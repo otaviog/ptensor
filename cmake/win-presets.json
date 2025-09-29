@@ -1,0 +1,69 @@
+{
+    "version": 6,
+    "include": [
+        "common-presets.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "msbuild",
+            "inherits": "base-dev",
+            "hidden": false,
+            "displayName": "Visual Studio 2022 (Dev)",
+            "description": "Development build with Visual Studio (2022)",
+            "generator": "Visual Studio 17 2022",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "msbuild-base",
+            "hidden": true,
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "inherits": "msbuild-base",
+            "name": "msbuild-debug",
+            "configurePreset": "msbuild",
+            "configuration": "Debug"
+        },
+        {
+            "inherits": "msbuild-base",
+            "name": "msbuild-release",
+            "configurePreset": "msbuild",
+            "configuration": "Release"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "msbuild",
+            "configurePreset": "msbuild"
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "win-dev-setup",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "msbuild"
+                },
+                {
+                    "type": "build",
+                    "name": "msbuild-release"
+                },
+                {
+                    "type": "build",
+                    "name": "msbuild-debug"
+                }
+            ]
+        }
+    ]
+}

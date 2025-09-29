@@ -1,0 +1,24 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "base",
+            "description": "Base for all configs",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "SKBUILD_PROJECT_NAME": "PTensor"
+            }
+        },
+        {
+            "name": "base-dev",
+            "inherits": "base",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                "WITH_IO": "ON",
+                "WITH_TESTS": "ON"
+            }
+        }
+    ]
+}

@@ -1,0 +1,195 @@
+{
+  "version": 6,
+  "include": [
+    "common-presets.json"
+  ],
+  "configurePresets": [
+    {
+      "inherits": "base-dev",
+      "name": "clang-base-dev",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "inherits": "clang-base-dev",
+      "name": "lin-debug",
+      "hidden": false,
+      "displayName": "Dev debug (clang)",
+      "description": "Development DEBUG build with Ninja using clang as compiler",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "inherits": "clang-base-dev",
+      "name": "lin-release",
+      "hidden": false,
+      "displayName": "Dev release (clang)",
+      "description": "Development RELEASE build with Ninja using clang as compiler",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "coverage",
+      "inherits": "clang-base-dev",
+      "displayName": "Code coverage - clang",
+      "description": "Code coverage build with clang",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fprofile-instr-generate -fcoverage-mapping -O0"
+      }
+    },
+    {
+      "name": "profile",
+      "inherits": "clang-base-dev",
+      "displayName": "Profile - clang",
+      "description": "Profile build with clang",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-g -fno-omit-frame-pointer -O2"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "lin-debug",
+      "configurePreset": "lin-debug",
+      "displayName": "Dev debug (clang)"
+    },
+    {
+      "name": "lin-release",
+      "configurePreset": "lin-release"
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage"
+    },
+    {
+      "name": "profile",
+      "configurePreset": "profile"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "-base-test",
+      "hidden": true,
+      "description": "Run tests",
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": false
+      },
+      "filter": {
+        "include": {
+          "name": ".*"
+        }
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "lin-debug",
+      "configurePreset": "lin-debug",
+      "inherits": "-base-test"
+    },
+    {
+      "name": "lin-release",
+      "configurePreset": "lin-release",
+      "inherits": "-base-test"
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage",
+      "inherits": "-base-test",
+      "environment": {
+        "LLVM_PROFILE_FILE": "ptensor-coverage.profraw"
+      }
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "dev-package",
+      "configurePreset": "lin-release",
+      "generators": [
+        "TGZ"
+      ]
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "lin-dev",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "lin-debug"
+        },
+        {
+          "type": "build",
+          "name": "lin-debug"
+        },
+        {
+          "type": "test",
+          "name": "lin-debug"
+        }
+      ]
+    },
+    {
+      "name": "lin-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "lin-release"
+        },
+        {
+          "type": "build",
+          "name": "lin-release"
+        },
+        {
+          "type": "test",
+          "name": "lin-release"
+        },
+        {
+          "type": "package",
+          "name": "dev-package"
+        }
+      ]
+    },
+    {
+      "name": "coverage-build",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "coverage"
+        },
+        {
+          "type": "build",
+          "name": "coverage"
+        }
+      ]
+    },
+    {
+      "name": "profile-build",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "profile"
+        },
+        {
+          "type": "build",
+          "name": "profile"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+[project]
+name = "ptensor"
+version = "0.1.0"
+description = "A portable tensor library"
+readme = "README.md"
+authors = [
+    { name = "Otavio Gomes", email = "otagom86@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+build-dir = "build/{wheel_tag}"
+
+[build-system]
+requires = ["scikit-build-core>=0.10"]
+build-backend = "scikit_build_core.build"

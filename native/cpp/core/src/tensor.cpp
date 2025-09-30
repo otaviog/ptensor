@@ -1,5 +1,6 @@
 #include "tensor.hpp"
 
+#include <algorithm>
 #include <cassert>
 
 #include "ptensor_error.hpp"
@@ -7,7 +8,8 @@
 namespace p10 {
 namespace {
     PtensorError are_options_valid_for_creation(const TensorOptions& options);
-}
+    size_t compute_size_bytes(const Shape& shape, const Dtype& dtype);
+}  // namespace
 
 PtensorResult<Tensor> Tensor::full(const Shape& shape, double value, const TensorOptions& options) {
     if (shape.count() < 1) {
@@ -36,9 +38,25 @@ PtensorResult<Tensor> Tensor::empty(const Shape& shape, const TensorOptions& opt
         return Err(status);
     }
 
-    const auto size = shape.count() * options.dtype().size();
+    const auto size = compute_size_bytes(shape, options.dtype());
     auto blob = Blob::allocate(size);
     return Ok(Tensor(std::move(blob), shape, options));
+}
+
+PtensorError Tensor::create(const Shape& shape, const TensorOptions& options) {
+    if (auto status = are_options_valid_for_creation(options); !status.is_ok()) {
+        return status;
+    }
+
+    const auto ask_size = compute_size_bytes(shape, options.dtype());
+    if (ask_size <= size_bytes()) {
+        shape_ = shape;
+        set_options(options);
+        return PtensorError::Ok;
+    }
+
+    blob_ = Blob::allocate(ask_size);
+    return PtensorError::Ok;
 }
 
 PtensorResult<Tensor> Tensor::clone() const {
@@ -140,6 +158,10 @@ namespace {
         }
 
         return PtensorError::Ok;
+    }
+
+    size_t compute_size_bytes(const Shape& shape, const Dtype& dtype) {
+        return shape.count() * dtype.size();
     }
 }  // namespace
 

@@ -12,7 +12,7 @@
         #define PTENSOR_API __declspec(dllimport)
     #endif
 #elif __GNUC__ >= 4
-    #if defined(hp3d_BUILD_SHARED) /* build dll */
+    #if defined(PTENSOR_BUILD_SHARED) /* build dll */
         #define PTENSOR_API __attribute__((visibility("default")))
     #else
         #define PTENSOR_API
@@ -55,4 +55,4 @@ const unsigned long P10_MAX_SHAPE = 8;
     PTENSOR_PACKED_BEGIN \
     PTENSOR_PACKED_STRUCT name
 
-#endif  // hp3d_CONFIG_H
+#endif  // PTENSOR_CONFIG_H

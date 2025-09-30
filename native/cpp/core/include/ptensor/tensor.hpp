@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <cstdint>
 #include <optional>
 
@@ -10,6 +9,8 @@
 #include "dtype.hpp"
 #include "ptensor_result.hpp"
 #include "shape.hpp"
+#include "span2d.hpp"
+#include "span3d.hpp"
 #include "tensor_options.hpp"
 
 namespace p10 {
@@ -74,14 +75,16 @@ class Tensor {
     ///
     /// # Returns
     /// * A tensor filled with the given value. If the shape is empty, an empty tensor is returned.
-    static PtensorResult<Tensor> full(
-        const Shape& shape,
-        double value,
-        const TensorOptions& options = TensorOptions()
-    );
+    static PtensorResult<Tensor>
+    full(const Shape& shape, double value, const TensorOptions& options = TensorOptions());
 
     static PtensorResult<Tensor>
     empty(const Shape& shape, const TensorOptions& options = TensorOptions());
+
+    PtensorError create(const Shape& shape, const TensorOptions& options = TensorOptions());
+
+    /// Clones the tensor if the tensor is in CPU memory
+    PtensorResult<Tensor> clone() const;
 
     /// Default constructor. Creates an empty tensor.
     Tensor() = default;
@@ -139,9 +142,6 @@ class Tensor {
         return size() * dtype_.size();
     }
 
-    /// Clones the tensor if the tensor is in CPU memory
-    PtensorResult<Tensor> clone() const;
-
     Tensor as_view() {
         return Tensor(blob_.view(), shape(), options());
     }
@@ -156,6 +156,14 @@ class Tensor {
         return TensorOptions().dtype(dtype_).stride(stride_).axes(axes_).device(blob_.device());
     }
 
+    std::span<const std::byte> as_bytes() const {
+        return std::span<const std::byte>(blob_.data<const std::byte>(), size_bytes());
+    }
+
+    std::span<std::byte> as_bytes() {
+        return std::span<std::byte>(blob_.data<std::byte>(), size_bytes());
+    }
+
     template<typename scalar_t>
     constexpr std::span<const scalar_t> as_span1d() const {
         return std::span<const scalar_t>(blob_.data<scalar_t>(), size());
@@ -166,12 +174,63 @@ class Tensor {
         return std::span<scalar_t>(blob_.data<scalar_t>(), size());
     }
 
-    std::span<const std::byte> as_bytes() const {
-        return std::span<const std::byte>(blob_.data<const std::byte>(), size_bytes());
+    template<typename T>
+    PtensorResult<Span2D<T>> as_span2d() {
+        if (dims() != 2) {
+            return Err<Span2D<T>>(PtensorError::InvalidArgument, "Tensor must have 2 dimensions");
+        }
+        return Ok<Span2D<T>>(Span2D<T>(data<T>(), shape_[0], shape_[1]));
     }
 
-    std::span<std::byte> as_bytes() {
-        return std::span<std::byte>(blob_.data<std::byte>(), size_bytes());
+    template<typename T>
+    PtensorResult<Span2D<T>> as_span2d() const {
+        if (dims() != 2) {
+            return Err<Span2D<T>>(PtensorError::InvalidArgument, "Tensor must have 2 dimensions");
+        }
+        return Ok<Span2D<T>>(Span2D<T>(data<T>(), shape_[0], shape_[1]));
+    }
+
+    template<typename T>
+    PtensorResult<Span3D<T>> as_span3d() {
+        if (dims() != 3) {
+            return Err<Span3D<T>>(PtensorError::InvalidArgument, "Tensor must have 3 dimensions");
+        }
+        return Ok<Span3D<T>>(Span3D<T>(data<T>(), shape_[0], shape_[1], shape_[2]));
+    }
+
+    template<typename T>
+    PtensorResult<Span3D<const T>> as_span3d() const {
+        if (dims() != 3) {
+            return Err<Span3D<const T>>(
+                PtensorError::InvalidArgument,
+                "Tensor must have 3 dimensions"
+            );
+        }
+        return Ok<Span3D<const T>>(Span3D<const T>(data<T>(), shape_[0], shape_[1], shape_[2]));
+    }
+
+    template<typename T>
+    PtensorResult<PlanarSpan3D<T>> as_planar_span3d() {
+        if (dims() != 3) {
+            return Err<PlanarSpan3D<T>>(
+                PtensorError::InvalidArgument,
+                "Tensor must have 3 dimensions"
+            );
+        }
+        return Ok<PlanarSpan3D<T>>(PlanarSpan3D<T>(data<T>(), shape_[0], shape_[1], shape_[2]));
+    }
+
+    template<typename T>
+    PtensorResult<PlanarSpan3D<const T>> as_planar_span3d() const {
+        if (dims() != 3) {
+            return Err<PlanarSpan3D<const T>>(
+                PtensorError::InvalidArgument,
+                "Tensor must have 3 dimensions"
+            );
+        }
+        return Ok<PlanarSpan3D<const T>>(
+            PlanarSpan3D<const T>(data<T>(), shape_[0], shape_[1], shape_[2])
+        );
     }
 
     /// Returns true if the tensor is contiguous.

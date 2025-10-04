@@ -236,12 +236,12 @@ class Tensor {
         );
     }
 
-    void visit(auto&& visitor) {
-        dtype_.visit(std::forward<decltype(visitor)>(visitor), as_bytes());
+    auto visit(auto&& visitor) {
+        return dtype_.visit(std::forward<decltype(visitor)>(visitor), as_bytes());
     }
 
-    void visit(auto&& visitor) const {
-        dtype_.visit(std::forward<decltype(visitor)>(visitor), as_bytes());
+    auto visit(auto&& visitor) const {
+        return dtype_.visit(std::forward<decltype(visitor)>(visitor), as_bytes());
     }
 
     /// Returns true if the tensor is contiguous.

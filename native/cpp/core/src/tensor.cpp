@@ -111,7 +111,7 @@ PtensorResult<Tensor> Tensor::to_contiguous() const {
             for (size_t i = 0; i < num_elements; i++) {
                 int64_t from_index = 0;
 
-                for (int j = 0; j < ndims; j++) {
+                for (size_t j = 0; j < ndims; j++) {
                     from_index += coords[j] * this_stride[j];
                 }
 

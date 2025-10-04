@@ -2,16 +2,10 @@
 
 #include <ptensor/tensor.hpp>
 
-#include "tensor_cast.hpp"
+#include "dtype_wrapper.hpp"
+#include "ptensor/shape.hpp"
+#include "tensor_wrapper.hpp"
 #include "update_error_state.hpp"
-
-///////
-// Tensor
-namespace {
-inline p10::DType to_cxx_dtype(P10DTypeEnum dtype) {
-    return p10::DType(static_cast<p10::DType::Code>(dtype));
-}
-}  // namespace
 
 PTENSOR_API P10ErrorEnum p10_tensor_from_data(
     P10Tensor* tensor,
@@ -20,9 +14,16 @@ PTENSOR_API P10ErrorEnum p10_tensor_from_data(
     size_t num_dims,
     uint8_t* data
 ) {
-    std::vector<int64_t> shape_vec(shape, shape + num_dims);
+    auto shape_res = p10::make_shape(std::span(shape, num_dims));
+    if (!shape_res.is_ok()) {
+        return p10::update_error_state(shape_res.unwrap_err());
+    }
+    auto dtype_res = p10::wrap(dtype);
+    if (!dtype_res.is_ok()) {
+        return p10::update_error_state(dtype_res.unwrap_err());
+    }
 
-    *tensor = to_tensor_c(new p10::Tensor(to_cxx_dtype(dtype), shape_vec, data));
+    *tensor = wrap(std::move(p10::Tensor::from_data(data, shape_res.unwrap(), dtype_res.unwrap())));
 
     return P10ErrorEnum::P10_OK;
 }
@@ -31,25 +32,25 @@ PTENSOR_API P10ErrorEnum p10_tensor_destroy(P10Tensor* tensor) {
     if (tensor == nullptr) {
         return P10ErrorEnum::P10_OK;
     }
-    auto* cxx_tensor = to_tensor_cxx(*tensor);
+    auto* cxx_tensor = unwrap(*tensor);
     delete cxx_tensor;
     *tensor = nullptr;
     return P10ErrorEnum::P10_OK;
 }
 
 PTENSOR_API size_t p10_tensor_get_size(P10Tensor tensor) {
-    const auto* cxx_tensor = to_tensor_cxx(tensor);
+    const auto* cxx_tensor = unwrap(tensor);
     return cxx_tensor->size();
 }
 
 PTENSOR_API P10DTypeEnum p10_tensor_get_dtype(P10Tensor tensor) {
-    const auto* cxx_tensor = to_tensor_cxx(tensor);
-    return static_cast<P10DTypeEnum>(cxx_tensor->dtype().code());
+    const auto* cxx_tensor = unwrap(tensor);
+    return static_cast<P10DTypeEnum>(cxx_tensor->dtype().value);
 }
 
 PTENSOR_API P10ErrorEnum p10_tensor_get_shape(P10Tensor tensor, int64_t* shape, size_t num_dims) {
-    const auto* cxx_tensor = to_tensor_cxx(tensor);
-    auto shape_vec = cxx_tensor->shape();
+    const auto* cxx_tensor = unwrap(tensor);
+    auto shape_vec = cxx_tensor->shape().as_span();
     for (size_t i = 0; i < std::min(num_dims, shape_vec.size()); ++i) {
         shape[i] = shape_vec[i];
     }
@@ -57,11 +58,9 @@ PTENSOR_API P10ErrorEnum p10_tensor_get_shape(P10Tensor tensor, int64_t* shape, 
 }
 
 PTENSOR_API size_t p10_tensor_get_dimensions(P10Tensor tensor) {
-    const auto* cxx_tensor = to_tensor_cxx(tensor);
-    return cxx_tensor->shape().size();
+    return unwrap(tensor)->dims();
 }
 
 PTENSOR_API void* p10_tensor_get_data(P10Tensor tensor) {
-    auto* cxx_tensor = to_tensor_cxx(tensor);
-    return cxx_tensor->data<void>();
+    return unwrap(tensor)->as_span1d<void*>().data();
 }

@@ -13,7 +13,7 @@
 namespace p10 {
 
 struct Dtype {
-    enum Value : uint8_t {
+    enum Code : uint8_t {
         Float32 = P10_DTYPE_FLOAT32,
         Float64 = P10_DTYPE_FLOAT64,
         Float16 = P10_DTYPE_FLOAT16,
@@ -30,7 +30,7 @@ struct Dtype {
     static Dtype from() {
         using ActualType = std::remove_cv_t<std::remove_reference_t<T>>;
         // clang-format off
-        if constexpr (std::is_same<ActualType, float>::value) return Dtype(Float32);
+        if constexpr (std::is_same_v<ActualType, float>) return Dtype(Float32);
         else if constexpr (std::is_same_v<ActualType, double>) return Dtype(Float64);
         else if constexpr (std::is_same_v<ActualType, uint8_t>) return Dtype(Uint8);
         else if constexpr (std::is_same_v<ActualType, uint16_t>) return Dtype(Uint16);
@@ -45,9 +45,9 @@ struct Dtype {
 
     Dtype() = default;
 
-    constexpr Dtype(Value value) : value(value) {}
+    constexpr Dtype(Code value) : value(value) {}
 
-    constexpr operator Value() const {
+    constexpr operator Code() const {
         return value;
     }
 
@@ -75,61 +75,59 @@ struct Dtype {
     }
 
     template<typename F>
-    PtensorError visit(F&& visitor, std::span<std::byte> data) const {
+    auto visit(F&& visitor, std::span<std::byte> data) const {
         return do_visit(std::forward<F>(visitor), data);
     }
 
     template<typename F>
-    PtensorError visit(F&& visitor, std::span<const std::byte> data) const {
+    auto visit(F&& visitor, std::span<const std::byte> data) const {
         return do_visit(std::forward<F>(visitor), data);
     }
 
-    Value value = Dtype::Float32;
+    Code value = Dtype::Float32;
 
   private:
     template<typename F, typename ByteType>
-    PtensorError do_visit(F&& visitor, std::span<ByteType> data) const {
+    auto do_visit(F&& visitor, std::span<ByteType> data) const {
         switch (value) {
             case Uint8:
-                do_type_visit<F, uint8_t, ByteType>(std::forward<F>(visitor), data);
+                return do_type_visit<F, uint8_t, ByteType>(std::forward<F>(visitor), data);
                 break;
             case Uint16:
-                do_type_visit<F, uint16_t, ByteType>(std::forward<F>(visitor), data);
+                return do_type_visit<F, uint16_t, ByteType>(std::forward<F>(visitor), data);
                 break;
             case Uint32:
-                do_type_visit<F, uint32_t, ByteType>(std::forward<F>(visitor), data);
+                return do_type_visit<F, uint32_t, ByteType>(std::forward<F>(visitor), data);
                 break;
             case Int8:
-                do_type_visit<F, int8_t, ByteType>(std::forward<F>(visitor), data);
+                return do_type_visit<F, int8_t, ByteType>(std::forward<F>(visitor), data);
                 break;
             case Int16:
-                do_type_visit<F, int16_t, ByteType>(std::forward<F>(visitor), data);
+                return do_type_visit<F, int16_t, ByteType>(std::forward<F>(visitor), data);
                 break;
             case Int32:
-                do_type_visit<F, int32_t, ByteType>(std::forward<F>(visitor), data);
+                return do_type_visit<F, int32_t, ByteType>(std::forward<F>(visitor), data);
                 break;
             case Int64:
-                do_type_visit<F, int64_t, ByteType>(std::forward<F>(visitor), data);
+                return do_type_visit<F, int64_t, ByteType>(std::forward<F>(visitor), data);
                 break;
             case Float32:
-                do_type_visit<F, float, ByteType>(std::forward<F>(visitor), data);
+                return do_type_visit<F, float, ByteType>(std::forward<F>(visitor), data);
                 break;
             case Float64:
-                do_type_visit<F, double, ByteType>(std::forward<F>(visitor), data);
+                return do_type_visit<F, double, ByteType>(std::forward<F>(visitor), data);
                 break;
             default:
-                return PtensorError::InvalidArgument;
+                detail::panic("Unknown type to dtype::visit_*");
         }
-
-        return PtensorError::Ok;
     }
 
     template<typename F, typename T, typename ByteType>
-    void do_type_visit(F&& visitor, std::span<ByteType> data) const {
+    auto do_type_visit(F&& visitor, std::span<ByteType> data) const {
         if constexpr (std::is_const<ByteType>::value) {
-            visitor(std::span(reinterpret_cast<const T*>(data.data()), data.size() / sizeof(T)));
+            return visitor(std::span(reinterpret_cast<const T*>(data.data()), data.size() / sizeof(T)));
         } else {
-            visitor(std::span(reinterpret_cast<T*>(data.data()), data.size() / sizeof(T)));
+            return visitor(std::span(reinterpret_cast<T*>(data.data()), data.size() / sizeof(T)));
         }
     }
 };

@@ -18,6 +18,8 @@ typedef enum {
     P10_DTYPE_INT64,
 } P10DTypeEnum;
 
+#define P10_DTYPE_LAST P10_DTYPE_INT64
+
 #ifdef __cplusplus
 }
 #endif

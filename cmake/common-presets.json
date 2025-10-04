@@ -16,6 +16,7 @@
             "hidden": true,
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_MANIFEST_FEATURES": "io;tests",
                 "WITH_IO": "ON",
                 "BUILD_TESTS": "ON"
             }

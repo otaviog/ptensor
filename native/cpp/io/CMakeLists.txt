@@ -10,5 +10,5 @@ target_sources(ptensor_io
   PRIVATE
   ${_INCLUDE_DIR}/numpy.hpp src/numpy.cpp
   ${_INCLUDE_DIR}/image.hpp src/image.cpp)
-target_include_directories(ptensor_io PRIVATE ${_INCLUDE_DIR})
-target_link_libraries(ptensor_io ptensor cnpy stb_image)
+target_include_directories(ptensor_io PRIVATE ${_INCLUDE_DIR} ${Stb_INCLUDE_DIR})
+target_link_libraries(ptensor_io PUBLIC ptensor PRIVATE cnpy)

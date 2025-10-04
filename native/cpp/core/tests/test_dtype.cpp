@@ -25,9 +25,9 @@ TEST_CASE("Dtype construction and enum values", "[dtype]") {
         REQUIRE(Dtype(Dtype::Int64) == Dtype::Int64);
     }
     
-    SECTION("Implicit conversion to Value") {
+    SECTION("Implicit conversion to Code") {
         Dtype dtype(Dtype::Float64);
-        Dtype::Value value = dtype;
+        Dtype::Code value = dtype;
         REQUIRE(value == Dtype::Float64);
     }
 }
@@ -105,8 +105,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
         };
         
         Dtype float32_dtype(Dtype::Float32);
-        auto result = float32_dtype.visit(visitor, std::span(data));
-        REQUIRE(result == PtensorError::Ok);
+        float32_dtype.visit(visitor, std::span(data));
         
         auto float_span = std::span(reinterpret_cast<float*>(data.data()), data.size() / sizeof(float));
         REQUIRE(float_span[0] == 1.0f);
@@ -131,8 +130,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
         };
         
         Dtype uint32_dtype(Dtype::Uint32);
-        auto result = uint32_dtype.visit(visitor, std::span<const std::byte>(data));
-        REQUIRE(result == PtensorError::Ok);
+        uint32_dtype.visit(visitor, std::span<const std::byte>(data));
         REQUIRE(sum == 100);
     }
     
@@ -148,8 +146,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
         
         SECTION("Int8") {
             Dtype dtype(Dtype::Int8);
-            auto result = dtype.visit(counting_visitor, std::span(data));
-            REQUIRE(result == PtensorError::Ok);
+            dtype.visit(counting_visitor, std::span(data));
             auto int8_span = std::span(reinterpret_cast<int8_t*>(data.data()), 8);
             REQUIRE(int8_span[0] == 0);
             REQUIRE(int8_span[7] == 7);
@@ -157,8 +154,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
         
         SECTION("Uint16") {
             Dtype dtype(Dtype::Uint16);
-            auto result = dtype.visit(counting_visitor, std::span(data));
-            REQUIRE(result == PtensorError::Ok);
+            dtype.visit(counting_visitor, std::span(data));
             auto uint16_span = std::span(reinterpret_cast<uint16_t*>(data.data()), 4);
             REQUIRE(uint16_span[0] == 0);
             REQUIRE(uint16_span[3] == 3);
@@ -166,8 +162,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
         
         SECTION("Float64") {
             Dtype dtype(Dtype::Float64);
-            auto result = dtype.visit(counting_visitor, std::span(data));
-            REQUIRE(result == PtensorError::Ok);
+            dtype.visit(counting_visitor, std::span(data));
             auto double_span = std::span(reinterpret_cast<double*>(data.data()), 1);
             REQUIRE(double_span[0] == 0.0);
         }
@@ -193,15 +188,14 @@ TEST_CASE("Dtype edge cases and error conditions", "[dtype]") {
         auto visitor = [](auto) {};
         
         Dtype invalid_dtype;
-        invalid_dtype.value = static_cast<Dtype::Value>(255);
-        
-        auto result = invalid_dtype.visit(visitor, std::span(data));
-        REQUIRE(result == PtensorError::InvalidArgument);
+        invalid_dtype.value = static_cast<Dtype::Code>(255);
+
+        invalid_dtype.visit(visitor, std::span(data));
     }
     
     SECTION("Size of invalid dtype") {
         Dtype invalid_dtype;
-        invalid_dtype.value = static_cast<Dtype::Value>(255);
+        invalid_dtype.value = static_cast<Dtype::Code>(255);
         REQUIRE(invalid_dtype.size() == 0);
     }
 }

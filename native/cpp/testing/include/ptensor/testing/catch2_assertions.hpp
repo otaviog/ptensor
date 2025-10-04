@@ -1,7 +1,5 @@
 #pragma once
 
-#include <sstream>
-
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_templated.hpp>
 #include <ptensor/ptensor_error.hpp>
@@ -74,66 +72,52 @@ struct Compare {
 
 inline PtensorError compare_tensors(const Tensor& t1, const Tensor& t2) {
     if (t1.shape() != t2.shape()) {
-        return PtensorError(PtensorError::AssertionError, u8"Shapes are different")
-            .append_message(
-                std::u8string(u8"Shape 1: ") + to_string(t1.shape()) + u8"\nShape 2: "
-                + to_string(t2.shape())
-            );
+        return PtensorError::AssertionError
+            << (std::string("Shapes are different") + "Shape 1: " + to_string(t1.shape())
+                + "\nShape 2: " + to_string(t2.shape()));
     }
 
     if (t1.stride() != t2.stride()) {
-        return PtensorError(PtensorError::AssertionError, u8"Strides are different")
-            .append_message(
-                std::u8string(u8"Stride 1: ") + to_string(t1.stride()) + u8"\nStride 2: "
-                + to_string(t2.stride())
-            );
+        return PtensorError::AssertionError
+            << (std::string("Strides are different") + "Stride 1: " + to_string(t1.stride())
+                + "\nStride 2: " + to_string(t2.stride()));
     }
 
     if (t1.dtype() != t2.dtype()) {
-        return PtensorError(PtensorError::kAssertionError, u8"Data types are different")
-            .append_message(
-                std::u8string(u8"Data type 1: ") + to_string(t1.dtype()) + u8"\nData type 2: "
-                + to_string(t2.dtype())
-            );
+        return PtensorError::AssertionError
+            << (std::string("Data types are different") + "Data type 1: " + to_string(t1.dtype())
+                + "\nData type 2: " + to_string(t2.dtype()));
     }
 
     if (t1.size_bytes() != t2.size_bytes()) {
-        return PtensorError(PtensorError::kAssertionError, u8"Sizes (byte) are different")
-            .append_message(detail::string_to_u8string(
-                std::string("Size 1: ") + std::to_string(t1.size_bytes())
-                + "\nSize 2: " + std::to_string(t2.size_bytes())
-            ));
+        return PtensorError::AssertionError
+            << (std::string("Sizes (byte) are different") + "Size 1: "
+                + std::to_string(t1.size_bytes()) + "\nSize 2: " + std::to_string(t2.size_bytes()));
     }
 
-    const auto match_count = t1.dtype().visit_const(
-        [&t1, &t2](auto _data) {
-            using scalar_t = std::remove_pointer_t<decltype(_data)>;
-            const auto data1 = t1.span<scalar_t>();
-            const auto data2 = t2.span<scalar_t>();
+    const auto match_count = t1.visit([&t2](auto data1) {
+        using scalar_t = decltype(data1)::value_type;
+        const auto data2 = t2.as_span1d<scalar_t>();
 
-            size_t match_count = 0;
-            auto it1 = data1.begin();
-            auto it2 = data2.begin();
-            while (it1 != data1.end()) {
-                if (Compare::equal(*it1, *it2)) {
-                    ++match_count;
-                }
-                ++it1;
-                ++it2;
+        size_t match_count = 0;
+        auto it1 = data1.begin();
+        auto it2 = data2.begin();
+        while (it1 != data1.end()) {
+            if (Compare::equal(*it1, *it2)) {
+                ++match_count;
             }
-            return match_count;
-        },
-        t1.data<void>()
-    );
+            ++it1;
+            ++it2;
+        }
+        return match_count;
+    });
 
     if (match_count != t1.size()) {
-        return PtensorError(PtensorError::kAssertionError, u8"Data are different")
-            .append_message(detail::string_to_u8string(
-                std::string("Match rate is ")
-                + std::to_string(static_cast<double>(match_count) / t1.size())
-            ));
+        return PtensorError::AssertionError << "Data are different"
+                                            << std::string("Match rate is ")
+            + std::to_string(static_cast<double>(match_count) / t1.size());
     }
-    return PtensorError::kOk;
+    return PtensorError::Ok;
 }
 
 }  // namespace p10::testing

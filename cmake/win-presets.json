@@ -49,7 +49,7 @@
     ],
     "workflowPresets": [
         {
-            "name": "win-dev-setup",
+            "name": "win-dev",
             "steps": [
                 {
                     "type": "configure",

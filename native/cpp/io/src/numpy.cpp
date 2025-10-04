@@ -22,13 +22,13 @@ PtensorError save_npz(const std::string& filename, const TensorMap& tensors) {
             std::back_inserter(shape),
             [](const int64_t& dim) { return static_cast<size_t>(dim); }
         );
-        tensor.visit_data([&](auto span) {
+        tensor.visit([&](auto span) {
             cnpy::npz_save(filename, key_name, span.data(), shape, mode);
         });
         mode = "a";
     }
 
-    return PtensorError::OK;
+    return PtensorError::Ok;
 }
 
 PtensorResult<TensorMap> load_npz(const std::string& filename) {
@@ -43,14 +43,19 @@ PtensorResult<TensorMap> load_npz(const std::string& filename) {
             shape.push_back(static_cast<int64_t>(array.shape[i]));
         }
 
-        if (array.word_size == 4) {
-            tensor = Tensor::from_data(array.data<float>(), shape).clone();
-        } else if (array.word_size == 1) {
-            tensor = Tensor::from_data(array.data<uint8_t>(), shape).clone();
-        } else {
-            return Err<TensorMap>(PtensorError::INVALID_ARGUMENT, "Unsupported data type");
+        auto p10_shape = make_shape(shape);
+        if (!p10_shape.is_ok()) {
+            return Err(p10_shape.unwrap_err());
         }
-        tensors.try_emplace(key, tensor);
+
+        if (array.word_size == 4) {
+            tensor = Tensor::from_data(array.data<float>(), p10_shape.unwrap()).clone().unwrap();
+        } else if (array.word_size == 1) {
+            tensor = Tensor::from_data(array.data<uint8_t>(), p10_shape.unwrap()).clone().unwrap();
+        } else {
+            return Err(PtensorError::InvalidArgument, "Unsupported data type");
+        }
+        tensors.try_emplace(key, std::move(tensor));
     }
 
     return Ok<TensorMap>(std::move(tensors));

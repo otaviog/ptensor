@@ -1,8 +1,8 @@
 
 find_package(ZLIB REQUIRED)
-# add_subdirectory(lib/cnpy)
-# set(StbImage_DIR lib/stb)
-#find_package(StbImage REQUIRED)
+
+find_package(Stb REQUIRED)
+add_subdirectory(lib/cnpy)
 
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/io)
 add_library(ptensor_io STATIC)

@@ -9,6 +9,12 @@ namespace p10 {
 
 class TensorOptions {
   public:
+    TensorOptions() = default;
+
+    TensorOptions(Dtype dtype) : dtype_(dtype) {}
+
+    TensorOptions(Dtype::Value dtype) : dtype_(dtype) {}
+
     /// The data type of the tensor.
     Dtype dtype() const {
         return dtype_;

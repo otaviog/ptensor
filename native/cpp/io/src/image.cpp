@@ -11,11 +11,16 @@ PtensorResult<Tensor> load_image(const std::string& path) {
     int width, height, channels;
     unsigned char* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
     if (!data) {
-        return Err<Tensor>(PtensorError::INVALID_ARGUMENT, "Failed to load image");
+        return Err(PtensorError::InvalidArgument, "Failed to load image");
     }
     Tensor tensor;
-    tensor.create(DType::UINT8, {height, width, channels});
-    std::copy(data, data + height * width * channels, tensor.data<uint8_t>());
+    tensor.create(make_shape({height, width, channels}).unwrap(), Dtype::Uint8);
+    auto tensor_bytes = tensor.as_bytes();
+    std::copy(
+        data,
+        data + tensor_bytes.size(),
+        reinterpret_cast<unsigned char*>(tensor_bytes.data())
+    );
     stbi_image_free(data);
     return Ok<Tensor>(std::move(tensor));
 }
@@ -30,7 +35,7 @@ PtensorError save_image(const std::string& path, const Tensor& tensor) {
         span.data(),
         span.width() * span.channels()
     );
-    return PtensorError::OK;
+    return PtensorError::Ok;
 }
 
 }  // namespace p10::io

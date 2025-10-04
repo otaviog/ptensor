@@ -28,17 +28,18 @@ struct Dtype {
 
     template<typename T>
     static Dtype from() {
+        using ActualType = std::remove_cv_t<std::remove_reference_t<T>>;
         // clang-format off
-        if constexpr (std::is_same_v<T, float>) return Dtype(Float32);
-        if constexpr (std::is_same_v<T, double>) return Dtype(Float64);
-        if constexpr (std::is_same_v<T, uint8_t>) return Dtype(Uint8);
-        if constexpr (std::is_same_v<T, uint16_t>) return Dtype(Uint16);
-        if constexpr (std::is_same_v<T, uint32_t>) return Dtype(Uint32);
-        if constexpr (std::is_same_v<T, int8_t>) return Dtype(Int8);
-        if constexpr (std::is_same_v<T, int16_t>) return Dtype(Int16);
-        if constexpr (std::is_same_v<T, int32_t>) return Dtype(Int32);
-        if constexpr (std::is_same_v<T, int64_t>) return Dtype(Int64);
-        static_assert(sizeof(T) == 0, "Unsupported type");
+        if constexpr (std::is_same<ActualType, float>::value) return Dtype(Float32);
+        else if constexpr (std::is_same_v<ActualType, double>) return Dtype(Float64);
+        else if constexpr (std::is_same_v<ActualType, uint8_t>) return Dtype(Uint8);
+        else if constexpr (std::is_same_v<ActualType, uint16_t>) return Dtype(Uint16);
+        else if constexpr (std::is_same_v<ActualType, uint32_t>) return Dtype(Uint32);
+        else if constexpr (std::is_same_v<ActualType, int8_t>) return Dtype(Int8);
+        else if constexpr (std::is_same_v<ActualType, int16_t>) return Dtype(Int16);
+        else if constexpr (std::is_same_v<ActualType, int32_t>) return Dtype(Int32);
+        else if constexpr (std::is_same_v<ActualType, int64_t>) return Dtype(Int64);
+        else static_assert(!std::is_same_v<ActualType, ActualType>, "Unsupported type for Dtype::from<T>()");
         // clang-format on
     }
 

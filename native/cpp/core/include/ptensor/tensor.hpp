@@ -179,7 +179,7 @@ class Tensor {
         if (dims() != 2) {
             return Err<Span2D<T>>(PtensorError::InvalidArgument, "Tensor must have 2 dimensions");
         }
-        return Ok<Span2D<T>>(Span2D<T>(data<T>(), shape_[0], shape_[1]));
+        return Ok<Span2D<T>>(Span2D<T>(blob_.data<T>(), shape_[0], shape_[1]));
     }
 
     template<typename T>
@@ -187,7 +187,7 @@ class Tensor {
         if (dims() != 2) {
             return Err<Span2D<T>>(PtensorError::InvalidArgument, "Tensor must have 2 dimensions");
         }
-        return Ok<Span2D<T>>(Span2D<T>(data<T>(), shape_[0], shape_[1]));
+        return Ok<Span2D<T>>(Span2D<T>(blob_.data<T>(), shape_[0], shape_[1]));
     }
 
     template<typename T>
@@ -195,18 +195,20 @@ class Tensor {
         if (dims() != 3) {
             return Err<Span3D<T>>(PtensorError::InvalidArgument, "Tensor must have 3 dimensions");
         }
-        return Ok<Span3D<T>>(Span3D<T>(data<T>(), shape_[0], shape_[1], shape_[2]));
+        return Ok<Span3D<T>>(Span3D<T>(blob_.data<T>(), shape_[0], shape_[1], shape_[2]));
     }
 
     template<typename T>
     PtensorResult<Span3D<const T>> as_span3d() const {
         if (dims() != 3) {
-            return Err<Span3D<const T>>(
+            return Err(
                 PtensorError::InvalidArgument,
                 "Tensor must have 3 dimensions"
             );
         }
-        return Ok<Span3D<const T>>(Span3D<const T>(data<T>(), shape_[0], shape_[1], shape_[2]));
+        auto shape = shape_.as_span();
+        return Ok<Span3D<const T>>(Span3D<const T>(blob_.data<T>(), shape[0], shape[1], shape[2])
+        );
     }
 
     template<typename T>
@@ -217,7 +219,8 @@ class Tensor {
                 "Tensor must have 3 dimensions"
             );
         }
-        return Ok<PlanarSpan3D<T>>(PlanarSpan3D<T>(data<T>(), shape_[0], shape_[1], shape_[2]));
+        return Ok<PlanarSpan3D<T>>(PlanarSpan3D<T>(blob_.data<T>(), shape_[0], shape_[1], shape_[2])
+        );
     }
 
     template<typename T>
@@ -229,8 +232,16 @@ class Tensor {
             );
         }
         return Ok<PlanarSpan3D<const T>>(
-            PlanarSpan3D<const T>(data<T>(), shape_[0], shape_[1], shape_[2])
+            PlanarSpan3D<const T>(blob_.data<T>(), shape_[0], shape_[1], shape_[2])
         );
+    }
+
+    void visit(auto&& visitor) {
+        dtype_.visit(std::forward<decltype(visitor)>(visitor), as_bytes());
+    }
+
+    void visit(auto&& visitor) const {
+        dtype_.visit(std::forward<decltype(visitor)>(visitor), as_bytes());
     }
 
     /// Returns true if the tensor is contiguous.

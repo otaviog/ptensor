@@ -1,7 +1,6 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
-
 #include <p10/io/image.hpp>
 #include <p10/tensor.hpp>
 
@@ -13,6 +12,7 @@
 
 namespace p10::tensorop {
 using Catch::Approx;
+
 TEST_CASE("Tensorop: Add", "[tensorop]") {
     auto type = GENERATE(DType::FLOAT32, DType::INT64, DType::UINT8);
     DYNAMIC_SECTION("Testing addition with type " << DType(type).to_string()) {
@@ -36,8 +36,7 @@ TEST_CASE("Tensorop: Add", "[tensorop]") {
 
 TEST_CASE("Tensorop: Subtract", "[tensor]") {
     auto type = GENERATE(DType::FLOAT32, DType::INT64, DType::UINT8);
-    DYNAMIC_SECTION("Testing subtraction with type "
-                    << DType(type).to_string()) {
+    DYNAMIC_SECTION("Testing subtraction with type " << DType(type).to_string()) {
         auto a = Tensor::from_range(type, {2, 3});
         auto b = Tensor::from_range(type, {2, 3});
         Tensor out;
@@ -70,14 +69,11 @@ TEST_CASE("Tensorop: Blur image", "[tensorop]") {
 
         Tensor blurred_image;
         imageop::image_from_tensor(blurred_tensor, blurred_image);
-        io::save_image(
-            (testing::get_output_path() / "000001_blurred.jpg").string(),
-            blurred_image);
+        io::save_image((testing::get_output_path() / "000001_blurred.jpg").string(), blurred_image);
     }
 
     SECTION("Should fail with invalid kernel size") {
-        REQUIRE(GaussianBlur::create(GaussianBlur::MAX_KERNEL_SIZE + 1, 1.5f)
-                    .is_error());
+        REQUIRE(GaussianBlur::create(GaussianBlur::MAX_KERNEL_SIZE + 1, 1.5f).is_error());
         REQUIRE(GaussianBlur::create(0, 1.5f).is_error());
     }
 }
@@ -94,22 +90,21 @@ TEST_CASE("Tensorop: Resize", "[tensorop]") {
         Tensor resized_image;
         imageop::image_from_tensor(resized_tensor, resized_image);
         io::save_image(
-            (testing::get_output_path() / "000001_resized_downsampled.jpg")
-                .string(),
-            resized_image);
+            (testing::get_output_path() / "000001_resized_downsampled.jpg").string(),
+            resized_image
+        );
     }
     SECTION("Upsample image") {
         Tensor resized_tensor;
         REQUIRE(resize(sample_tensor, resized_tensor, 1024, 1024).is_ok());
-        REQUIRE(resized_tensor.shape() ==
-                std::vector<int64_t>({3, 1024, 1024}));
+        REQUIRE(resized_tensor.shape() == std::vector<int64_t>({3, 1024, 1024}));
         REQUIRE(resized_tensor.dtype() == DType::FLOAT32);
         Tensor resized_image;
         imageop::image_from_tensor(resized_tensor, resized_image);
         io::save_image(
-            (testing::get_output_path() / "000001_resized_upsampled.jpg")
-                .string(),
-            resized_image);
+            (testing::get_output_path() / "000001_resized_upsampled.jpg").string(),
+            resized_image
+        );
     }
 }
 }  // namespace p10::tensorop

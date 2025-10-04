@@ -1,9 +1,9 @@
 #include "ptensor_error.hpp"
 
-#include <system_error>
-
 #ifdef PTENSOR_HAS_WINDOWS_H
     #include <Windows.h>
+
+    #include <system_error>
 #endif
 
 namespace p10 {

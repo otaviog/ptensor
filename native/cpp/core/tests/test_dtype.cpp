@@ -1,8 +1,9 @@
-#include <catch2/catch_test_macros.hpp>
-#include <ptensor/dtype.hpp>
 #include <cstdint>
 #include <span>
 #include <vector>
+
+#include <catch2/catch_test_macros.hpp>
+#include <ptensor/dtype.hpp>
 
 namespace p10 {
 
@@ -11,7 +12,7 @@ TEST_CASE("Dtype construction and enum values", "[dtype]") {
         Dtype dtype;
         REQUIRE(dtype == Dtype::Float32);
     }
-    
+
     SECTION("Value construction") {
         REQUIRE(Dtype(Dtype::Float32) == Dtype::Float32);
         REQUIRE(Dtype(Dtype::Float64) == Dtype::Float64);
@@ -24,7 +25,7 @@ TEST_CASE("Dtype construction and enum values", "[dtype]") {
         REQUIRE(Dtype(Dtype::Int32) == Dtype::Int32);
         REQUIRE(Dtype(Dtype::Int64) == Dtype::Int64);
     }
-    
+
     SECTION("Implicit conversion to Code") {
         Dtype dtype(Dtype::Float64);
         Dtype::Code value = dtype;
@@ -37,32 +38,29 @@ TEST_CASE("Dtype::from() template function", "[dtype]") {
         REQUIRE(Dtype::from<float>() == Dtype::Float32);
         REQUIRE(Dtype::from<double>() == Dtype::Float64);
     }
-    
+
     SECTION("Unsigned integer types") {
         REQUIRE(Dtype::from<uint8_t>() == Dtype::Uint8);
         REQUIRE(Dtype::from<unsigned char>() == Dtype::Uint8);
         REQUIRE(Dtype::from<uint16_t>() == Dtype::Uint16);
         REQUIRE(Dtype::from<uint32_t>() == Dtype::Uint32);
     }
-    
+
     SECTION("Signed integer types") {
         REQUIRE(Dtype::from<int8_t>() == Dtype::Int8);
         REQUIRE(Dtype::from<int16_t>() == Dtype::Int16);
         REQUIRE(Dtype::from<int32_t>() == Dtype::Int32);
         REQUIRE(Dtype::from<int64_t>() == Dtype::Int64);
     }
-    
+
     SECTION("CV-qualified types") {
         REQUIRE(Dtype::from<const float>() == Dtype::Float32);
         REQUIRE(Dtype::from<volatile double>() == Dtype::Float64);
         REQUIRE(Dtype::from<const volatile int32_t>() == Dtype::Int32);
         REQUIRE(Dtype::from<const volatile uint8_t>() == Dtype::Uint8);
     }
-    
+
     SECTION("Reference types") {
-        float f = 1.0f;
-        double d = 1.0;
-        int32_t i = 1;
         REQUIRE(Dtype::from<float&>() == Dtype::Float32);
         REQUIRE(Dtype::from<const double&>() == Dtype::Float64);
         REQUIRE(Dtype::from<int32_t&&>() == Dtype::Int32);
@@ -74,19 +72,19 @@ TEST_CASE("Dtype::size() method", "[dtype]") {
         REQUIRE(Dtype(Dtype::Uint8).size() == 1);
         REQUIRE(Dtype(Dtype::Int8).size() == 1);
     }
-    
+
     SECTION("2-byte types") {
         REQUIRE(Dtype(Dtype::Float16).size() == 2);
         REQUIRE(Dtype(Dtype::Uint16).size() == 2);
         REQUIRE(Dtype(Dtype::Int16).size() == 2);
     }
-    
+
     SECTION("4-byte types") {
         REQUIRE(Dtype(Dtype::Uint32).size() == 4);
         REQUIRE(Dtype(Dtype::Int32).size() == 4);
         REQUIRE(Dtype(Dtype::Float32).size() == 4);
     }
-    
+
     SECTION("8-byte types") {
         REQUIRE(Dtype(Dtype::Int64).size() == 8);
         REQUIRE(Dtype(Dtype::Float64).size() == 8);
@@ -96,29 +94,30 @@ TEST_CASE("Dtype::size() method", "[dtype]") {
 TEST_CASE("Dtype::visit() functionality", "[dtype]") {
     SECTION("Visit with mutable data") {
         std::vector<std::byte> data(16);
-        
+
         auto visitor = [](auto typed_span) {
             using T = typename decltype(typed_span)::element_type;
             for (size_t i = 0; i < typed_span.size(); ++i) {
                 typed_span[i] = static_cast<T>(i + 1);
             }
         };
-        
+
         Dtype float32_dtype(Dtype::Float32);
         float32_dtype.visit(visitor, std::span(data));
-        
-        auto float_span = std::span(reinterpret_cast<float*>(data.data()), data.size() / sizeof(float));
+
+        auto float_span =
+            std::span(reinterpret_cast<float*>(data.data()), data.size() / sizeof(float));
         REQUIRE(float_span[0] == 1.0f);
         REQUIRE(float_span[1] == 2.0f);
         REQUIRE(float_span[2] == 3.0f);
         REQUIRE(float_span[3] == 4.0f);
     }
-    
+
     SECTION("Visit with const data") {
         std::vector<uint32_t> source_data = {10, 20, 30, 40};
         std::vector<std::byte> data(source_data.size() * sizeof(uint32_t));
         std::memcpy(data.data(), source_data.data(), data.size());
-        
+
         uint32_t sum = 0;
         auto visitor = [&sum](auto typed_span) {
             using T = typename decltype(typed_span)::element_type;
@@ -128,22 +127,22 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
                 }
             }
         };
-        
+
         Dtype uint32_dtype(Dtype::Uint32);
         uint32_dtype.visit(visitor, std::span<const std::byte>(data));
         REQUIRE(sum == 100);
     }
-    
+
     SECTION("Visit with different data types") {
         std::vector<std::byte> data(8);
-        
+
         auto counting_visitor = [](auto typed_span) {
             using T = typename decltype(typed_span)::element_type;
             for (size_t i = 0; i < typed_span.size(); ++i) {
                 typed_span[i] = static_cast<T>(i);
             }
         };
-        
+
         SECTION("Int8") {
             Dtype dtype(Dtype::Int8);
             dtype.visit(counting_visitor, std::span(data));
@@ -151,7 +150,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
             REQUIRE(int8_span[0] == 0);
             REQUIRE(int8_span[7] == 7);
         }
-        
+
         SECTION("Uint16") {
             Dtype dtype(Dtype::Uint16);
             dtype.visit(counting_visitor, std::span(data));
@@ -159,7 +158,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
             REQUIRE(uint16_span[0] == 0);
             REQUIRE(uint16_span[3] == 3);
         }
-        
+
         SECTION("Float64") {
             Dtype dtype(Dtype::Float64);
             dtype.visit(counting_visitor, std::span(data));
@@ -186,13 +185,13 @@ TEST_CASE("Dtype edge cases and error conditions", "[dtype]") {
     SECTION("Visit with invalid dtype") {
         std::vector<std::byte> data(8);
         auto visitor = [](auto) {};
-        
+
         Dtype invalid_dtype;
         invalid_dtype.value = static_cast<Dtype::Code>(255);
 
-        invalid_dtype.visit(visitor, std::span(data));
+        REQUIRE_THROWS_AS(invalid_dtype.visit(visitor, std::span(data)), std::runtime_error);
     }
-    
+
     SECTION("Size of invalid dtype") {
         Dtype invalid_dtype;
         invalid_dtype.value = static_cast<Dtype::Code>(255);

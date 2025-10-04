@@ -17,4 +17,4 @@ class FFT {
   private:
     kissfft<float> kiss_;
 };
-}  // namespace p10::tensorop
+}  // namespace p10::op

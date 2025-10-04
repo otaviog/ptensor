@@ -64,6 +64,7 @@ namespace detail {
         const int64_t* end() const {
             return extent_.data() + dims_;
         }
+
       protected:
         TensorExtents(std::span<const int64_t> shape) {
             std::copy(shape.begin(), shape.end(), extent_.begin());

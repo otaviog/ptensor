@@ -33,4 +33,4 @@ class GaussianBlur {
     size_t kernel_size_;
 };
 
-}  // namespace p10::tensorop
+}  // namespace p10::op

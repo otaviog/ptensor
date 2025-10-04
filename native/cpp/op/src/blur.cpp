@@ -94,10 +94,7 @@ namespace {
             );
         }
         if (input.dtype() != DType::FLOAT32) {
-            return Err(
-                PtensorError::InvalidArgument,
-                "Input tensor must be of type UINT8."
-            );
+            return Err(PtensorError::InvalidArgument, "Input tensor must be of type UINT8.");
         }
 
         return input.as_planar_span3d<float>();

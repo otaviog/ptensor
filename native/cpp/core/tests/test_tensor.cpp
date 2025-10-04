@@ -3,24 +3,54 @@
 #include <ptensor/shape.hpp>
 #include <ptensor/tensor.hpp>
 #include <ptensor/tensor_options.hpp>
+#include <ptensor/testing/catch2_assertions.hpp>
 
 namespace p10 {
-TEST_CASE("Tensor::full", "[tensor]") {
+
+// ============================================================================
+// Tensor Creation Tests
+// ============================================================================
+
+TEST_CASE("Tensor::full creates tensor filled with specified value", "[tensor][creation]") {
     auto tensor = Tensor::full(make_shape({2, 3}).unwrap(), 3.0).expect("Could not create tensor");
 
     REQUIRE(tensor.dtype() == Dtype::Float32);
     REQUIRE(tensor.shape().count() == 6);
     REQUIRE(tensor.stride().dims() == 2);
-    CHECK(tensor.axes().dims() == 2);
+    REQUIRE(tensor.axes().dims() == 2);
     REQUIRE(tensor.dims() == 2);
 
     auto data = tensor.as_span1d<float>();
-    for (size_t i = 0; i < tensor.shape().count(); i++) {
-        REQUIRE(data[i] == 3.0);
+    for (auto i = 0; i < tensor.shape().count(); i++) {
+        REQUIRE(data[i] == Catch::Approx(3.0f));
     }
 }
 
-TEST_CASE("Tensor::zeros", "[tensor]") {
+TEST_CASE("Tensor::full with different data types", "[tensor][creation]") {
+    SECTION("int32") {
+        auto tensor =
+            Tensor::full(make_shape({3, 3}).unwrap(), 42, TensorOptions().dtype(Dtype::Int32))
+                .unwrap();
+        REQUIRE(tensor.dtype() == Dtype::Int32);
+        auto data = tensor.as_span1d<int32_t>();
+        for (auto i = 0; i < 9; i++) {
+            REQUIRE(data[i] == 42);
+        }
+    }
+
+    SECTION("float64") {
+        auto tensor =
+            Tensor::full(make_shape({2, 2}).unwrap(), 3.14, TensorOptions().dtype(Dtype::Float64))
+                .unwrap();
+        REQUIRE(tensor.dtype() == Dtype::Float64);
+        auto data = tensor.as_span1d<double>();
+        for (auto i = 0; i < 4; i++) {
+            REQUIRE(data[i] == Catch::Approx(3.14));
+        }
+    }
+}
+
+TEST_CASE("Tensor::zeros creates tensor filled with zeros", "[tensor][creation]") {
     auto tensor = Tensor::zeros(make_shape({2, 3}).unwrap()).expect("Could not create tensor");
 
     REQUIRE(tensor.dtype() == Dtype::Float32);
@@ -30,12 +60,23 @@ TEST_CASE("Tensor::zeros", "[tensor]") {
     REQUIRE(tensor.dims() == 2);
 
     auto data = tensor.as_span1d<float>();
-    for (size_t i = 0; i < tensor.shape().count(); i++) {
-        REQUIRE(data[i] == 0.0);
+    for (auto i = 0; i < tensor.shape().count(); i++) {
+        REQUIRE(data[i] == Catch::Approx(0.0f));
     }
 }
 
-TEST_CASE("Test::empty", "[tensor]") {
+TEST_CASE("Tensor::zeros with explicit dtype", "[tensor][creation]") {
+    auto tensor =
+        Tensor::zeros(make_shape({3, 4}).unwrap(), TensorOptions().dtype(Dtype::Int64)).unwrap();
+
+    REQUIRE(tensor.dtype() == Dtype::Int64);
+    auto data = tensor.as_span1d<int64_t>();
+    for (size_t i = 0; i < 12; i++) {
+        REQUIRE(data[i] == 0);
+    }
+}
+
+TEST_CASE("Tensor::empty allocates uninitialized tensor", "[tensor][creation]") {
     auto tensor = Tensor::empty(make_shape({2, 3}).unwrap()).expect("Could not create tensor");
 
     REQUIRE(tensor.dtype() == Dtype::Float32);
@@ -45,7 +86,31 @@ TEST_CASE("Test::empty", "[tensor]") {
     REQUIRE(tensor.dims() == 2);
 }
 
-TEST_CASE("Tensor::type and device", "[tensor]") {
+TEST_CASE("Tensor::empty with various shapes", "[tensor][creation]") {
+    SECTION("1D tensor") {
+        auto tensor = Tensor::empty(make_shape({10}).unwrap()).unwrap();
+        REQUIRE(tensor.dims() == 1);
+        REQUIRE(tensor.shape().count() == 10);
+    }
+
+    SECTION("3D tensor") {
+        auto tensor = Tensor::empty(make_shape({2, 3, 4}).unwrap()).unwrap();
+        REQUIRE(tensor.dims() == 3);
+        REQUIRE(tensor.shape().count() == 24);
+    }
+
+    SECTION("4D tensor") {
+        auto tensor = Tensor::empty(make_shape({2, 3, 4, 5}).unwrap()).unwrap();
+        REQUIRE(tensor.dims() == 4);
+        REQUIRE(tensor.shape().count() == 120);
+    }
+}
+
+// ============================================================================
+// Tensor Properties Tests
+// ============================================================================
+
+TEST_CASE("Tensor dtype and device can be configured", "[tensor][properties]") {
     const auto all_dtypes = {
         Dtype::Uint8,
         Dtype::Uint16,
@@ -75,25 +140,36 @@ TEST_CASE("Tensor::type and device", "[tensor]") {
     }
 }
 
-TEST_CASE("Tensor::strides", "[tensor]") {
-    auto tensor = Tensor::empty(make_shape({2, 3}).unwrap()).expect("Could not create tensor");
+TEST_CASE("Tensor strides are computed correctly", "[tensor][properties]") {
+    SECTION("default row-major strides") {
+        auto tensor = Tensor::empty(make_shape({2, 3}).unwrap()).expect("Could not create tensor");
 
-    REQUIRE(tensor.stride().dims() == 2);
-    REQUIRE(tensor.stride(0).unwrap() == 3);
-    REQUIRE(tensor.stride(1).unwrap() == 1);
+        REQUIRE(tensor.stride().dims() == 2);
+        REQUIRE(tensor.stride(0).unwrap() == 3);
+        REQUIRE(tensor.stride(1).unwrap() == 1);
+    }
 
-    auto tensor2 = Tensor::empty(
-                       make_shape({2, 3}).unwrap(),
-                       TensorOptions().stride(make_stride({1, 2}).unwrap())
-    )
-                       .expect("Could not create tensor");
+    SECTION("custom strides") {
+        auto tensor = Tensor::empty(
+                          make_shape({2, 3}).unwrap(),
+                          TensorOptions().stride(make_stride({1, 2}).unwrap())
+        )
+                          .expect("Could not create tensor");
 
-    REQUIRE(tensor2.stride().dims() == 2);
-    REQUIRE(tensor2.stride(0).unwrap() == 1);
-    REQUIRE(tensor2.stride(1).unwrap() == 2);
+        REQUIRE(tensor.stride().dims() == 2);
+        REQUIRE(tensor.stride(0).unwrap() == 1);
+        REQUIRE(tensor.stride(1).unwrap() == 2);
+    }
+
+    SECTION("3D strides") {
+        auto tensor = Tensor::empty(make_shape({2, 3, 4}).unwrap()).unwrap();
+        REQUIRE(tensor.stride(0).unwrap() == 12);
+        REQUIRE(tensor.stride(1).unwrap() == 4);
+        REQUIRE(tensor.stride(2).unwrap() == 1);
+    }
 }
 
-TEST_CASE("Tensor::too many dims", "[tensor]") {
+TEST_CASE("Tensor dimensions are tracked correctly", "[tensor][properties]") {
     auto tensor =
         Tensor::empty(make_shape({2, 3, 4, 5}).unwrap()).expect("Unable to create tensor");
 
@@ -103,60 +179,132 @@ TEST_CASE("Tensor::too many dims", "[tensor]") {
     REQUIRE(tensor.axes().dims() == 4);
 }
 
-TEST_CASE("Tensor::empty", "[tensor]") {
-    auto tensor = Tensor::empty(make_shape({2, 3}).unwrap()).unwrap();
-    REQUIRE(!tensor.empty());
+TEST_CASE("Tensor::empty() detects empty tensors", "[tensor][properties]") {
+    SECTION("non-empty tensor") {
+        auto tensor = Tensor::empty(make_shape({2, 3}).unwrap()).unwrap();
+        REQUIRE_FALSE(tensor.empty());
+    }
 
-    auto tensor2 = Tensor::empty(make_shape({0, 3}).unwrap()).unwrap();
-    REQUIRE(tensor2.empty());
+    SECTION("tensor with zero dimension") {
+        auto tensor = Tensor::empty(make_shape({0, 3}).unwrap()).unwrap();
+        REQUIRE(tensor.empty());
+    }
+
+    SECTION("tensor with multiple zero dimensions") {
+        auto tensor = Tensor::empty(make_shape({0, 0}).unwrap()).unwrap();
+        REQUIRE(tensor.empty());
+    }
 }
 
-TEST_CASE("Tensor::contiguous", "[tensor]") {
-    auto tensor = Tensor::empty(make_shape({2, 3}).unwrap()).unwrap();
-    REQUIRE(tensor.is_contiguous());
+// ============================================================================
+// Tensor Contiguity Tests
+// ============================================================================
 
-    auto tensor2 = Tensor::empty(
-                       make_shape({2, 3}).unwrap(),
-                       TensorOptions().stride(make_stride({1, 2}).unwrap())
-    )
-                       .unwrap();
-    REQUIRE(!tensor2.is_contiguous());
+TEST_CASE("Tensor::is_contiguous detects memory layout", "[tensor][contiguity]") {
+    SECTION("default tensors are contiguous") {
+        auto tensor = Tensor::empty(make_shape({2, 3}).unwrap()).unwrap();
+        REQUIRE(tensor.is_contiguous());
+    }
+
+    SECTION("custom strides may not be contiguous") {
+        auto tensor = Tensor::empty(
+                          make_shape({2, 3}).unwrap(),
+                          TensorOptions().stride(make_stride({1, 2}).unwrap())
+        )
+                          .unwrap();
+        REQUIRE_FALSE(tensor.is_contiguous());
+    }
 }
 
-TEST_CASE("Tensor::to_contiguous", "[tensor]") {
+TEST_CASE("Tensor::to_contiguous creates contiguous copy", "[tensor][contiguity]") {
     auto tensor = Tensor::empty(
                       make_shape({2, 3}).unwrap(),
                       TensorOptions().stride(make_stride({1, 2}).unwrap())
     )
                       .unwrap();
 
-    // 0 1 2 3 4 5
-    // view:
-    // 0 2 4
-    // 1 3 5
-    for (size_t i = 0; i < tensor.shape().count(); i++) {
+    // Original data layout:
+    // Physical: 0 1 2 3 4 5
+    // Logical view (stride {1, 2}):
+    // Row 0: 0 2 4
+    // Row 1: 1 3 5
+    for (auto i = 0; i < tensor.shape().count(); i++) {
         tensor.as_span1d<float>()[i] = float(i);
     }
 
-    auto tensor2 = tensor.to_contiguous().unwrap();
-    REQUIRE(tensor2.is_contiguous());
+    auto contiguous = tensor.to_contiguous().unwrap();
+    REQUIRE(contiguous.is_contiguous());
 
+    // Contiguous layout should preserve logical view:
+    // 0 2 4 1 3 5
     const std::array<float, 6> expected = {0, 2, 4, 1, 3, 5};
-    for (size_t i = 0; i < tensor2.shape().count(); i++) {
-        REQUIRE(tensor2.as_span1d<float>()[i] == Catch::Approx(expected[i]));
+    for (auto i = 0; i < contiguous.shape().count(); i++) {
+        REQUIRE(contiguous.as_span1d<float>()[i] == Catch::Approx(expected[i]));
     }
 }
 
-TEST_CASE("Tensor::as_view", "[tensor]") {
+TEST_CASE("Tensor::to_contiguous on already contiguous tensor", "[tensor][contiguity]") {
+    auto tensor = Tensor::full(make_shape({3, 3}).unwrap(), 1.0).unwrap();
+    REQUIRE(tensor.is_contiguous());
+
+    auto contiguous = tensor.to_contiguous().unwrap();
+    REQUIRE(contiguous.is_contiguous());
+
+    REQUIRE_THAT(testing::compare_tensors(tensor, contiguous), testing::IsOk());
+}
+
+// ============================================================================
+// Tensor View Tests
+// ============================================================================
+
+TEST_CASE("Tensor::as_view creates view sharing data", "[tensor][view]") {
     auto tensor = Tensor::zeros(make_shape({2, 3}).unwrap()).unwrap();
 
     auto tensor_view = tensor.as_view();
-    REQUIRE(tensor_view.shape().dims() == 2);
-    REQUIRE(tensor_view.stride().dims() == 2);
-    REQUIRE(tensor_view.axes().dims() == 2);
-    REQUIRE(tensor_view.dims() == 2);
 
-    tensor_view.as_span1d<float>()[0] = 3.0;
-    REQUIRE(tensor.as_span1d<float>()[0] == 3.0);
+    SECTION("view has same properties") {
+        REQUIRE(tensor_view.shape().dims() == 2);
+        REQUIRE(tensor_view.stride().dims() == 2);
+        REQUIRE(tensor_view.axes().dims() == 2);
+        REQUIRE(tensor_view.dims() == 2);
+    }
+
+    SECTION("view shares underlying data") {
+        tensor_view.as_span1d<float>()[0] = 3.0;
+        REQUIRE(tensor.as_span1d<float>()[0] == Catch::Approx(3.0f));
+
+        tensor.as_span1d<float>()[1] = 5.0;
+        REQUIRE(tensor_view.as_span1d<float>()[1] == Catch::Approx(5.0f));
+    }
 }
+
+TEST_CASE("Tensor::as_view with non-contiguous tensor", "[tensor][view]") {
+    auto tensor = Tensor::full(
+                      make_shape({3, 4}).unwrap(),
+                      2.5,
+                      TensorOptions().stride(make_stride({2, 1}).unwrap())
+    )
+                      .unwrap();
+
+    auto view = tensor.as_view();
+    REQUIRE(view.stride() == tensor.stride());
+    REQUIRE_FALSE(view.is_contiguous());
+}
+
+// ============================================================================
+// Edge Cases and Error Handling
+// ============================================================================
+
+TEST_CASE("Tensor handles single element", "[tensor][edge-cases]") {
+    auto tensor = Tensor::full(make_shape({1}).unwrap(), 42.0).unwrap();
+    REQUIRE(tensor.size() == 1);
+    REQUIRE(tensor.as_span1d<float>()[0] == Catch::Approx(42.0f));
+}
+
+TEST_CASE("Tensor with large dimensions", "[tensor][edge-cases]") {
+    auto tensor = Tensor::empty(make_shape({100, 200}).unwrap()).unwrap();
+    REQUIRE(tensor.size() == 20000);
+    REQUIRE(tensor.is_contiguous());
+}
+
 }  // namespace p10

@@ -6,9 +6,7 @@
 
 #include <ptensor/ptensor_dtype.h>
 
-#include "detail/blob.hpp"
-#include "ptensor_error.hpp"
-#include "ptensor_result.hpp"
+#include "detail/panic.hpp"
 
 namespace p10 {
 
@@ -118,14 +116,16 @@ struct Dtype {
                 return do_type_visit<F, double, ByteType>(std::forward<F>(visitor), data);
                 break;
             default:
-                detail::panic("Unknown type to dtype::visit_*");
+                detail::panic("Unsupported dtype in Dtype::visit()");
         }
     }
 
     template<typename F, typename T, typename ByteType>
     auto do_type_visit(F&& visitor, std::span<ByteType> data) const {
         if constexpr (std::is_const<ByteType>::value) {
-            return visitor(std::span(reinterpret_cast<const T*>(data.data()), data.size() / sizeof(T)));
+            return visitor(
+                std::span(reinterpret_cast<const T*>(data.data()), data.size() / sizeof(T))
+            );
         } else {
             return visitor(std::span(reinterpret_cast<T*>(data.data()), data.size() / sizeof(T)));
         }

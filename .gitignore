@@ -12,3 +12,4 @@ wheels/
 .cache
 build/
 compile_commands.json
+lcov.info

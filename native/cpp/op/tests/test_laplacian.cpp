@@ -1,6 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
-
 #include <p10/io/image.hpp>
 #include <p10/tensor.hpp>
 
@@ -16,8 +15,7 @@ TEST_CASE("health: Create laplacian pyramid", "[health]") {
     Tensor sample_tensor;
     imageop::image_to_tensor(testing::samples::image01(), sample_tensor);
 
-    auto lp_process =
-        LaplacianPyramid::create(5).expect("Can't create pyramid");
+    auto lp_process = LaplacianPyramid::create(5).expect("Can't create pyramid");
 
     std::vector<Tensor> pyramid(PYRAMID_LEVELS);
     REQUIRE(lp_process.process(sample_tensor, pyramid).is_ok());
@@ -30,9 +28,9 @@ TEST_CASE("health: Create laplacian pyramid", "[health]") {
 
     imageop::image_from_tensor(reconstructed, reconstructed_image);
     REQUIRE(io::save_image(
-                (testing::get_output_path() / "000001_laplacian_recontruct.jpg")
-                    .string(),
-                reconstructed_image)
+                (testing::get_output_path() / "000001_laplacian_recontruct.jpg").string(),
+                reconstructed_image
+    )
                 .is_ok());
 }
 

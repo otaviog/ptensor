@@ -21,7 +21,7 @@ TEST_CASE("PtensorError::(to_string() and code())", "[error]") {
 TEST_CASE("PtensorError::fromAssert()", "[error]") {
     PtensorError error = PtensorError::fromAssert("assertion failed", "file.cpp", 42);
     REQUIRE(error.code() == PtensorError::AssertionError);
-    REQUIRE(error.to_string() == "Internal error: assertion failed (file.cpp:42)");
+    REQUIRE(error.to_string() == "Assertion error: assertion failed (file.cpp:42)");
 }
 
 TEST_CASE("PtensorResult::(Ok and Err)", "[result]") {
@@ -37,9 +37,6 @@ TEST_CASE("PtensorResult::(Ok and Err)", "[result]") {
     REQUIRE(!err.is_ok());
     REQUIRE(err.unwrap_err().code() == PtensorError::InvalidArgument);
 
-    auto error_return2 = []() -> PtensorResult<int> {
-        return Err(PtensorError::InvalidArgument, "invalid argument");
-    };
     err = Err(PtensorError::InvalidOperation, "invalid operation");
     REQUIRE(!err.is_ok());
     REQUIRE(err.unwrap_err().code() == PtensorError::InvalidOperation);

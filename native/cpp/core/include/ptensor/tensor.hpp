@@ -201,14 +201,10 @@ class Tensor {
     template<typename T>
     PtensorResult<Span3D<const T>> as_span3d() const {
         if (dims() != 3) {
-            return Err(
-                PtensorError::InvalidArgument,
-                "Tensor must have 3 dimensions"
-            );
+            return Err(PtensorError::InvalidArgument, "Tensor must have 3 dimensions");
         }
         auto shape = shape_.as_span();
-        return Ok<Span3D<const T>>(Span3D<const T>(blob_.data<T>(), shape[0], shape[1], shape[2])
-        );
+        return Ok<Span3D<const T>>(Span3D<const T>(blob_.data<T>(), shape[0], shape[1], shape[2]));
     }
 
     template<typename T>

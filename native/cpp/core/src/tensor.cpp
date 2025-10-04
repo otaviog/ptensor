@@ -102,7 +102,7 @@ PtensorResult<Tensor> Tensor::to_contiguous() const {
             using scalar_t =
                 decltype(dest_span)::element_type;  // std::remove_pointer_t<decltype(dest_ptr)>;
             const size_t num_elements = this->size();
-            const int ndims = this->shape_.dims();
+            const size_t ndims = this->shape_.dims();
 
             std::array<int64_t, P10_MAX_SHAPE> coords {};
             const auto source_span = this->as_span1d<scalar_t>();

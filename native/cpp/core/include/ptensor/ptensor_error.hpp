@@ -23,6 +23,10 @@ class PtensorError {
 
     static PtensorError fromAssert(std::string_view message, std::string_view file, int line);
 
+#ifdef PTENSOR_HAS_WINDOWS_H
+    static PtensorError from_win32_error(unsigned long error_code);
+#endif
+
     PtensorError() = default;
 
     PtensorError(Code code) : code_(code) {}
@@ -44,6 +48,7 @@ class PtensorError {
     bool is_ok() const {
         return code_ == Ok;
     }
+
   private:
     Code code_ = Ok;
     std::string message_;
@@ -52,4 +57,4 @@ class PtensorError {
 inline PtensorError operator<<(PtensorError::Code code, std::string_view message) {
     return PtensorError(code, message);
 }
-}  // namespace ptensor
+}  // namespace p10

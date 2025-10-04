@@ -1,4 +1,4 @@
-#include "string.hpp"
+#include "detail/string.hpp"
 
 #include <Windows.h>
 

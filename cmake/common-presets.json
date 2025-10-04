@@ -17,7 +17,7 @@
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
                 "WITH_IO": "ON",
-                "WITH_TESTS": "ON"
+                "BUILD_TESTS": "ON"
             }
         }
     ]

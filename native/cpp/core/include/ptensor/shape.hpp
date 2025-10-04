@@ -12,7 +12,7 @@ class Shape: public detail::TensorExtents {
   public:
     int64_t count() const {
         const auto shape = as_span();
-        return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+        return std::accumulate(shape.begin(), shape.end(), int64_t {1}, std::multiplies<int64_t>());
     }
 
     using TensorExtents::TensorExtents;
@@ -37,7 +37,7 @@ class Stride: public detail::TensorExtents {
   public:
     Stride(const Shape& shape) : detail::TensorExtents {shape.dims()} {
         extent_[dims_ - 1] = 1;
-        for (int i = dims_ - 2; i >= 0; i--) {
+        for (int i = int(dims_) - 2; i >= 0; i--) {
             extent_[i] = shape.extent_[i + 1] * extent_[i + 1];
         }
     }

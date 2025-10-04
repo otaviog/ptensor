@@ -1,14 +1,29 @@
 #include "ptensor_error.hpp"
 
+#include <system_error>
+
+#ifdef PTENSOR_HAS_WINDOWS_H
+    #include <Windows.h>
+#endif
+
 namespace p10 {
 
 PtensorError PtensorError::fromAssert(std::string_view message, std::string_view file, int line) {
     return PtensorError(
         AssertionError,
-        std::string(message) + " (" + std::string(file) + ":" + std::to_string(line)
-            + ")"
+        std::string(message) + " (" + std::string(file) + ":" + std::to_string(line) + ")"
     );
 }
+
+#ifdef PTENSOR_HAS_WINDOWS_H
+PtensorError PtensorError::from_win32_error(unsigned long error_code) {
+    if (error_code == ERROR_SUCCESS) {
+        return PtensorError::Ok;
+    }
+    std::error_code ec(error_code, std::system_category());
+    return PtensorError::OsError << ec.message();
+}
+#endif
 
 std::string PtensorError::to_string() const {
     std::string str;
@@ -55,4 +70,4 @@ std::string PtensorError::to_string() const {
     return str + ": " + message_;
 }
 
-}  // namespace ptensor
+}  // namespace p10

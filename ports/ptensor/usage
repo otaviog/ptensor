@@ -1,0 +1,33 @@
+ptensor provides CMake targets:
+
+    find_package(ptensor CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE ptensor::ptensor)
+
+Basic usage:
+
+```cpp
+#include <ptensor/tensor.hpp>
+#include <ptensor/dtype.hpp>
+
+using namespace p10;
+
+int main() {
+    // Create a tensor with specific dtype
+    auto dtype = Dtype::from<float>();
+    auto shape = make_shape({2, 3, 4});
+    
+    if (shape.is_ok()) {
+        auto tensor = Tensor::zeros(dtype, shape.value());
+        // Use tensor...
+    }
+    
+    return 0;
+}
+```
+
+Features:
+- Core tensor operations with type-safe data type handling
+
+Optional I/O support (enable with feature "io"):
+- Image loading and saving
+- NumPy file format support

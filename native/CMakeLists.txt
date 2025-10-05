@@ -1,3 +1,5 @@
 add_subdirectory(cpp)
 add_subdirectory(c)
-add_subdirectory(tests)
+if (BUILD_TESTS)
+    add_subdirectory(tests)
+endif()

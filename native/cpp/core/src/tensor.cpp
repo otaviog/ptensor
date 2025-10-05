@@ -116,7 +116,7 @@ PtensorResult<Tensor> Tensor::to_contiguous() const {
                 }
 
                 dest_span[i] = source_span[from_index];
-                for (auto j = ndims - 1; j >= 0; j--) {
+                for (int j = int(ndims) - 1; j >= 0; j--) {
                     if (coords[j] < shape(j).unwrap() - 1) {
                         coords[j] += 1;
                         break;

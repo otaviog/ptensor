@@ -20,6 +20,10 @@
                 "WITH_IO": "ON",
                 "BUILD_TESTS": "ON"
             }
+        },
+        {
+            "inherits": "base",
+            "name": "package-core"
         }
     ]
 }

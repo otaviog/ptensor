@@ -1,6 +1,4 @@
-
 find_package(ZLIB REQUIRED)
-
 find_package(Stb REQUIRED)
 add_subdirectory(lib/cnpy)
 

@@ -7,7 +7,7 @@
             "hidden": true,
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "ASKBUILD_PROJECT_NAME": "PTensor"
+                "SKBUILD_PROJECT_NAME": "PTensor"
             }
         },
         {

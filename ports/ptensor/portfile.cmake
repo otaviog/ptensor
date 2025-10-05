@@ -1,15 +1,20 @@
 vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
     URL "https://github.com/otaviog/ptensor.git"
-    REF "${VERSION}"
-    SHA512 0  # This will be updated when you use the port
+    REF "f7d44b0f3add485b92884e5800f9326d799fd358"
+    SHA512 f46ffcd9a3beab1b394ca6847d7be43d2d5b90a66047bb859c36bb0146cf958e
 )
+
+set(FEATURE_io OFF)
+if("io" IN_LIST FEATURES)
+    set(FEATURE_io ON)
+endif()
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         -DBUILD_TESTS=OFF
-        -DWITH_IO=ON
+        -DWITH_IO=${FEATURE_io}
 )
 
 vcpkg_cmake_build()

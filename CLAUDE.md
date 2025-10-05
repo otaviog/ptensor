@@ -1,5 +1,7 @@
 # Portable Tensor Docs Development Guide
 
+* Project git is at: http://github.com/otaviog/ptensor.git
+
 ## Project Goals
 
 * Provide a simple tensor library that's portable across different languages.

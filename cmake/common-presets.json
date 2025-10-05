@@ -7,7 +7,7 @@
             "hidden": true,
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "SKBUILD_PROJECT_NAME": "PTensor"
+                "ASKBUILD_PROJECT_NAME": "PTensor"
             }
         },
         {
@@ -24,6 +24,13 @@
         {
             "inherits": "base",
             "name": "package-core"
+        },
+        {
+            "inherits": "base",
+            "name": "package-io",
+            "cacheVariables": {
+                "WITH_IO": "ON"
+            }
         }
     ]
 }

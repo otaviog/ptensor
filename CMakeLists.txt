@@ -8,6 +8,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS On)
 
 # Create compile_commands.json
 include("./cmake/export_compile_commands.cmake")
+include("./cmake/ptensor_target_options.cmake")
+
 set(BUILD_TESTS OFF CACHE BOOL "Build tests")
 if(BUILD_TESTS)
     include(FetchContent)

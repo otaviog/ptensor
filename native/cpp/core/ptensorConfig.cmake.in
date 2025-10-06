@@ -8,4 +8,17 @@ include(CMakeFindDependencyMacro)
 # Include the exported targets
 include("${CMAKE_CURRENT_LIST_DIR}/ptensorTargets.cmake")
 
+# Create aliases if not already defined
+if(NOT TARGET p10::core)
+    add_library(p10::core ALIAS ptensor)
+endif()
+
+if(TARGET ptensor_io AND NOT TARGET p10::io)
+    add_library(p10::io ALIAS ptensor_io)
+endif()
+
+if(TARGET ptensor_testing AND NOT TARGET p10::testing)
+    add_library(p10::testing ALIAS ptensor_testing)
+endif()
+
 check_required_components(ptensor)

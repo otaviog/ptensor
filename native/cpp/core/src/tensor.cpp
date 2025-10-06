@@ -102,10 +102,11 @@ PtensorResult<Tensor> Tensor::to_contiguous() const {
             using scalar_t =
                 decltype(dest_span)::element_type;  // std::remove_pointer_t<decltype(dest_ptr)>;
             const size_t num_elements = this->size();
+            const auto shape = this->shape_.as_span();
             const size_t ndims = this->shape_.dims();
 
             std::array<int64_t, P10_MAX_SHAPE> coords {};
-            const auto source_span = this->as_span1d<scalar_t>();
+            const auto source_span = this->as_span1d<scalar_t>().unwrap();
 
             const auto this_stride = this->stride_.as_span();
             for (size_t i = 0; i < num_elements; i++) {
@@ -117,7 +118,7 @@ PtensorResult<Tensor> Tensor::to_contiguous() const {
 
                 dest_span[i] = source_span[from_index];
                 for (int j = int(ndims) - 1; j >= 0; j--) {
-                    if (coords[j] < shape(j).unwrap() - 1) {
+                    if (coords[j] < shape[j] - 1) {
                         coords[j] += 1;
                         break;
                     } else {

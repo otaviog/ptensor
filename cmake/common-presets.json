@@ -7,7 +7,7 @@
             "hidden": true,
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "SKBUILD_PROJECT_NAME": "PTensor"
+                "SKBUILD_PROJECT_NAME": "ptensor"
             }
         },
         {
@@ -18,7 +18,8 @@
                 "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
                 "VCPKG_MANIFEST_FEATURES": "io;tests",
                 "WITH_IO": "ON",
-                "BUILD_TESTS": "ON"
+                "BUILD_TESTS": "ON",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/vcpkg/installed/x64-linux"
             }
         },
         {

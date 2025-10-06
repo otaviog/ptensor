@@ -20,7 +20,7 @@ TEST_CASE("Tensor::full creates tensor filled with specified value", "[tensor][c
     REQUIRE(tensor.axes().dims() == 2);
     REQUIRE(tensor.dims() == 2);
 
-    auto data = tensor.as_span1d<float>();
+    auto data = tensor.as_span1d<float>().unwrap();
     for (auto i = 0; i < tensor.shape().count(); i++) {
         REQUIRE(data[i] == Catch::Approx(3.0f));
     }
@@ -32,7 +32,7 @@ TEST_CASE("Tensor::full with different data types", "[tensor][creation]") {
             Tensor::full(make_shape({3, 3}).unwrap(), 42, TensorOptions().dtype(Dtype::Int32))
                 .unwrap();
         REQUIRE(tensor.dtype() == Dtype::Int32);
-        auto data = tensor.as_span1d<int32_t>();
+        auto data = tensor.as_span1d<int32_t>().unwrap();
         for (auto i = 0; i < 9; i++) {
             REQUIRE(data[i] == 42);
         }
@@ -43,7 +43,7 @@ TEST_CASE("Tensor::full with different data types", "[tensor][creation]") {
             Tensor::full(make_shape({2, 2}).unwrap(), 3.14, TensorOptions().dtype(Dtype::Float64))
                 .unwrap();
         REQUIRE(tensor.dtype() == Dtype::Float64);
-        auto data = tensor.as_span1d<double>();
+        auto data = tensor.as_span1d<double>().unwrap();
         for (auto i = 0; i < 4; i++) {
             REQUIRE(data[i] == Catch::Approx(3.14));
         }
@@ -59,7 +59,7 @@ TEST_CASE("Tensor::zeros creates tensor filled with zeros", "[tensor][creation]"
     REQUIRE(tensor.axes().dims() == 2);
     REQUIRE(tensor.dims() == 2);
 
-    auto data = tensor.as_span1d<float>();
+    auto data = tensor.as_span1d<float>().unwrap();
     for (auto i = 0; i < tensor.shape().count(); i++) {
         REQUIRE(data[i] == Catch::Approx(0.0f));
     }
@@ -70,7 +70,7 @@ TEST_CASE("Tensor::zeros with explicit dtype", "[tensor][creation]") {
         Tensor::zeros(make_shape({3, 4}).unwrap(), TensorOptions().dtype(Dtype::Int64)).unwrap();
 
     REQUIRE(tensor.dtype() == Dtype::Int64);
-    auto data = tensor.as_span1d<int64_t>();
+    auto data = tensor.as_span1d<int64_t>().unwrap();
     for (size_t i = 0; i < 12; i++) {
         REQUIRE(data[i] == 0);
     }
@@ -229,7 +229,7 @@ TEST_CASE("Tensor::to_contiguous creates contiguous copy", "[tensor][contiguity]
     // Row 0: 0 2 4
     // Row 1: 1 3 5
     for (auto i = 0; i < tensor.shape().count(); i++) {
-        tensor.as_span1d<float>()[i] = float(i);
+        tensor.as_span1d<float>().unwrap()[i] = float(i);
     }
 
     auto contiguous = tensor.to_contiguous().unwrap();
@@ -239,7 +239,7 @@ TEST_CASE("Tensor::to_contiguous creates contiguous copy", "[tensor][contiguity]
     // 0 2 4 1 3 5
     const std::array<float, 6> expected = {0, 2, 4, 1, 3, 5};
     for (auto i = 0; i < contiguous.shape().count(); i++) {
-        REQUIRE(contiguous.as_span1d<float>()[i] == Catch::Approx(expected[i]));
+        REQUIRE(contiguous.as_span1d<float>().unwrap()[i] == Catch::Approx(expected[i]));
     }
 }
 
@@ -270,11 +270,11 @@ TEST_CASE("Tensor::as_view creates view sharing data", "[tensor][view]") {
     }
 
     SECTION("view shares underlying data") {
-        tensor_view.as_span1d<float>()[0] = 3.0;
-        REQUIRE(tensor.as_span1d<float>()[0] == Catch::Approx(3.0f));
+        tensor_view.as_span1d<float>().unwrap()[0] = 3.0;
+        REQUIRE(tensor.as_span1d<float>().unwrap()[0] == Catch::Approx(3.0f));
 
-        tensor.as_span1d<float>()[1] = 5.0;
-        REQUIRE(tensor_view.as_span1d<float>()[1] == Catch::Approx(5.0f));
+        tensor.as_span1d<float>().unwrap()[1] = 5.0;
+        REQUIRE(tensor_view.as_span1d<float>().unwrap()[1] == Catch::Approx(5.0f));
     }
 }
 
@@ -298,7 +298,7 @@ TEST_CASE("Tensor::as_view with non-contiguous tensor", "[tensor][view]") {
 TEST_CASE("Tensor handles single element", "[tensor][edge-cases]") {
     auto tensor = Tensor::full(make_shape({1}).unwrap(), 42.0).unwrap();
     REQUIRE(tensor.size() == 1);
-    REQUIRE(tensor.as_span1d<float>()[0] == Catch::Approx(42.0f));
+    REQUIRE(tensor.as_span1d<float>().unwrap()[0] == Catch::Approx(42.0f));
 }
 
 TEST_CASE("Tensor with large dimensions", "[tensor][edge-cases]") {

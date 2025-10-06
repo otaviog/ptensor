@@ -1,19 +1,16 @@
-set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor)
-add_library(ptensor)
+set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/op)
+add_library(ptensor_op)
 
 ##
 # Public Headers
 set(PUBLIC_HEADERS
-  ${_INCLUDE_DIR}/ptensor_error.hpp
-  ${_INCLUDE_DIR}/ptensor_result.hpp
-  ${_INCLUDE_DIR}/device.hpp
-  ${_INCLUDE_DIR}/tensor.hpp
-  ${_INCLUDE_DIR}/detail/blob.hpp
-  ${_INCLUDE_DIR}/detail/string.hpp
-  ${_INCLUDE_DIR}/detail/panic.hpp
+  ${_INCLUDE_DIR}/blur.hpp
+  ${_INCLUDE_DIR}/elemwise.hpp
+  ${_INCLUDE_DIR}/fft.hpp
+  ${_INCLUDE_DIR}/resize.hpp
   )
 
-target_sources(ptensor
+target_sources(ptensor_op
     PUBLIC 
     FILE_SET public_headers TYPE HEADERS
     FILES
@@ -22,34 +19,34 @@ set_source_files_properties(${PUBLIC_HEADERS} PROPERTIES VS_FOLDER "Public Heade
 
 ##
 # Source to public headers
-target_sources(ptensor
+target_sources(ptensor_op
     PRIVATE
-    src/ptensor_error.cpp
-    src/tensor.cpp
-    src/detail/blob.cpp
-    src/dtype.cpp
+    src/blur.cpp
+    src/elemwise.cpp
+    src/fft.cpp
+    src/resize.cpp
 )
 
-if(WIN32)
-    target_sources(ptensor
-        PRIVATE src/detail/string.cpp)
-endif(WIN32)
-
-target_include_directories(ptensor
+target_include_directories(ptensor_op
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/native/c/include>
-        $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
     PRIVATE
-        ${_INCLUDE_DIR})
+    ${_INCLUDE_DIR})
 
-ptensor_target_options(ptensor "Core")
+target_compile_options(ptensor_op PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/W4>
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>)
+
+if(NOT WIN32)
+    target_compile_options(ptensor_op PRIVATE -fPIC)
+endif()
 
 #### Installation
 # Create alias for use in build tree and install
-add_library(p10::core ALIAS ptensor)
+add_library(p10::core ALIAS ptensor_op)
 include(GNUInstallDirs)
-install(TARGETS ptensor
+install(TARGETS ptensor_op
     EXPORT ptensorTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

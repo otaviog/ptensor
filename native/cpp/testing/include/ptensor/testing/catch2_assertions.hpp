@@ -11,7 +11,7 @@ namespace p10::testing {
 template<typename Type>
 inline void require_ok(const PtensorResult<Type>& result) {
     if (!result.is_ok()) {
-        const auto err1 = result.error().to_string();
+        const auto err1 = result.err().to_string();
         const std::string err(err1.begin(), err1.end());
         FAIL(err);
     }
@@ -97,7 +97,7 @@ inline PtensorError compare_tensors(const Tensor& t1, const Tensor& t2) {
 
     const auto match_count = t1.visit([&t2](auto data1) {
         using scalar_t = decltype(data1)::value_type;
-        const auto data2 = t2.as_span1d<scalar_t>();
+        const auto data2 = t2.as_span1d<scalar_t>().unwrap();
 
         size_t match_count = 0;
         auto it1 = data1.begin();

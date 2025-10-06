@@ -62,5 +62,5 @@ PTENSOR_API size_t p10_tensor_get_dimensions(P10Tensor tensor) {
 }
 
 PTENSOR_API void* p10_tensor_get_data(P10Tensor tensor) {
-    return unwrap(tensor)->as_span1d<void*>().data();
+    return unwrap(tensor)->as_bytes().data();
 }

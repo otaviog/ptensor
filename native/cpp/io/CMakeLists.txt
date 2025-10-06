@@ -4,9 +4,47 @@ add_subdirectory(lib/cnpy)
 
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/io)
 add_library(ptensor_io STATIC)
+
+set(PUBLIC_HEADERS
+  ${_INCLUDE_DIR}/numpy.hpp
+  ${_INCLUDE_DIR}/image.hpp
+)
+
 target_sources(ptensor_io
+  PUBLIC
+  FILE_SET public_headers TYPE HEADERS
+  FILES ${PUBLIC_HEADERS}
   PRIVATE
-  ${_INCLUDE_DIR}/numpy.hpp src/numpy.cpp
-  ${_INCLUDE_DIR}/image.hpp src/image.cpp)
-target_include_directories(ptensor_io PRIVATE ${_INCLUDE_DIR} ${Stb_INCLUDE_DIR})
-target_link_libraries(ptensor_io PUBLIC ptensor PRIVATE cnpy)
+  src/numpy.cpp
+  src/image.cpp
+)
+
+target_include_directories(ptensor_io
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  PRIVATE
+  ${_INCLUDE_DIR}
+  ${Stb_INCLUDE_DIR}
+)
+
+target_link_libraries(ptensor_io PUBLIC ptensor PRIVATE $<BUILD_INTERFACE:cnpy> ZLIB::ZLIB)
+
+# Create alias for use in build tree and install
+add_library(p10::io ALIAS ptensor_io)
+
+# Installation and export configuration
+include(GNUInstallDirs)
+
+# Install the library and headers
+install(TARGETS ptensor_io
+    EXPORT ptensorTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+if(BUILD_TESTS)
+    add_subdirectory(tests)
+endif()

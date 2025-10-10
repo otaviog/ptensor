@@ -23,7 +23,10 @@ PtensorError save_npz(const std::string& filename, const TensorMap& tensors) {
             [](const int64_t& dim) { return static_cast<size_t>(dim); }
         );
         tensor.visit([&](auto span) {
+#pragma warning(push)
+#pragma warning(disable : 4267 4996 4310)
             cnpy::npz_save(filename, key_name, span.data(), shape, mode);
+#pragma warning(pop)
         });
         mode = "a";
     }
@@ -32,7 +35,10 @@ PtensorError save_npz(const std::string& filename, const TensorMap& tensors) {
 }
 
 PtensorResult<TensorMap> load_npz(const std::string& filename) {
+#pragma warning(push)
+#pragma warning(disable: 4267)
     cnpy::npz_t npz = cnpy::npz_load(filename);
+#pragma warning(pop)
 
     std::map<std::string, Tensor> tensors;
     for (auto& [key, array] : npz) {

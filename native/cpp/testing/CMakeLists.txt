@@ -10,9 +10,10 @@ target_include_directories(ptensor_testing INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
-ptensor_target_options(ptensor_testing "Tests")
 target_link_libraries(ptensor_testing INTERFACE ptensor)
 
+set_target_properties(${target} PROPERTIES
+        FOLDER "Tests")
 # Create alias for use in build tree and install
 add_library(p10::testing ALIAS ptensor_testing)
 

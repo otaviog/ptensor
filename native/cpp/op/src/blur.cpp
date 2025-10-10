@@ -1,9 +1,11 @@
-#include "blur.hpp"
+#include "ptensor/op/blur.hpp"
 
 #include <algorithm>
 #include <cmath>
+#include <numbers> 
 
-#include "tensor.hpp"
+#include "ptensor/dtype.hpp"
+#include "ptensor/tensor.hpp"
 
 namespace p10::op {
 namespace {
@@ -12,7 +14,7 @@ namespace {
 
 PtensorResult<GaussianBlur> GaussianBlur::create(size_t kernel_size, float sigma) {
     if (kernel_size % 2 == 0 || kernel_size > MAX_KERNEL_SIZE) {
-        return Err<GaussianBlur>(
+        return Err(
             PtensorError::InvalidArgument,
             "Kernel size must be an odd number and less than or equal to "
             "MAX_KERNEL_SIZE."
@@ -31,7 +33,7 @@ namespace {
         int half_size = int(kernel.size() / 2);
         for (int i = -half_size; i <= half_size; ++i) {
             kernel[i + half_size] = static_cast<float>(
-                std::exp(-(i * i) / (2 * sigma * sigma)) / (sigma * std::sqrt(2 * M_PI))
+                std::exp(-(i * i) / (2 * sigma * sigma)) / (sigma * std::sqrt(2.0f * std::numbers::pi))
             );
             sum += kernel[i + half_size];
         }
@@ -60,11 +62,11 @@ namespace {
 PtensorError GaussianBlur::operator()(const Tensor& input, Tensor& output) const {
     auto validate_result = validate_inputs_(input);
     if (validate_result.is_error()) {
-        return validate_result.error();
+        return validate_result.unwrap_err();
     }
     const auto input_span {validate_result.unwrap()};
 
-    output.create(input.dtype(), input.shape());
+    output.create(input.shape(), input.dtype());
     auto output_span = output.as_planar_span3d<float>().unwrap();
 
     const auto kernel = get_kernel();
@@ -80,20 +82,20 @@ PtensorError GaussianBlur::operator()(const Tensor& input, Tensor& output) const
             kernel
         );
     }
-    return PtensorError::OK;
+    return PtensorError::Ok;
 }
 
 namespace {
 
     PtensorResult<PlanarSpan3D<const float>> validate_inputs_(const Tensor& input) {
         using ReturnType = PlanarSpan3D<const float>;
-        if (input.ndim() != 3) {
+        if (input.shape().dims() != 3) {
             return Err(
                 PtensorError::InvalidArgument,
                 "Input tensor must be a 3D image with shape (H, W, C)."
             );
         }
-        if (input.dtype() != DType::FLOAT32) {
+        if (input.dtype() != Dtype::Float32) {
             return Err(PtensorError::InvalidArgument, "Input tensor must be of type UINT8.");
         }
 

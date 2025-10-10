@@ -1,8 +1,8 @@
-#include "elemwise.hpp"
+#include "ptensor/op/elemwise.hpp"
 
 #include <algorithm>
 
-#include "tensor.hpp"
+#include "ptensor/tensor.hpp"
 
 namespace p10::op {
 namespace {
@@ -19,12 +19,19 @@ PtensorError add_elemwise(const Tensor& a, const Tensor& b, Tensor& out) {
     if (a.dtype() != b.dtype()) {
         return PtensorError::InvalidArgument << "Input tensors must have the same data type";
     }
-    out.create(a.dtype(), a.shape());
-    a.visit_data([&](auto a_span) {
+    if (auto status = out.create(a.shape(), a.dtype()); !status.is_ok()) {
+        return status;
+    }
+    a.visit([&](auto a_span) {
         using SpanType = decltype(a_span)::value_type;
-        add_elemwise_impl(a_span.data(), b.data<SpanType>(), out.data<SpanType>(), a.size());
+        add_elemwise_impl(
+            a_span.data(),
+            b.as_span1d<SpanType>().unwrap().data(),
+            out.as_span1d<SpanType>().unwrap().data(),
+            a.size()
+        );
     });
-    return PtensorError::OK;
+    return PtensorError::Ok;
 }
 
 PtensorError subtract_elemwise(const Tensor& a, const Tensor& b, Tensor& out) {
@@ -34,14 +41,19 @@ PtensorError subtract_elemwise(const Tensor& a, const Tensor& b, Tensor& out) {
     if (a.dtype() != b.dtype()) {
         return PtensorError::InvalidArgument << "Input tensors must have the same data type";
     }
-    out.create(a.dtype(), a.shape());
+    out.create(a.shape(), a.dtype());
 
-    a.visit_data([&](auto a_span) {
+    a.visit([&](auto a_span) {
         using SpanType = decltype(a_span)::value_type;
 
-        subtract_elemwise_impl(a_span.data(), b.data<SpanType>(), out.data<SpanType>(), a.size());
+        subtract_elemwise_impl(
+            a_span.data(),
+            b.as_span1d<SpanType>().unwrap().data(),
+            out.as_span1d<SpanType>().unwrap().data(),
+            a.size()
+        );
     });
-    return PtensorError::OK;
+    return PtensorError::Ok;
 }
 
 namespace {

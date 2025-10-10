@@ -16,6 +16,10 @@ class PtensorResult {
         return std::holds_alternative<OkType>(value_);
     }
 
+    bool is_error() const {
+        return std::holds_alternative<PtensorError>(value_);
+    }
+
     bool has_value() const {
         return value_.index() != std::variant_npos;
     }

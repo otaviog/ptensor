@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <optional>
+
 #include <type_traits>
 
 #include "axis.hpp"
@@ -180,7 +181,7 @@ class Tensor {
         if (!data_res.is_ok()) {
             return Err(data_res.err());
         }
-        return Ok(std::span<scalar_t>(blob_.data<scalar_t>(), size()));
+        return Ok(std::span<scalar_t> {blob_.data<scalar_t>(), size()});
     }
 
     template<typename T>
@@ -192,7 +193,7 @@ class Tensor {
         if (!data_res.is_ok()) {
             return Err(data_res.err());
         }
-        return Ok(Span2D<T>(data_res.unwrap(), shape_[0], shape_[1]));
+        return Ok(Span2D<T> {data_res.unwrap(), size_t(shape_[0]), size_t(shape_[1])});
     }
 
     template<typename T>
@@ -204,7 +205,7 @@ class Tensor {
         if (!data_res.is_ok()) {
             return Err(data_res.err());
         }
-        return Ok(Span2D<T>(data_res.unwrap(), shape_[0], shape_[1]));
+        return Ok(Span2D<T> {data_res.unwrap(), size_t(shape_[0]), size_t(shape_[1])});
     }
 
     template<typename T>
@@ -213,11 +214,13 @@ class Tensor {
             return Err<Span3D<T>>(PtensorError::InvalidArgument, "Tensor must have 3 dimensions");
         }
         auto shape = shape_.as_span();
-        auto data_res = data_as<const T>();
+        auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
             return Err(data_res.err());
         }
-        return Ok(Span3D<T>(data_res.unwrap(), shape[0], shape[1], shape[2]));
+        return Ok(
+            Span3D<T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1]), size_t(shape[2])}
+        );
     }
 
     template<typename T>
@@ -230,40 +233,49 @@ class Tensor {
         if (!data_res.is_ok()) {
             return Err(data_res.err());
         }
-        return Ok(Span3D<const T>(data_res.unwrap(), shape[0], shape[1], shape[2]));
+        return Ok(Span3D<const T> {
+            data_res.unwrap(),
+            size_t(shape[0]),
+            size_t(shape[1]),
+            size_t(shape[2])
+        });
     }
 
     template<typename T>
     PtensorResult<PlanarSpan3D<T>> as_planar_span3d() {
         if (dims() != 3) {
-            return Err(
-                PtensorError::InvalidArgument << "Tensor must have 3 dimensions"
-            );
+            return Err(PtensorError::InvalidArgument << "Tensor must have 3 dimensions");
         }
         auto shape = shape_.as_span();
-        auto data_res = data_as<const T>();
+        auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
             return Err(data_res.err());
         }
-        return Ok(PlanarSpan3D<T>(data_res.unwrap(), shape[0], shape[1], shape[2])
-        );
+
+        return Ok(PlanarSpan3D<T> {
+            data_res.unwrap(),
+            size_t(shape[0]),
+            size_t(shape[1]),
+            size_t(shape[2])
+        });
     }
 
     template<typename T>
     PtensorResult<PlanarSpan3D<const T>> as_planar_span3d() const {
         if (dims() != 3) {
-            return Err(
-                PtensorError::InvalidArgument << "Tensor must have 3 dimensions"
-            );
+            return Err(PtensorError::InvalidArgument << "Tensor must have 3 dimensions");
         }
         auto shape = shape_.as_span();
         auto data_res = data_as<const T>();
-        if (!data_res.is_ok()) {
+        if (data_res.is_error()) {
             return Err(data_res.err());
         }
-        return Ok(
-            PlanarSpan3D<const T>(data_res.unwrap(), shape[0], shape[1], shape[2])
-        );
+        return Ok(PlanarSpan3D<const T> {
+            data_res.unwrap(),
+            size_t(shape[0]),
+            size_t(shape[1]),
+            size_t(shape[2])
+        });
     }
 
     auto visit(auto&& visitor) {

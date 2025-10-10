@@ -51,6 +51,42 @@ TEST_CASE("Shape creation from span", "[shape][creation]") {
     REQUIRE(shape.count() == 60);
 }
 
+TEST_CASE("Shape creation from individual parameters", "[shape][creation]") {
+    SECTION("1D shape from single parameter") {
+        auto shape = make_shape(7);
+        REQUIRE(shape.dims() == 1);
+        REQUIRE(shape[0].unwrap() == 7);
+        REQUIRE(shape.count() == 7);
+    }
+
+    SECTION("2D shape from two parameters") {
+        auto shape = make_shape(3, 5);
+        REQUIRE(shape.dims() == 2);
+        REQUIRE(shape[0].unwrap() == 3);
+        REQUIRE(shape[1].unwrap() == 5);
+        REQUIRE(shape.count() == 15);
+    }
+
+    SECTION("3D shape from three parameters") {
+        auto shape = make_shape(2, 4, 6);
+        REQUIRE(shape.dims() == 3);
+        REQUIRE(shape[0].unwrap() == 2);
+        REQUIRE(shape[1].unwrap() == 4);
+        REQUIRE(shape[2].unwrap() == 6);
+        REQUIRE(shape.count() == 48);
+    }
+
+    SECTION("4D shape from four parameters") {
+        auto shape = make_shape(2, 3, 4, 5);
+        REQUIRE(shape.dims() == 4);
+        REQUIRE(shape[0].unwrap() == 2);
+        REQUIRE(shape[1].unwrap() == 3);
+        REQUIRE(shape[2].unwrap() == 4);
+        REQUIRE(shape[3].unwrap() == 5);
+        REQUIRE(shape.count() == 120);
+    }
+}
+
 TEST_CASE("Shape empty initialization", "[shape][creation]") {
     auto shape = make_shape({}).unwrap();
     REQUIRE(shape.dims() == 0);

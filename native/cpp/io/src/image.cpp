@@ -14,7 +14,7 @@ PtensorResult<Tensor> load_image(const std::string& path) {
         return Err(PtensorError::InvalidArgument, "Failed to load image");
     }
     Tensor tensor;
-    tensor.create(make_shape({height, width, channels}).unwrap(), Dtype::Uint8);
+    tensor.create(make_shape(height, width, channels), Dtype::Uint8);
     auto tensor_bytes = tensor.as_bytes();
     std::copy(
         data,
@@ -29,11 +29,11 @@ PtensorError save_image(const std::string& path, const Tensor& tensor) {
     auto span = tensor.as_span3d<uint8_t>().unwrap();
     stbi_write_png(
         path.c_str(),
-        span.width(),
-        span.height(),
-        span.channels(),
+        int(span.width()),
+        int(span.height()),
+        int(span.channels()),
         span.data(),
-        span.width() * span.channels()
+        int(span.width() * span.channels())
     );
     return PtensorError::Ok;
 }

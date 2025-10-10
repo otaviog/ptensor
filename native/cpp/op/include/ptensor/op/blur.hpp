@@ -3,7 +3,7 @@
 #include <array>
 #include <span>
 
-#include "ptensor_result.hpp"
+#include "ptensor/ptensor_result.hpp"
 
 namespace p10 {
 class Tensor;

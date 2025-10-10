@@ -49,6 +49,9 @@ class PtensorError {
         return code_ == Ok;
     }
 
+    bool is_error() const {
+        return !is_ok();
+    }
   private:
     Code code_ = Ok;
     std::string message_;

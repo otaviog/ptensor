@@ -11,7 +11,7 @@ TEST_CASE("save_image and load_image roundtrip", "[io][image]") {
     const std::string filename = "test_image.png";
 
     // Create a simple 8x8 RGB image (height, width, channels)
-    auto tensor = Tensor::zeros(make_shape({8, 8, 3}).unwrap(),
+    auto tensor = Tensor::zeros(make_shape(8, 8, 3),
                                 TensorOptions().dtype(Dtype::Uint8))
                       .unwrap();
 
@@ -45,7 +45,7 @@ TEST_CASE("save_image with grayscale tensor", "[io][image]") {
     const std::string filename = "test_grayscale.png";
 
     // Create a grayscale image (height, width)
-    auto tensor = Tensor::full(make_shape({16, 16}).unwrap(), 128,
+    auto tensor = Tensor::full(make_shape(16, 16), 128,
                                TensorOptions().dtype(Dtype::Uint8))
                       .unwrap();
 
@@ -68,7 +68,7 @@ TEST_CASE("save_image with RGBA tensor", "[io][image]") {
     const std::string filename = "test_rgba.png";
 
     // Create an RGBA image (height, width, 4 channels)
-    auto tensor = Tensor::zeros(make_shape({10, 10, 4}).unwrap(),
+    auto tensor = Tensor::zeros(make_shape(10, 10, 4),
                                 TensorOptions().dtype(Dtype::Uint8))
                       .unwrap();
 
@@ -89,7 +89,7 @@ TEST_CASE("load_image with non-existent file returns error", "[io][image]") {
 TEST_CASE("save_image creates valid file", "[io][image]") {
     const std::string filename = "test_save_creates_file.jpg";
 
-    auto tensor = Tensor::full(make_shape({5, 5, 3}).unwrap(), 1.0,
+    auto tensor = Tensor::full(make_shape(5, 5, 3), 1.0,
                                TensorOptions().dtype(Dtype::Uint8))
                       .unwrap();
 
@@ -103,7 +103,7 @@ TEST_CASE("save_image creates valid file", "[io][image]") {
 }
 
 TEST_CASE("save_image with different formats", "[io][image]") {
-    auto tensor = Tensor::full(make_shape({4, 4, 3}).unwrap(), 200,
+    auto tensor = Tensor::full(make_shape(4, 4, 3), 200,
                                TensorOptions().dtype(Dtype::Uint8))
                       .unwrap();
 
@@ -135,7 +135,7 @@ TEST_CASE("save_image with different formats", "[io][image]") {
 TEST_CASE("load_image returns correct dtype", "[io][image]") {
     const std::string filename = "test_dtype.png";
 
-    auto tensor = Tensor::zeros(make_shape({6, 6, 3}).unwrap(),
+    auto tensor = Tensor::zeros(make_shape(6, 6, 3),
                                 TensorOptions().dtype(Dtype::Uint8))
                       .unwrap();
 

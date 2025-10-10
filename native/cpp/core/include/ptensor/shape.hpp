@@ -27,6 +27,22 @@ inline PtensorResult<Shape> make_shape(std::span<const int64_t> shape) {
     return detail::make_extent<Shape>(shape);
 }
 
+inline Shape make_shape(int64_t s0) {
+    return make_shape({s0}).unwrap();
+}
+
+inline Shape make_shape(int64_t s0, int64_t s1) {
+    return make_shape({s0, s1}).unwrap();
+}
+
+inline Shape make_shape(int64_t s0, int64_t s1, int64_t s2) {
+    return make_shape({s0, s1, s2}).unwrap();
+}
+
+inline Shape make_shape(int64_t s0, int64_t s1, int64_t s2, int64_t s3) {
+    return make_shape({s0, s1, s2, s3}).unwrap();
+}
+
 /// Converts a shape to a string.
 inline std::string to_string(const Shape& shape) {
     return detail::to_string(shape);

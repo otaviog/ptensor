@@ -1,6 +1,7 @@
-#include "resize.hpp"
+#include "ptensor/op/resize.hpp"
 
-#include "tensor.hpp"
+#include "ptensor/dtype.hpp"
+#include "ptensor/tensor.hpp"
 
 namespace p10::op {
 PtensorError resize(const Tensor& input, Tensor& output, size_t new_width, size_t new_height) {
@@ -17,8 +18,14 @@ PtensorError resize(const Tensor& input, Tensor& output, size_t new_width, size_
     const float x_scale = float(width) / float(new_width);
     const float y_scale = float(height) / float(new_height);
 
-    output.create(DType::FLOAT32, {int64_t(channels), int64_t(new_height), int64_t(new_width)})
-        .panic("Failed to create output tensor");
+    if (auto err = output.create(
+            make_shape(int64_t(channels), int64_t(new_height), int64_t(new_width)),
+            Dtype::Float32
+        );
+        err.is_error()) {
+        return err;
+    }
+
     auto output_span = output.as_planar_span3d<float>().unwrap();
 
     for (int row = 0; row < new_height; ++row) {
@@ -32,7 +39,7 @@ PtensorError resize(const Tensor& input, Tensor& output, size_t new_width, size_
             }
         }
     }
-    return PtensorError::OK;
+    return PtensorError::Ok;
 }
 
 }  // namespace p10::op

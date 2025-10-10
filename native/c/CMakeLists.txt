@@ -37,3 +37,5 @@ target_include_directories(ptensor_capi
     ${_INCLUDE_DIR}
 )
 target_link_libraries(ptensor_capi ptensor)
+set_target_properties(ptensor_capi PROPERTIES
+        FOLDER "Core")

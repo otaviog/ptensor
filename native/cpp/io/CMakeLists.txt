@@ -30,11 +30,14 @@ target_include_directories(ptensor_io
 
 target_link_libraries(ptensor_io PUBLIC ptensor PRIVATE $<BUILD_INTERFACE:cnpy> ZLIB::ZLIB)
 
+ptensor_target_options(ptensor_io "IO")
+
+if(BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
+
 # Create alias for use in build tree and install
 add_library(p10::io ALIAS ptensor_io)
-
-# Installation and export configuration
-include(GNUInstallDirs)
 
 # Install the library and headers
 install(TARGETS ptensor_io
@@ -44,7 +47,3 @@ install(TARGETS ptensor_io
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-
-if(BUILD_TESTS)
-    add_subdirectory(tests)
-endif()

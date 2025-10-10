@@ -29,3 +29,38 @@ if(BUILD_TESTS)
 endif()
 
 add_subdirectory(native)
+
+# Create and install the config files
+install(EXPORT ptensorTargets
+    FILE ptensorTargets.cmake
+    NAMESPACE p10::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ptensor
+)
+
+# Create and install the config files
+install(EXPORT ptensorTargets
+    FILE ptensorTargets.cmake
+    NAMESPACE p10::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ptensor
+)
+
+# Create the config file
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    ptensorConfigVersion.cmake
+    VERSION 1.0.0
+    COMPATIBILITY SameMajorVersion
+)
+
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/ptensorConfig.cmake.in
+    ptensorConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ptensor
+)
+
+# Install the config files
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/ptensorConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/ptensorConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ptensor
+)

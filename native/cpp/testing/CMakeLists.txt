@@ -10,17 +10,11 @@ target_include_directories(ptensor_testing INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
-target_compile_options(ptensor_testing INTERFACE
-    $<$<CXX_COMPILER_ID:MSVC>:/W4>
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>)
-
+ptensor_target_options(ptensor_testing "Tests")
 target_link_libraries(ptensor_testing INTERFACE ptensor)
 
 # Create alias for use in build tree and install
 add_library(p10::testing ALIAS ptensor_testing)
-
-# Installation and export configuration
-include(GNUInstallDirs)
 
 # Install the library and headers
 install(TARGETS ptensor_testing

@@ -1,23 +1,8 @@
-add_executable(test_op
+add_library(unit_tests_op OBJECT
     test_elemwise.cpp
-    test_fft.cpp
-    test_resize.cpp
-    test_blur.cpp
+    test_image.cpp
+    test_laplacian.cpp
 )
-
-target_link_libraries(test_op PRIVATE
-    ptensor_op
-    ptensor_testing
-    Catch2::Catch2WithMain
-)
-
-target_compile_options(test_op PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/W4>
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
-)
-
-set_target_properties(test_op PROPERTIES
-    FOLDER Tests
-)
-
-catch_discover_tests(test_op)
+ptensor_target_options(unit_tests_op Op)
+target_link_libraries(unit_tests_op
+    PUBLIC ptensor ptensor_op PRIVATE Catch2::Catch2 ptensor_testing ptensor_io)

@@ -21,4 +21,8 @@ if(TARGET ptensor_testing AND NOT TARGET p10::testing)
     add_library(p10::testing ALIAS ptensor_testing)
 endif()
 
+if(TARGET ptensor_op AND NOT TARGET p10::op)
+    add_library(p10::op ALIAS ptensor_op)
+endif()
+
 check_required_components(ptensor)

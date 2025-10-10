@@ -18,6 +18,7 @@
                 "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
                 "VCPKG_MANIFEST_FEATURES": "io;tests",
                 "WITH_IO": "ON",
+                "WITH_OP": "ON",
                 "BUILD_TESTS": "ON",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/vcpkg/installed/x64-linux"
             }

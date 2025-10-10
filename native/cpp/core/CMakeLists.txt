@@ -45,6 +45,10 @@ target_include_directories(ptensor
 
 ptensor_target_options(ptensor "Core")
 
+if(BUILD_TESTS)
+  add_subdirectory(tests)
+endif()
+
 #### Installation
 # Create alias for use in build tree and install
 add_library(p10::core ALIAS ptensor)
@@ -56,35 +60,3 @@ install(TARGETS ptensor
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-
-# Create and install the config files
-install(EXPORT ptensorTargets
-    FILE ptensorTargets.cmake
-    NAMESPACE p10::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ptensor
-)
-
-# Create the config file
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-    ptensorConfigVersion.cmake
-    VERSION 1.0.0
-    COMPATIBILITY SameMajorVersion
-)
-
-configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/ptensorConfig.cmake.in
-    ptensorConfig.cmake
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ptensor
-)
-
-# Install the config files
-install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/ptensorConfig.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/ptensorConfigVersion.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ptensor
-)
-
-if(BUILD_TESTS)
-  add_subdirectory(tests)
-endif()

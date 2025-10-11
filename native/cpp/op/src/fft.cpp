@@ -1,10 +1,30 @@
 #include "fft.hpp"
+#include <kissfft/kissfft.hh>
 
 #include "tensor.hpp"
 
 namespace p10::op {
+namespace {
+    inline kissfft<float>* unwrap(void* ptr) {
+        return reinterpret_cast<kissfft<float>*>(ptr);
+    }
 
-FFT::FFT(size_t nfft, bool inverse) : kiss_(nfft, inverse) {}
+    inline const kissfft<float>* unwrap(const void* ptr) {
+        return reinterpret_cast<const kissfft<float>*>(ptr);
+    }
+
+    inline void* wrap(kissfft<float>* ptr) {
+        return reinterpret_cast<void*>(ptr);
+    }
+}
+
+FFT::FFT(size_t nfft, bool inverse) : kiss_(nfft, inverse) {
+    kiss_ = wrap(new kissfft<float>(nfft, inverse));
+
+}
+FFT::~FFT() {
+    delete unwrap(kiss_);
+}
 
 void FFT::forward(const Tensor& time, Tensor& frequency) const {
     // validate_time_argument(time);

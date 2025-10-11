@@ -7,6 +7,8 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/blur.hpp
   ${_INCLUDE_DIR}/elemwise.hpp
   ${_INCLUDE_DIR}/resize.hpp
+  ${_INCLUDE_DIR}/image.hpp
+  ${_INCLUDE_DIR}/laplacian_pyramid.hpp
   )
 
 target_sources(ptensor_op
@@ -23,6 +25,8 @@ target_sources(ptensor_op
     src/blur.cpp
     src/elemwise.cpp
     src/resize.cpp
+    src/image.cpp
+    src/laplacian_pyramid.cpp
 )
 
 target_include_directories(ptensor_op
@@ -43,7 +47,6 @@ endif()
 #### Installation
 # Create alias for use in build tree and install
 add_library(p10::op ALIAS ptensor_op)
-include(GNUInstallDirs)
 install(TARGETS ptensor_op
     EXPORT ptensorTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS On)
 
+# Configure installation directories
+include(GNUInstallDirs)
+
 # Create compile_commands.json
 include("./cmake/export_compile_commands.cmake")
 include("./cmake/ptensor_target_options.cmake")

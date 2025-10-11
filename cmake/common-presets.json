@@ -20,7 +20,7 @@
                 "WITH_IO": "ON",
                 "WITH_OP": "ON",
                 "BUILD_TESTS": "ON",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/vcpkg/installed/x64-linux"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/installed"
             }
         },
         {
@@ -29,9 +29,10 @@
         },
         {
             "inherits": "base",
-            "name": "package-io",
+            "name": "package-dependencies",
             "cacheVariables": {
-                "WITH_IO": "ON"
+                "WITH_IO": "ON",
+                "WITH_OP": "ON"
             }
         }
     ]

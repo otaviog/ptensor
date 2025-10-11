@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <Catch2Adapter disabled="false">
+    <DebugBreak>on</DebugBreak>
+    <DiscoverTimeout>50000</DiscoverTimeout>
+    <FilenameFilter>unit_tests_all</FilenameFilter>
+    <IncludeHidden>true</IncludeHidden>
+    <Logging>Verbose</Logging>
+    <MessageFormat>AdditionalInfo</MessageFormat>
+    <StackTraceFormat>ShortInfo</StackTraceFormat>
+    <StackTracePointReplacement>,</StackTracePointReplacement>
+    <TestCaseTimeout>125000</TestCaseTimeout>        <!-- Milliseconds -->
+    <WorkingDirectoryRoot>Solution</WorkingDirectoryRoot>
+    <WorkingDirectory>../../</WorkingDirectory>
+  </Catch2Adapter>
+</RunSettings>

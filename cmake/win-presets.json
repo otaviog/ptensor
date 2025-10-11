@@ -32,13 +32,19 @@
             "inherits": "msbuild-base",
             "name": "msbuild-debug",
             "configurePreset": "msbuild",
-            "configuration": "Debug"
+            "configuration": "Debug",
+            "targets": [
+                "install"
+            ]
         },
         {
             "inherits": "msbuild-base",
             "name": "msbuild-release",
             "configurePreset": "msbuild",
-            "configuration": "Release"
+            "configuration": "Release",
+            "targets": [
+                "install"
+            ]
         }
     ],
     "testPresets": [
@@ -62,6 +68,27 @@
                 {
                     "type": "build",
                     "name": "msbuild-debug"
+                }
+            ]
+        },
+        {
+            "name": "win-verify",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "msbuild"
+                },
+                {
+                    "type": "build",
+                    "name": "msbuild-release"
+                },
+                {
+                    "type": "build",
+                    "name": "msbuild-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "msbuild"
                 }
             ]
         }

@@ -180,7 +180,7 @@ TEST_CASE("Tensor dimensions are tracked correctly", "[tensor][properties]") {
 }
 
 TEST_CASE("Tensor::empty() detects empty tensors", "[tensor][properties]") {
-    SECTION("non-empty tensor") {
+     SECTION("non-empty tensor") {
         auto tensor = Tensor::empty(make_shape({2, 3}).unwrap()).unwrap();
         REQUIRE_FALSE(tensor.empty());
     }

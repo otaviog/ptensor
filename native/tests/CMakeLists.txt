@@ -1,6 +1,8 @@
 add_executable(unit_tests_all)
 
-target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_core> $<TARGET_OBJECTS:unit_tests_testing>)
+target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_core> $<TARGET_OBJECTS:unit_tests_testing>
+$<TARGET_OBJECTS:unit_tests_op>
+)
 ptensor_target_options(unit_tests_all "Tests")
 if (WITH_IO)
     target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_io>)

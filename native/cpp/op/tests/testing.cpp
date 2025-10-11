@@ -20,7 +20,7 @@ namespace samples {
     std::tuple<Tensor, std::string> image01() {
         const std::string image = "image01.png";
         return {
-            io::load_image("native/cpp/tests/data/image/" + image).expect("Can't load test image"),
+            io::load_image("tests/data/image/" + image).expect("Can't load test image"),
             image
         };
     }

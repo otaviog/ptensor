@@ -83,6 +83,9 @@ class Tensor {
     static PtensorResult<Tensor>
     empty(const Shape& shape, const TensorOptions& options = TensorOptions());
 
+    static PtensorResult<Tensor>
+    from_range(const Shape& shape, const Dtype& dtype, int64_t start = 0);
+
     PtensorError create(const Shape& shape, const TensorOptions& options = TensorOptions());
 
     /// Clones the tensor if the tensor is in CPU memory
@@ -189,29 +192,31 @@ class Tensor {
         if (dims() != 2) {
             return Err(PtensorError::InvalidArgument << "Tensor must have 2 dimensions");
         }
+        auto shape = shape_.as_span();
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
             return Err(data_res.err());
         }
-        return Ok(Span2D<T> {data_res.unwrap(), size_t(shape_[0]), size_t(shape_[1])});
+        return Ok(Span2D<T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1])});
     }
 
     template<typename T>
-    PtensorResult<Span2D<T>> as_span2d() const {
+    PtensorResult<Span2D<const T>> as_span2d() const {
         if (dims() != 2) {
             return Err(PtensorError::InvalidArgument, "Tensor must have 2 dimensions");
         }
+        auto shape = shape_.as_span();
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
             return Err(data_res.err());
         }
-        return Ok(Span2D<T> {data_res.unwrap(), size_t(shape_[0]), size_t(shape_[1])});
+        return Ok(Span2D<const T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1])});
     }
 
     template<typename T>
     PtensorResult<Span3D<T>> as_span3d() {
         if (dims() != 3) {
-            return Err<Span3D<T>>(PtensorError::InvalidArgument, "Tensor must have 3 dimensions");
+            return Err(PtensorError::InvalidArgument, "Tensor must have 3 dimensions");
         }
         auto shape = shape_.as_span();
         auto data_res = data_as<T>();

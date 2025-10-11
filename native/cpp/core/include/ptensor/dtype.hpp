@@ -132,6 +132,6 @@ struct Dtype {
     }
 };
 
-std::string to_string(Dtype dtype);
+std::string to_string(Dtype::Code dtype);
 
 }  // namespace p10

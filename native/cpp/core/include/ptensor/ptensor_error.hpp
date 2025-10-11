@@ -3,6 +3,7 @@
 #include <string>
 
 #include <ptensor/ptensor_error.h>
+#include "detail/panic.hpp"
 
 namespace p10 {
 
@@ -52,6 +53,13 @@ class PtensorError {
     bool is_error() const {
         return !is_ok();
     }
+
+    void expect(const std::string& message) const {
+        if (is_error()) {
+            detail::panic((message + ":" + to_string()).data());
+        }
+    }
+
   private:
     Code code_ = Ok;
     std::string message_;

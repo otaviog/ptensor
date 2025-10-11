@@ -1,7 +1,7 @@
 #include "dtype.hpp"
 
 namespace p10 {
-std::string to_string(Dtype dtype) {
+std::string to_string(Dtype::Code dtype) {
     switch (dtype) {
         case Dtype::Uint8:
             return "uint8";

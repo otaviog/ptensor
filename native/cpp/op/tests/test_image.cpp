@@ -1,67 +1,124 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <ptensor/io/image.hpp>
+#include <ptensor/op/image.hpp>
 #include <ptensor/tensor.hpp>
 
-#include "imageop/image_to_tensor.hpp"
-#include "imageop/resize_image.hpp"
 #include "testing.hpp"
 
 namespace p10::op {
 
 TEST_CASE("Image to tensor", "[imageop]") {
-    Tensor image_tensor = Tensor::zeros(DType::UINT8, {256, 256, 3});
+    Tensor image_tensor = Tensor::zeros(make_shape(256, 256, 3), Dtype::Uint8).unwrap();
     Tensor float_tensor;
     image_to_tensor(image_tensor, float_tensor);
-    REQUIRE(float_tensor.shape() == std::vector<int64_t>({3, 256, 256}));
-    REQUIRE(float_tensor.dtype() == DType::FLOAT32);
+    REQUIRE(float_tensor.shape() == make_shape(3, 256, 256));
+    REQUIRE(float_tensor.dtype() == Dtype::Float32);
 }
 
 TEST_CASE("Image to tensor with invalid type", "[imageop]") {
-    Tensor image_tensor = Tensor::zeros(DType::FLOAT32, {256, 256, 3});
+    Tensor image_tensor = Tensor::zeros(make_shape(256, 256, 3), Dtype::Float32).unwrap();
     Tensor float_tensor;
-    // REQUIRE(image_to_tensor(image_tensor, float_tensor) ==
-    //         PtensorError::INVALID_ARGUMENT);
+    REQUIRE(image_to_tensor(image_tensor, float_tensor) == PtensorError::InvalidArgument);
 }
 
 TEST_CASE("Image to tensor with invalid shape", "[imageop]") {
-    Tensor image_tensor = Tensor::zeros(DType::UINT8, {256, 256, 2});
+    Tensor image_tensor = Tensor::zeros(make_shape(256, 256, 2), Dtype::Uint8).unwrap();
     Tensor float_tensor;
-    // REQUIRE(image_to_tensor(image_tensor, float_tensor) ==
-    //       PtensorError::INVALID_ARGUMENT);
+    REQUIRE(image_to_tensor(image_tensor, float_tensor) == PtensorError::InvalidArgument);
 }
 
-TEST_CASE("Resize image with bilinear", "[imageop]") {
-    auto sample_image = testing::samples::image01();
-    auto mode = GENERATE(
-        std ::make_pair(InterpolationMethod::NEAREST, "nearest"),
-        std::make_pair(InterpolationMethod::BILINEAR, "bilinear")
-    );
-    DYNAMIC_SECTION("Testing resize with method " << mode.second) {
-        ResizeImage resize_image(mode.first);
+TEST_CASE("Image from tensor", "[imageop]") {
+    Tensor float_tensor = Tensor::zeros(make_shape(3, 256, 256), Dtype::Float32).unwrap();
+    Tensor image_tensor;
+    image_from_tensor(float_tensor, image_tensor);
+    REQUIRE(image_tensor.shape() == make_shape(256, 256, 3));
+    REQUIRE(image_tensor.dtype() == Dtype::Uint8);
+}
 
-        SECTION("Downsample image") {
-            Tensor resized_image;
-            resize_image(sample_image, resized_image, 128, 128);
-            REQUIRE(resized_image.shape() == std::vector<int64_t>({128, 128, 3}));
-            REQUIRE(resized_image.dtype() == DType::UINT8);
-            io::save_image(
-                (testing::get_output_path()
-                 / (std::string("000001_downsampled_") + mode.second + ".jpg"))
-                    .string(),
-                resized_image
-            );
+TEST_CASE("Image from tensor with invalid type", "[imageop]") {
+    Tensor float_tensor = Tensor::zeros(make_shape(3, 256, 256), Dtype::Uint8).unwrap();
+    Tensor image_tensor;
+    REQUIRE_THROWS_AS(image_from_tensor(float_tensor, image_tensor), PtensorError);
+}
+
+TEST_CASE("Image from tensor with invalid shape", "[imageop]") {
+    Tensor float_tensor = Tensor::zeros(make_shape(256, 256), Dtype::Float32).unwrap();
+    Tensor image_tensor;
+    REQUIRE_THROWS_AS(image_from_tensor(float_tensor, image_tensor), PtensorError);
+}
+
+TEST_CASE("Image to tensor and back conversion", "[imageop]") {
+    // Create a test image with known values
+    Tensor original_image = Tensor::zeros(make_shape(64, 64, 3), Dtype::Uint8).unwrap();
+    auto image_span = original_image.as_span3d<uint8_t>().unwrap();
+
+    // Set some test values
+    for (size_t row = 0; row < image_span.height(); row++) {
+        for (size_t col = 0; col < image_span.width(); col++) {
+            auto channel = image_span.channel(row, col);
+            channel[0] = static_cast<uint8_t>(row % 256);
+            channel[1] = static_cast<uint8_t>(col % 256);
+            channel[2] = static_cast<uint8_t>((row + col) % 256);
         }
-        SECTION("Upsample image") {
-            Tensor resized_image;
-            resize_image(sample_image, resized_image, 1024, 1024);
-            REQUIRE(resized_image.shape() == std::vector<int64_t>({1024, 1024, 3}));
-            io::save_image(
-                (testing::get_output_path()
-                 / (std::string("000001_upsampled_") + mode.second + ".jpg"))
-                    .string(),
-                resized_image
-            );
+    }
+
+    // Convert to tensor
+    Tensor float_tensor;
+    REQUIRE(image_to_tensor(original_image, float_tensor) == PtensorError::Ok);
+
+    // Convert back to image
+    Tensor result_image;
+    REQUIRE(image_from_tensor(float_tensor, result_image) == PtensorError::Ok);
+
+    // Verify dimensions
+    REQUIRE(result_image.shape() == original_image.shape());
+    REQUIRE(result_image.dtype() == original_image.dtype());
+
+    // Verify values (allowing for small rounding errors)
+    auto original_span = original_image.as_span3d<uint8_t>().unwrap();
+    auto result_span = result_image.as_span3d<uint8_t>().unwrap();
+
+    for (size_t row = 0; row < original_span.height(); row++) {
+        for (size_t col = 0; col < original_span.width(); col++) {
+            auto original_channel = original_span.channel(row, col);
+            auto result_channel = result_span.channel(row, col);
+
+            for (size_t c = 0; c < 3; c++) {
+                // Allow for ±1 difference due to float conversion rounding
+                REQUIRE(std::abs(int(original_channel[c]) - int(result_channel[c])) <= 1);
+            }
+        }
+    }
+}
+
+TEST_CASE("Image from tensor value clamping", "[imageop]") {
+    // Create a float tensor with values outside [0, 1] range
+    Tensor float_tensor = Tensor::zeros(make_shape(3, 8, 8), Dtype::Float32).unwrap();
+    auto tensor_span = float_tensor.as_planar_span3d<float>().unwrap();
+
+    // Set values: channel 0 = -0.5 (below 0), channel 1 = 0.5 (normal), channel 2 = 1.5 (above 1)
+    for (size_t row = 0; row < tensor_span.height(); row++) {
+        for (size_t col = 0; col < tensor_span.width(); col++) {
+            tensor_span.plane(0).row(row)[col] = -0.5f;
+            tensor_span.plane(1).row(row)[col] = 0.5f;
+            tensor_span.plane(2).row(row)[col] = 1.5f;
+        }
+    }
+
+    // Convert to image
+    Tensor image_tensor;
+    REQUIRE(image_from_tensor(float_tensor, image_tensor) == PtensorError::Ok);
+
+    auto image_span = image_tensor.as_span3d<uint8_t>().unwrap();
+
+    // Verify clamping
+    for (size_t row = 0; row < image_span.height(); row++) {
+        for (size_t col = 0; col < image_span.width(); col++) {
+            auto channel = image_span.channel(row, col);
+            REQUIRE(channel[0] == 0);  // -0.5 * 255 clamped to 0
+            REQUIRE(channel[1] == 127);  // 0.5 * 255 = 127.5 ≈ 127
+            REQUIRE(channel[2] == 255);  // 1.5 * 255 clamped to 255
         }
     }
 }

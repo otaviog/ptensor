@@ -52,7 +52,6 @@ endif()
 #### Installation
 # Create alias for use in build tree and install
 add_library(p10::core ALIAS ptensor)
-include(GNUInstallDirs)
 install(TARGETS ptensor
     EXPORT ptensorTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

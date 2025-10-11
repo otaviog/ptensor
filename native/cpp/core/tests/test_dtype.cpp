@@ -120,11 +120,8 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
 
         uint32_t sum = 0;
         auto visitor = [&sum](auto typed_span) {
-            using T = typename decltype(typed_span)::element_type;
-            if constexpr (std::is_same_v<T, uint32_t>) {
-                for (const auto& val : typed_span) {
-                    sum += val;
-                }
+            for (const auto& val : typed_span) {
+                sum += val;
             }
         };
 

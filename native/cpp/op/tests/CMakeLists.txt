@@ -1,7 +1,10 @@
 add_library(unit_tests_op OBJECT
+    testing.hpp testing.cpp
     test_elemwise.cpp
     test_image.cpp
-    test_laplacian.cpp
+    test_laplacian_pyramid.cpp
+    test_resize.cpp
+    test_blur.cpp
 )
 ptensor_target_options(unit_tests_op Op)
 target_link_libraries(unit_tests_op

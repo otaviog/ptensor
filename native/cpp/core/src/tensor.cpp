@@ -29,6 +29,27 @@ PtensorResult<Tensor> Tensor::full(const Shape& shape, double value, const Tenso
     return Ok(Tensor(std::move(blob), shape, options));
 }
 
+PtensorResult<Tensor> Tensor::from_range(const Shape& shape, const Dtype& dtype, int64_t start) {
+   auto result_res = Tensor::zeros(shape, dtype);
+    if (auto status = result_res.is_error()) {
+       return Err(result_res);
+    }
+
+    auto total_size =
+        std::accumulate(shape.begin(), shape.end(), int64_t(1), std::multiplies<int64_t>());
+
+    dtype.visit(
+        [&](auto span) {
+            using SpanType = decltype(span)::value_type;
+            for (auto i = 0; i < total_size; i++) {
+                span[i] = SpanType(start + i);
+            }
+        },
+        result_res.unwrap().as_bytes()
+    );
+    return result_res;
+}
+
 PtensorResult<Tensor> Tensor::empty(const Shape& shape, const TensorOptions& options) {
     if (shape.count() < 1) {
         return Ok(Tensor(options));

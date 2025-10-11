@@ -3,7 +3,6 @@
 #include <utility>
 #include <variant>
 
-#include "detail/panic.hpp"
 #include "ptensor_error.hpp"
 
 namespace p10 {
@@ -32,8 +31,9 @@ class PtensorResult {
         if (is_ok()) {
             return unwrap();
         } else {
-            std::string msg(err().to_string());
-            detail::panic((message + ":" + msg).data());
+            err().expect(message);
+            // This line should never be reached because err().expect() will panic
+            return unwrap();
         }
     }
 
@@ -102,6 +102,11 @@ inline ErrTypeDeduct Err(PtensorError::Code err_code) {
 
 inline ErrTypeDeduct Err(PtensorError::Code err_code, const std::string_view& message) {
     return ErrTypeDeduct {err_code, message};
+}
+
+template<typename TransferOkType>
+inline ErrTypeDeduct Err(const PtensorResult<TransferOkType>& result) {
+    return Err(result.err());
 }
 
 }  // namespace p10

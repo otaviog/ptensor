@@ -7,8 +7,8 @@
 #include "tensor_wrapper.hpp"
 #include "update_error_state.hpp"
 
-PTENSOR_API P10ErrorEnum p10_tensor_from_data(
-    P10Tensor* tensor,
+PTENSOR_API P10ErrorEnum p10_from_data(
+    Ptensor* tensor,
     P10DTypeEnum dtype,
     int64_t* shape,
     size_t num_dims,
@@ -28,7 +28,7 @@ PTENSOR_API P10ErrorEnum p10_tensor_from_data(
     return P10ErrorEnum::P10_OK;
 }
 
-PTENSOR_API P10ErrorEnum p10_tensor_destroy(P10Tensor* tensor) {
+PTENSOR_API P10ErrorEnum p10_destroy(Ptensor* tensor) {
     if (tensor == nullptr) {
         return P10ErrorEnum::P10_OK;
     }
@@ -38,17 +38,17 @@ PTENSOR_API P10ErrorEnum p10_tensor_destroy(P10Tensor* tensor) {
     return P10ErrorEnum::P10_OK;
 }
 
-PTENSOR_API size_t p10_tensor_get_size(P10Tensor tensor) {
+PTENSOR_API size_t p10_get_size(Ptensor tensor) {
     const auto* cxx_tensor = unwrap(tensor);
     return cxx_tensor->size();
 }
 
-PTENSOR_API P10DTypeEnum p10_tensor_get_dtype(P10Tensor tensor) {
+PTENSOR_API P10DTypeEnum p10_get_dtype(Ptensor tensor) {
     const auto* cxx_tensor = unwrap(tensor);
     return static_cast<P10DTypeEnum>(cxx_tensor->dtype().value);
 }
 
-PTENSOR_API P10ErrorEnum p10_tensor_get_shape(P10Tensor tensor, int64_t* shape, size_t num_dims) {
+PTENSOR_API P10ErrorEnum p10_get_shape(Ptensor tensor, int64_t* shape, size_t num_dims) {
     const auto* cxx_tensor = unwrap(tensor);
     auto shape_vec = cxx_tensor->shape().as_span();
     for (size_t i = 0; i < std::min(num_dims, shape_vec.size()); ++i) {
@@ -57,10 +57,10 @@ PTENSOR_API P10ErrorEnum p10_tensor_get_shape(P10Tensor tensor, int64_t* shape, 
     return P10ErrorEnum::P10_OK;
 }
 
-PTENSOR_API size_t p10_tensor_get_dimensions(P10Tensor tensor) {
+PTENSOR_API size_t p10_get_dimensions(Ptensor tensor) {
     return unwrap(tensor)->dims();
 }
 
-PTENSOR_API void* p10_tensor_get_data(P10Tensor tensor) {
+PTENSOR_API void* p10_get_data(Ptensor tensor) {
     return unwrap(tensor)->as_bytes().data();
 }

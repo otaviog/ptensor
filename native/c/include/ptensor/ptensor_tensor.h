@@ -13,28 +13,28 @@
 extern "C" {
 #endif
 
-typedef void* P10Tensor;
+typedef void* Ptensor;
 
-PTENSOR_API P10ErrorEnum p10_tensor_from_data(
-    P10Tensor* tensor,
+PTENSOR_API P10ErrorEnum p10_from_data(
+    Ptensor* tensor,
     P10DTypeEnum dtype,
     int64_t* shape,
     size_t num_dims,
     uint8_t* data
 );
 
-PTENSOR_API P10ErrorEnum p10_tensor_destroy(P10Tensor* tensor);
+PTENSOR_API P10ErrorEnum p10_destroy(Ptensor* tensor);
 
-PTENSOR_API size_t p10_tensor_get_size(P10Tensor tensor);
+PTENSOR_API size_t p10_get_size(Ptensor tensor);
 
-PTENSOR_API P10DTypeEnum p10_tensor_get_dtype(P10Tensor tensor);
+PTENSOR_API P10DTypeEnum p10_get_dtype(Ptensor tensor);
 
 PTENSOR_API P10ErrorEnum
-p10_tensor_get_shape(P10Tensor tensor, int64_t* shape, size_t num_dims);
+p10_get_shape(Ptensor tensor, int64_t* shape, size_t num_dims);
 
-PTENSOR_API size_t p10_tensor_get_dimensions(P10Tensor tensor);
+PTENSOR_API size_t p10_get_dimensions(Ptensor tensor);
 
-PTENSOR_API void* p10_tensor_get_data(P10Tensor tensor);
+PTENSOR_API void* p10_get_data(Ptensor tensor);
 
 #ifdef __cplusplus
 }

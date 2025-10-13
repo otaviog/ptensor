@@ -1,0 +1,38 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "linux",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "ptensor_DIR": "../../build/lin-debug/installed/lib/cmake/ptensor/"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "linux",
+      "configurePreset": "linux"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "linux",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "linux"
+        },
+        {
+          "type": "build",
+          "name": "linux"
+        }
+      ]
+    }
+  ]
+}

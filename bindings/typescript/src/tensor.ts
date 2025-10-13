@@ -1,5 +1,6 @@
 import * as ffi from './ffi';
-import { DType, DTYPE_TO_TYPED_ARRAY, getDTypeSize } from './enums';
+import { DType, dtype_to_typed_array, getDTypeSize } from './enums';
+
 import { checkError } from './errors';
 import * as koffi from 'koffi';
 
@@ -41,10 +42,10 @@ export class Tensor {
       if (dtype === undefined) {
         dtype = DType.FLOAT32;
       }
-      const ArrayConstructor = DTYPE_TO_TYPED_ARRAY[dtype];
-      if (!ArrayConstructor) {
-        throw new Error(`Cannot create typed array for dtype ${dtype}`);
+      if (dtype == DType.FLOAT16) {
+        throw new Error(`Cannot create typed array for float16`);
       }
+      const ArrayConstructor = dtype_to_typed_array(dtype);
       typedData = new ArrayConstructor(data);
     } else {
       typedData = data;
@@ -91,7 +92,7 @@ export class Tensor {
    */
   static zeros(shape: number[], dtype: DType = DType.FLOAT32): Tensor {
     const size = shape.reduce((a, b) => a * b, 1);
-    const ArrayConstructor = DTYPE_TO_TYPED_ARRAY[dtype];
+    const ArrayConstructor = dtype_to_typed_array(dtype);
     if (!ArrayConstructor) {
       throw new Error(`Cannot create typed array for dtype ${dtype}`);
     }
@@ -104,7 +105,7 @@ export class Tensor {
    */
   static ones(shape: number[], dtype: DType = DType.FLOAT32): Tensor {
     const size = shape.reduce((a, b) => a * b, 1);
-    const ArrayConstructor = DTYPE_TO_TYPED_ARRAY[dtype];
+    const ArrayConstructor = dtype_to_typed_array(dtype);
     if (!ArrayConstructor) {
       throw new Error(`Cannot create typed array for dtype ${dtype}`);
     }
@@ -161,7 +162,7 @@ export class Tensor {
     const size = this.size;
     const dtype = this.dtype;
 
-    const ArrayConstructor = DTYPE_TO_TYPED_ARRAY[dtype];
+    const ArrayConstructor = dtype_to_typed_array(dtype);
     if (!ArrayConstructor) {
       throw new Error(`Cannot create typed array for dtype ${dtype}`);
     }

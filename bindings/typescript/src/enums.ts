@@ -58,16 +58,19 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
 /**
  * Map DType to TypedArray constructors
  */
-export const DTYPE_TO_TYPED_ARRAY = {
-  [DType.FLOAT32]: Float32Array,
-  [DType.FLOAT64]: Float64Array,
-  [DType.UINT8]: Uint8Array,
-  [DType.UINT16]: Uint16Array,
-  [DType.UINT32]: Uint32Array,
-  [DType.INT8]: Int8Array,
-  [DType.INT16]: Int16Array,
-  [DType.INT32]: Int32Array,
-} as const;
+
+export const dtype_to_typed_array = (dtype: DType) => {
+  if (dtype === DType.FLOAT32) return Float32Array;
+  if (dtype === DType.FLOAT64) return Float64Array;
+  if (dtype === DType.UINT8) return Uint8Array;
+  if (dtype === DType.UINT16) return Uint16Array;
+  if (dtype === DType.UINT32) return Uint32Array;
+  if (dtype === DType.INT8) return Int8Array;
+  if (dtype === DType.INT16) return Int16Array;
+  if (dtype === DType.INT32) return Int32Array;
+
+  throw new Error(`Invalid dtype ${dtype}`)
+}
 
 /**
  * Get byte size for a given dtype

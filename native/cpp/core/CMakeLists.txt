@@ -6,16 +6,24 @@ add_library(ptensor)
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/ptensor_error.hpp
   ${_INCLUDE_DIR}/ptensor_result.hpp
+  ${_INCLUDE_DIR}/axis.hpp
   ${_INCLUDE_DIR}/device.hpp
+  ${_INCLUDE_DIR}/dtype.hpp
+  ${_INCLUDE_DIR}/shape.hpp
+  ${_INCLUDE_DIR}/span2d.hpp
+  ${_INCLUDE_DIR}/span3d.hpp
   ${_INCLUDE_DIR}/tensor.hpp
+  ${_INCLUDE_DIR}/tensor_options.hpp
   ${_INCLUDE_DIR}/detail/blob.hpp
   ${_INCLUDE_DIR}/detail/string.hpp
   ${_INCLUDE_DIR}/detail/panic.hpp
+  ${_INCLUDE_DIR}/detail/tensor_extents.hpp
   )
 
 target_sources(ptensor
-    PUBLIC 
+    PUBLIC
     FILE_SET public_headers TYPE HEADERS
+    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     FILES
     ${PUBLIC_HEADERS})
 set_source_files_properties(${PUBLIC_HEADERS} PROPERTIES VS_FOLDER "Public Headers")
@@ -42,6 +50,15 @@ target_include_directories(ptensor
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${_INCLUDE_DIR})
+
+# Add C API headers that are referenced by C++ headers
+install(FILES
+    ${CMAKE_SOURCE_DIR}/native/c/include/ptensor/config.h
+    ${CMAKE_SOURCE_DIR}/native/c/include/ptensor/ptensor_error.h
+    ${CMAKE_SOURCE_DIR}/native/c/include/ptensor/ptensor_dtype.h
+    ${CMAKE_SOURCE_DIR}/native/c/include/ptensor/ptensor_device.h
+    ${CMAKE_SOURCE_DIR}/native/c/include/ptensor/ptensor_int_types.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ptensor)
 
 ptensor_target_options(ptensor "Core")
 

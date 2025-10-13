@@ -3,26 +3,26 @@
 include(CMakeFindDependencyMacro)
 
 # Add any required dependencies here
-# find_dependency(SomePackage)
+find_dependency(ZLIB REQUIRED)
 
 # Include the exported targets
 include("${CMAKE_CURRENT_LIST_DIR}/ptensorTargets.cmake")
 
 # Create aliases if not already defined
 if(NOT TARGET p10::core)
-    add_library(p10::core ALIAS ptensor)
+    add_library(p10::core ALIAS p10::ptensor)
 endif()
 
-if(TARGET ptensor_io AND NOT TARGET p10::io)
-    add_library(p10::io ALIAS ptensor_io)
+if(TARGET p10::ptensor_io AND NOT TARGET p10::io)
+    add_library(p10::io ALIAS p10::ptensor_io)
 endif()
 
-if(TARGET ptensor_testing AND NOT TARGET p10::testing)
-    add_library(p10::testing ALIAS ptensor_testing)
+if(TARGET p10::ptensor_testing AND NOT TARGET p10::testing)
+    add_library(p10::testing ALIAS p10::ptensor_testing)
 endif()
 
-if(TARGET ptensor_op AND NOT TARGET p10::op)
-    add_library(p10::op ALIAS ptensor_op)
+if(TARGET p10::ptensor_op AND NOT TARGET p10::op)
+    add_library(p10::op ALIAS p10::ptensor_op)
 endif()
 
 check_required_components(ptensor)

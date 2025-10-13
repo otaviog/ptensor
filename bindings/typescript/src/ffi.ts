@@ -7,16 +7,17 @@ import * as os from 'os';
  */
 function findLibrary(): string {
   const platform = os.platform();
-  const libName = platform === 'win32' ? 'ptensor.dll' :
-                  platform === 'darwin' ? 'libptensor.dylib' :
-                  'libptensor.so';
+  const libName = platform === 'win32' ? 'ptensor_capi.dll' :
+                  platform === 'darwin' ? 'libptensor_capi.dylib' :
+                  'libptensor_capi.so';
 
   // Try multiple search paths
   const searchPaths = [
     // Relative to the bindings directory
     path.join(__dirname, '..', '..', '..', 'build', 'msbuild', 'native', 'c', 'Debug', libName),
     path.join(__dirname, '..', '..', '..', 'build', 'msbuild', 'native', 'c', 'Release', libName),
-    path.join(__dirname, '..', '..', '..', 'build', 'lin-dev', 'native', 'c', libName),
+    path.join(__dirname, '..', '..', '..', 'build', 'lin-debug', 'native', 'c', libName),
+    path.join(__dirname, '..', '..', '..', 'build', 'lin-release', 'native', 'c', libName),
     // System paths
     path.join('/usr', 'local', 'lib', libName),
     path.join('/usr', 'lib', libName),

@@ -2,8 +2,9 @@ set(_INCLUDE_DIR include/ptensor/testing)
 add_library(ptensor_testing INTERFACE)
 
 target_sources(ptensor_testing INTERFACE FILE_SET public_headers
-    TYPE HEADERS FILES
-    ${_INCLUDE_DIR}/catch2_assertions.hpp)
+    TYPE HEADERS
+    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    FILES ${_INCLUDE_DIR}/catch2_assertions.hpp)
 
 target_include_directories(ptensor_testing INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -13,6 +13,7 @@ set(PUBLIC_HEADERS
 target_sources(ptensor_io
   PUBLIC
   FILE_SET public_headers TYPE HEADERS
+  BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
   FILES ${PUBLIC_HEADERS}
   PRIVATE
   src/numpy.cpp

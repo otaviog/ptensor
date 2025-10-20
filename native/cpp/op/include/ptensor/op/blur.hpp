@@ -3,7 +3,7 @@
 #include <array>
 #include <span>
 
-#include "ptensor/ptensor_result.hpp"
+#include "ptensor/p10_result.hpp"
 
 namespace p10 {
 class Tensor;
@@ -14,9 +14,9 @@ class GaussianBlur {
   public:
     static constexpr size_t MAX_KERNEL_SIZE = 25;
 
-    static PtensorResult<GaussianBlur> create(size_t kernel_size, float sigma);
+    static P10Result<GaussianBlur> create(size_t kernel_size, float sigma);
 
-    PtensorError operator()(const Tensor& input, Tensor& output) const;
+    P10Error operator()(const Tensor& input, Tensor& output) const;
 
   private:
     using KernelStorage = std::array<float, MAX_KERNEL_SIZE>;

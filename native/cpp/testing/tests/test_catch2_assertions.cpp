@@ -2,12 +2,12 @@
 #include <catch2/catch_test_macros.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
 
-#include "ptensor/ptensor_error.hpp"
+#include "ptensor/p10_error.hpp"
 #include "ptensor/shape.hpp"
 
 namespace p10::testing {
 TEST_CASE("Testing::Exception", "[testing assertions]") {
-    PtensorResult<int> result = Err(PtensorError::InvalidArgument);
+    P10Result<int> result = Err(P10Error::InvalidArgument);
     CHECK_THROWS(result.expect("Got error"));
 }
 

@@ -4,7 +4,7 @@
 #include "ptensor/tensor.hpp"
 
 namespace p10::op {
-PtensorError resize(const Tensor& input, Tensor& output, size_t new_width, size_t new_height) {
+P10Error resize(const Tensor& input, Tensor& output, size_t new_width, size_t new_height) {
     auto input_validate = input.as_planar_span3d<float>();
     if (input_validate.is_error()) {
         return input_validate.unwrap_err();
@@ -39,7 +39,7 @@ PtensorError resize(const Tensor& input, Tensor& output, size_t new_width, size_
             }
         }
     }
-    return PtensorError::Ok;
+    return P10Error::Ok;
 }
 
 }  // namespace p10::op

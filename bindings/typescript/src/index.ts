@@ -28,5 +28,5 @@
 
 export { Tensor } from './tensor';
 export { DType, ErrorCode, Device } from './enums';
-export { PtensorError } from './errors';
+export { P10Error } from './errors';
 export type { TypedArrayLike } from './tensor';

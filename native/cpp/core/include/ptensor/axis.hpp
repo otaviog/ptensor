@@ -7,7 +7,7 @@
 
 #include <string_view>
 
-#include "ptensor_result.hpp"
+#include "p10_result.hpp"
 
 namespace p10 {
 enum class AxisUsage { Any, Width, Height, Channel, Batch };
@@ -43,9 +43,9 @@ class Axes {
 
     Axes(const std::array<Axis, P10_MAX_SHAPE>& axes, int64_t dims) : axes_(axes), dims_(dims) {}
 
-    PtensorResult<Axis> operator[](size_t index) const {
+    P10Result<Axis> operator[](size_t index) const {
         if (axes_.size() <= index) {
-            return Err(PtensorError::OutOfRange);
+            return Err(P10Error::OutOfRange);
         }
         return Ok(Axis(axes_[index]));
     }

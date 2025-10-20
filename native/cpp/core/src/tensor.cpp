@@ -3,15 +3,15 @@
 #include <algorithm>
 #include <cassert>
 
-#include "ptensor_error.hpp"
+#include "p10_error.hpp"
 
 namespace p10 {
 namespace {
-    PtensorError are_options_valid_for_creation(const TensorOptions& options);
+    P10Error are_options_valid_for_creation(const TensorOptions& options);
     size_t compute_size_bytes(const Shape& shape, const Dtype& dtype);
 }  // namespace
 
-PtensorResult<Tensor> Tensor::full(const Shape& shape, double value, const TensorOptions& options) {
+P10Result<Tensor> Tensor::full(const Shape& shape, double value, const TensorOptions& options) {
     if (shape.count() < 1) {
         return Ok(Tensor(options));
     }
@@ -29,7 +29,7 @@ PtensorResult<Tensor> Tensor::full(const Shape& shape, double value, const Tenso
     return Ok(Tensor(std::move(blob), shape, options));
 }
 
-PtensorResult<Tensor> Tensor::from_range(const Shape& shape, const Dtype& dtype, int64_t start) {
+P10Result<Tensor> Tensor::from_range(const Shape& shape, const Dtype& dtype, int64_t start) {
    auto result_res = Tensor::zeros(shape, dtype);
     if (auto status = result_res.is_error()) {
        return Err(result_res);
@@ -50,7 +50,7 @@ PtensorResult<Tensor> Tensor::from_range(const Shape& shape, const Dtype& dtype,
     return result_res;
 }
 
-PtensorResult<Tensor> Tensor::empty(const Shape& shape, const TensorOptions& options) {
+P10Result<Tensor> Tensor::empty(const Shape& shape, const TensorOptions& options) {
     if (shape.count() < 1) {
         return Ok(Tensor(options));
     }
@@ -64,7 +64,7 @@ PtensorResult<Tensor> Tensor::empty(const Shape& shape, const TensorOptions& opt
     return Ok(Tensor(std::move(blob), shape, options));
 }
 
-PtensorError Tensor::create(const Shape& shape, const TensorOptions& options) {
+P10Error Tensor::create(const Shape& shape, const TensorOptions& options) {
     if (auto status = are_options_valid_for_creation(options); !status.is_ok()) {
         return status;
     }
@@ -73,20 +73,20 @@ PtensorError Tensor::create(const Shape& shape, const TensorOptions& options) {
     if (ask_size <= size_bytes()) {
         shape_ = shape;
         set_options(options);
-        return PtensorError::Ok;
+        return P10Error::Ok;
     }
 
     blob_ = Blob::allocate(ask_size);
-    return PtensorError::Ok;
+    return P10Error::Ok;
 }
 
-PtensorResult<Tensor> Tensor::clone() const {
+P10Result<Tensor> Tensor::clone() const {
     if (blob_.device() != Device::Cpu) {
-        return Err(PtensorError::NotImplemented);
+        return Err(P10Error::NotImplemented);
     }
 
     if (!is_contiguous()) {
-        return Err(PtensorError::NotImplemented);
+        return Err(P10Error::NotImplemented);
     }
 
     const auto blob_size = size_bytes();
@@ -106,13 +106,13 @@ bool Tensor::is_contiguous() const {
     return true;
 }
 
-PtensorResult<Tensor> Tensor::to_contiguous() const {
+P10Result<Tensor> Tensor::to_contiguous() const {
     if (is_contiguous()) {
         return clone();
     }
 
     if (blob_.device() != Device::Cpu) {
-        return Err(PtensorError::NotImplemented);
+        return Err(P10Error::NotImplemented);
     }
 
     Tensor contiguous_tensor = empty(shape_, options().clone().stride(Stride())).unwrap();
@@ -173,13 +173,13 @@ void Tensor::squeeze() {
 }
 
 namespace {
-    PtensorError are_options_valid_for_creation(const TensorOptions& options) {
+    P10Error are_options_valid_for_creation(const TensorOptions& options) {
         if (options.device() != Device::Cpu) {
-            return PtensorError::InvalidArgument
+            return P10Error::InvalidArgument
                 << "Cannot create tensor outside of the CPU, allocate using your device API";
         }
 
-        return PtensorError::Ok;
+        return P10Error::Ok;
     }
 
     size_t compute_size_bytes(const Shape& shape, const Dtype& dtype) {

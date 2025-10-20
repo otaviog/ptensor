@@ -2,16 +2,16 @@ import { ErrorCode, ERROR_MESSAGES } from './enums';
 import * as ffi from './ffi';
 
 /**
- * Base error class for Ptensor errors
+ * Base error class for P10 errors
  */
-export class PtensorError extends Error {
+export class P10Error extends Error {
   constructor(
     public readonly code: ErrorCode,
     message?: string
   ) {
     super(message || ERROR_MESSAGES[code]);
-    this.name = 'PtensorError';
-    Object.setPrototypeOf(this, PtensorError.prototype);
+    this.name = 'P10Error';
+    Object.setPrototypeOf(this, P10Error.prototype);
   }
 }
 
@@ -21,6 +21,6 @@ export class PtensorError extends Error {
 export function checkError(errorCode: ErrorCode): void {
   if (errorCode !== ErrorCode.OK) {
     const lastError = ffi.p10_get_last_error_message();
-    throw new PtensorError(errorCode, lastError || ERROR_MESSAGES[errorCode]);
+    throw new P10Error(errorCode, lastError || ERROR_MESSAGES[errorCode]);
   }
 }

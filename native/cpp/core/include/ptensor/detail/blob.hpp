@@ -7,7 +7,7 @@
 #include <ptensor/config.h>
 
 #include "../device.hpp"
-#include "../ptensor_result.hpp"
+#include "../p10_result.hpp"
 
 namespace p10 {
 class Blob {
@@ -53,9 +53,9 @@ class Blob {
         return device_;
     }
 
-    PtensorResult<Blob> clone() const {
+    P10Result<Blob> clone() const {
         if (dealloc_.has_value()) {
-            return Err(PtensorError::InvalidOperation, "Cannot clone a Blob that owns its data");
+            return Err(P10Error::InvalidOperation, "Cannot clone a Blob that owns its data");
         }
         return Ok(Blob(data_, device_));
     }

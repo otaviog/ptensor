@@ -12,10 +12,10 @@ namespace {
     void create_gaussian_kernel_(std::span<float> kernel, float sigma);
 }  // namespace
 
-PtensorResult<GaussianBlur> GaussianBlur::create(size_t kernel_size, float sigma) {
+P10Result<GaussianBlur> GaussianBlur::create(size_t kernel_size, float sigma) {
     if (kernel_size % 2 == 0 || kernel_size > MAX_KERNEL_SIZE) {
         return Err(
-            PtensorError::InvalidArgument,
+            P10Error::InvalidArgument,
             "Kernel size must be an odd number and less than or equal to "
             "MAX_KERNEL_SIZE."
         );
@@ -46,7 +46,7 @@ namespace {
 }  // namespace
 
 namespace {
-    PtensorResult<PlanarSpan3D<const float>> validate_inputs_(const Tensor& input);
+    P10Result<PlanarSpan3D<const float>> validate_inputs_(const Tensor& input);
     void apply_horizontal_kernel_(
         Span2D<const float> input,
         Span2D<float> output,
@@ -59,7 +59,7 @@ namespace {
     );
 }  // namespace
 
-PtensorError GaussianBlur::operator()(const Tensor& input, Tensor& output) const {
+P10Error GaussianBlur::operator()(const Tensor& input, Tensor& output) const {
     auto validate_result = validate_inputs_(input);
     if (validate_result.is_error()) {
         return validate_result.unwrap_err();
@@ -82,21 +82,21 @@ PtensorError GaussianBlur::operator()(const Tensor& input, Tensor& output) const
             kernel
         );
     }
-    return PtensorError::Ok;
+    return P10Error::Ok;
 }
 
 namespace {
 
-    PtensorResult<PlanarSpan3D<const float>> validate_inputs_(const Tensor& input) {
+    P10Result<PlanarSpan3D<const float>> validate_inputs_(const Tensor& input) {
         using ReturnType = PlanarSpan3D<const float>;
         if (input.shape().dims() != 3) {
             return Err(
-                PtensorError::InvalidArgument,
+                P10Error::InvalidArgument,
                 "Input tensor must be a 3D image with shape (H, W, C)."
             );
         }
         if (input.dtype() != Dtype::Float32) {
-            return Err(PtensorError::InvalidArgument, "Input tensor must be of type UINT8.");
+            return Err(P10Error::InvalidArgument, "Input tensor must be of type UINT8.");
         }
 
         return input.as_planar_span3d<float>();

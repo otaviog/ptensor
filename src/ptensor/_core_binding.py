@@ -39,7 +39,7 @@ def get_library() -> ctypes.CDLL:
     return _LIB
 
 
-class PtensorErrorEnum(IntEnum):
+class P10ErrorEnum(IntEnum):
     OK = 0
     UNKNOWN_ERROR = 1
     ASSERTION_ERROR = 2
@@ -62,15 +62,15 @@ def get_last_error_message():
     return _LIB.p10_get_last_error_message().decode("utf-8")
 
 
-class PtensorError(Exception):
-    def __init__(self, error_code: PtensorErrorEnum):
+class P10Error(Exception):
+    def __init__(self, error_code: P10ErrorEnum):
         self.error_code = error_code
-        if error_code != PtensorErrorEnum.OK:
+        if error_code != P10ErrorEnum.OK:
             self.error_message = get_last_error_message()
 
     def __str__(self):
-        return f"PtensorError: {self.error_message}"
+        return f"P10Error: {self.error_message}"
 
     def raise_if_error(self):
-        if self.error_code != PtensorErrorEnum.OK:
+        if self.error_code != P10ErrorEnum.OK:
             raise self

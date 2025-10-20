@@ -376,7 +376,7 @@ TEST_CASE("Tensor::as_span1d converts to 1D span", "[tensor][span]") {
         auto result = tensor.as_span1d<int32_t>();
 
         REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == PtensorError::InvalidArgument);
+        REQUIRE(result.err().code() == P10Error::InvalidArgument);
     }
 
     SECTION("mutable span allows modification") {
@@ -446,7 +446,7 @@ TEST_CASE("Tensor::as_span2d converts to 2D span", "[tensor][span]") {
         auto result = tensor.as_span2d<float>();
 
         REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == PtensorError::InvalidArgument);
+        REQUIRE(result.err().code() == P10Error::InvalidArgument);
     }
 
     SECTION("fails with wrong dtype") {
@@ -454,7 +454,7 @@ TEST_CASE("Tensor::as_span2d converts to 2D span", "[tensor][span]") {
         auto result = tensor.as_span2d<double>();
 
         REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == PtensorError::InvalidArgument);
+        REQUIRE(result.err().code() == P10Error::InvalidArgument);
     }
 }
 
@@ -527,7 +527,7 @@ TEST_CASE("Tensor::as_span3d converts to 3D span", "[tensor][span]") {
         auto result = tensor.as_span3d<float>();
 
         REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == PtensorError::InvalidArgument);
+        REQUIRE(result.err().code() == P10Error::InvalidArgument);
     }
 
     SECTION("fails with wrong dtype") {
@@ -535,7 +535,7 @@ TEST_CASE("Tensor::as_span3d converts to 3D span", "[tensor][span]") {
         auto result = tensor.as_span3d<int32_t>();
 
         REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == PtensorError::InvalidArgument);
+        REQUIRE(result.err().code() == P10Error::InvalidArgument);
     }
 }
 
@@ -607,7 +607,7 @@ TEST_CASE("Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]
         auto result = tensor.as_planar_span3d<float>();
 
         REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == PtensorError::InvalidArgument);
+        REQUIRE(result.err().code() == P10Error::InvalidArgument);
     }
 
     SECTION("fails with wrong dtype") {
@@ -615,7 +615,7 @@ TEST_CASE("Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]
         auto result = tensor.as_planar_span3d<double>();
 
         REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == PtensorError::InvalidArgument);
+        REQUIRE(result.err().code() == P10Error::InvalidArgument);
     }
 }
 

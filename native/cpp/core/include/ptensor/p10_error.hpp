@@ -7,7 +7,7 @@
 
 namespace p10 {
 
-class PtensorError {
+class P10Error {
   public:
     enum Code {
         Ok = P10_OK,  // No error
@@ -22,17 +22,17 @@ class PtensorError {
         IoError = P10_IO_ERROR
     };
 
-    static PtensorError fromAssert(std::string_view message, std::string_view file, int line);
+    static P10Error fromAssert(std::string_view message, std::string_view file, int line);
 
 #ifdef PTENSOR_HAS_WINDOWS_H
-    static PtensorError from_win32_error(unsigned long error_code);
+    static P10Error from_win32_error(unsigned long error_code);
 #endif
 
-    PtensorError() = default;
+    P10Error() = default;
 
-    PtensorError(Code code) : code_(code) {}
+    P10Error(Code code) : code_(code) {}
 
-    PtensorError(Code code, std::string_view message) : code_(code), message_(message) {}
+    P10Error(Code code, std::string_view message) : code_(code), message_(message) {}
 
     constexpr operator Code() const {
         return code_;
@@ -65,7 +65,7 @@ class PtensorError {
     std::string message_;
 };
 
-inline PtensorError operator<<(PtensorError::Code code, std::string_view message) {
-    return PtensorError(code, message);
+inline P10Error operator<<(P10Error::Code code, std::string_view message) {
+    return P10Error(code, message);
 }
 }  // namespace p10

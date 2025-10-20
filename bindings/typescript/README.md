@@ -116,12 +116,12 @@ const data = tensor.getData<Float32Array>();
 ### Error Handling
 
 ```typescript
-import { PtensorError } from '@ptensor/typescript';
+import { P10Error } from '@ptensor/typescript';
 
 try {
   const tensor = Tensor.fromData([1, 2, 3], [2, 2]); // Wrong size!
 } catch (error) {
-  if (error instanceof PtensorError) {
+  if (error instanceof P10Error) {
     console.error(`Ptensor error: ${error.code} - ${error.message}`);
   }
 }

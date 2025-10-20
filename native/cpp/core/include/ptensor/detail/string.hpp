@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "../ptensor_result.hpp"
+#include "../p10_result.hpp"
 
 namespace p10::detail {
-PtensorResult<std::wstring> string_to_wstring(const std::string& ansi);
+P10Result<std::wstring> string_to_wstring(const std::string& ansi);
 }  // namespace p10::detail

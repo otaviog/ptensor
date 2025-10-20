@@ -5,7 +5,7 @@
 #include <span>
 
 #include "detail/tensor_extents.hpp"
-#include "ptensor_result.hpp"
+#include "p10_result.hpp"
 
 namespace p10 {
 class Shape: public detail::TensorExtents {
@@ -19,11 +19,11 @@ class Shape: public detail::TensorExtents {
     friend class Stride;
 };
 
-inline PtensorResult<Shape> make_shape(const std::initializer_list<int64_t>& shape) {
+inline P10Result<Shape> make_shape(const std::initializer_list<int64_t>& shape) {
     return detail::make_extent<Shape>(shape);
 }
 
-inline PtensorResult<Shape> make_shape(std::span<const int64_t> shape) {
+inline P10Result<Shape> make_shape(std::span<const int64_t> shape) {
     return detail::make_extent<Shape>(shape);
 }
 
@@ -62,11 +62,11 @@ class Stride: public detail::TensorExtents {
     using TensorExtents::TensorExtents;
 };
 
-inline PtensorResult<Stride> make_stride(const std::initializer_list<int64_t>& shape) {
+inline P10Result<Stride> make_stride(const std::initializer_list<int64_t>& shape) {
     return detail::make_extent<Stride>(shape);
 }
 
-inline PtensorResult<Stride> make_stride(std::span<const int64_t> shape) {
+inline P10Result<Stride> make_stride(std::span<const int64_t> shape) {
     return detail::make_extent<Stride>(shape);
 }
 

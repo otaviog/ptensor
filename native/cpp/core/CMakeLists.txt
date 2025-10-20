@@ -4,8 +4,8 @@ add_library(ptensor)
 ##
 # Public Headers
 set(PUBLIC_HEADERS
-  ${_INCLUDE_DIR}/ptensor_error.hpp
-  ${_INCLUDE_DIR}/ptensor_result.hpp
+  ${_INCLUDE_DIR}/p10_error.hpp
+  ${_INCLUDE_DIR}/p10_result.hpp
   ${_INCLUDE_DIR}/axis.hpp
   ${_INCLUDE_DIR}/device.hpp
   ${_INCLUDE_DIR}/dtype.hpp
@@ -32,7 +32,7 @@ set_source_files_properties(${PUBLIC_HEADERS} PROPERTIES VS_FOLDER "Public Heade
 # Source to public headers
 target_sources(ptensor
     PRIVATE
-    src/ptensor_error.cpp
+    src/p10_error.cpp
     src/tensor.cpp
     src/detail/blob.cpp
     src/dtype.cpp

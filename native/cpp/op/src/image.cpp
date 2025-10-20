@@ -6,12 +6,12 @@
 #include <ptensor/tensor.hpp>
 
 namespace p10::op {
-PtensorError image_to_tensor(const Tensor& image, Tensor& tensor) {
+P10Error image_to_tensor(const Tensor& image, Tensor& tensor) {
     if (image.dtype() != Dtype::Uint8) {
-        return PtensorError::InvalidArgument << "Input tensor must be of type UINT8.";
+        return P10Error::InvalidArgument << "Input tensor must be of type UINT8.";
     }
     if (image.shape().dims() != 3) {
-        return PtensorError::InvalidArgument
+        return P10Error::InvalidArgument
             << "Input tensor must have shape [height, width, channels].";
     }
 
@@ -44,15 +44,15 @@ PtensorError image_to_tensor(const Tensor& image, Tensor& tensor) {
         }
     }
 
-    return PtensorError::Ok;
+    return P10Error::Ok;
 }
 
-PtensorError image_from_tensor(const Tensor& tensor, Tensor& image) {
+P10Error image_from_tensor(const Tensor& tensor, Tensor& image) {
     if (tensor.dtype() != Dtype::Float32) {
-        throw PtensorError::InvalidArgument << "Input tensor must be of type FLOAT32.";
+        throw P10Error::InvalidArgument << "Input tensor must be of type FLOAT32.";
     }
     if (tensor.shape().dims() != 3) {
-        throw PtensorError::InvalidArgument
+        throw P10Error::InvalidArgument
             << "Input tensor must have shape [channels, height, width].";
     }
 
@@ -82,6 +82,6 @@ PtensorError image_from_tensor(const Tensor& tensor, Tensor& image) {
             }
         }
     }
-    return PtensorError::Ok;
+    return P10Error::Ok;
 }
 }  // namespace p10::op

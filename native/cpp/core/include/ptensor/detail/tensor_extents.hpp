@@ -6,7 +6,7 @@
 
 #include <ptensor/config.h>
 
-#include "../ptensor_result.hpp"
+#include "../p10_result.hpp"
 
 namespace p10 {
 namespace detail {
@@ -42,9 +42,9 @@ namespace detail {
         ///
         /// # Returns
         /// * The size of the tensor along the given axis or an error if the axis is out of range.
-        PtensorResult<int64_t> operator[](size_t axis) const {
+        P10Result<int64_t> operator[](size_t axis) const {
             if (axis >= dims_) {
-                return Err(PtensorError::OutOfRange);
+                return Err(P10Error::OutOfRange);
             }
             return Ok(int64_t {extent_[axis]});
         }
@@ -83,24 +83,24 @@ namespace detail {
         size_t dims_ = 0;
 
         template<typename extent_t>
-        friend PtensorResult<extent_t> make_extent(const std::initializer_list<int64_t>&);
+        friend P10Result<extent_t> make_extent(const std::initializer_list<int64_t>&);
 
         template<typename extent_t>
-        friend PtensorResult<extent_t> make_extent(std::span<const int64_t> shape);
+        friend P10Result<extent_t> make_extent(std::span<const int64_t> shape);
     };
 
     template<typename extent_t>
-    PtensorResult<extent_t> make_extent(const std::initializer_list<int64_t>& shape) {
+    P10Result<extent_t> make_extent(const std::initializer_list<int64_t>& shape) {
         if (shape.size() >= P10_MAX_SHAPE) {
-            return Err(PtensorError::OutOfRange);
+            return Err(P10Error::OutOfRange);
         }
         return Ok(extent_t(shape.begin(), shape.end()));
     }
 
     template<typename extent_t>
-    PtensorResult<extent_t> make_extent(std::span<const int64_t> shape) {
+    P10Result<extent_t> make_extent(std::span<const int64_t> shape) {
         if (shape.size() >= P10_MAX_SHAPE) {
-            return Err(PtensorError::OutOfRange);
+            return Err(P10Error::OutOfRange);
         }
         return Ok(extent_t(shape));
     }

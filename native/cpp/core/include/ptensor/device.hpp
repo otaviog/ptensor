@@ -5,7 +5,7 @@
 
 #include <ptensor/ptensor_device.h>
 
-#include "ptensor_result.hpp"
+#include "p10_result.hpp"
 
 namespace p10 {
 
@@ -28,9 +28,9 @@ struct Device {
 
     explicit operator bool() const = delete;
 
-    static PtensorResult<Device> from_int(uint8_t value, int32_t index = -1) {
+    static P10Result<Device> from_int(uint8_t value, int32_t index = -1) {
         if (value > OpenCL) {
-            return Err(PtensorError::InvalidArgument);
+            return Err(P10Error::InvalidArgument);
         }
         return Ok<Device>(Device(static_cast<Value>(value), index));
     }

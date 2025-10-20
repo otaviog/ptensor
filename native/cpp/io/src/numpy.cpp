@@ -5,13 +5,13 @@
 
 #include <cnpy.h>
 
-#include "ptensor/ptensor_error.hpp"
-#include "ptensor/ptensor_result.hpp"
+#include "ptensor/p10_error.hpp"
+#include "ptensor/p10_result.hpp"
 
 namespace p10::io {
 using TensorMap = std::map<std::string, Tensor>;
 
-PtensorError save_npz(const std::string& filename, const TensorMap& tensors) {
+P10Error save_npz(const std::string& filename, const TensorMap& tensors) {
     std::string mode = "w";
     for (const auto& [key_name, tensor] : tensors) {
         std::vector<size_t> shape;
@@ -31,10 +31,10 @@ PtensorError save_npz(const std::string& filename, const TensorMap& tensors) {
         mode = "a";
     }
 
-    return PtensorError::Ok;
+    return P10Error::Ok;
 }
 
-PtensorResult<TensorMap> load_npz(const std::string& filename) {
+P10Result<TensorMap> load_npz(const std::string& filename) {
 #pragma warning(push)
 #pragma warning(disable: 4267)
     cnpy::npz_t npz = cnpy::npz_load(filename);
@@ -59,7 +59,7 @@ PtensorResult<TensorMap> load_npz(const std::string& filename) {
         } else if (array.word_size == 1) {
             tensor = Tensor::from_data(array.data<uint8_t>(), p10_shape.unwrap()).clone().unwrap();
         } else {
-            return Err(PtensorError::InvalidArgument, "Unsupported data type");
+            return Err(P10Error::InvalidArgument, "Unsupported data type");
         }
         tensors.try_emplace(key, std::move(tensor));
     }

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <ptensor/ptensor_error.hpp>
+#include <ptensor/p10_error.hpp>
 
 namespace p10 {
 
-P10ErrorEnum update_error_state(const p10::PtensorError& error);
+P10ErrorEnum update_error_state(const p10::P10Error& error);
 
 }  // namespace p10

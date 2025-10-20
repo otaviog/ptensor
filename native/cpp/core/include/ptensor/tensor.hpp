@@ -9,7 +9,7 @@
 #include "detail/blob.hpp"
 #include "device.hpp"
 #include "dtype.hpp"
-#include "ptensor_result.hpp"
+#include "p10_result.hpp"
 #include "shape.hpp"
 #include "span2d.hpp"
 #include "span3d.hpp"
@@ -62,7 +62,7 @@ class Tensor {
     ///
     /// # Returns
     /// * A tensor with zeros. If the shape is empty, an empty tensor is returned.
-    static PtensorResult<Tensor>
+    static P10Result<Tensor>
     zeros(const Shape& shape, const TensorOptions& options = TensorOptions()) {
         return full(shape, 0.0, options);
     }
@@ -77,19 +77,19 @@ class Tensor {
     ///
     /// # Returns
     /// * A tensor filled with the given value. If the shape is empty, an empty tensor is returned.
-    static PtensorResult<Tensor>
+    static P10Result<Tensor>
     full(const Shape& shape, double value, const TensorOptions& options = TensorOptions());
 
-    static PtensorResult<Tensor>
+    static P10Result<Tensor>
     empty(const Shape& shape, const TensorOptions& options = TensorOptions());
 
-    static PtensorResult<Tensor>
+    static P10Result<Tensor>
     from_range(const Shape& shape, const Dtype& dtype, int64_t start = 0);
 
-    PtensorError create(const Shape& shape, const TensorOptions& options = TensorOptions());
+    P10Error create(const Shape& shape, const TensorOptions& options = TensorOptions());
 
     /// Clones the tensor if the tensor is in CPU memory
-    PtensorResult<Tensor> clone() const;
+    P10Result<Tensor> clone() const;
 
     /// Default constructor. Creates an empty tensor.
     Tensor() = default;
@@ -118,7 +118,7 @@ class Tensor {
     }
 
     /// Gets the shape of the tensor the given axis.
-    PtensorResult<int64_t> shape(size_t axis) const {
+    P10Result<int64_t> shape(size_t axis) const {
         return shape_[axis];
     }
 
@@ -133,7 +133,7 @@ class Tensor {
     }
 
     /// Gets the stride of the tensor at the given axis.
-    PtensorResult<int64_t> stride(size_t axis) const {
+    P10Result<int64_t> stride(size_t axis) const {
         return stride_[axis];
     }
 
@@ -170,7 +170,7 @@ class Tensor {
     }
 
     template<typename scalar_t>
-    PtensorResult<std::span<const scalar_t>> as_span1d() const {
+    P10Result<std::span<const scalar_t>> as_span1d() const {
         auto data_res = data_as<scalar_t>();
         if (!data_res.is_ok()) {
             return Err(data_res.err());
@@ -179,7 +179,7 @@ class Tensor {
     }
 
     template<typename scalar_t>
-    PtensorResult<std::span<scalar_t>> as_span1d() {
+    P10Result<std::span<scalar_t>> as_span1d() {
         auto data_res = data_as<scalar_t>();
         if (!data_res.is_ok()) {
             return Err(data_res.err());
@@ -188,9 +188,9 @@ class Tensor {
     }
 
     template<typename T>
-    PtensorResult<Span2D<T>> as_span2d() {
+    P10Result<Span2D<T>> as_span2d() {
         if (dims() != 2) {
-            return Err(PtensorError::InvalidArgument << "Tensor must have 2 dimensions");
+            return Err(P10Error::InvalidArgument << "Tensor must have 2 dimensions");
         }
         auto shape = shape_.as_span();
         auto data_res = data_as<T>();
@@ -201,9 +201,9 @@ class Tensor {
     }
 
     template<typename T>
-    PtensorResult<Span2D<const T>> as_span2d() const {
+    P10Result<Span2D<const T>> as_span2d() const {
         if (dims() != 2) {
-            return Err(PtensorError::InvalidArgument, "Tensor must have 2 dimensions");
+            return Err(P10Error::InvalidArgument, "Tensor must have 2 dimensions");
         }
         auto shape = shape_.as_span();
         auto data_res = data_as<const T>();
@@ -214,9 +214,9 @@ class Tensor {
     }
 
     template<typename T>
-    PtensorResult<Span3D<T>> as_span3d() {
+    P10Result<Span3D<T>> as_span3d() {
         if (dims() != 3) {
-            return Err(PtensorError::InvalidArgument, "Tensor must have 3 dimensions");
+            return Err(P10Error::InvalidArgument, "Tensor must have 3 dimensions");
         }
         auto shape = shape_.as_span();
         auto data_res = data_as<T>();
@@ -229,9 +229,9 @@ class Tensor {
     }
 
     template<typename T>
-    PtensorResult<Span3D<const T>> as_span3d() const {
+    P10Result<Span3D<const T>> as_span3d() const {
         if (dims() != 3) {
-            return Err(PtensorError::InvalidArgument << "Tensor must have 3 dimensions");
+            return Err(P10Error::InvalidArgument << "Tensor must have 3 dimensions");
         }
         auto shape = shape_.as_span();
         auto data_res = data_as<const T>();
@@ -247,9 +247,9 @@ class Tensor {
     }
 
     template<typename T>
-    PtensorResult<PlanarSpan3D<T>> as_planar_span3d() {
+    P10Result<PlanarSpan3D<T>> as_planar_span3d() {
         if (dims() != 3) {
-            return Err(PtensorError::InvalidArgument << "Tensor must have 3 dimensions");
+            return Err(P10Error::InvalidArgument << "Tensor must have 3 dimensions");
         }
         auto shape = shape_.as_span();
         auto data_res = data_as<T>();
@@ -266,9 +266,9 @@ class Tensor {
     }
 
     template<typename T>
-    PtensorResult<PlanarSpan3D<const T>> as_planar_span3d() const {
+    P10Result<PlanarSpan3D<const T>> as_planar_span3d() const {
         if (dims() != 3) {
-            return Err(PtensorError::InvalidArgument << "Tensor must have 3 dimensions");
+            return Err(P10Error::InvalidArgument << "Tensor must have 3 dimensions");
         }
         auto shape = shape_.as_span();
         auto data_res = data_as<const T>();
@@ -295,7 +295,7 @@ class Tensor {
     bool is_contiguous() const;
 
     /// Returns a contiguous tensor.
-    PtensorResult<Tensor> to_contiguous() const;
+    P10Result<Tensor> to_contiguous() const;
 
     void squeeze();
 
@@ -317,7 +317,7 @@ class Tensor {
     }
 
     template<typename T>
-    PtensorResult<T*> data_as() {
+    P10Result<T*> data_as() {
         if (auto err = validate_dtype<T>(); !err.is_ok()) {
             return Err(err);
         }
@@ -325,7 +325,7 @@ class Tensor {
     }
 
     template<typename T>
-    PtensorResult<const T*> data_as() const {
+    P10Result<const T*> data_as() const {
         if (auto err = validate_dtype<T>(); !err.is_ok()) {
             return Err(err);
         }
@@ -333,11 +333,11 @@ class Tensor {
     }
 
     template<typename T>
-    PtensorError validate_dtype() const {
+    P10Error validate_dtype() const {
         if (dtype_ != Dtype::from<T>()) {
-            return PtensorError(PtensorError::InvalidArgument, "Invalid dtype");
+            return P10Error(P10Error::InvalidArgument, "Invalid dtype");
         }
-        return PtensorError::Ok;
+        return P10Error::Ok;
     }
 
     Blob blob_;

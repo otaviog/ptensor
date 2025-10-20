@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include <ptensor/ptensor_result.hpp>
+#include <ptensor/p10_result.hpp>
 #include <ptensor/tensor.hpp>
 
 #include "blur.hpp"
@@ -10,7 +10,7 @@
 namespace p10::op {
 class LaplacianPyramid {
   public:
-    static PtensorResult<LaplacianPyramid>
+    static P10Result<LaplacianPyramid>
     create(size_t blur_kernel_size = 5, float blur_sigma = 1.0f) {
         auto blur_op_result = GaussianBlur::create(blur_kernel_size, blur_sigma);
         if (blur_op_result.is_error()) {
@@ -19,9 +19,9 @@ class LaplacianPyramid {
         return Ok(LaplacianPyramid(blur_op_result.unwrap()));
     }
 
-    PtensorError process(const Tensor& input, std::span<Tensor> output) const;
+    P10Error process(const Tensor& input, std::span<Tensor> output) const;
 
-    PtensorError reconstruct(std::span<const Tensor> pyramid, Tensor& output) const;
+    P10Error reconstruct(std::span<const Tensor> pyramid, Tensor& output) const;
 
   private:
     explicit LaplacianPyramid(const GaussianBlur& blur_op) : blur_op_(blur_op) {}

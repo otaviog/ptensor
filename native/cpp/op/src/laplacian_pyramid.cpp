@@ -6,12 +6,12 @@
 namespace p10::op {
 
 namespace {
-    PtensorError validate_process_arguments(const Tensor& input, std::span<Tensor> output);
-    PtensorError validate_reconstruct_arguments(std::span<const Tensor> pyramid);
+    P10Error validate_process_arguments(const Tensor& input, std::span<Tensor> output);
+    P10Error validate_reconstruct_arguments(std::span<const Tensor> pyramid);
 
 }  // namespace
 
-PtensorError
+P10Error
 LaplacianPyramid::process(const Tensor& in_tensor, std::span<Tensor> out_laplacian_pyr) const {
     if (const auto error = validate_process_arguments(in_tensor, out_laplacian_pyr);
         error.is_error()) {
@@ -21,7 +21,7 @@ LaplacianPyramid::process(const Tensor& in_tensor, std::span<Tensor> out_laplaci
     const auto num_levels = out_laplacian_pyr.size();
     store_gaussian_pyramid(in_tensor, num_levels);
     transform_gaussian_laplacian_pyramid(out_laplacian_pyr);
-    return PtensorError::Ok;
+    return P10Error::Ok;
 }
 
 void LaplacianPyramid::store_gaussian_pyramid(const Tensor& in_tensor, size_t num_levels) const {
@@ -53,7 +53,7 @@ void LaplacianPyramid::transform_gaussian_laplacian_pyramid(std::span<Tensor> ou
     output.back() = std::move(gaussian_pyramid_.back());
 }
 
-PtensorError LaplacianPyramid::reconstruct(std::span<const Tensor> pyramid, Tensor& output) const {
+P10Error LaplacianPyramid::reconstruct(std::span<const Tensor> pyramid, Tensor& output) const {
     if (const auto err = validate_reconstruct_arguments(pyramid); err.is_error()) {
         return err;
     }
@@ -71,37 +71,37 @@ PtensorError LaplacianPyramid::reconstruct(std::span<const Tensor> pyramid, Tens
         assert(resize(output, upsample_buffer, width, height).is_ok());
         assert(add_elemwise(Ll, upsample_buffer, output).is_ok());
     }
-    return PtensorError::Ok;
+    return P10Error::Ok;
 }
 
 namespace {
-    PtensorError validate_process_arguments(const Tensor& input, std::span<Tensor> output) {
+    P10Error validate_process_arguments(const Tensor& input, std::span<Tensor> output) {
         if (input.shape().dims() != 3) {
-            return PtensorError::InvalidArgument << "Input tensor must be a 3D tensor.";
+            return P10Error::InvalidArgument << "Input tensor must be a 3D tensor.";
         }
         if (input.dtype() != Dtype::Float32) {
-            return PtensorError::InvalidArgument << "Input tensor must be of type FLOAT32.";
+            return P10Error::InvalidArgument << "Input tensor must be of type FLOAT32.";
         }
         if (output.empty()) {
-            return PtensorError::InvalidArgument << "Output span is empty.";
+            return P10Error::InvalidArgument << "Output span is empty.";
         }
-        return PtensorError::Ok;
+        return P10Error::Ok;
     }
 
-    PtensorError validate_reconstruct_arguments(std::span<const Tensor> pyramid) {
+    P10Error validate_reconstruct_arguments(std::span<const Tensor> pyramid) {
         if (pyramid.empty()) {
-            return PtensorError::InvalidArgument << "Input pyramid is empty.";
+            return P10Error::InvalidArgument << "Input pyramid is empty.";
         }
         for (const auto& level : pyramid) {
             if (level.shape().dims() != 3) {
-                return PtensorError::InvalidArgument << "All pyramid levels must be 3D tensors.";
+                return P10Error::InvalidArgument << "All pyramid levels must be 3D tensors.";
             }
             if (level.dtype() != Dtype::Float32) {
-                return PtensorError::InvalidArgument
+                return P10Error::InvalidArgument
                     << "All pyramid levels must be of type FLOAT32.";
             }
         }
-        return PtensorError::Ok;
+        return P10Error::Ok;
     }
 }  // namespace
 };  // namespace p10::op

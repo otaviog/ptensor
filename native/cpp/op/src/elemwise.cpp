@@ -12,12 +12,12 @@ namespace {
     void subtract_elemwise_impl(const T* a, const T* b, T* out, size_t size);
 }  // namespace
 
-PtensorError add_elemwise(const Tensor& a, const Tensor& b, Tensor& out) {
+P10Error add_elemwise(const Tensor& a, const Tensor& b, Tensor& out) {
     if (a.shape() != b.shape()) {
-        return PtensorError::InvalidArgument << "Input tensors must have the same shape";
+        return P10Error::InvalidArgument << "Input tensors must have the same shape";
     }
     if (a.dtype() != b.dtype()) {
-        return PtensorError::InvalidArgument << "Input tensors must have the same data type";
+        return P10Error::InvalidArgument << "Input tensors must have the same data type";
     }
     if (auto status = out.create(a.shape(), a.dtype()); !status.is_ok()) {
         return status;
@@ -31,15 +31,15 @@ PtensorError add_elemwise(const Tensor& a, const Tensor& b, Tensor& out) {
             a.size()
         );
     });
-    return PtensorError::Ok;
+    return P10Error::Ok;
 }
 
-PtensorError subtract_elemwise(const Tensor& a, const Tensor& b, Tensor& out) {
+P10Error subtract_elemwise(const Tensor& a, const Tensor& b, Tensor& out) {
     if (a.shape() != b.shape()) {
-        return PtensorError::InvalidArgument << "Input tensors must have the same shape";
+        return P10Error::InvalidArgument << "Input tensors must have the same shape";
     }
     if (a.dtype() != b.dtype()) {
-        return PtensorError::InvalidArgument << "Input tensors must have the same data type";
+        return P10Error::InvalidArgument << "Input tensors must have the same data type";
     }
     out.create(a.shape(), a.dtype());
 
@@ -53,7 +53,7 @@ PtensorError subtract_elemwise(const Tensor& a, const Tensor& b, Tensor& out) {
             a.size()
         );
     });
-    return PtensorError::Ok;
+    return P10Error::Ok;
 }
 
 namespace {

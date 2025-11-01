@@ -23,7 +23,7 @@ TEST_CASE("Image to tensor with invalid type", "[imageop]") {
 }
 
 TEST_CASE("Image to tensor with invalid shape", "[imageop]") {
-    Tensor image_tensor = Tensor::zeros(make_shape(256, 256, 2), Dtype::Uint8).unwrap();
+    Tensor image_tensor = Tensor::zeros(make_shape(256, 256), Dtype::Uint8).unwrap();
     Tensor float_tensor;
     REQUIRE(image_to_tensor(image_tensor, float_tensor) == P10Error::InvalidArgument);
 }

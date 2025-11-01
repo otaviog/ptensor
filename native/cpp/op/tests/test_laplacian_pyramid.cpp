@@ -19,7 +19,7 @@ TEST_CASE("op: Create laplacian pyramid", "[health]") {
     auto lp_process = LaplacianPyramid::create(5).expect("Can't create pyramid");
 
     std::vector<Tensor> pyramid(PYRAMID_LEVELS);
-    REQUIRE(lp_process.process(sample_tensor, pyramid).is_ok());
+    REQUIRE(lp_process.transform(sample_tensor, pyramid).is_ok());
 
     Tensor reconstructed, reconstructed_image;
     lp_process.reconstruct(pyramid, reconstructed);

@@ -19,7 +19,7 @@ class LaplacianPyramid {
         return Ok(LaplacianPyramid(blur_op_result.unwrap()));
     }
 
-    P10Error process(const Tensor& input, std::span<Tensor> output) const;
+    P10Error transform(const Tensor& input, std::span<Tensor> output) const;
 
     P10Error reconstruct(std::span<const Tensor> pyramid, Tensor& output) const;
 

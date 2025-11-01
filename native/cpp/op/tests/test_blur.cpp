@@ -15,7 +15,7 @@ TEST_CASE("Op: Blur image", "[tensorop]") {
     SECTION("Apply blur operator") {
         auto blur_op = GaussianBlur::create(25, 1.5f).unwrap();
         Tensor blurred_tensor;
-        blur_op(sample_tensor, blurred_tensor).expect("Failed to blur image");
+        blur_op.transform(sample_tensor, blurred_tensor).expect("Failed to blur image");
 
         REQUIRE(blurred_tensor.shape() == sample_tensor.shape());
 

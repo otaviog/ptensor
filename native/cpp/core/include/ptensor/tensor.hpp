@@ -3,10 +3,9 @@
 #include <cstdint>
 #include <optional>
 
-#include <type_traits>
-
 #include "axis.hpp"
 #include "detail/blob.hpp"
+#include "detail/complex_traits.hpp"
 #include "device.hpp"
 #include "dtype.hpp"
 #include "p10_result.hpp"
@@ -83,8 +82,7 @@ class Tensor {
     static P10Result<Tensor>
     empty(const Shape& shape, const TensorOptions& options = TensorOptions());
 
-    static P10Result<Tensor>
-    from_range(const Shape& shape, const Dtype& dtype, int64_t start = 0);
+    static P10Result<Tensor> from_range(const Shape& shape, const Dtype& dtype, int64_t start = 0);
 
     P10Error create(const Shape& shape, const TensorOptions& options = TensorOptions());
 
@@ -334,8 +332,20 @@ class Tensor {
 
     template<typename T>
     P10Error validate_dtype() const {
-        if (dtype_ != Dtype::from<T>()) {
-            return P10Error(P10Error::InvalidArgument, "Invalid dtype");
+        if constexpr (detail::is_complex<T>::value) {
+            if (dtype_ != Dtype::from<typename T::value_type>()) {
+                return P10Error(P10Error::InvalidArgument, "Invalid dtype");
+            }
+            if (shape_.back() != 2) {
+                return P10Error(
+                    P10Error::InvalidArgument,
+                    "Complex types require the last dimension to be of size 2"
+                );
+            }
+        } else {
+            if (dtype_ != Dtype::from<T>()) {
+                return P10Error(P10Error::InvalidArgument, "Invalid dtype");
+            }
         }
         return P10Error::Ok;
     }

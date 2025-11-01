@@ -27,6 +27,7 @@ struct Dtype {
     template<typename T>
     static Dtype from() {
         using ActualType = std::remove_cv_t<std::remove_reference_t<T>>;
+
         // clang-format off
         if constexpr (std::is_same_v<ActualType, float>) return Dtype(Float32);
         else if constexpr (std::is_same_v<ActualType, double>) return Dtype(Float64);

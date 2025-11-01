@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <span>
 #include <sstream>
 
@@ -65,6 +66,19 @@ namespace detail {
             return extent_.data() + dims_;
         }
 
+        int64_t front() const {
+            if (dims_ == 0) {
+                return 0;
+            }
+            return extent_[0];
+        }
+
+        int64_t back() const {
+            if (dims_ == 0) {
+                return 0;
+            }
+            return extent_[dims_ - 1];
+        }
       protected:
         TensorExtents(std::span<const int64_t> shape) {
             std::copy(shape.begin(), shape.end(), extent_.begin());
@@ -91,7 +105,7 @@ namespace detail {
 
     template<typename extent_t>
     P10Result<extent_t> make_extent(const std::initializer_list<int64_t>& shape) {
-        if (shape.size() >= P10_MAX_SHAPE) {
+        if (shape.size() > P10_MAX_SHAPE) {
             return Err(P10Error::OutOfRange);
         }
         return Ok(extent_t(shape.begin(), shape.end()));
@@ -99,7 +113,7 @@ namespace detail {
 
     template<typename extent_t>
     P10Result<extent_t> make_extent(std::span<const int64_t> shape) {
-        if (shape.size() >= P10_MAX_SHAPE) {
+        if (shape.size() > P10_MAX_SHAPE) {
             return Err(P10Error::OutOfRange);
         }
         return Ok(extent_t(shape));

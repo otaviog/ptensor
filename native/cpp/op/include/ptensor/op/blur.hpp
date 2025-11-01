@@ -16,7 +16,7 @@ class GaussianBlur {
 
     static P10Result<GaussianBlur> create(size_t kernel_size, float sigma);
 
-    P10Error operator()(const Tensor& input, Tensor& output) const;
+    P10Error transform(const Tensor& input, Tensor& output) const;
 
   private:
     using KernelStorage = std::array<float, MAX_KERNEL_SIZE>;

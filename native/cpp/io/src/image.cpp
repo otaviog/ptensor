@@ -26,15 +26,31 @@ P10Result<Tensor> load_image(const std::string& path) {
 }
 
 P10Error save_image(const std::string& path, const Tensor& tensor) {
-    auto span = tensor.as_span3d<uint8_t>().unwrap();
-    stbi_write_png(
-        path.c_str(),
-        int(span.width()),
-        int(span.height()),
-        int(span.channels()),
-        span.data(),
-        int(span.width() * span.channels())
-    );
+    if (tensor.dtype() != Dtype::Uint8) {
+        return P10Error::InvalidArgument << "Only uint8 tensors can be saved as images";
+    }
+
+    if (tensor.dims() == 2) {
+        const auto span = tensor.as_span2d<uint8_t>().unwrap();
+        stbi_write_png(
+            path.c_str(),
+            int(span.width()),
+            int(span.height()),
+            1,
+            span.row(0),
+            int(span.width())
+        );
+    } else if (tensor.dims() == 3) {
+        auto span = tensor.as_span3d<uint8_t>().unwrap();
+        stbi_write_png(
+            path.c_str(),
+            int(span.width()),
+            int(span.height()),
+            int(span.channels()),
+            span.data(),
+            int(span.width() * span.channels())
+        );
+    }
     return P10Error::Ok;
 }
 

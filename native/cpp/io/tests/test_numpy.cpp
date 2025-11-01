@@ -1,10 +1,10 @@
+#include <filesystem>
+#include <map>
+
 #include <catch2/catch_test_macros.hpp>
 #include <ptensor/io/numpy.hpp>
 #include <ptensor/tensor.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
-
-#include <filesystem>
-#include <map>
 
 namespace p10::io {
 
@@ -12,12 +12,13 @@ TEST_CASE("save_npz and load_npz with single tensor", "[io][numpy]") {
     const std::string filename = "test_single.npz";
 
     // Create a test tensor
-    auto tensor = Tensor::full(make_shape({3, 4}).unwrap(), 1.0, TensorOptions().dtype(Dtype::Float32))
-                      .unwrap();
+    auto tensor =
+        Tensor::full(make_shape({3, 4}).unwrap(), 1.0, TensorOptions().dtype(Dtype::Float32))
+            .unwrap();
 
     // Save to npz
     std::map<std::string, Tensor> tensors_to_save;
-    tensors_to_save["data"] = std::move(tensor);
+    tensors_to_save["data"] = tensor.clone().unwrap();
     auto save_err = save_npz(filename, tensors_to_save);
     REQUIRE_THAT(save_err, p10::testing::IsOk());
 
@@ -50,13 +51,14 @@ TEST_CASE("save_npz and load_npz with multiple tensors", "[io][numpy]") {
     // Create test tensors
     auto tensor1 = Tensor::full(make_shape({2, 3}).unwrap(), 1.0).unwrap();
     auto tensor2 = Tensor::full(make_shape({4, 5}).unwrap(), 42.0f).unwrap();
-    auto tensor3 = Tensor::full(make_shape({10}).unwrap(), 5, TensorOptions().dtype(Dtype::Int32)).unwrap();
+    auto tensor3 =
+        Tensor::full(make_shape({10}).unwrap(), 5, TensorOptions().dtype(Dtype::Int32)).unwrap();
 
     // Save to npz
     std::map<std::string, Tensor> tensors_to_save;
-    tensors_to_save["ones"] = std::move(tensor1);
-    tensors_to_save["forties"] = std::move(tensor2);
-    tensors_to_save["range"] = std::move(tensor3);
+    tensors_to_save["ones"] = tensor1.clone().unwrap();
+    tensors_to_save["forties"] = tensor2.clone().unwrap();
+    tensors_to_save["range"] = tensor3.clone().unwrap();
     auto save_err = save_npz(filename, tensors_to_save);
     REQUIRE_THAT(save_err, p10::testing::IsOk());
 
@@ -111,10 +113,11 @@ TEST_CASE("save_npz and load_npz with multiple tensors", "[io][numpy]") {
 TEST_CASE("save_npz with different data types", "[io][numpy]") {
     const std::string filename = "test_dtypes.npz";
 
-    auto float64_tensor = Tensor::full(make_shape({2, 2}).unwrap(), 3.14,
-                                       TensorOptions().dtype(Dtype::Float64)).unwrap();
-    auto int32_tensor = Tensor::full(make_shape({2, 3}).unwrap(), 3, TensorOptions().dtype(Dtype::Int32))
-                            .unwrap();
+    auto float64_tensor =
+        Tensor::full(make_shape({2, 2}).unwrap(), 3.14, TensorOptions().dtype(Dtype::Float64))
+            .unwrap();
+    auto int32_tensor =
+        Tensor::full(make_shape({2, 3}).unwrap(), 3, TensorOptions().dtype(Dtype::Int32)).unwrap();
 
     std::map<std::string, Tensor> tensors_to_save;
     tensors_to_save["float64"] = std::move(float64_tensor);

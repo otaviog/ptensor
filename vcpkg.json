@@ -22,6 +22,12 @@
         "stb"
       ]
     },
+    "op": {
+      "description": "Enable additional tensor operations",
+      "dependencies": [
+        "kissfft"
+      ]
+    },
     "tests": {
       "description": "Build tests (for development)",
       "dependencies": [

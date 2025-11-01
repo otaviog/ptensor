@@ -12,7 +12,7 @@ namespace {
 }  // namespace
 
 P10Error
-LaplacianPyramid::process(const Tensor& in_tensor, std::span<Tensor> out_laplacian_pyr) const {
+LaplacianPyramid::transform(const Tensor& in_tensor, std::span<Tensor> out_laplacian_pyr) const {
     if (const auto error = validate_process_arguments(in_tensor, out_laplacian_pyr);
         error.is_error()) {
         return error;
@@ -28,13 +28,13 @@ void LaplacianPyramid::store_gaussian_pyramid(const Tensor& in_tensor, size_t nu
     gaussian_pyramid_.resize(num_levels);
     gaussian_pyramid_[0] = std::move(in_tensor.clone().unwrap());
     Tensor downsample_buffer;
-    for (auto level = 1; level < num_levels; ++level) {
+    for (size_t level = 1; level < num_levels; ++level) {
         const auto& prev = gaussian_pyramid_[level - 1];
         const auto half_height = prev.shape(1).unwrap() / 2;
         const auto half_width = prev.shape(2).unwrap() / 2;
 
         assert(resize(prev, downsample_buffer, half_width, half_height).is_ok());
-        blur_op_(downsample_buffer, gaussian_pyramid_[level]);
+        assert(blur_op_.transform(downsample_buffer, gaussian_pyramid_[level]).is_ok());
     }
 }
 
@@ -43,7 +43,7 @@ void LaplacianPyramid::transform_gaussian_laplacian_pyramid(std::span<Tensor> ou
     assert(num_levels == gaussian_pyramid_.size());
 
     Tensor upsample_buffer;
-    for (auto level = 0; level < num_levels - 1; ++level) {
+    for (size_t level = 0; level < num_levels - 1; ++level) {
         size_t height = gaussian_pyramid_[level].shape(1).unwrap();
         size_t width = gaussian_pyramid_[level].shape(2).unwrap();
 

@@ -59,7 +59,7 @@ namespace {
     );
 }  // namespace
 
-P10Error GaussianBlur::operator()(const Tensor& input, Tensor& output) const {
+P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) const {
     auto validate_result = validate_inputs_(input);
     if (validate_result.is_error()) {
         return validate_result.unwrap_err();
@@ -70,7 +70,7 @@ P10Error GaussianBlur::operator()(const Tensor& input, Tensor& output) const {
     auto output_span = output.as_planar_span3d<float>().unwrap();
 
     const auto kernel = get_kernel();
-    for (auto channel_plane = 0; channel_plane < input_span.channels(); channel_plane++) {
+    for (size_t channel_plane = 0; channel_plane < input_span.channels(); channel_plane++) {
         apply_horizontal_kernel_(
             input_span.plane(channel_plane),
             output_span.plane(channel_plane),
@@ -88,7 +88,6 @@ P10Error GaussianBlur::operator()(const Tensor& input, Tensor& output) const {
 namespace {
 
     P10Result<PlanarSpan3D<const float>> validate_inputs_(const Tensor& input) {
-        using ReturnType = PlanarSpan3D<const float>;
         if (input.shape().dims() != 3) {
             return Err(
                 P10Error::InvalidArgument,

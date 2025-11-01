@@ -14,10 +14,10 @@
             "name": "base-dev",
             "inherits": "base",
             "hidden": true,
-          "cacheVariables": {
-			"CMAKE_MAKE_PROGRAM": "ninja",
+            "cacheVariables": {
+                "CMAKE_MAKE_PROGRAM": "ninja",
                 "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
-                "VCPKG_MANIFEST_FEATURES": "io;tests",
+                "VCPKG_MANIFEST_FEATURES": "io;tests;op",
                 "WITH_IO": "ON",
                 "WITH_OP": "ON",
                 "BUILD_TESTS": "ON",

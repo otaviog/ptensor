@@ -1,6 +1,8 @@
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/op)
 add_library(ptensor_op)
 
+find_package(kissfft CONFIG REQUIRED)
+
 ##
 # Public Headers
 set(PUBLIC_HEADERS
@@ -9,6 +11,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/resize.hpp
   ${_INCLUDE_DIR}/image.hpp
   ${_INCLUDE_DIR}/laplacian_pyramid.hpp
+  ${_INCLUDE_DIR}/fft.hpp
   )
 
 target_sources(ptensor_op
@@ -28,6 +31,7 @@ target_sources(ptensor_op
     src/resize.cpp
     src/image.cpp
     src/laplacian_pyramid.cpp
+    src/fft.cpp
 )
 
 target_include_directories(ptensor_op
@@ -37,7 +41,7 @@ target_include_directories(ptensor_op
     PRIVATE
     ${_INCLUDE_DIR})
 
-target_link_libraries(ptensor_op PUBLIC ptensor)
+target_link_libraries(ptensor_op PUBLIC ptensor PRIVATE kissfft::kissfft-float)
 
 ptensor_target_options(ptensor_op Op)
 

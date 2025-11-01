@@ -26,7 +26,7 @@ LaplacianPyramid::transform(const Tensor& in_tensor, std::span<Tensor> out_lapla
 
 void LaplacianPyramid::store_gaussian_pyramid(const Tensor& in_tensor, size_t num_levels) const {
     gaussian_pyramid_.resize(num_levels);
-    gaussian_pyramid_[0] = std::move(in_tensor.clone().unwrap());
+    gaussian_pyramid_[0] = in_tensor.clone().unwrap();
     Tensor downsample_buffer;
     for (size_t level = 1; level < num_levels; ++level) {
         const auto& prev = gaussian_pyramid_[level - 1];
@@ -61,7 +61,7 @@ P10Error LaplacianPyramid::reconstruct(std::span<const Tensor> pyramid, Tensor& 
     const auto num_levels = static_cast<int>(pyramid.size());
     Tensor upsample_buffer;
 
-    output = std::move(pyramid[num_levels - 1].clone().unwrap());
+    output = pyramid[num_levels - 1].clone().unwrap();
     for (int level = num_levels - 2; level >= 0; --level) {
         const auto Ll = pyramid[level].clone().unwrap();
 

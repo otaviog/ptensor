@@ -28,10 +28,10 @@ P10Error resize(const Tensor& input, Tensor& output, size_t new_width, size_t ne
 
     auto output_span = output.as_planar_span3d<float>().unwrap();
 
-    for (int row = 0; row < new_height; ++row) {
+    for (size_t row = 0; row < new_height; ++row) {
         const auto src_y = std::min(size_t(float(row) * y_scale), height - 1);
 
-        for (int col = 0; col < new_width; ++col) {
+        for (size_t col = 0; col < new_width; ++col) {
             const auto src_x = std::min(size_t(float(col) * x_scale), width - 1);
 
             for (size_t chn = 0; chn < channels; ++chn) {

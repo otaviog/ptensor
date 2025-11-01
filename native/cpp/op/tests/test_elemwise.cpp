@@ -45,7 +45,6 @@ TEST_CASE("Tensorop: Subtract", "[tensor]") {
         REQUIRE(out.dtype() == type);
 
         out.visit([](auto span) {
-            using SpanType = decltype(span)::value_type;
             for (int i = 0; i < 6; ++i) {
                 REQUIRE(span[i] == Approx(0.0));
             }

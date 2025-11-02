@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <optional>
-#include <initializer_list>
 
 #include "axis.hpp"
 #include "detail/blob.hpp"

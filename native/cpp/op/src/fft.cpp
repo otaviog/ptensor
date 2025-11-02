@@ -14,9 +14,8 @@ namespace {
     P10Result<std::tuple<int64_t, int64_t>> validate_frequency_arguments(const Tensor& frequency);
 }  // namespace
 
-FFT::FFT(size_t nfft, bool inverse) {
-    kiss_ = wrap(new kissfft<float>(nfft, inverse));
-    inverse_ = inverse;
+FFT::FFT(size_t nfft, FFTType type) : type_(type) {
+    kiss_ = wrap(new kissfft<float>(nfft, type == FFTType::Inverse));
 }
 
 FFT::~FFT() {
@@ -24,7 +23,7 @@ FFT::~FFT() {
 }
 
 P10Error FFT::transform(const Tensor& input, Tensor& output) const {
-    if (inverse_) {
+    if (type_ == FFTType::Inverse) {
         return inverse(input, output);
     } else {
         return forward(input, output);
@@ -91,7 +90,7 @@ namespace {
 
     P10Result<std::tuple<int64_t, int64_t>> validate_frequency_arguments(const Tensor& frequency) {
         if (frequency.dims() != 3) {
-            return Err(P10Error::InvalidArgument << "Input tensor must have 3 dimensions");
+            return Err(P10Error::InvalidArgument << "Input tensor must have 3 dimensions [N x F x 2]");
         }
         if (frequency.dtype() != Dtype::Float32) {
             return Err(P10Error::InvalidArgument << "Input tensor must have Float32 dtype");

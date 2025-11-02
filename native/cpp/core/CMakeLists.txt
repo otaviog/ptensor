@@ -14,6 +14,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/span3d.hpp
   ${_INCLUDE_DIR}/tensor.hpp
   ${_INCLUDE_DIR}/tensor_options.hpp
+  ${_INCLUDE_DIR}/tensor_print.hpp
   ${_INCLUDE_DIR}/detail/blob.hpp
   ${_INCLUDE_DIR}/detail/string.hpp
   ${_INCLUDE_DIR}/detail/panic.hpp
@@ -34,6 +35,7 @@ target_sources(ptensor
     PRIVATE
     src/p10_error.cpp
     src/tensor.cpp
+    src/tensor_print.cpp
     src/detail/blob.cpp
     src/dtype.cpp
 )

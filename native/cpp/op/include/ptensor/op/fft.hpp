@@ -12,7 +12,8 @@ namespace p10::op {
 
 class FFT {
   public:
-    FFT(size_t nfft, bool inverse);
+  enum FFTType { Forward = false, Inverse = true };
+    FFT(size_t nfft, FFTType type);
     ~FFT();
 
     FFT(const FFT&) = delete;
@@ -24,6 +25,6 @@ class FFT {
     P10Error forward(const Tensor& time, Tensor& frequency) const;
     P10Error inverse(const Tensor& input, Tensor& output) const;
     void* kiss_ = nullptr;
-    bool inverse_ = false;
+    FFTType type_ = FFTType::Forward;
 };
 }  // namespace p10::op

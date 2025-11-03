@@ -165,6 +165,38 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
     }
 }
 
+TEST_CASE("Dtype::match() functionality", "[dtype]") {
+    SECTION("Integer matcher") {
+        auto int_matcher = [](auto type_id) {
+            using T = typename decltype(type_id)::type;
+            return sizeof(T);
+        };
+
+        auto float_matcher = [](auto) {
+            return -1;  // Should not be called for integer types
+        };
+
+        REQUIRE(Dtype::from<int8_t>().match(int_matcher, float_matcher) == 1);
+        REQUIRE(Dtype::from<uint16_t>().match(int_matcher, float_matcher) == 2);
+        REQUIRE(Dtype::from<int32_t>().match(int_matcher, float_matcher) == 4);
+        REQUIRE(Dtype::from<int64_t>().match(int_matcher, float_matcher) == 8);
+    }
+
+    SECTION("Float matcher") {
+        auto int_matcher = [](auto) {
+            return -1;  // Should not be called for float types
+        };
+
+        auto float_matcher = [](auto type_id) {
+            using T = typename decltype(type_id)::type;
+            return sizeof(T);
+        };
+
+        REQUIRE(Dtype::from<float>().match(int_matcher, float_matcher) == 4);
+        REQUIRE(Dtype::from<double>().match(int_matcher, float_matcher) == 8);
+    }
+}
+
 TEST_CASE("to_string() function", "[dtype]") {
     REQUIRE(to_string(Dtype::Float32).length() > 0);
     REQUIRE(to_string(Dtype::Float64).length() > 0);

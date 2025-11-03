@@ -291,14 +291,16 @@ class Tensor {
     }
 
     /// Returns true if the tensor is contiguous.
-    bool is_contiguous() const;
+    bool is_contiguous() const {
+        return is_contiguous_;
+    }
 
     /// Returns a contiguous tensor.
     P10Result<Tensor> to_contiguous() const;
 
     void squeeze();
 
-    P10Result<Tensor> select_dimension(int64_t dim);
+    P10Result<Tensor> select_dimension(int64_t dim, int64_t index);
 
   private:
     Tensor(Blob&& blob, const Shape& shape, const TensorOptions& options) :
@@ -311,12 +313,7 @@ class Tensor {
         set_options(options);
     }
 
-    void set_options(const TensorOptions& options) {
-        dtype_ = options.dtype();
-        stride_ =
-            options.stride().empty() ? Stride::from_contiguous_shape(shape_) : options.stride();
-        axes_ = options.axes().empty() ? Axes(shape_.dims()) : options.axes();
-    }
+    void set_options(const TensorOptions& options);
 
     template<typename T>
     P10Result<T*> data_as() {
@@ -359,5 +356,6 @@ class Tensor {
     Shape shape_;
     Stride stride_;
     Axes axes_;
+    bool is_contiguous_ = true;
 };
 }  // namespace p10

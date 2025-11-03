@@ -35,8 +35,8 @@ class Blob {
 
     ~Blob();
 
-    Blob view() {
-        return Blob(data_, device_);
+    Blob view(size_t offset = 0) {
+        return Blob(static_cast<uint8_t*>(data_) + offset, device_);
     }
 
     template<typename scalar_t>

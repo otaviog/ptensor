@@ -180,7 +180,7 @@ TEST_CASE("Tensor dimensions are tracked correctly", "[tensor][properties]") {
 }
 
 TEST_CASE("Tensor::empty() detects empty tensors", "[tensor][properties]") {
-     SECTION("non-empty tensor") {
+    SECTION("non-empty tensor") {
         auto tensor = Tensor::empty(make_shape({2, 3}).unwrap()).unwrap();
         REQUIRE_FALSE(tensor.empty());
     }
@@ -349,8 +349,9 @@ TEST_CASE("Tensor::as_span1d converts to 1D span", "[tensor][span]") {
     }
 
     SECTION("supports int32 dtype") {
-        auto tensor = Tensor::full(make_shape({5}).unwrap(), 10, TensorOptions().dtype(Dtype::Int32))
-                          .unwrap();
+        auto tensor =
+            Tensor::full(make_shape({5}).unwrap(), 10, TensorOptions().dtype(Dtype::Int32))
+                .unwrap();
         auto span = tensor.as_span1d<int32_t>().unwrap();
 
         REQUIRE(span.size() == 5);
@@ -616,6 +617,193 @@ TEST_CASE("Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]
 
         REQUIRE(result.is_error());
         REQUIRE(result.err().code() == P10Error::InvalidArgument);
+    }
+}
+
+TEST_CASE("Tensor::select_dimension", "[tensor][select_dimension]") {
+    SECTION("Select dimension reduces tensor rank") {
+        auto tensor = Tensor::full(make_shape({3, 4, 5}).unwrap(), 1.0f).unwrap();
+        auto selected = tensor.select_dimension(1, 2).unwrap();
+
+        REQUIRE(selected.dims() == 2);
+        REQUIRE(selected.shape() == make_shape({3, 5}).unwrap());
+        REQUIRE_FALSE(selected.is_contiguous());
+    }
+
+    SECTION("Select first dimension") {
+        auto tensor = Tensor::full(make_shape({3, 4, 5}).unwrap(), 1.0f).unwrap();
+        auto selected = tensor.select_dimension(0, 0).unwrap();
+
+        REQUIRE(selected.dims() == 2);
+        REQUIRE(selected.shape() == make_shape({4, 5}).unwrap());
+        REQUIRE(selected.is_contiguous());
+    }
+
+    SECTION("Select last dimension") {
+        auto tensor = Tensor::full(make_shape({3, 4, 5}).unwrap(), 1.0f).unwrap();
+        auto selected = tensor.select_dimension(2, 3).unwrap();
+
+        REQUIRE(selected.dims() == 2);
+        REQUIRE(selected.shape() == make_shape({3, 4}).unwrap());
+        REQUIRE_FALSE(selected.is_contiguous());
+    }
+
+    SECTION("Select dimension verifies data correctness") {
+        auto tensor = Tensor::from_range(make_shape({2, 3, 4}).unwrap(), Dtype::Float32).unwrap();
+
+        // Tensor data: 0-23 in row-major order
+        // Shape: [2, 3, 4], Stride: [12, 4, 1]
+        // Layout: [[[0,1,2,3], [4,5,6,7], [8,9,10,11]], [[12,13,14,15], [16,17,18,19], [20,21,22,23]]]
+
+        auto selected = tensor.select_dimension(1, 1).unwrap();
+        REQUIRE(selected.dims() == 2);
+        REQUIRE(selected.shape() == make_shape({2, 4}).unwrap());
+
+        // Select middle row (index 1) from each batch
+        // The view is non-contiguous with stride [12, 1]
+        // Starting offset: stride[1] * 1 * 4 bytes = 4 * 4 = 16 bytes (element 4)
+        // This gives us a non-contiguous view: first 4 elements starting at offset 4
+        // then skip 8 elements (due to stride 12), getting next 4 elements
+        auto contiguous = selected.to_contiguous().unwrap();
+        auto selected_data = contiguous.as_span1d<float>().unwrap();
+        REQUIRE(selected_data[0] == Catch::Approx(4.0f));
+        REQUIRE(selected_data[1] == Catch::Approx(5.0f));
+        REQUIRE(selected_data[2] == Catch::Approx(6.0f));
+        REQUIRE(selected_data[3] == Catch::Approx(7.0f));
+        REQUIRE(selected_data[4] == Catch::Approx(16.0f));
+        REQUIRE(selected_data[5] == Catch::Approx(17.0f));
+        REQUIRE(selected_data[6] == Catch::Approx(18.0f));
+        REQUIRE(selected_data[7] == Catch::Approx(19.0f));
+    }
+
+    SECTION("Select dimension on 2D tensor produces 1D") {
+        auto tensor = Tensor::from_range(make_shape({4, 5}).unwrap(), Dtype::Int32).unwrap();
+        auto selected = tensor.select_dimension(0, 2).unwrap();
+
+        REQUIRE(selected.dims() == 1);
+        REQUIRE(selected.shape() == make_shape({5}).unwrap());
+
+        // Should get row 2: elements 10-14
+        auto selected_data = selected.as_span1d<int32_t>().unwrap();
+        for (int i = 0; i < 5; i++) {
+            REQUIRE(selected_data[i] == 10 + i);
+        }
+    }
+
+    SECTION("Select dimension shares data with original") {
+        auto tensor = Tensor::zeros(make_shape({3, 4}).unwrap()).unwrap();
+        auto selected = tensor.select_dimension(0, 1).unwrap();
+
+        // Modify selected view
+        selected.as_span1d<float>().unwrap()[0] = 42.0f;
+
+        // Original tensor should reflect the change
+        auto tensor_data = tensor.as_span1d<float>().unwrap();
+        REQUIRE(tensor_data[4] == Catch::Approx(42.0f));
+    }
+
+    SECTION("Select boundary indices") {
+        auto tensor = Tensor::full(make_shape({5, 3, 2}).unwrap(), 7.0f).unwrap();
+
+        // First index (index 0) - contiguous
+        auto first = tensor.select_dimension(0, 0).unwrap();
+        REQUIRE(first.shape() == make_shape({3, 2}).unwrap());
+        REQUIRE(first.is_contiguous());
+
+        // Last index (index 4) - not contiguous (only index 0 is contiguous for dim 0)
+        auto last = tensor.select_dimension(0, 4).unwrap();
+        REQUIRE(last.shape() == make_shape({3, 2}).unwrap());
+        REQUIRE_FALSE(last.is_contiguous());
+    }
+
+    SECTION("Select dimension with different dtypes") {
+        SECTION("int64") {
+            auto tensor =
+                Tensor::full(make_shape({3, 4}).unwrap(), 100, TensorOptions().dtype(Dtype::Int64))
+                    .unwrap();
+            auto selected = tensor.select_dimension(1, 2).unwrap();
+            REQUIRE(selected.dtype() == Dtype::Int64);
+            REQUIRE(selected.shape() == make_shape({3}).unwrap());
+        }
+
+        SECTION("uint8") {
+            auto tensor = Tensor::full(
+                              make_shape({2, 5, 3}).unwrap(),
+                              255,
+                              TensorOptions().dtype(Dtype::Uint8)
+            )
+                              .unwrap();
+            auto selected = tensor.select_dimension(2, 1).unwrap();
+            REQUIRE(selected.dtype() == Dtype::Uint8);
+            REQUIRE(selected.shape() == make_shape({2, 5}).unwrap());
+        }
+    }
+
+    SECTION("Multiple consecutive selections") {
+        auto tensor = Tensor::from_range(make_shape({4, 3, 2}).unwrap(), Dtype::Float32).unwrap();
+        // Tensor shape: [4, 3, 2], Stride: [6, 2, 1]
+        // Layout: 0,1, 2,3, 4,5, | 6,7, 8,9, 10,11, | 12,13, 14,15, 16,17, | 18,19, 20,21, 22,23
+
+        // First selection: [4, 3, 2] -> [3, 2] at index 1
+        // Offset: 6 * 1 * 4 = 24 bytes (element 6)
+        // New shape: [3, 2], New stride: [2, 1]
+        auto selected1 = tensor.select_dimension(0, 1).unwrap();
+        REQUIRE(selected1.shape() == make_shape({3, 2}).unwrap());
+
+        // Second selection: [3, 2] -> [2] at index 2
+        // Offset from selected1 start: 2 * 2 * 4 = 16 bytes (4 elements from selected1 start)
+        // Absolute position: element 6 + 4 = element 10
+        auto selected2 = selected1.select_dimension(0, 2).unwrap();
+        REQUIRE(selected2.shape() == make_shape({2}).unwrap());
+
+        // Should get elements from tensor[1, 2, :] which is elements 10 and 11
+        auto data = selected2.as_span1d<float>().unwrap();
+        REQUIRE(data[0] == Catch::Approx(10.0f));
+        REQUIRE(data[1] == Catch::Approx(11.0f));
+    }
+
+    SECTION("Error: invalid dimension index") {
+        auto tensor = Tensor::full(make_shape({3, 4, 5}).unwrap(), 1.0f).unwrap();
+
+        auto result1 = tensor.select_dimension(3, 0);
+        REQUIRE(result1.is_error());
+        REQUIRE(result1.err().code() == P10Error::InvalidArgument);
+
+        auto result2 = tensor.select_dimension(-1, 0);
+        REQUIRE(result2.is_error());
+        REQUIRE(result2.err().code() == P10Error::InvalidArgument);
+    }
+
+    SECTION("Error: index out of bounds") {
+        auto tensor = Tensor::full(make_shape({3, 4, 5}).unwrap(), 1.0f).unwrap();
+
+        // Index too large
+        auto result1 = tensor.select_dimension(1, 4);
+        REQUIRE(result1.is_error());
+        REQUIRE(result1.err().code() == P10Error::InvalidArgument);
+
+        auto result2 = tensor.select_dimension(2, 5);
+        REQUIRE(result2.is_error());
+        REQUIRE(result2.err().code() == P10Error::InvalidArgument);
+
+        // Negative index
+        auto result3 = tensor.select_dimension(0, -1);
+        REQUIRE(result3.is_error());
+        REQUIRE(result3.err().code() == P10Error::InvalidArgument);
+    }
+
+    SECTION("Stride preservation") {
+        auto tensor = Tensor::full(make_shape({4, 5, 6}).unwrap(), 1.0f).unwrap();
+
+        // Original strides: [30, 6, 1]
+        REQUIRE(tensor.stride(0).unwrap() == 30);
+        REQUIRE(tensor.stride(1).unwrap() == 6);
+        REQUIRE(tensor.stride(2).unwrap() == 1);
+
+        auto selected = tensor.select_dimension(1, 2).unwrap();
+        // After selecting dim 1, strides should be [30, 1]
+        REQUIRE(selected.stride(0).unwrap() == 30);
+        REQUIRE(selected.stride(1).unwrap() == 1);
     }
 }
 

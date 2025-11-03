@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <numeric>
 #include <span>
 
 #include "detail/tensor_extents.hpp"
@@ -15,11 +14,9 @@ class Stride: public detail::TensorExtents {
   public:
     static Stride from_contiguous_shape(const Shape& shape);
 
-  // Constructor is private to enforce creation via factory methods,
-  // ensuring correct stride initialization and invariants.
-  private:
     Stride(size_t dims) : detail::TensorExtents {dims} {}
 
+  private:
     using TensorExtents::TensorExtents;
 };
 

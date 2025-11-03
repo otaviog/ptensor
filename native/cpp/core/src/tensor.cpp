@@ -2,13 +2,21 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 
 #include "p10_error.hpp"
+#include "ptensor/config.h"
+#include "shape.hpp"
+#include "stride.hpp"
 
 namespace p10 {
 namespace {
     P10Error are_options_valid_for_creation(const TensorOptions& options);
     size_t compute_size_bytes(const Shape& shape, const Dtype& dtype);
+    bool is_stride_contiguous(const Stride& stride, const Shape& shape);
+    template<typename Iter1, typename Iter2>
+    void copy_one_except(Iter1 begin, Iter1 end, size_t index, Iter2 out);
+
 }  // namespace
 
 P10Result<Tensor> Tensor::full(const Shape& shape, double value, const TensorOptions& options) {
@@ -98,15 +106,6 @@ P10Result<Tensor> Tensor::clone() const {
     return Ok(Tensor(std::move(new_blob), shape_, options()));
 }
 
-bool Tensor::is_contiguous() const {
-    for (int i = ((int)shape_.dims()) - 2; i >= 0; --i) {
-        if (stride_[i].unwrap() != shape_[i + 1].unwrap() * stride_[i + 1].unwrap()) {
-            return false;
-        }
-    }
-    return true;
-}
-
 P10Result<Tensor> Tensor::to_contiguous() const {
     if (is_contiguous()) {
         return clone();
@@ -173,6 +172,47 @@ void Tensor::squeeze() {
     shape_ = make_shape(shape).unwrap();
 }
 
+P10Result<Tensor> Tensor::select_dimension(int64_t dim, int64_t index) {
+    if (dim >= int64_t(dims()) || dim < 0) {
+        return Err(
+            P10Error::InvalidArgument << "Cannot select dimension " + std::to_string(dim)
+                + ": must be in range [0, " + std::to_string(dims()) + ")"
+        );
+    }
+
+    if (index < 0 || index >= shape_[dim].unwrap()) {
+        return Err(
+            P10Error::InvalidArgument << "Cannot select index " + std::to_string(index)
+                + " from dimension " + std::to_string(dim) + ": must be in range [0, "
+                + std::to_string(shape_[dim].unwrap()) + ")"
+        );
+    }
+
+    Shape select_shape(size_t(dims() - 1));
+    copy_one_except(shape_.begin(), shape_.end(), size_t(dim), select_shape.begin());
+    Stride select_stride(size_t(dims() - 1));
+    copy_one_except(stride_.begin(), stride_.end(), size_t(dim), select_stride.begin());
+
+    const auto offset = stride_[dim].unwrap() * index * dtype_.size();
+
+    Tensor select(blob_.view(offset), select_shape, options().stride(select_stride));
+    select.is_contiguous_ = (dim == 0) ? is_contiguous_ : false;
+    return Ok(std::move(select));
+}
+
+void Tensor::set_options(const TensorOptions& options) {
+    dtype_ = options.dtype();
+    if (options.stride().empty()) {
+        stride_ = Stride::from_contiguous_shape(shape_);
+        is_contiguous_ = true;
+    } else {
+        stride_ = options.stride();
+        is_contiguous_ = is_stride_contiguous(stride_, shape_);
+    }
+
+    axes_ = options.axes().empty() ? Axes(shape_.dims()) : options.axes();
+}
+
 namespace {
     P10Error are_options_valid_for_creation(const TensorOptions& options) {
         if (options.device() != Device::Cpu) {
@@ -186,6 +226,22 @@ namespace {
     size_t compute_size_bytes(const Shape& shape, const Dtype& dtype) {
         return shape.count() * dtype.size();
     }
+
+    bool is_stride_contiguous(const Stride& stride, const Shape& shape) {
+        for (int i = ((int)shape.dims()) - 2; i >= 0; --i) {
+            if (stride[i].unwrap() != shape[i + 1].unwrap() * stride[i + 1].unwrap()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    template<typename Iter1, typename Iter2>
+    void copy_one_except(Iter1 begin, Iter1 end, size_t index, Iter2 out) {
+        std::copy(begin, begin + index, out);
+        std::copy(begin + index + 1, end, out + index);
+    }
+
 }  // namespace
 
 }  // namespace p10

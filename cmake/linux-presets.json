@@ -63,8 +63,14 @@
   "buildPresets": [
     {
       "name": "lin-debug",
+      "configurePreset": "lin-debug"
+    },
+    {
+      "name": "lin-debug-install",
       "configurePreset": "lin-debug",
-      "displayName": "Dev debug (clang)"
+      "targets": [
+        "install"
+      ]
     },
     {
       "name": "lin-release",

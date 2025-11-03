@@ -24,11 +24,6 @@ namespace detail {
             return dims_;
         }
 
-        /// Checks if the shape is empty, that is, it has no dimensions.
-        bool empty() const {
-            return dims_ == 0;
-        }
-
         std::span<int64_t> as_span() {
             return std::span<int64_t>(extent_.data(), dims_);
         }

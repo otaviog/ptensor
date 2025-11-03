@@ -91,7 +91,7 @@ TEST_CASE("Shape empty initialization", "[shape][creation]") {
     auto shape = make_shape({}).unwrap();
     REQUIRE(shape.dims() == 0);
     REQUIRE(shape.empty());
-    REQUIRE(shape.count() == 1);  // Empty shape has count of 1 (scalar)
+    REQUIRE(shape.count() == 0);
 }
 
 // ============================================================================
@@ -128,7 +128,7 @@ TEST_CASE("Shape with large dimensions", "[shape][validation]") {
 // ============================================================================
 
 TEST_CASE("Shape::count calculates total elements", "[shape][properties]") {
-    REQUIRE(make_shape({}).unwrap().count() == 1);
+    REQUIRE(make_shape({}).unwrap().count() == 0);
     REQUIRE(make_shape({5}).unwrap().count() == 5);
     REQUIRE(make_shape({2, 3}).unwrap().count() == 6);
     REQUIRE(make_shape({2, 3, 4}).unwrap().count() == 24);

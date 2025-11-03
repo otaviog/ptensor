@@ -11,8 +11,16 @@ namespace p10 {
 class Shape: public detail::TensorExtents {
   public:
     int64_t count() const {
+        if (dims_ == 0) {
+            return 0;
+        }
         const auto shape = as_span();
         return std::accumulate(shape.begin(), shape.end(), int64_t {1}, std::multiplies<int64_t>());
+    }
+
+    /// Checks if the shape is empty, that is, it has no dimensions.
+    bool empty() const {
+        return count() == 0;
     }
 
     using TensorExtents::TensorExtents;
@@ -47,6 +55,5 @@ inline Shape make_shape(int64_t s0, int64_t s1, int64_t s2, int64_t s3) {
 inline std::string to_string(const Shape& shape) {
     return detail::to_string(shape);
 }
-
 
 }  // namespace p10

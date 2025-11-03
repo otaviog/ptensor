@@ -9,6 +9,10 @@ Stride Stride::from_contiguous_shape(const Shape& shape) {
     const size_t dims = shape.dims();
     Stride stride {dims};
 
+    if (dims == 0) {
+        return stride;
+    }
+
     auto stride_span = stride.as_span();
     auto shape_span = shape.as_span();
     stride_span[dims - 1] = 1;

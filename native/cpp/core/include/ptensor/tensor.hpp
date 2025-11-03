@@ -8,6 +8,7 @@
 #include "detail/complex_traits.hpp"
 #include "device.hpp"
 #include "dtype.hpp"
+#include "p10_error.hpp"
 #include "p10_result.hpp"
 #include "shape.hpp"
 #include "span2d.hpp"
@@ -96,7 +97,7 @@ class Tensor {
     Tensor(Tensor&&) = default;
     Tensor& operator=(Tensor&&) = default;
 
-    /// Checks if the tensor is empty.
+    /// Checks if the tensor is empty (has zero dimensions or zero elements).
     bool empty() const {
         return shape_.empty();
     }
@@ -302,6 +303,19 @@ class Tensor {
 
     P10Result<Tensor> select_dimension(int64_t dim, int64_t index);
 
+    /// Reshapes the tensor to the given shape.
+    /// # Arguments
+    /// * `new_shape` - The new shape of the tensor.
+    /// # Returns
+    /// * A tensor with the new shape. If the reshape is not possible, returns an error.
+    P10Result<Tensor> reshape(const Shape& new_shape);
+
+    /// Transposes a 2D tensor.
+    /// # Arguments
+    /// * `other` - The transposed tensor.
+    /// # Returns
+    /// * An error if the tensor is not 2D or not contiguous or device is not CPU.
+    P10Error transpose(Tensor &other) const;
   private:
     Tensor(Blob&& blob, const Shape& shape, const TensorOptions& options) :
         blob_ {std::move(blob)},

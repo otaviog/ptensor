@@ -16,6 +16,11 @@ class Stride: public detail::TensorExtents {
 
     Stride(size_t dims) : detail::TensorExtents {dims} {}
 
+    /// Checks if the shape is empty, that is, it has no dimensions.
+    bool empty() const {
+        return dims_ == 0;
+    }
+
   private:
     using TensorExtents::TensorExtents;
 };
@@ -26,6 +31,22 @@ inline P10Result<Stride> make_stride(const std::initializer_list<int64_t>& shape
 
 inline P10Result<Stride> make_stride(std::span<const int64_t> shape) {
     return detail::make_extent<Stride>(shape);
+}
+
+inline Stride make_stride(int64_t s0) {
+    return make_stride({s0}).unwrap();
+}
+
+inline Stride make_stride(int64_t s0, int64_t s1) {
+    return make_stride({s0, s1}).unwrap();
+}
+
+inline Stride make_stride(int64_t s0, int64_t s1, int64_t s2) {
+    return make_stride({s0, s1, s2}).unwrap();
+}
+
+inline Stride make_stride(int64_t s0, int64_t s1, int64_t s2, int64_t s3) {
+    return make_stride({s0, s1, s2, s3}).unwrap();
 }
 
 /// Converts a stride to a string.

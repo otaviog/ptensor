@@ -3,7 +3,7 @@
 #include "axis.hpp"
 #include "device.hpp"
 #include "dtype.hpp"
-#include "shape.hpp"
+#include "stride.hpp"
 
 namespace p10 {
 

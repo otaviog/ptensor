@@ -10,6 +10,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/device.hpp
   ${_INCLUDE_DIR}/dtype.hpp
   ${_INCLUDE_DIR}/shape.hpp
+  ${_INCLUDE_DIR}/stride.hpp
   ${_INCLUDE_DIR}/span2d.hpp
   ${_INCLUDE_DIR}/span3d.hpp
   ${_INCLUDE_DIR}/tensor.hpp
@@ -19,6 +20,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/detail/string.hpp
   ${_INCLUDE_DIR}/detail/panic.hpp
   ${_INCLUDE_DIR}/detail/tensor_extents.hpp
+  ${_INCLUDE_DIR}/detail/complex_traits.hpp
   )
 
 target_sources(ptensor
@@ -34,6 +36,7 @@ set_source_files_properties(${PUBLIC_HEADERS} PROPERTIES VS_FOLDER "Public Heade
 target_sources(ptensor
     PRIVATE
     src/p10_error.cpp
+    src/stride.cpp
     src/tensor.cpp
     src/tensor_print.cpp
     src/detail/blob.cpp

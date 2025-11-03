@@ -12,6 +12,7 @@
 #include "shape.hpp"
 #include "span2d.hpp"
 #include "span3d.hpp"
+#include "stride.hpp"
 #include "tensor_options.hpp"
 
 namespace p10 {
@@ -297,6 +298,8 @@ class Tensor {
 
     void squeeze();
 
+    P10Result<Tensor> select_dimension(int64_t dim);
+
   private:
     Tensor(Blob&& blob, const Shape& shape, const TensorOptions& options) :
         blob_ {std::move(blob)},
@@ -310,7 +313,8 @@ class Tensor {
 
     void set_options(const TensorOptions& options) {
         dtype_ = options.dtype();
-        stride_ = options.stride().empty() ? Stride(shape_) : options.stride();
+        stride_ =
+            options.stride().empty() ? Stride::from_contiguous_shape(shape_) : options.stride();
         axes_ = options.axes().empty() ? Axes(shape_.dims()) : options.axes();
     }
 

@@ -48,30 +48,5 @@ inline std::string to_string(const Shape& shape) {
     return detail::to_string(shape);
 }
 
-/// A class representing the strides of a tensor.
-class Stride: public detail::TensorExtents {
-  public:
-    Stride(const Shape& shape) : detail::TensorExtents {shape.dims()} {
-        extent_[dims_ - 1] = 1;
-        for (int i = int(dims_) - 2; i >= 0; i--) {
-            extent_[i] = shape.extent_[i + 1] * extent_[i + 1];
-        }
-    }
 
-  private:
-    using TensorExtents::TensorExtents;
-};
-
-inline P10Result<Stride> make_stride(const std::initializer_list<int64_t>& shape) {
-    return detail::make_extent<Stride>(shape);
-}
-
-inline P10Result<Stride> make_stride(std::span<const int64_t> shape) {
-    return detail::make_extent<Stride>(shape);
-}
-
-/// Converts a stride to a string.
-inline std::string to_string(const Stride& stride) {
-    return detail::to_string(stride);
-}
 }  // namespace p10

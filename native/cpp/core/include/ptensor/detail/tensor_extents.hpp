@@ -17,6 +17,7 @@ namespace detail {
         using const_iterator = std::array<int64_t, P10_MAX_SHAPE>::const_iterator;
 
         TensorExtents() = default;
+        TensorExtents(size_t dims) : dims_(dims) {}
 
         /// The number of dimensions in the tensor.
         size_t dims() const {
@@ -66,6 +67,14 @@ namespace detail {
             return extent_.data() + dims_;
         }
 
+        int64_t* begin() {
+            return extent_.data();
+        }
+
+        int64_t* end() {
+            return extent_.data() + dims_;
+        }
+        
         int64_t front() const {
             if (dims_ == 0) {
                 return 0;
@@ -85,15 +94,13 @@ namespace detail {
             dims_ = shape.size();
         }
 
-        TensorExtents(size_t dims) : dims_(dims) {}
-
         template<typename iterator_t>
         TensorExtents(iterator_t begin_it, iterator_t end_it) :
             dims_ {size_t(std::distance(begin_it, end_it))} {
             std::copy(begin_it, end_it, extent_.begin());
         }
 
-        std::array<int64_t, P10_MAX_SHAPE> extent_ {};
+        std::array<int64_t, P10_MAX_SHAPE> extent_ {0};
         size_t dims_ = 0;
 
         template<typename extent_t>

@@ -2,8 +2,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <ptensor/op/elemwise.hpp>
-#include <ptensor/op/image.hpp>
-#include <ptensor/op/resize.hpp>
 #include <ptensor/tensor.hpp>
 
 namespace p10::op {

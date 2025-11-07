@@ -4,8 +4,6 @@
 #include <ptensor/op/image.hpp>
 #include <ptensor/tensor.hpp>
 
-#include "testing.hpp"
-
 namespace p10::op {
 
 TEST_CASE("Image to tensor", "[imageop]") {

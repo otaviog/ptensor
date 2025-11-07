@@ -1,9 +1,12 @@
 #include <complex>
+#include <iostream>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <ptensor/io/image.hpp>
 #include <ptensor/op/fft.hpp>
+#include <ptensor/tensor_print.hpp>
+#include <ptensor/testing/catch2_assertions.hpp>
 
 namespace p10::op {
 TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
@@ -22,20 +25,20 @@ TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
         make_shape(1, frequency_data.size(), 2)
     );
 
-    FFT fft(frequency_data.size(), FFT::Inverse);
+    const size_t signal_size = (frequency_data.size() - 1) * 2;
+    Fft ifft(signal_size, FftOptions().direction(Fft::Inverse).normalize(Fft::ByN));
     Tensor signal;
 
-    REQUIRE(fft.transform(frequency, signal).is_ok());
-    REQUIRE(signal.shape() == make_shape(1, 14, 2));
+    REQUIRE(ifft.transform(frequency, signal).is_ok());
+    REQUIRE(signal.shape() == make_shape(1, signal_size));
+    std::cout << "Time-domain signal:\n " << p10::to_string(signal) << std::endl;
 
     // Now perform forward FFT
-    FFT ifft(frequency_data.size(), FFT::Forward);
+    Fft fft(signal_size, Fft::Forward);
     Tensor recovered_frequency;
-    REQUIRE(ifft.transform(signal, recovered_frequency).is_ok());
-    REQUIRE(recovered_frequency.shape() == make_shape(frequency_data.size(), 2));
-    auto recovered_span = recovered_frequency.as_span1d<std::complex<float>>().unwrap();
-    for (size_t i = 0; i < frequency_data.size(); i++) {
-        REQUIRE(std::abs(recovered_span[i] - frequency_data[i]) < 1e-5f);
-    }
+
+    REQUIRE(fft.transform(signal, recovered_frequency).is_ok());
+    std::cout << "Frequency-domain signal:\n " << p10::to_string(recovered_frequency) << std::endl;
+    REQUIRE_THAT(testing::compare_tensors(recovered_frequency, frequency), testing::IsOk());
 }
 }  // namespace p10::op

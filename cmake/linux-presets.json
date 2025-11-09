@@ -25,6 +25,18 @@
       "displayName": "Dev debug (clang)",
       "description": "Development DEBUG build with Ninja using clang as compiler",
       "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-O0",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "inherits": "clang-base-dev",
+      "name": "lin-debug-asan",
+      "hidden": false,
+      "displayName": "Dev debug asan (clang)",
+      "description": "Development DEBUG with address sanitizer build with Ninja using clang as compiler",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-fsanitize=address -O0",
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },

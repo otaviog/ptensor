@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <optional>
 
+#include <type_traits>
+
 #include "axis.hpp"
 #include "detail/blob.hpp"
 #include "detail/complex_traits.hpp"
@@ -175,7 +177,11 @@ class Tensor {
         if (!data_res.is_ok()) {
             return Err(data_res.err());
         }
-        return Ok(std::span<const scalar_t>(blob_.data<scalar_t>(), size()));
+        auto elem_count = size();
+        if constexpr (detail::is_complex_v<std::remove_const_t<scalar_t>>) {
+            elem_count /= 2;
+        }
+        return Ok(std::span<const scalar_t>(blob_.data<scalar_t>(), elem_count));
     }
 
     template<typename scalar_t>
@@ -184,32 +190,33 @@ class Tensor {
         if (!data_res.is_ok()) {
             return Err(data_res.err());
         }
-        return Ok(std::span<scalar_t> {blob_.data<scalar_t>(), size()});
+        auto elem_count = size();
+        if constexpr (detail::is_complex_v<std::remove_const_t<scalar_t>>) {
+            elem_count /= 2;
+        }
+        return Ok(std::span<scalar_t> {blob_.data<scalar_t>(), elem_count});
     }
 
     template<typename T>
     P10Result<Span2D<T>> as_span2d() {
-        if (dims() != 2) {
-            return Err(P10Error::InvalidArgument << "Tensor must have 2 dimensions");
-        }
-        auto shape = shape_.as_span();
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_span2d<T>());
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
             return Err(data_res.err());
         }
+        const auto shape = shape_.as_span();
         return Ok(Span2D<T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1])});
     }
 
     template<typename T>
     P10Result<Span2D<const T>> as_span2d() const {
-        if (dims() != 2) {
-            return Err(P10Error::InvalidArgument, "Tensor must have 2 dimensions");
-        }
-        auto shape = shape_.as_span();
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_span2d<T>());
+
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
             return Err(data_res.err());
         }
+        const auto shape = shape_.as_span();
         return Ok(Span2D<const T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1])});
     }
 
@@ -315,7 +322,10 @@ class Tensor {
     /// * `other` - The transposed tensor.
     /// # Returns
     /// * An error if the tensor is not 2D or not contiguous or device is not CPU.
-    P10Error transpose(Tensor &other) const;
+    P10Error transpose(Tensor& other) const;
+
+    P10Error fill(double value);
+
   private:
     Tensor(Blob&& blob, const Shape& shape, const TensorOptions& options) :
         blob_ {std::move(blob)},
@@ -347,7 +357,7 @@ class Tensor {
 
     template<typename T>
     P10Error validate_dtype() const {
-        if constexpr (detail::is_complex<T>::value) {
+        if constexpr (detail::is_complex<std::remove_const_t<T>>::value) {
             if (dtype_ != Dtype::from<typename T::value_type>()) {
                 return P10Error(P10Error::InvalidArgument, "Invalid dtype");
             }
@@ -360,6 +370,21 @@ class Tensor {
         } else {
             if (dtype_ != Dtype::from<T>()) {
                 return P10Error(P10Error::InvalidArgument, "Invalid dtype");
+            }
+        }
+        return P10Error::Ok;
+    }
+
+    template<typename T>
+    P10Error check_dims_for_span2d() const {
+        if constexpr (detail::is_complex_v<std::remove_const_t<T>>) {
+            if (dims() != 3) {
+                return P10Error::InvalidArgument
+                    << "Tensor must have 3 dimensions [N x T x 2] for complex types";
+            }
+        } else {
+            if (dims() != 2) {
+                return P10Error::InvalidArgument << "Tensor must have 2 dimensions";
             }
         }
         return P10Error::Ok;

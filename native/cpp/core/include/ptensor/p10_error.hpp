@@ -3,6 +3,7 @@
 #include <string>
 
 #include <ptensor/ptensor_error.h>
+
 #include "detail/panic.hpp"
 
 namespace p10 {
@@ -69,3 +70,13 @@ inline P10Error operator<<(P10Error::Code code, std::string_view message) {
     return P10Error(code, message);
 }
 }  // namespace p10
+
+#define P10_RETURN_IF_ERROR(expr) \
+    if (auto err = (expr); err.is_error()) { \
+        return err; \
+    }
+
+#define P10_RETURN_ERR_IF_ERROR(expr) \
+    if (auto err = (expr); err.is_error()) { \
+        return Err(err); \
+    }

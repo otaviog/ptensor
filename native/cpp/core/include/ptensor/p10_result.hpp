@@ -73,6 +73,7 @@ P10Result<OkType> Ok(OkType&& value) {
     return P10Result<OkType> {std::forward<OkType>(value)};
 }
 
+
 /// Helper class for template argument deduction for Err function
 /// Unlike Ok, Err needs to deduce the template type from the context
 /// so we use this intermediate struct to hold the error and convert it to PtensorResult<T>

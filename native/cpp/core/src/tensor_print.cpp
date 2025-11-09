@@ -14,7 +14,8 @@ std::string to_string(const Tensor& tensor, const TensorStringOptions& options) 
     size_t max_elements = options.max_elements().value_or(tensor.size());
     tensor.visit([&](auto span) {
         using SpanType = decltype(span)::value_type;
-        for (size_t i = 0; i < tensor.size(); i++) {
+        const size_t tensor_size = tensor.size();
+        for (size_t i = 0; i < tensor_size; i++) {
             if (printed_elements >= max_elements) {
                 result << "...";
                 break;

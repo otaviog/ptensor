@@ -292,7 +292,7 @@ P10Error Tensor::transpose(Tensor& other) const {
             auto dest_span = other.as_span2d<scalar_t>().unwrap();
             const auto rows = src_span.height();
             const auto cols = src_span.width();
-    
+
             for (size_t r = 0; r < rows; r++) {
                 const auto src_row = src_span.row(r);
                 for (size_t c = 0; c < cols; c++) {
@@ -302,6 +302,18 @@ P10Error Tensor::transpose(Tensor& other) const {
         },
         as_bytes()
     );
+    return P10Error::Ok;
+}
+
+P10Error Tensor::fill(double value) {
+    if (device() != Device::Cpu) {
+        return P10Error::NotImplemented << "Fill is only implemented for CPU tensors";
+    }
+
+    visit([value](auto span) {
+        using scalar_t = typename std::decay_t<decltype(span)>::value_type;
+        std::fill(span.begin(), span.end(), static_cast<scalar_t>(value));
+    });
     return P10Error::Ok;
 }
 

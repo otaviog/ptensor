@@ -10,8 +10,10 @@
 
 namespace p10::op {
 TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
-    std::array<std::complex<float>, 8> frequency_data = {
+    constexpr size_t NUM_FFTS = 9;
+    std::array<std::complex<float>, NUM_FFTS> frequency_data = {
         std::complex<float> {1.0f, 0.0f},
+        std::complex<float> {0.0f, 0.0f},
         std::complex<float> {0.0f, 0.0f},
         std::complex<float> {0.0f, 0.0f},
         std::complex<float> {0.0f, 0.0f},
@@ -24,21 +26,37 @@ TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
         reinterpret_cast<float*>(frequency_data.data()),
         make_shape(1, frequency_data.size(), 2)
     );
+    //std::cout << "Frequency-domain signal:\n " << p10::to_string(frequency) << std::endl;
 
-    const size_t signal_size = (frequency_data.size() - 1) * 2;
-    Fft ifft(signal_size, FftOptions().direction(Fft::Inverse).normalize(Fft::ByN));
-    Tensor signal;
+    SECTION("Should inverse into complex and forward FFT correctly") {
+        Fft ifft(NUM_FFTS, FftOptions().direction(Fft::Inverse).normalize(Fft::ByN));
 
-    REQUIRE(ifft.transform(frequency, signal).is_ok());
-    REQUIRE(signal.shape() == make_shape(1, signal_size));
-    std::cout << "Time-domain signal:\n " << p10::to_string(signal) << std::endl;
+        Tensor signal;
+        REQUIRE(ifft.transform(frequency, signal).is_ok());
+        REQUIRE(signal.shape() == make_shape(1, NUM_FFTS, 2));
+        // Debug output removed to keep test results clean
+        Fft fft(NUM_FFTS, Fft::Forward);
+        Tensor recovered_frequency;
 
-    // Now perform forward FFT
-    Fft fft(signal_size, Fft::Forward);
-    Tensor recovered_frequency;
+        REQUIRE(fft.transform(signal, recovered_frequency).is_ok());
+        REQUIRE_THAT(testing::compare_tensors(recovered_frequency, frequency), testing::IsOk());
+    }
 
-    REQUIRE(fft.transform(signal, recovered_frequency).is_ok());
-    std::cout << "Frequency-domain signal:\n " << p10::to_string(recovered_frequency) << std::endl;
-    REQUIRE_THAT(testing::compare_tensors(recovered_frequency, frequency), testing::IsOk());
+    SECTION("Should inverse into real and forward FFT correctly") {
+        Fft ifft(NUM_FFTS, FftOptions().direction(Fft::InverseReal));
+
+        Tensor signal;
+        REQUIRE(ifft.transform(frequency, signal).is_ok());
+        REQUIRE(signal.shape() == make_shape(1, (NUM_FFTS - 1) * 2));
+        // Debug output removed to keep test results clean
+
+        // Now perform forward FFT
+        Fft fft(NUM_FFTS, Fft::ForwardReal);
+        Tensor recovered_frequency;
+
+        REQUIRE(fft.transform(signal, recovered_frequency).is_ok());
+        // Debug output removed to keep test results clean
+        REQUIRE_THAT(testing::compare_tensors(recovered_frequency, frequency), testing::IsOk());
+    }
 }
 }  // namespace p10::op

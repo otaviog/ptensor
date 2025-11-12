@@ -18,6 +18,8 @@ namespace {
     bool is_stride_contiguous(const Stride& stride, const Shape& shape);
     template<typename Iter1, typename Iter2>
     void copy_one_except(Iter1 begin, Iter1 end, size_t index, Iter2 out);
+    P10Error
+    check_reshapeability(const Shape& old_shape, const Shape& new_shape, bool is_contiguous);
 
 }  // namespace
 
@@ -26,7 +28,7 @@ P10Result<Tensor> Tensor::full(const Shape& shape, double value, const TensorOpt
         return Ok(Tensor(options));
     }
 
-    const auto size = shape.count() * options.dtype().size();
+    const auto size = shape.count() * options.dtype().size_bytes();
     auto blob = Blob::allocate(size);
     options.dtype().visit(
         [value, &shape](auto span) {
@@ -73,6 +75,27 @@ P10Result<Tensor> Tensor::empty(const Shape& shape, const TensorOptions& options
 
     auto blob = Blob::allocate(size);
     return Ok(Tensor(std::move(blob), shape, options));
+}
+
+Tensor::Tensor(Tensor&& other) :
+    blob_(std::move(other.blob_)),
+    dtype_(other.dtype_),
+    shape_(std::move(other.shape_)),
+    stride_(std::move(other.stride_)),
+    axes_(std::move(other.axes_)),
+    is_contiguous_(other.is_contiguous_) {
+    other.dtype_ = Dtype::Float32;
+}
+
+Tensor& Tensor::operator=(Tensor&& other) {
+    blob_ = std::move(other.blob_);
+    dtype_ = other.dtype_;
+    shape_ = std::move(other.shape_);
+    stride_ = std::move(other.stride_);
+    axes_ = std::move(other.axes_);
+    is_contiguous_ = other.is_contiguous_;
+    other.dtype_ = Dtype::Float32;
+    return *this;
 }
 
 P10Error Tensor::create(const Shape& shape, const TensorOptions& options) {
@@ -170,8 +193,62 @@ void Tensor::squeeze() {
         }
         shape = shape.subspan(0, shape.size() - 1);
     }
-
+    // TODO: fix strides
     shape_ = make_shape(shape).unwrap();
+}
+
+P10Error Tensor::unsqueeze(int64_t dim) {
+    if (dim < 0 || dim > int64_t(dims())) {
+        return P10Error::InvalidArgument << "Cannot unsqueeze at dimension " + std::to_string(dim)
+            + ": must be in range [0, " + std::to_string(dims()) + "]";
+    }
+
+    auto new_shape_res = Shape::zeros(size_t(dims() + 1));
+    if (new_shape_res.is_error()) {
+        return new_shape_res.err();
+    }
+
+    auto new_stride_res = Stride::zeros(size_t(dims() + 1));
+    if (new_stride_res.is_error()) {
+        return new_stride_res.err();
+    }
+
+    auto old_shape_s = shape_.as_span();
+
+    auto new_shape = new_shape_res.unwrap();
+    auto new_shape_s = new_shape.as_span();
+
+    auto stride_s = stride_.as_span();
+    auto new_stride = new_stride_res.unwrap();
+    auto new_stride_s = new_stride.as_span();
+
+    if (dim == 0) {
+        // When inserting at position 0, stride should be the product of all dimensions in the old shape
+        int64_t prod = 1;
+        for (size_t i = 0; i < old_shape_s.size(); ++i) {
+            prod *= old_shape_s[i];
+        }
+        new_stride_s[0] = prod;
+    } else {
+        new_stride_s[0] = stride_s[0];
+    }
+    for (size_t i = 1; i <= size_t(dim); ++i) {
+        new_stride_s[i] = stride_s[i - 1];
+    }
+    for (size_t i = size_t(dim) + 1; i < new_stride.dims(); ++i) {
+        new_stride_s[i] = stride_s[i - 1];
+    }
+    for (size_t i = 0; i < size_t(dim); ++i) {
+        new_shape_s[i] = old_shape_s[i];
+    }
+    new_shape_s[size_t(dim)] = 1;
+    for (size_t i = size_t(dim); i < dims(); ++i) {
+        new_shape_s[i + 1] = old_shape_s[i];
+    }
+
+    shape_ = new_shape;
+    stride_ = new_stride;
+    return P10Error::Ok;
 }
 
 P10Result<Tensor> Tensor::select_dimension(int64_t dim, int64_t index) {
@@ -195,7 +272,7 @@ P10Result<Tensor> Tensor::select_dimension(int64_t dim, int64_t index) {
     Stride select_stride(size_t(dims() - 1));
     copy_one_except(stride_.begin(), stride_.end(), size_t(dim), select_stride.begin());
 
-    const auto offset = stride_[dim].unwrap() * index * dtype_.size();
+    const auto offset = stride_[dim].unwrap() * index * dtype_.size_bytes();
 
     Tensor select(blob_.view(offset), select_shape, options().stride(select_stride));
     select.is_contiguous_ = (dim == 0) ? is_contiguous_ : false;
@@ -216,58 +293,27 @@ void Tensor::set_options(const TensorOptions& options) {
 }
 
 P10Result<Tensor> Tensor::reshape(const Shape& new_shape) {
-    if (shape_.count() != new_shape.count()) {
-        return Err(
-            P10Error::InvalidArgument << "Cannot reshape tensor of size " + std::to_string(size())
-                + " to shape with size " + std::to_string(new_shape.count())
-        );
-    }
-
     Stride new_stride = Stride::from_contiguous_shape(new_shape);
-    if (!is_contiguous_ && shape_.count() > 0 && new_shape.count() > 0) {
-        // Check if the reshape is possible with the current stride
-        size_t old_dim = 0;
-        size_t new_dim = 0;
-        size_t old_size = shape_[0].unwrap();
-        size_t new_size = new_shape[0].unwrap();
 
-        while (old_dim < dims() && new_dim < new_shape.dims()) {
-            if (old_size == new_size) {
-                old_dim++;
-                new_dim++;
-                if (old_dim < dims()) {
-                    old_size = shape_[old_dim].unwrap();
-                }
-                if (new_dim < new_shape.dims()) {
-                    new_size = new_shape[new_dim].unwrap();
-                }
-            } else if (old_size < new_size) {
-                old_dim++;
-                if (old_dim < dims()) {
-                    old_size *= shape_[old_dim].unwrap();
-                }
-            } else {  // old_size > new_size
-                new_dim++;
-                if (new_dim < new_shape.dims()) {
-                    new_size *= new_shape[new_dim].unwrap();
-                }
-            }
-        }
-
-        if (old_dim != dims() || new_dim != new_shape.dims()) {
-            return Err(
-                P10Error::InvalidArgument
-                << "Cannot reshape tensor with non-contiguous layout to the desired shape"
-            );
-        }
-    }
-
+    P10_RETURN_ERR_IF_ERROR(check_reshapeability(shape(), new_shape, is_contiguous()));
     Tensor reshaped_tensor = this->as_view();
     reshaped_tensor.shape_ = new_shape;
     reshaped_tensor.stride_ = new_stride;
     reshaped_tensor.is_contiguous_ = is_stride_contiguous(new_stride, new_shape);
 
     return Ok(std::move(reshaped_tensor));
+}
+
+P10Error Tensor::reshape_inplace(const Shape& new_shape) {
+    Stride new_stride = Stride::from_contiguous_shape(new_shape);
+
+    P10_RETURN_IF_ERROR(check_reshapeability(shape(), new_shape, is_contiguous()));
+
+    shape_ = new_shape;
+    stride_ = new_stride;
+    is_contiguous_ = is_stride_contiguous(new_stride, new_shape);
+
+    return P10Error::Ok;
 }
 
 P10Error Tensor::transpose(Tensor& other) const {
@@ -317,6 +363,18 @@ P10Error Tensor::fill(double value) {
     return P10Error::Ok;
 }
 
+P10Error Tensor::copy_from(const Tensor& src) {
+    if (!src.is_contiguous()) {
+        return P10Error::NotImplemented << "Copy is only implemented for contiguous tensors";
+    }
+
+    P10_RETURN_IF_ERROR(create(src.shape(), src.options()));
+
+    std::memcpy(as_bytes().data(), src.as_bytes().data(), src.size_bytes());
+
+    return P10Error::Ok;
+}
+
 namespace {
     P10Error are_options_valid_for_creation(const TensorOptions& options) {
         if (options.device() != Device::Cpu) {
@@ -328,7 +386,7 @@ namespace {
     }
 
     size_t compute_size_bytes(const Shape& shape, const Dtype& dtype) {
-        return shape.count() * dtype.size();
+        return shape.count() * dtype.size_bytes();
     }
 
     bool is_stride_contiguous(const Stride& stride, const Shape& shape) {
@@ -347,6 +405,55 @@ namespace {
     void copy_one_except(Iter1 begin, Iter1 end, size_t index, Iter2 out) {
         std::copy(begin, begin + index, out);
         std::copy(begin + index + 1, end, out + index);
+    }
+
+    P10Error
+    check_reshapeability(const Shape& old_shape, const Shape& new_shape, bool is_contiguous) {
+        if (old_shape.count() != new_shape.count()) {
+            return P10Error::InvalidArgument << "Cannot reshape tensor of size "
+                + std::to_string(old_shape.count()) + " to shape with size "
+                + std::to_string(new_shape.count());
+        }
+
+        const auto dims = old_shape.dims();
+
+        if (!is_contiguous && old_shape.count() > 0 && new_shape.count() > 0) {
+            // Check if the reshape is possible with the current stride
+            size_t old_dim = 0;
+            size_t new_dim = 0;
+            size_t old_size = old_shape[0].unwrap();
+            size_t new_size = new_shape[0].unwrap();
+
+            while (old_dim < dims && new_dim < new_shape.dims()) {
+                if (old_size == new_size) {
+                    old_dim++;
+                    new_dim++;
+                    if (old_dim < dims) {
+                        old_size = old_shape[old_dim].unwrap();
+                    }
+                    if (new_dim < new_shape.dims()) {
+                        new_size = new_shape[new_dim].unwrap();
+                    }
+                } else if (old_size < new_size) {
+                    old_dim++;
+                    if (old_dim < dims) {
+                        old_size *= old_shape[old_dim].unwrap();
+                    }
+                } else {  // old_size > new_size
+                    new_dim++;
+                    if (new_dim < new_shape.dims()) {
+                        new_size *= new_shape[new_dim].unwrap();
+                    }
+                }
+            }
+
+            if (old_dim != dims || new_dim != new_shape.dims()) {
+                return P10Error::InvalidArgument
+                    << "Cannot reshape tensor with non-contiguous layout to the desired shape";
+            }
+        }
+
+        return P10Error::Ok;
     }
 
 }  // namespace

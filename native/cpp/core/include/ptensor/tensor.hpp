@@ -90,14 +90,18 @@ class Tensor {
 
     P10Error create(const Shape& shape, const TensorOptions& options = TensorOptions());
 
+    P10Error create_like(const Tensor& other) {
+        return create(other.shape(), other.options());
+    }
+
     /// Clones the tensor if the tensor is in CPU memory
     P10Result<Tensor> clone() const;
 
     /// Default constructor. Creates an empty tensor.
     Tensor() = default;
 
-    Tensor(Tensor&&) = default;
-    Tensor& operator=(Tensor&&) = default;
+    Tensor(Tensor&&);
+    Tensor& operator=(Tensor&&);
 
     /// Checks if the tensor is empty (has zero dimensions or zero elements).
     bool empty() const {
@@ -144,11 +148,6 @@ class Tensor {
         return shape_.count();
     }
 
-    /// Gets the size of the tensor in bytes.
-    size_t size_bytes() const {
-        return size() * dtype_.size();
-    }
-
     Tensor as_view() {
         return Tensor(blob_.view(), shape(), options());
     }
@@ -169,6 +168,11 @@ class Tensor {
 
     std::span<std::byte> as_bytes() {
         return std::span<std::byte>(blob_.data<std::byte>(), size_bytes());
+    }
+
+    /// Gets the size of the tensor in bytes.
+    size_t size_bytes() const {
+        return size() * dtype_.size_bytes();
     }
 
     template<typename scalar_t>
@@ -308,6 +312,8 @@ class Tensor {
 
     void squeeze();
 
+    P10Error unsqueeze(int64_t dim);
+
     P10Result<Tensor> select_dimension(int64_t dim, int64_t index);
 
     /// Reshapes the tensor to the given shape.
@@ -317,6 +323,8 @@ class Tensor {
     /// * A tensor with the new shape. If the reshape is not possible, returns an error.
     P10Result<Tensor> reshape(const Shape& new_shape);
 
+    P10Error reshape_inplace(const Shape& new_shape);
+
     /// Transposes a 2D tensor.
     /// # Arguments
     /// * `other` - The transposed tensor.
@@ -325,6 +333,8 @@ class Tensor {
     P10Error transpose(Tensor& other) const;
 
     P10Error fill(double value);
+
+    P10Error copy_from(const Tensor& src);
 
   private:
     Tensor(Blob&& blob, const Shape& shape, const TensorOptions& options) :

@@ -5,6 +5,7 @@
 #include <numbers> 
 
 #include "ptensor/dtype.hpp"
+#include "ptensor/p10_error.hpp"
 #include "ptensor/tensor.hpp"
 
 namespace p10::op {
@@ -66,7 +67,7 @@ P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) const {
     }
     const auto input_span {validate_result.unwrap()};
 
-    output.create(input.shape(), input.dtype());
+    P10_RETURN_IF_ERROR(output.create(input.shape(), input.dtype()));
     auto output_span = output.as_planar_span3d<float>().unwrap();
 
     const auto kernel = get_kernel();

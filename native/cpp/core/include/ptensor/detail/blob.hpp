@@ -62,7 +62,7 @@ class Blob {
 
     Blob copy(size_t size) const {
         Blob new_blob = Blob::allocate(size);
-        std::memcpy(new_blob.data<uint8_t>(), data<uint8_t>(), size);
+        std::memcpy(new_blob.data<std::byte>(), data<std::byte>(), size);
         return new_blob;
     }
 

@@ -3,7 +3,11 @@
 namespace p10 {
 
 Blob Blob::allocate(size_t size) {
-    return Blob(static_cast<void*>(new uint8_t[size]), Device(Device::Cpu), [](void* data) {
+    auto memory = new uint8_t[size];
+    if (memory == nullptr) {
+        throw std::bad_alloc();
+    }
+    return Blob(static_cast<void*>(memory), Device(Device::Cpu), [](void* data) {
         delete[] (uint8_t*)data;
     });
 }

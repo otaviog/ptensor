@@ -7,6 +7,8 @@ add_library(unit_tests_op OBJECT
     test_blur.cpp
     test_fft.cpp
     test_tensor_scalar.cpp
+    test_stack.cpp
+    test_image_rgb_to_gray.cpp
 )
 ptensor_target_options(unit_tests_op Op)
 target_link_libraries(unit_tests_op

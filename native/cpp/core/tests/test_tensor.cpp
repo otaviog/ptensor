@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
@@ -104,6 +105,77 @@ TEST_CASE("Tensor::empty with various shapes", "[tensor][creation]") {
         auto tensor = Tensor::empty(make_shape(2, 3, 4, 5)).unwrap();
         REQUIRE(tensor.dims() == 4);
         REQUIRE(tensor.shape().count() == 120);
+    }
+}
+
+// ===========================================================================
+// Tensor move constructs
+// ===========================================================================
+
+TEST_CASE("Tensor move constructor transfers ownership", "[tensor][move]") {
+    auto original = Tensor::full(make_shape(2, 2), 7.0, Dtype::Int32).unwrap();
+    auto original_data_ptr = original.as_span1d<int32_t>().unwrap().data();
+
+    Tensor moved(std::move(original));
+
+    REQUIRE(moved.dtype() == Dtype::Int32);
+    REQUIRE(moved.shape().count() == 4);
+    REQUIRE(moved.as_span1d<int32_t>().unwrap().data() == original_data_ptr);
+
+    // Original tensor should be in a valid but unspecified state
+    REQUIRE(original.as_span1d<float>().unwrap().data() == nullptr);
+    REQUIRE(original.shape().count() == 0);
+    REQUIRE(original.dims() == 0);
+    REQUIRE(original.dtype() == Dtype::Float32);
+}
+
+TEST_CASE("Tensor move assign transfers ownership", "[tensor][move]") {
+    auto original = Tensor::full(make_shape(2, 2), 7.0, Dtype::Int32).unwrap();
+    auto original_data_ptr = original.as_span1d<int32_t>().unwrap().data();
+
+    Tensor moved = std::move(original);
+
+    REQUIRE(moved.dtype() == Dtype::Int32);
+    REQUIRE(moved.shape().count() == 4);
+    REQUIRE(moved.as_span1d<int32_t>().unwrap().data() == original_data_ptr);
+
+    // Original tensor should be in a valid but unspecified state
+    REQUIRE(original.as_span1d<float>().unwrap().data() == nullptr);
+    REQUIRE(original.shape().count() == 0);
+    REQUIRE(original.dims() == 0);
+    REQUIRE(original.dtype() == Dtype::Float32);
+}
+
+// ============================================================================
+// Tensor Copy
+// ============================================================================
+
+TEST_CASE("Tensor::copy_from copies data from another tensor", "[tensor][copy]") {
+    SECTION("Empty dest tensor") {
+        auto source = Tensor::full(make_shape(2, 3), 5.0, Dtype::Float32).unwrap();
+        Tensor destination;
+
+        REQUIRE(destination.copy_from(source).is_ok());
+
+        auto dest_data = destination.as_span1d<float>().unwrap();
+        for (auto i = 0; i < destination.shape().count(); i++) {
+            REQUIRE(dest_data[i] == Catch::Approx(5.0f));
+        }
+    }
+    
+    SECTION("Preallocated dest tensor") {
+        auto source = Tensor::full(make_shape(2, 3), 8.0, Dtype::Float32).unwrap();
+        auto destination = Tensor::empty(make_shape(2, 3), TensorOptions().dtype(Dtype::Int32))
+                               .unwrap();
+        auto original_ptr = destination.as_bytes().data();
+
+        REQUIRE(destination.copy_from(source).is_ok());
+
+        auto dest_data = destination.as_span1d<float>().unwrap();
+        for (auto i = 0; i < destination.shape().count(); i++) {
+            REQUIRE(dest_data[i] == Catch::Approx(8.0f));
+        }
+        REQUIRE(original_ptr == destination.as_bytes().data());
     }
 }
 

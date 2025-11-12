@@ -13,6 +13,9 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/laplacian_pyramid.hpp
   ${_INCLUDE_DIR}/fft.hpp
   ${_INCLUDE_DIR}/tensor_scalar.hpp
+  ${_INCLUDE_DIR}/stack.hpp
+  ${_INCLUDE_DIR}/image_rgb_to_gray.hpp
+  ${_INCLUDE_DIR}/wave.hpp
   )
 
 target_sources(ptensor_op
@@ -34,6 +37,9 @@ target_sources(ptensor_op
     src/image.cpp
     src/laplacian_pyramid.cpp
     src/fft.cpp
+    src/stack.cpp
+    src/image_rgb_to_gray.cpp
+    src/wave.cpp
 )
 
 target_include_directories(ptensor_op
@@ -44,6 +50,10 @@ target_include_directories(ptensor_op
     ${_INCLUDE_DIR})
 
 target_link_libraries(ptensor_op PUBLIC ptensor PRIVATE kissfft::kissfft-float)
+
+# Explicitly set what dependencies are exported for consumers
+# kissfft is a private implementation detail and should not be exposed
+set_property(TARGET ptensor_op PROPERTY INTERFACE_LINK_LIBRARIES ptensor)
 
 ptensor_target_options(ptensor_op Op)
 

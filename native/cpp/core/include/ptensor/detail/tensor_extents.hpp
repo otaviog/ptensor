@@ -17,7 +17,26 @@ namespace detail {
         using const_iterator = std::array<int64_t, P10_MAX_SHAPE>::const_iterator;
 
         TensorExtents() = default;
+
         TensorExtents(size_t dims) : dims_(dims) {}
+
+        TensorExtents(TensorExtents&& other) {
+            dims_ = other.dims_;
+            extent_ = std::move(other.extent_);
+            other.dims_ = 0;
+            other.extent_.fill(0);
+        }
+
+        TensorExtents& operator=(TensorExtents&& other) {
+            dims_ = other.dims_;
+            extent_ = std::move(other.extent_);
+            other.dims_ = 0;
+            other.extent_.fill(0);
+            return *this;
+        }
+
+        TensorExtents& operator=(const TensorExtents& other) = default;
+        TensorExtents(const TensorExtents& other) = default;
 
         /// The number of dimensions in the tensor.
         size_t dims() const {
@@ -69,7 +88,7 @@ namespace detail {
         int64_t* end() {
             return extent_.data() + dims_;
         }
-        
+
         int64_t front() const {
             if (dims_ == 0) {
                 return 0;
@@ -83,6 +102,7 @@ namespace detail {
             }
             return extent_[dims_ - 1];
         }
+
       protected:
         TensorExtents(std::span<const int64_t> shape) {
             std::copy(shape.begin(), shape.end(), extent_.begin());

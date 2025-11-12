@@ -14,7 +14,19 @@ class Stride: public detail::TensorExtents {
   public:
     static Stride from_contiguous_shape(const Shape& shape);
 
-    Stride(size_t dims) : detail::TensorExtents {dims} {}
+    static P10Result<Stride> zeros(size_t dims) {
+        if (dims < P10_MAX_SHAPE) {
+            return Ok(Stride(dims));
+        } else {
+            return Err(
+                P10Error::InvalidArgument,
+                "Number of dimensions exceeds maximum supported shape"
+            );
+        }
+    }
+
+  private:
+    explicit Stride(size_t dims) : TensorExtents(dims) {}
 
     /// Checks if the shape is empty, that is, it has no dimensions.
     bool empty() const {

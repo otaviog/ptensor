@@ -6,10 +6,22 @@
 
 #include "detail/tensor_extents.hpp"
 #include "p10_result.hpp"
+#include "ptensor/config.h"
 
 namespace p10 {
 class Shape: public detail::TensorExtents {
   public:
+    static p10::P10Result<Shape> zeros(size_t dims) {
+        if (dims < P10_MAX_SHAPE) {
+            return Ok(Shape(dims));
+        } else {
+            return Err(
+                P10Error::InvalidArgument,
+                "Number of dimensions exceeds maximum supported shape"
+            );
+        }
+    }
+
     int64_t count() const {
         if (dims_ == 0) {
             return 0;

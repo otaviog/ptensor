@@ -55,7 +55,7 @@ struct Dtype {
 
     explicit operator bool() const = delete;
 
-    std::size_t size() const {
+    std::size_t size_bytes() const {
         switch (value) {
             case Uint8:
             case Int8:

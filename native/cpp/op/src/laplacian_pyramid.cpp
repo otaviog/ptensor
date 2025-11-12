@@ -1,6 +1,7 @@
 #include "laplacian_pyramid.hpp"
 
 #include "elemwise.hpp"
+#include "ptensor/p10_error.hpp"
 #include "resize.hpp"
 
 namespace p10::op {
@@ -20,7 +21,7 @@ LaplacianPyramid::transform(const Tensor& in_tensor, std::span<Tensor> out_lapla
 
     const auto num_levels = out_laplacian_pyr.size();
     store_gaussian_pyramid(in_tensor, num_levels);
-    transform_gaussian_laplacian_pyramid(out_laplacian_pyr);
+    pyramid_from_gaussian_to_laplacian(out_laplacian_pyr);
     return P10Error::Ok;
 }
 
@@ -33,12 +34,12 @@ void LaplacianPyramid::store_gaussian_pyramid(const Tensor& in_tensor, size_t nu
         const auto half_height = prev.shape(1).unwrap() / 2;
         const auto half_width = prev.shape(2).unwrap() / 2;
 
-        assert(resize(prev, downsample_buffer, half_width, half_height).is_ok());
-        assert(blur_op_.transform(downsample_buffer, gaussian_pyramid_[level]).is_ok());
+        resize(prev, downsample_buffer, half_width, half_height).expect("Resize failed");
+        blur_op_.transform(downsample_buffer, gaussian_pyramid_[level]).expect("Blur failed");
     }
 }
 
-void LaplacianPyramid::transform_gaussian_laplacian_pyramid(std::span<Tensor> output) const {
+void LaplacianPyramid::pyramid_from_gaussian_to_laplacian(std::span<Tensor> output) const {
     const auto num_levels = output.size();
     assert(num_levels == gaussian_pyramid_.size());
 
@@ -47,10 +48,12 @@ void LaplacianPyramid::transform_gaussian_laplacian_pyramid(std::span<Tensor> ou
         size_t height = gaussian_pyramid_[level].shape(1).unwrap();
         size_t width = gaussian_pyramid_[level].shape(2).unwrap();
 
-        assert(resize(gaussian_pyramid_[level + 1], upsample_buffer, width, height).is_ok());
-        assert(subtract_elemwise(gaussian_pyramid_[level], upsample_buffer, output[level]).is_ok());
+        resize(gaussian_pyramid_[level + 1], upsample_buffer, width, height)
+            .expect("Upsample failed");
+        subtract_elemwise(gaussian_pyramid_[level], upsample_buffer, output[level])
+            .expect("Subtract failed");
     }
-    output.back() = std::move(gaussian_pyramid_.back());
+    output.back() = gaussian_pyramid_.back().clone().expect("Clone failed");
 }
 
 P10Error LaplacianPyramid::reconstruct(std::span<const Tensor> pyramid, Tensor& output) const {
@@ -61,10 +64,13 @@ P10Error LaplacianPyramid::reconstruct(std::span<const Tensor> pyramid, Tensor& 
     const auto num_levels = static_cast<int>(pyramid.size());
     Tensor upsample_buffer;
 
-    output = pyramid[num_levels - 1].clone().unwrap();
+    // Allocate output tensor with the shape of the largest level
+    // so we can avoid reallocations during the loop
+    // and don't change the output if preallocated
+    P10_RETURN_IF_ERROR(output.create(pyramid[0].shape(), pyramid[0].dtype()));
+    P10_RETURN_IF_ERROR(output.copy_from(pyramid.back()));
     for (int level = num_levels - 2; level >= 0; --level) {
         const auto Ll = pyramid[level].clone().unwrap();
-
         const size_t height = Ll.shape(1).unwrap();
         const size_t width = Ll.shape(2).unwrap();
 
@@ -97,8 +103,7 @@ namespace {
                 return P10Error::InvalidArgument << "All pyramid levels must be 3D tensors.";
             }
             if (level.dtype() != Dtype::Float32) {
-                return P10Error::InvalidArgument
-                    << "All pyramid levels must be of type FLOAT32.";
+                return P10Error::InvalidArgument << "All pyramid levels must be of type FLOAT32.";
             }
         }
         return P10Error::Ok;

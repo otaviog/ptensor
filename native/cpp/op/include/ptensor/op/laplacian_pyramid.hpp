@@ -27,7 +27,7 @@ class LaplacianPyramid {
     explicit LaplacianPyramid(const GaussianBlur& blur_op) : blur_op_(blur_op) {}
 
     void store_gaussian_pyramid(const Tensor& input, size_t num_levels) const;
-    void transform_gaussian_laplacian_pyramid(std::span<Tensor> output) const;
+    void pyramid_from_gaussian_to_laplacian(std::span<Tensor> output) const;
 
     GaussianBlur blur_op_;
     mutable std::vector<Tensor> gaussian_pyramid_;

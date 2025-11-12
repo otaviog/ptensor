@@ -57,7 +57,7 @@ class P10Error {
 
     void expect(const std::string& message) const {
         if (is_error()) {
-            detail::panic((message + ":" + to_string()).data());
+            detail::panic((message + " - " + to_string()).data());
         }
     }
 

@@ -69,25 +69,25 @@ TEST_CASE("Dtype::from() template function", "[dtype]") {
 
 TEST_CASE("Dtype::size() method", "[dtype]") {
     SECTION("1-byte types") {
-        REQUIRE(Dtype(Dtype::Uint8).size() == 1);
-        REQUIRE(Dtype(Dtype::Int8).size() == 1);
+        REQUIRE(Dtype(Dtype::Uint8).size_bytes() == 1);
+        REQUIRE(Dtype(Dtype::Int8).size_bytes() == 1);
     }
 
     SECTION("2-byte types") {
-        REQUIRE(Dtype(Dtype::Float16).size() == 2);
-        REQUIRE(Dtype(Dtype::Uint16).size() == 2);
-        REQUIRE(Dtype(Dtype::Int16).size() == 2);
+        REQUIRE(Dtype(Dtype::Float16).size_bytes() == 2);
+        REQUIRE(Dtype(Dtype::Uint16).size_bytes() == 2);
+        REQUIRE(Dtype(Dtype::Int16).size_bytes() == 2);
     }
 
     SECTION("4-byte types") {
-        REQUIRE(Dtype(Dtype::Uint32).size() == 4);
-        REQUIRE(Dtype(Dtype::Int32).size() == 4);
-        REQUIRE(Dtype(Dtype::Float32).size() == 4);
+        REQUIRE(Dtype(Dtype::Uint32).size_bytes() == 4);
+        REQUIRE(Dtype(Dtype::Int32).size_bytes() == 4);
+        REQUIRE(Dtype(Dtype::Float32).size_bytes() == 4);
     }
 
     SECTION("8-byte types") {
-        REQUIRE(Dtype(Dtype::Int64).size() == 8);
-        REQUIRE(Dtype(Dtype::Float64).size() == 8);
+        REQUIRE(Dtype(Dtype::Int64).size_bytes() == 8);
+        REQUIRE(Dtype(Dtype::Float64).size_bytes() == 8);
     }
 }
 
@@ -224,7 +224,7 @@ TEST_CASE("Dtype edge cases and error conditions", "[dtype]") {
     SECTION("Size of invalid dtype") {
         Dtype invalid_dtype;
         invalid_dtype.value = static_cast<Dtype::Code>(255);
-        REQUIRE(invalid_dtype.size() == 0);
+        REQUIRE(invalid_dtype.size_bytes() == 0);
     }
 }
 

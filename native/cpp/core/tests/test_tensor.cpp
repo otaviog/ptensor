@@ -1,4 +1,5 @@
 #include <cstdint>
+
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
@@ -6,6 +7,7 @@
 #include <ptensor/tensor.hpp>
 #include <ptensor/tensor_options.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+#include <ptensor/testing/compare_tensors.hpp>
 
 namespace p10 {
 
@@ -31,8 +33,7 @@ TEST_CASE("Tensor::full creates tensor filled with specified value", "[tensor][c
 TEST_CASE("Tensor::full with different data types", "[tensor][creation]") {
     SECTION("int32") {
         auto tensor =
-            Tensor::full(make_shape(3, 3), 42, TensorOptions().dtype(Dtype::Int32))
-                .unwrap();
+            Tensor::full(make_shape(3, 3), 42, TensorOptions().dtype(Dtype::Int32)).unwrap();
         REQUIRE(tensor.dtype() == Dtype::Int32);
         auto data = tensor.as_span1d<int32_t>().unwrap();
         for (auto i = 0; i < 9; i++) {
@@ -42,8 +43,7 @@ TEST_CASE("Tensor::full with different data types", "[tensor][creation]") {
 
     SECTION("float64") {
         auto tensor =
-            Tensor::full(make_shape(2, 2), 3.14, TensorOptions().dtype(Dtype::Float64))
-                .unwrap();
+            Tensor::full(make_shape(2, 2), 3.14, TensorOptions().dtype(Dtype::Float64)).unwrap();
         REQUIRE(tensor.dtype() == Dtype::Float64);
         auto data = tensor.as_span1d<double>().unwrap();
         for (auto i = 0; i < 4; i++) {
@@ -68,8 +68,7 @@ TEST_CASE("Tensor::zeros creates tensor filled with zeros", "[tensor][creation]"
 }
 
 TEST_CASE("Tensor::zeros with explicit dtype", "[tensor][creation]") {
-    auto tensor =
-        Tensor::zeros(make_shape(3, 4), TensorOptions().dtype(Dtype::Int64)).unwrap();
+    auto tensor = Tensor::zeros(make_shape(3, 4), TensorOptions().dtype(Dtype::Int64)).unwrap();
 
     REQUIRE(tensor.dtype() == Dtype::Int64);
     auto data = tensor.as_span1d<int64_t>().unwrap();
@@ -162,11 +161,11 @@ TEST_CASE("Tensor::copy_from copies data from another tensor", "[tensor][copy]")
             REQUIRE(dest_data[i] == Catch::Approx(5.0f));
         }
     }
-    
+
     SECTION("Preallocated dest tensor") {
         auto source = Tensor::full(make_shape(2, 3), 8.0, Dtype::Float32).unwrap();
-        auto destination = Tensor::empty(make_shape(2, 3), TensorOptions().dtype(Dtype::Int32))
-                               .unwrap();
+        auto destination =
+            Tensor::empty(make_shape(2, 3), TensorOptions().dtype(Dtype::Int32)).unwrap();
         auto original_ptr = destination.as_bytes().data();
 
         REQUIRE(destination.copy_from(source).is_ok());
@@ -223,10 +222,7 @@ TEST_CASE("Tensor strides are computed correctly", "[tensor][properties]") {
     }
 
     SECTION("custom strides") {
-        auto tensor = Tensor::empty(
-                          make_shape(2, 3),
-                          TensorOptions().stride(make_stride(1, 2))
-        )
+        auto tensor = Tensor::empty(make_shape(2, 3), TensorOptions().stride(make_stride(1, 2)))
                           .expect("Could not create tensor");
 
         REQUIRE(tensor.stride().dims() == 2);
@@ -243,8 +239,7 @@ TEST_CASE("Tensor strides are computed correctly", "[tensor][properties]") {
 }
 
 TEST_CASE("Tensor dimensions are tracked correctly", "[tensor][properties]") {
-    auto tensor =
-        Tensor::empty(make_shape(2, 3, 4, 5)).expect("Unable to create tensor");
+    auto tensor = Tensor::empty(make_shape(2, 3, 4, 5)).expect("Unable to create tensor");
 
     REQUIRE(tensor.dims() == 4);
     REQUIRE(tensor.shape().dims() == 4);
@@ -280,21 +275,15 @@ TEST_CASE("Tensor::is_contiguous detects memory layout", "[tensor][contiguity]")
     }
 
     SECTION("custom strides may not be contiguous") {
-        auto tensor = Tensor::empty(
-                          make_shape(2, 3),
-                          TensorOptions().stride(make_stride(1, 2))
-        )
-                          .unwrap();
+        auto tensor =
+            Tensor::empty(make_shape(2, 3), TensorOptions().stride(make_stride(1, 2))).unwrap();
         REQUIRE_FALSE(tensor.is_contiguous());
     }
 }
 
 TEST_CASE("Tensor::to_contiguous creates contiguous copy", "[tensor][contiguity]") {
-    auto tensor = Tensor::empty(
-                      make_shape(2, 3),
-                      TensorOptions().stride(make_stride(1, 2))
-    )
-                      .unwrap();
+    auto tensor =
+        Tensor::empty(make_shape(2, 3), TensorOptions().stride(make_stride(1, 2))).unwrap();
 
     // Original data layout:
     // Physical: 0 1 2 3 4 5
@@ -352,12 +341,8 @@ TEST_CASE("Tensor::as_view creates view sharing data", "[tensor][view]") {
 }
 
 TEST_CASE("Tensor::as_view with non-contiguous tensor", "[tensor][view]") {
-    auto tensor = Tensor::full(
-                      make_shape(3, 4),
-                      2.5,
-                      TensorOptions().stride(make_stride(2, 1))
-    )
-                      .unwrap();
+    auto tensor =
+        Tensor::full(make_shape(3, 4), 2.5, TensorOptions().stride(make_stride(2, 1))).unwrap();
 
     auto view = tensor.as_view();
     REQUIRE(view.stride() == tensor.stride());
@@ -422,9 +407,7 @@ TEST_CASE("Tensor::as_span1d converts to 1D span", "[tensor][span]") {
     }
 
     SECTION("supports int32 dtype") {
-        auto tensor =
-            Tensor::full(make_shape(5), 10, TensorOptions().dtype(Dtype::Int32))
-                .unwrap();
+        auto tensor = Tensor::full(make_shape(5), 10, TensorOptions().dtype(Dtype::Int32)).unwrap();
         auto span = tensor.as_span1d<int32_t>().unwrap();
 
         REQUIRE(span.size() == 5);
@@ -435,8 +418,7 @@ TEST_CASE("Tensor::as_span1d converts to 1D span", "[tensor][span]") {
 
     SECTION("supports double dtype") {
         auto tensor =
-            Tensor::full(make_shape(3), 3.14, TensorOptions().dtype(Dtype::Float64))
-                .unwrap();
+            Tensor::full(make_shape(3), 3.14, TensorOptions().dtype(Dtype::Float64)).unwrap();
         auto span = tensor.as_span1d<double>().unwrap();
 
         REQUIRE(span.size() == 3);
@@ -506,8 +488,7 @@ TEST_CASE("Tensor::as_span2d converts to 2D span", "[tensor][span]") {
 
     SECTION("supports int64 dtype") {
         auto tensor =
-            Tensor::full(make_shape(2, 3), 100, TensorOptions().dtype(Dtype::Int64))
-                .unwrap();
+            Tensor::full(make_shape(2, 3), 100, TensorOptions().dtype(Dtype::Int64)).unwrap();
         auto span = tensor.as_span2d<int64_t>().unwrap();
 
         REQUIRE(span.height() == 2);
@@ -571,8 +552,7 @@ TEST_CASE("Tensor::as_span3d converts to 3D span", "[tensor][span]") {
 
     SECTION("supports uint8 dtype") {
         auto tensor =
-            Tensor::full(make_shape(2, 2, 3), 128, TensorOptions().dtype(Dtype::Uint8))
-                .unwrap();
+            Tensor::full(make_shape(2, 2, 3), 128, TensorOptions().dtype(Dtype::Uint8)).unwrap();
         auto span = tensor.as_span3d<uint8_t>().unwrap();
 
         REQUIRE(span.height() == 2);
@@ -655,8 +635,7 @@ TEST_CASE("Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]
 
     SECTION("supports uint16 dtype") {
         auto tensor =
-            Tensor::full(make_shape(2, 3, 4), 1000, TensorOptions().dtype(Dtype::Uint16))
-                .unwrap();
+            Tensor::full(make_shape(2, 3, 4), 1000, TensorOptions().dtype(Dtype::Uint16)).unwrap();
         auto span = tensor.as_planar_span3d<uint16_t>().unwrap();
 
         REQUIRE(span.channels() == 2);
@@ -792,20 +771,16 @@ TEST_CASE("Tensor::select_dimension", "[tensor][select_dimension]") {
     SECTION("Select dimension with different dtypes") {
         SECTION("int64") {
             auto tensor =
-                Tensor::full(make_shape(3, 4), 100, TensorOptions().dtype(Dtype::Int64))
-                    .unwrap();
+                Tensor::full(make_shape(3, 4), 100, TensorOptions().dtype(Dtype::Int64)).unwrap();
             auto selected = tensor.select_dimension(1, 2).unwrap();
             REQUIRE(selected.dtype() == Dtype::Int64);
             REQUIRE(selected.shape() == make_shape(3));
         }
 
         SECTION("uint8") {
-            auto tensor = Tensor::full(
-                              make_shape(2, 5, 3),
-                              255,
-                              TensorOptions().dtype(Dtype::Uint8)
-            )
-                              .unwrap();
+            auto tensor =
+                Tensor::full(make_shape(2, 5, 3), 255, TensorOptions().dtype(Dtype::Uint8))
+                    .unwrap();
             auto selected = tensor.select_dimension(2, 1).unwrap();
             REQUIRE(selected.dtype() == Dtype::Uint8);
             REQUIRE(selected.shape() == make_shape(2, 5));
@@ -883,70 +858,58 @@ TEST_CASE("Tensor::select_dimension", "[tensor][select_dimension]") {
 TEST_CASE("Tensor::reshape", "[tensor][reshape]") {
     SECTION("Valid shapes") {
         auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
-
+        size_t tensor_size = tensor.size();
         // Reshape to (4, 3, 2)
-        auto reshaped1 = tensor.reshape(make_shape(4, 3, 2)).unwrap();
-        REQUIRE(reshaped1.shape() == make_shape(4, 3, 2));
-        REQUIRE(reshaped1.size() == tensor.size());
-
+        REQUIRE_THAT(tensor.reshape(make_shape(4, 3, 2)), testing::IsOk());
+        REQUIRE(tensor.shape() == make_shape(4, 3, 2));
+        REQUIRE(tensor.size() == tensor_size);
         // Reshape to (6, 4)
-        auto reshaped2 = tensor.reshape(make_shape(6, 4)).unwrap();
-        REQUIRE(reshaped2.shape() == make_shape(6, 4));
-        REQUIRE(reshaped2.size() == tensor.size());
-
+        REQUIRE_THAT(tensor.reshape(make_shape(6, 4)), testing::IsOk());
+        REQUIRE(tensor.shape() == make_shape(6, 4));
+        REQUIRE(tensor.size() == tensor_size);
         // Reshape to (24,)
-        auto reshaped3 = tensor.reshape(make_shape(24)).unwrap();
-        REQUIRE(reshaped3.shape() == make_shape(24));
-        REQUIRE(reshaped3.size() == tensor.size());
+        REQUIRE_THAT(tensor.reshape(make_shape(24)), testing::IsOk());
+        REQUIRE(tensor.shape() == make_shape(24));
+        REQUIRE(tensor.size() == tensor_size);
     }
 
     SECTION("Valid shapes non-contiguous tensor") {
-        auto tensor = Tensor::full(
-                          make_shape(2, 3),
-                          1.0f,
-                          TensorOptions().stride(make_stride(1, 2))
-        )
-                          .unwrap();
-
+        auto tensor =
+            Tensor::full(make_shape(2, 3), 1.0f, TensorOptions().stride(make_stride(1, 2)))
+                .unwrap();
+        size_t tensor_size = tensor.size();
         // Reshape to (3, 2)
-        auto reshaped = tensor.reshape(make_shape(3, 2)).unwrap();
-        REQUIRE(reshaped.shape() == make_shape(3, 2));
-        REQUIRE(reshaped.size() == tensor.size());
+        REQUIRE_THAT(tensor.reshape(make_shape(3, 2)), testing::IsOk());
+        REQUIRE(tensor.shape() == make_shape(3, 2));
+        REQUIRE(tensor.size() == tensor_size);
     }
 
     SECTION("Invalid shapes") {
         auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
 
         // Total elements mismatch
-        auto result1 = tensor.reshape(make_shape(5, 5));
-        REQUIRE(result1.is_error());
-        REQUIRE(result1.err().code() == P10Error::InvalidArgument);
-
-        auto result2 = tensor.reshape(make_shape(10));
-        REQUIRE(result2.is_error());
-        REQUIRE(result2.err().code() == P10Error::InvalidArgument);
+        REQUIRE(tensor.reshape(make_shape(5, 5)) == P10Error::InvalidArgument);
+        REQUIRE(tensor.reshape(make_shape(10)) == P10Error::InvalidArgument);
     }
 
     SECTION("Invalid shapes on empty tensor") {
         auto tensor = Tensor::empty(make_shape(0, 3)).unwrap();
+        size_t tensor_size = tensor.size();
 
         // Reshape to (0, 1)
-        auto reshaped = tensor.reshape(make_shape(0, 1)).unwrap();
-        REQUIRE(reshaped.shape() == make_shape(0, 1));
-        REQUIRE(reshaped.size() == tensor.size());
-
+        REQUIRE_THAT(tensor.reshape(make_shape(0, 1)), testing::IsOk());
+        REQUIRE(tensor.shape() == make_shape(0, 1));
+        REQUIRE(tensor.size() == tensor_size);
         // Invalid reshape
-        auto result = tensor.reshape(make_shape(1, 1));
-        REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(tensor.reshape(make_shape(1, 1)), testing::IsError(P10Error::InvalidArgument));
     }
 
     SECTION("Reshape shares data with original tensor") {
         auto tensor = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
-        auto reshaped = tensor.reshape(make_shape(3, 2)).unwrap();
+        REQUIRE_THAT(tensor.reshape(make_shape(3, 2)), testing::IsOk());
 
         // Modify reshaped tensor
-        reshaped.as_span1d<float>().unwrap()[0] = 99.0f;
+        tensor.as_span1d<float>().unwrap()[0] = 99.0f;
 
         // Original tensor should reflect the change
         auto original_data = tensor.as_span1d<float>().unwrap();
@@ -959,9 +922,7 @@ TEST_CASE("Tensor::reshape", "[tensor][reshape]") {
                 .unwrap();
 
         // Attempt to reshape to incompatible shape
-        auto result = tensor.reshape(make_shape(4, 2));
-        REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(tensor.reshape(make_shape(4, 2)), testing::IsError(P10Error::InvalidArgument));
     }
 }
 
@@ -999,8 +960,7 @@ TEST_CASE("Tensor::transpose", "[tensor][transpose]") {
             auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
             Tensor transposed;
             auto result = tensor.transpose(transposed);
-            REQUIRE(result.is_error());
-            REQUIRE(result.code() == P10Error::InvalidArgument);
+            REQUIRE_THAT(result, testing::IsError(P10Error::InvalidArgument));
             REQUIRE(transposed.empty());
         }
 
@@ -1010,8 +970,7 @@ TEST_CASE("Tensor::transpose", "[tensor][transpose]") {
                     .unwrap();
             Tensor transposed;
             auto result = tensor.transpose(transposed);
-            REQUIRE(result.is_error());
-            REQUIRE(result.code() == P10Error::NotImplemented);
+            REQUIRE_THAT(result, testing::IsError(P10Error::NotImplemented));
             REQUIRE(transposed.empty());
         }
 
@@ -1024,8 +983,7 @@ TEST_CASE("Tensor::transpose", "[tensor][transpose]") {
 
             Tensor transposed;
             auto result = tensor.transpose(transposed);
-            REQUIRE(result.is_error());
-            REQUIRE(result.code() == P10Error::NotImplemented);
+            REQUIRE_THAT(result, testing::IsError(P10Error::NotImplemented));
             REQUIRE(transposed.empty());
         }
     }

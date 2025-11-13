@@ -1,9 +1,11 @@
+#include <filesystem>
+
 #include <catch2/catch_test_macros.hpp>
 #include <ptensor/io/image.hpp>
 #include <ptensor/tensor.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
 
-#include <filesystem>
+#include "catch2/matchers/catch_matchers.hpp"
 
 namespace p10::io {
 
@@ -11,9 +13,7 @@ TEST_CASE("save_image and load_image roundtrip", "[io][image]") {
     const std::string filename = "test_image.png";
 
     // Create a simple 8x8 RGB image (height, width, channels)
-    auto tensor = Tensor::zeros(make_shape(8, 8, 3),
-                                TensorOptions().dtype(Dtype::Uint8))
-                      .unwrap();
+    auto tensor = Tensor::zeros(make_shape(8, 8, 3), TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     // Fill with some pattern
     auto data = tensor.as_span1d<uint8_t>().unwrap();
@@ -27,7 +27,7 @@ TEST_CASE("save_image and load_image roundtrip", "[io][image]") {
 
     // Load image
     auto loaded_result = load_image(filename);
-    p10::testing::require_ok(loaded_result);
+    REQUIRE_THAT(loaded_result, testing::IsOk());
 
     auto loaded_tensor = loaded_result.unwrap();
     REQUIRE(loaded_tensor.shape() == tensor.shape());
@@ -45,15 +45,14 @@ TEST_CASE("save_image with grayscale tensor", "[io][image]") {
     const std::string filename = "test_grayscale.png";
 
     // Create a grayscale image (height, width)
-    auto tensor = Tensor::full(make_shape(16, 16), 128,
-                               TensorOptions().dtype(Dtype::Uint8))
-                      .unwrap();
+    auto tensor =
+        Tensor::full(make_shape(16, 16), 128, TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     auto save_err = save_image(filename, tensor);
     REQUIRE_THAT(save_err, p10::testing::IsOk());
 
     auto loaded_result = load_image(filename);
-    p10::testing::require_ok(loaded_result);
+    REQUIRE_THAT(loaded_result, p10::testing::IsOk());
 
     auto loaded_tensor = loaded_result.unwrap();
     REQUIRE(loaded_tensor.dims() >= 2);
@@ -68,9 +67,8 @@ TEST_CASE("save_image with RGBA tensor", "[io][image]") {
     const std::string filename = "test_rgba.png";
 
     // Create an RGBA image (height, width, 4 channels)
-    auto tensor = Tensor::zeros(make_shape(10, 10, 4),
-                                TensorOptions().dtype(Dtype::Uint8))
-                      .unwrap();
+    auto tensor =
+        Tensor::zeros(make_shape(10, 10, 4), TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     auto save_err = save_image(filename, tensor);
     REQUIRE_THAT(save_err, p10::testing::IsOk());
@@ -89,9 +87,8 @@ TEST_CASE("load_image with non-existent file returns error", "[io][image]") {
 TEST_CASE("save_image creates valid file", "[io][image]") {
     const std::string filename = "test_save_creates_file.jpg";
 
-    auto tensor = Tensor::full(make_shape(5, 5, 3), 1.0,
-                               TensorOptions().dtype(Dtype::Uint8))
-                      .unwrap();
+    auto tensor =
+        Tensor::full(make_shape(5, 5, 3), 1.0, TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     auto save_err = save_image(filename, tensor);
     REQUIRE_THAT(save_err, p10::testing::IsOk());
@@ -103,9 +100,8 @@ TEST_CASE("save_image creates valid file", "[io][image]") {
 }
 
 TEST_CASE("save_image with different formats", "[io][image]") {
-    auto tensor = Tensor::full(make_shape(4, 4, 3), 200,
-                               TensorOptions().dtype(Dtype::Uint8))
-                      .unwrap();
+    auto tensor =
+        Tensor::full(make_shape(4, 4, 3), 200, TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     SECTION("PNG format") {
         const std::string filename = "test.png";
@@ -135,15 +131,13 @@ TEST_CASE("save_image with different formats", "[io][image]") {
 TEST_CASE("load_image returns correct dtype", "[io][image]") {
     const std::string filename = "test_dtype.png";
 
-    auto tensor = Tensor::zeros(make_shape(6, 6, 3),
-                                TensorOptions().dtype(Dtype::Uint8))
-                      .unwrap();
+    auto tensor = Tensor::zeros(make_shape(6, 6, 3), TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     auto save_err = save_image(filename, tensor);
     REQUIRE_THAT(save_err, p10::testing::IsOk());
 
     auto loaded_result = load_image(filename);
-    p10::testing::require_ok(loaded_result);
+    REQUIRE_THAT(loaded_result, testing::IsOk());
 
     auto loaded = loaded_result.unwrap();
     REQUIRE(loaded.dtype() == Dtype::Uint8);

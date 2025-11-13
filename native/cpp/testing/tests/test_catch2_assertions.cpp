@@ -1,6 +1,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+#include <ptensor/testing/compare_tensors.hpp>
 
 #include "ptensor/p10_error.hpp"
 #include "ptensor/shape.hpp"
@@ -29,7 +30,7 @@ TEST_CASE("Testing::compare_tensors", "[testing assertions]") {
             Tensor::full(make_shape({8, 7}).unwrap(), 123.0).unwrap(),
             Tensor::full(make_shape({8, 8}).unwrap(), 123.0).unwrap()
         ),
-        IsErr()
+            IsError(P10Error::InvalidArgument)
     );
 }
 }  // namespace p10::testing

@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <ptensor/shape.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+#include "ptensor/p10_error.hpp"
 
 namespace p10 {
 
@@ -10,14 +11,14 @@ namespace p10 {
 
 TEST_CASE("Shape creation from initializer list", "[shape][creation]") {
     SECTION("1D shape") {
-        auto shape = make_shape({5}).unwrap();
+        auto shape = make_shape(5);
         REQUIRE(shape.dims() == 1);
         REQUIRE(shape[0].unwrap() == 5);
         REQUIRE(shape.count() == 5);
     }
 
     SECTION("2D shape") {
-        auto shape = make_shape({2, 3}).unwrap();
+        auto shape = make_shape(2, 3);
         REQUIRE(shape.dims() == 2);
         REQUIRE(shape[0].unwrap() == 2);
         REQUIRE(shape[1].unwrap() == 3);
@@ -25,7 +26,7 @@ TEST_CASE("Shape creation from initializer list", "[shape][creation]") {
     }
 
     SECTION("3D shape") {
-        auto shape = make_shape({2, 3, 4}).unwrap();
+        auto shape = make_shape(2, 3, 4);
         REQUIRE(shape.dims() == 3);
         REQUIRE(shape[0].unwrap() == 2);
         REQUIRE(shape[1].unwrap() == 3);
@@ -34,7 +35,7 @@ TEST_CASE("Shape creation from initializer list", "[shape][creation]") {
     }
 
     SECTION("4D shape") {
-        auto shape = make_shape({2, 3, 4, 5}).unwrap();
+        auto shape = make_shape(2, 3, 4, 5);
         REQUIRE(shape.dims() == 4);
         REQUIRE(shape.count() == 120);
     }
@@ -100,12 +101,12 @@ TEST_CASE("Shape empty initialization", "[shape][creation]") {
 
 TEST_CASE("Shape exceeding maximum dimensions", "[shape][validation]") {
     REQUIRE_THAT(make_shape({1, 2, 3, 4, 5, 6, 7, 8}), testing::IsOk());
-    REQUIRE_THAT(make_shape({1, 2, 3, 4, 5, 6, 7, 8, 9}), testing::IsErr());
+    REQUIRE_THAT(make_shape({1, 2, 3, 4, 5, 6, 7, 8, 9}), testing::IsError(P10Error::InvalidArgument));
 }
 
 TEST_CASE("Shape with zero dimensions", "[shape][validation]") {
     SECTION("single zero dimension") {
-        auto shape = make_shape({0, 3}).unwrap();
+        auto shape = make_shape(0, 3);
         REQUIRE(shape.dims() == 2);
         REQUIRE(shape[0].unwrap() == 0);
         REQUIRE(shape[1].unwrap() == 3);
@@ -113,13 +114,13 @@ TEST_CASE("Shape with zero dimensions", "[shape][validation]") {
     }
 
     SECTION("multiple zero dimensions") {
-        auto shape = make_shape({0, 0, 3}).unwrap();
+        auto shape = make_shape(0, 0, 3);
         REQUIRE(shape.count() == 0);
     }
 }
 
 TEST_CASE("Shape with large dimensions", "[shape][validation]") {
-    auto shape = make_shape({1000, 2000}).unwrap();
+    auto shape = make_shape(1000, 2000);
     REQUIRE(shape.count() == 2000000);
 }
 
@@ -128,26 +129,26 @@ TEST_CASE("Shape with large dimensions", "[shape][validation]") {
 // ============================================================================
 
 TEST_CASE("Shape::count calculates total elements", "[shape][properties]") {
-    REQUIRE(make_shape({}).unwrap().count() == 0);
-    REQUIRE(make_shape({5}).unwrap().count() == 5);
-    REQUIRE(make_shape({2, 3}).unwrap().count() == 6);
-    REQUIRE(make_shape({2, 3, 4}).unwrap().count() == 24);
-    REQUIRE(make_shape({2, 3, 4, 5}).unwrap().count() == 120);
-    REQUIRE(make_shape({10, 10, 10}).unwrap().count() == 1000);
+    REQUIRE(Shape().count() == 0);
+    REQUIRE(make_shape(5).count() == 5);
+    REQUIRE(make_shape(2, 3).count() == 6);
+    REQUIRE(make_shape(2, 3, 4).count() == 24);
+    REQUIRE(make_shape(2, 3, 4, 5).count() == 120);
+    REQUIRE(make_shape(10, 10, 10).count() == 1000);
 }
 
 TEST_CASE("Shape::dims returns number of dimensions", "[shape][properties]") {
-    REQUIRE(make_shape({}).unwrap().dims() == 0);
-    REQUIRE(make_shape({5}).unwrap().dims() == 1);
-    REQUIRE(make_shape({2, 3}).unwrap().dims() == 2);
-    REQUIRE(make_shape({2, 3, 4}).unwrap().dims() == 3);
+    REQUIRE(Shape().dims() == 0);
+    REQUIRE(make_shape(5).dims() == 1);
+    REQUIRE(make_shape(2, 3).dims() == 2);
+    REQUIRE(make_shape(2, 3, 4).dims() == 3);
     REQUIRE(make_shape({2, 3, 4, 5, 6, 7, 8}).unwrap().dims() == 7);
 }
 
 TEST_CASE("Shape::empty detects empty shape", "[shape][properties]") {
-    REQUIRE(make_shape({}).unwrap().empty());
-    REQUIRE_FALSE(make_shape({1}).unwrap().empty());
-    REQUIRE_FALSE(make_shape({2, 3}).unwrap().empty());
+    REQUIRE(Shape().empty());
+    REQUIRE_FALSE(make_shape(1).empty());
+    REQUIRE_FALSE(make_shape(2, 3).empty());
 }
 
 TEST_CASE("Shape::operator[] accesses dimensions", "[shape][properties]") {
@@ -163,8 +164,8 @@ TEST_CASE("Shape::operator[] accesses dimensions", "[shape][properties]") {
     }
 
     SECTION("out of bounds index") {
-        REQUIRE_THAT(shape[3], testing::IsErr());
-        REQUIRE_THAT(shape[10], testing::IsErr());
+        REQUIRE_THAT(shape[3], testing::IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(shape[10], testing::IsError(P10Error::InvalidArgument));
     }
 }
 
@@ -174,28 +175,28 @@ TEST_CASE("Shape::operator[] accesses dimensions", "[shape][properties]") {
 
 TEST_CASE("Shape equality comparison", "[shape][comparison]") {
     SECTION("equal shapes") {
-        auto shape1 = make_shape({2, 3, 4}).unwrap();
-        auto shape2 = make_shape({2, 3, 4}).unwrap();
+        auto shape1 = make_shape(2, 3, 4);
+        auto shape2 = make_shape(2, 3, 4);
         REQUIRE(shape1 == shape2);
         REQUIRE_FALSE(shape1 != shape2);
     }
 
     SECTION("different dimensions") {
-        auto shape1 = make_shape({2, 3}).unwrap();
-        auto shape2 = make_shape({2, 4}).unwrap();
+        auto shape1 = make_shape(2, 3);
+        auto shape2 = make_shape(2, 4);
         REQUIRE(shape1 != shape2);
         REQUIRE_FALSE(shape1 == shape2);
     }
 
     SECTION("different number of dims") {
-        auto shape1 = make_shape({2, 3}).unwrap();
-        auto shape2 = make_shape({2, 3, 4}).unwrap();
+        auto shape1 = make_shape(2, 3);
+        auto shape2 = make_shape(2, 3, 4);
         REQUIRE(shape1 != shape2);
     }
 
     SECTION("empty shapes") {
-        auto shape1 = make_shape({}).unwrap();
-        auto shape2 = make_shape({}).unwrap();
+        Shape shape1;
+        Shape shape2;
         REQUIRE(shape1 == shape2);
     }
 }
@@ -205,7 +206,7 @@ TEST_CASE("Shape equality comparison", "[shape][comparison]") {
 // ============================================================================
 
 TEST_CASE("Shape iteration with begin/end", "[shape][iteration]") {
-    auto shape = make_shape({2, 3, 4}).unwrap();
+    auto shape = make_shape(2, 3, 4);
 
     std::vector<int64_t> collected;
     for (auto it = shape.begin(); it != shape.end(); ++it) {
@@ -219,7 +220,7 @@ TEST_CASE("Shape iteration with begin/end", "[shape][iteration]") {
 }
 
 TEST_CASE("Shape as_span conversion", "[shape][iteration]") {
-    auto shape = make_shape({2, 3, 4}).unwrap();
+    auto shape = make_shape(2, 3, 4);
     auto span = shape.as_span();
 
     REQUIRE(span.size() == 3);
@@ -233,11 +234,11 @@ TEST_CASE("Shape as_span conversion", "[shape][iteration]") {
 // ============================================================================
 
 TEST_CASE("Shape to_string conversion", "[shape][formatting]") {
-    REQUIRE(to_string(make_shape({}).unwrap()) == "[]");
-    REQUIRE(to_string(make_shape({5}).unwrap()) == "[5]");
-    REQUIRE(to_string(make_shape({2, 3}).unwrap()) == "[2, 3]");
-    REQUIRE(to_string(make_shape({2, 3, 4}).unwrap()) == "[2, 3, 4]");
-    REQUIRE(to_string(make_shape({1, 2, 3, 4, 5}).unwrap()) == "[1, 2, 3, 4, 5]");
+    REQUIRE(to_string(Shape()) == "[]");
+    REQUIRE(to_string(make_shape(5)) == "[5]");
+    REQUIRE(to_string(make_shape(2, 3)) == "[2, 3]");
+    REQUIRE(to_string(make_shape(2, 3, 4)) == "[2, 3, 4]");
+    REQUIRE(to_string(make_shape(1, 2, 3, 4, 5)) == "[1, 2, 3, 4, 5]");
 }
 
 }  // namespace p10

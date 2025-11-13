@@ -320,10 +320,8 @@ class Tensor {
     /// # Arguments
     /// * `new_shape` - The new shape of the tensor.
     /// # Returns
-    /// * A tensor with the new shape. If the reshape is not possible, returns an error.
-    P10Result<Tensor> reshape(const Shape& new_shape);
-
-    P10Error reshape_inplace(const Shape& new_shape);
+    /// * An error if the reshape is not possible.
+    P10Error reshape(const Shape& new_shape);
 
     /// Transposes a 2D tensor.
     /// # Arguments

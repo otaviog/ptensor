@@ -5,6 +5,7 @@
 #include <ptensor/io/numpy.hpp>
 #include <ptensor/tensor.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+#include "catch2/matchers/catch_matchers.hpp"
 
 namespace p10::io {
 
@@ -24,7 +25,7 @@ TEST_CASE("save_npz and load_npz with single tensor", "[io][numpy]") {
 
     // Load from npz
     auto loaded_result = load_npz(filename);
-    p10::testing::require_ok(loaded_result);
+    REQUIRE_THAT(loaded_result, testing::IsOk());
 
     auto loaded_tensors = loaded_result.unwrap();
     REQUIRE(loaded_tensors.size() == 1);
@@ -64,7 +65,7 @@ TEST_CASE("save_npz and load_npz with multiple tensors", "[io][numpy]") {
 
     // Load from npz
     auto loaded_result = load_npz(filename);
-    p10::testing::require_ok(loaded_result);
+    REQUIRE_THAT(loaded_result, testing::IsOk());
 
     auto loaded_tensors = loaded_result.unwrap();
     REQUIRE(loaded_tensors.size() == 3);
@@ -129,7 +130,7 @@ TEST_CASE("save_npz with different data types", "[io][numpy]") {
     REQUIRE_THAT(save_err, p10::testing::IsOk());
 
     auto loaded_result = load_npz(filename);
-    p10::testing::require_ok(loaded_result);
+    REQUIRE_THAT(loaded_result, p10::testing::IsOk());
 
     auto loaded_tensors = loaded_result.unwrap();
     REQUIRE(loaded_tensors.size() == 2);

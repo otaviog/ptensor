@@ -4,10 +4,11 @@
 #include <ptensor/op/stack.hpp>
 #include <ptensor/tensor.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+#include "ptensor/p10_error.hpp"
 
 namespace p10::op {
 using Catch::Approx;
-using p10::testing::IsErr;
+using p10::testing::IsError;
 using p10::testing::IsOk;
 
 TEST_CASE("Stack: Basic stacking along axis 0", "[stack]") {
@@ -191,7 +192,7 @@ TEST_CASE("Stack: Error - Empty input", "[stack]") {
     std::vector<Tensor> inputs;
     Tensor output;
 
-    REQUIRE_THAT(stack(inputs, 0, output), IsErr());
+    REQUIRE_THAT(stack(inputs, 0, output), IsError(P10Error::InvalidArgument));
 }
 
 TEST_CASE("Stack: Error - Mismatched shapes", "[stack]") {
@@ -201,7 +202,7 @@ TEST_CASE("Stack: Error - Mismatched shapes", "[stack]") {
     Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
     Tensor output;
 
-    REQUIRE_THAT(stack(inputs, 0, output), IsErr());
+    REQUIRE_THAT(stack(inputs, 0, output), IsError(P10Error::InvalidArgument));
 }
 
 TEST_CASE("Stack: Error - Mismatched dtypes", "[stack]") {
@@ -211,7 +212,7 @@ TEST_CASE("Stack: Error - Mismatched dtypes", "[stack]") {
     Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
     Tensor output;
 
-    REQUIRE_THAT(stack(inputs, 0, output), IsErr());
+    REQUIRE_THAT(stack(inputs, 0, output), IsError(P10Error::InvalidArgument));
 }
 
 TEST_CASE("Stack: Error - Axis out of bounds", "[stack]") {
@@ -221,13 +222,13 @@ TEST_CASE("Stack: Error - Axis out of bounds", "[stack]") {
     SECTION("Positive axis too large") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, 3, output), IsErr());
+        REQUIRE_THAT(stack(inputs, 3, output), IsError(P10Error::InvalidArgument));
     }
 
     SECTION("Negative axis too large") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, -4, output), IsErr());
+        REQUIRE_THAT(stack(inputs, -4, output), IsError(P10Error::InvalidArgument));
     }
 }
 

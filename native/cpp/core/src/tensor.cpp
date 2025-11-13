@@ -43,7 +43,7 @@ P10Result<Tensor> Tensor::full(const Shape& shape, double value, const TensorOpt
 
 P10Result<Tensor> Tensor::from_range(const Shape& shape, const Dtype& dtype, int64_t start) {
     auto result_res = Tensor::zeros(shape, dtype);
-    if (auto status = result_res.is_error()) {
+    if (result_res.is_error()) {
         return Err(result_res);
     }
 
@@ -269,7 +269,7 @@ P10Result<Tensor> Tensor::select_dimension(int64_t dim, int64_t index) {
 
     Shape select_shape(size_t(dims() - 1));
     copy_one_except(shape_.begin(), shape_.end(), size_t(dim), select_shape.begin());
-    Stride select_stride(size_t(dims() - 1));
+    Stride select_stride = Stride::zeros(size_t(dims() - 1)).unwrap();
     copy_one_except(stride_.begin(), stride_.end(), size_t(dim), select_stride.begin());
 
     const auto offset = stride_[dim].unwrap() * index * dtype_.size_bytes();
@@ -292,19 +292,7 @@ void Tensor::set_options(const TensorOptions& options) {
     axes_ = options.axes().empty() ? Axes(shape_.dims()) : options.axes();
 }
 
-P10Result<Tensor> Tensor::reshape(const Shape& new_shape) {
-    Stride new_stride = Stride::from_contiguous_shape(new_shape);
-
-    P10_RETURN_ERR_IF_ERROR(check_reshapeability(shape(), new_shape, is_contiguous()));
-    Tensor reshaped_tensor = this->as_view();
-    reshaped_tensor.shape_ = new_shape;
-    reshaped_tensor.stride_ = new_stride;
-    reshaped_tensor.is_contiguous_ = is_stride_contiguous(new_stride, new_shape);
-
-    return Ok(std::move(reshaped_tensor));
-}
-
-P10Error Tensor::reshape_inplace(const Shape& new_shape) {
+P10Error Tensor::reshape(const Shape& new_shape) {
     Stride new_stride = Stride::from_contiguous_shape(new_shape);
 
     P10_RETURN_IF_ERROR(check_reshapeability(shape(), new_shape, is_contiguous()));

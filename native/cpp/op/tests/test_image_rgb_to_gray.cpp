@@ -3,10 +3,11 @@
 #include <ptensor/op/image_rgb_to_gray.hpp>
 #include <ptensor/tensor.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+#include "ptensor/p10_error.hpp"
 
 namespace p10::op {
 using Catch::Approx;
-using p10::testing::IsErr;
+using p10::testing::IsError;
 using p10::testing::IsOk;
 
 TEST_CASE("RGB to gray: Basic conversion", "[image_rgb_to_gray]") {
@@ -183,9 +184,10 @@ TEST_CASE("RGB to gray: Luminosity formula accuracy", "[image_rgb_to_gray]") {
     TestCase test_cases[] = {
         {128, 128, 128, 128},  // Gray
         {255, 255, 255, 255},  // White
-        {0, 0, 0, 0},          // Black
-        {50, 100, 150, 91},    // 0.21*50 + 0.72*100 + 0.07*150 = 10.5 + 72 + 10.5 = 93, but check actual
-        {200, 50, 100, 85},    // 0.21*200 + 0.72*50 + 0.07*100 = 42 + 36 + 7 = 85
+        {0, 0, 0, 0},  // Black
+        {50, 100, 150, 91
+        },  // 0.21*50 + 0.72*100 + 0.07*150 = 10.5 + 72 + 10.5 = 93, but check actual
+        {200, 50, 100, 85},  // 0.21*200 + 0.72*50 + 0.07*100 = 42 + 36 + 7 = 85
     };
 
     for (const auto& test : test_cases) {
@@ -207,19 +209,19 @@ TEST_CASE("RGB to gray: Error - Wrong number of dimensions", "[image_rgb_to_gray
     SECTION("2D tensor instead of 3D") {
         auto rgb = Tensor::zeros(make_shape(10, 10), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsErr());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
     }
 
     SECTION("4D tensor instead of 3D") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 3, 1), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsErr());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
     }
 
     SECTION("1D tensor") {
         auto rgb = Tensor::zeros(make_shape(30), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsErr());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
     }
 }
 
@@ -227,19 +229,19 @@ TEST_CASE("RGB to gray: Error - Wrong number of channels", "[image_rgb_to_gray]"
     SECTION("1 channel") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 1), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsErr());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
     }
 
     SECTION("4 channels (RGBA)") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 4), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsErr());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
     }
 
     SECTION("2 channels") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 2), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsErr());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
     }
 }
 
@@ -247,19 +249,19 @@ TEST_CASE("RGB to gray: Error - Wrong dtype", "[image_rgb_to_gray]") {
     SECTION("Float32 instead of Uint8") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 3), Dtype::Float32).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsErr());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
     }
 
     SECTION("Int32 instead of Uint8") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 3), Dtype::Int32).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsErr());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
     }
 
     SECTION("Float64 instead of Uint8") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 3), Dtype::Float64).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsErr());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
     }
 }
 
@@ -272,7 +274,7 @@ TEST_CASE("RGB to gray: Gradient pattern", "[image_rgb_to_gray]") {
             auto pixel = rgb_span.channel(h, w);
             pixel[0] = static_cast<uint8_t>((h * 255) / 15);  // Vertical gradient
             pixel[1] = static_cast<uint8_t>((w * 255) / 15);  // Horizontal gradient
-            pixel[2] = 128;                                    // Constant
+            pixel[2] = 128;  // Constant
         }
     }
 

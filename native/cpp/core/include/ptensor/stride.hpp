@@ -25,15 +25,14 @@ class Stride: public detail::TensorExtents {
         }
     }
 
-  private:
-    explicit Stride(size_t dims) : TensorExtents(dims) {}
-
     /// Checks if the shape is empty, that is, it has no dimensions.
     bool empty() const {
         return dims_ == 0;
     }
 
   private:
+    explicit Stride(size_t dims) : TensorExtents(dims) {}
+
     using TensorExtents::TensorExtents;
 };
 

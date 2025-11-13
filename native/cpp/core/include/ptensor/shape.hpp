@@ -63,6 +63,10 @@ inline Shape make_shape(int64_t s0, int64_t s1, int64_t s2, int64_t s3) {
     return make_shape({s0, s1, s2, s3}).unwrap();
 }
 
+inline Shape make_shape(int64_t s0, int64_t s1, int64_t s2, int64_t s3, int64_t s4) {
+    return make_shape({s0, s1, s2, s3, s4}).unwrap();
+}
+
 /// Converts a shape to a string.
 inline std::string to_string(const Shape& shape) {
     return detail::to_string(shape);

@@ -86,6 +86,44 @@ struct Dtype {
         return do_visit(std::forward<F>(visitor), data);
     }
 
+    template<typename F>
+    auto match(F&& matcher) const {
+        using R_u8 = std::invoke_result_t<F, std::type_identity<uint8_t>>;
+        using R_u16 = std::invoke_result_t<F, std::type_identity<uint16_t>>;
+        using R_u32 = std::invoke_result_t<F, std::type_identity<uint32_t>>;
+        using R_i8 = std::invoke_result_t<F, std::type_identity<int8_t>>;
+        using R_i16 = std::invoke_result_t<F, std::type_identity<int16_t>>;
+        using R_i32 = std::invoke_result_t<F, std::type_identity<int32_t>>;
+        using R_i64 = std::invoke_result_t<F, std::type_identity<int64_t>>;
+        using R_f32 = std::invoke_result_t<F, std::type_identity<float>>;
+        using R_f64 = std::invoke_result_t<F, std::type_identity<double>>;
+        using Return =
+            std::common_type_t<R_u8, R_u16, R_u32, R_i8, R_i16, R_i32, R_i64, R_f32, R_f64>;
+
+        switch (value) {
+            case Uint8:
+                return static_cast<Return>(matcher(std::type_identity<uint8_t> {}));
+            case Uint16:
+                return static_cast<Return>(matcher(std::type_identity<uint16_t> {}));
+            case Uint32:
+                return static_cast<Return>(matcher(std::type_identity<uint32_t> {}));
+            case Int8:
+                return static_cast<Return>(matcher(std::type_identity<int8_t> {}));
+            case Int16:
+                return static_cast<Return>(matcher(std::type_identity<int16_t> {}));
+            case Int32:
+                return static_cast<Return>(matcher(std::type_identity<int32_t> {}));
+            case Int64:
+                return static_cast<Return>(matcher(std::type_identity<int64_t> {}));
+            case Float32:
+                return static_cast<Return>(matcher(std::type_identity<float> {}));
+            case Float64:
+                return static_cast<Return>(matcher(std::type_identity<double> {}));
+            default:
+                detail::panic("Unsupported dtype in Dtype::match()");
+        }
+    }
+
     template<typename FI, typename FF>
     auto match(FI&& int_matcher, FF&& float_matcher) const {
         using R_u8 = std::invoke_result_t<FI, std::type_identity<uint8_t>>;
@@ -123,6 +161,7 @@ struct Dtype {
                 detail::panic("Unsupported dtype in Dtype::match()");
         }
     }
+
 
     Code value = Dtype::Float32;
 

@@ -8,6 +8,7 @@ add_library(ptensor_io STATIC)
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/numpy.hpp
   ${_INCLUDE_DIR}/image.hpp
+  ${_INCLUDE_DIR}/audio.hpp
 )
 
 target_sources(ptensor_io
@@ -18,6 +19,7 @@ target_sources(ptensor_io
   PRIVATE
   src/numpy.cpp
   src/image.cpp
+  src/audio.cpp
 )
 
 target_include_directories(ptensor_io
@@ -34,7 +36,7 @@ target_link_libraries(ptensor_io PUBLIC ptensor PRIVATE $<BUILD_INTERFACE:cnpy> 
 ptensor_target_options(ptensor_io "IO")
 
 if(BUILD_TESTS)
-    add_subdirectory(tests)
+  add_subdirectory(tests)
 endif()
 
 # Create alias for use in build tree and install
@@ -42,9 +44,9 @@ add_library(p10::io ALIAS ptensor_io)
 
 # Install the library and headers
 install(TARGETS ptensor_io
-    EXPORT ptensorTargets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  EXPORT ptensorTargets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )

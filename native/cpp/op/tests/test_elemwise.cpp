@@ -7,7 +7,7 @@
 namespace p10::op {
 using Catch::Approx;
 
-TEST_CASE("Tensorop: Add", "[tensorop]") {
+TEST_CASE("Tensorop: elemwise Add", "[tensorop]") {
     auto type = GENERATE(Dtype::Float32, Dtype::Int64, Dtype::Uint8);
     DYNAMIC_SECTION("Testing addition with type " << to_string(type)) {
         Tensor out;
@@ -29,7 +29,7 @@ TEST_CASE("Tensorop: Add", "[tensorop]") {
     }
 }
 
-TEST_CASE("Tensorop: Subtract", "[tensor]") {
+TEST_CASE("Tensorop: elemwise Subtract", "[tensor]") {
     auto type = GENERATE(Dtype::Float32, Dtype::Int64, Dtype::Uint8);
     DYNAMIC_SECTION("Testing subtraction with type " << to_string(type)) {
         Tensor out;
@@ -45,6 +45,27 @@ TEST_CASE("Tensorop: Subtract", "[tensor]") {
         out.visit([](auto span) {
             for (int i = 0; i < 6; ++i) {
                 REQUIRE(span[i] == Approx(0.0));
+            }
+        });
+    }
+}
+
+TEST_CASE("Tensorop: elemwise multiply", "[tensor]") {
+    auto type = GENERATE(Dtype::Float32, Dtype::Int64, Dtype::Uint8);
+    DYNAMIC_SECTION("Testing multiplication with type " << to_string(type)) {
+        Tensor out;
+        auto a = Tensor::from_range(make_shape(2, 3), type).unwrap();
+        auto b = Tensor::from_range(make_shape(2, 3), type).unwrap();
+
+        REQUIRE(multiply_elemwise(a, b, out).is_ok());
+        REQUIRE(out.shape(0).unwrap() == 2);
+        REQUIRE(out.shape(1).unwrap() == 3);
+        REQUIRE(out.size() == 6);
+        REQUIRE(out.dtype() == type);
+
+        out.visit([](auto span) {
+            for (int i = 0; i < 6; ++i) {
+                REQUIRE(span[i] == Approx(i * i));
             }
         });
     }

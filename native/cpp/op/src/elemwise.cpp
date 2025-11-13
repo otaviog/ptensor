@@ -56,6 +56,29 @@ P10Error subtract_elemwise(const Tensor& a, const Tensor& b, Tensor& out) {
     return P10Error::Ok;
 }
 
+P10Error multiply_elemwise(const Tensor& a, const Tensor& b, Tensor& out) {
+    if (a.shape() != b.shape()) {
+        return P10Error::InvalidArgument << "Input tensors must have the same shape";
+    }
+    if (a.dtype() != b.dtype()) {
+        return P10Error::InvalidArgument << "Input tensors must have the same data type";
+    }
+    out.create(a.shape(), a.dtype());
+
+    a.visit([&](auto a_span) {
+        using SpanType = decltype(a_span)::value_type;
+
+        std::transform(
+            a_span.data(),
+            a_span.data() + a.size(),
+            b.as_span1d<SpanType>().unwrap().data(),
+            out.as_span1d<SpanType>().unwrap().data(),
+            std::multiplies<SpanType>()
+        );
+    });
+    return P10Error::Ok;
+}
+
 namespace {
     template<typename T>
     void add_elemwise_impl(const T* a, const T* b, T* out, size_t size) {

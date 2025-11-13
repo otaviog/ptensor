@@ -88,7 +88,7 @@ compare_tensors(const Tensor& t1, const Tensor& t2, const CompareOptions& option
     if (match_count != t1.size()) {
         return P10Error::AssertionError << "Data are different"
                                         << std::string("Match rate is ")
-            + std::to_string(static_cast<double>(match_count) / t1.size());
+            + std::to_string(static_cast<double>(match_count) / t1.size() * 100.0) + "%";
     }
     return P10Error::Ok;
 }

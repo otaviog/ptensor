@@ -13,29 +13,29 @@ namespace p10::op {
 using Hz = double;
 using Seconds = double;
 
-class SineWaveOptions {
+class SineWaveParams {
   public:
-    SineWaveOptions& sample_rate(Hz rate) {
+    SineWaveParams& sample_rate(Hz rate) {
         sample_rate_ = rate;
         return *this;
     }
 
-    SineWaveOptions& frequency(Hz freq) {
+    SineWaveParams& frequency(Hz freq) {
         frequency_ = freq;
         return *this;
     }
 
-    SineWaveOptions& amplitude(double amp) {
+    SineWaveParams& amplitude(double amp) {
         amplitude_ = amp;
         return *this;
     }
 
-    SineWaveOptions& phaseRadians(double ph) {
+    SineWaveParams& phaseRadians(double ph) {
         phaseRadians_ = ph;
         return *this;
     }
 
-    SineWaveOptions& period(Seconds per) {
+    SineWaveParams& period(Seconds per) {
         period_ = per;
         return *this;
     }
@@ -69,6 +69,6 @@ class SineWaveOptions {
 };
 
 P10Error
-generate_sine_wave(size_t num_samples, Dtype type, const SineWaveOptions& options, Tensor& output);
+generate_sine_wave(size_t num_samples, Dtype type, const SineWaveParams& params, Tensor& output);
 
 }  // namespace p10::op

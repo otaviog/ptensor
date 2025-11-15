@@ -28,14 +28,14 @@ LaplacianPyramid::transform(const Tensor& in_tensor, std::span<Tensor> out_lapla
 void LaplacianPyramid::store_gaussian_pyramid(const Tensor& in_tensor, size_t num_levels) const {
     gaussian_pyramid_.resize(num_levels);
     gaussian_pyramid_[0] = in_tensor.clone().unwrap();
-    Tensor downsample_buffer;
+    Tensor blur_buffer;
     for (size_t level = 1; level < num_levels; ++level) {
         const auto& prev = gaussian_pyramid_[level - 1];
         const auto half_height = prev.shape(1).unwrap() / 2;
         const auto half_width = prev.shape(2).unwrap() / 2;
 
-        resize(prev, downsample_buffer, half_width, half_height).expect("Resize failed");
-        blur_op_.transform(downsample_buffer, gaussian_pyramid_[level]).expect("Blur failed");
+        blur_op_.transform(prev, blur_buffer).expect("Blur failed");
+        resize(blur_buffer, gaussian_pyramid_[level], half_width, half_height).expect("Resize failed");
     }
 }
 
@@ -55,7 +55,7 @@ void LaplacianPyramid::pyramid_from_gaussian_to_laplacian(std::span<Tensor> outp
     }
     output.back() = gaussian_pyramid_.back().clone().expect("Clone failed");
 }
-
+ 
 P10Error LaplacianPyramid::reconstruct(std::span<const Tensor> pyramid, Tensor& output) const {
     if (const auto err = validate_reconstruct_arguments(pyramid); err.is_error()) {
         return err;

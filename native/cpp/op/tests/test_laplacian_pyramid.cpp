@@ -21,9 +21,25 @@ TEST_CASE("op: Create laplacian pyramid", "[health]") {
     std::vector<Tensor> pyramid(PYRAMID_LEVELS);
     REQUIRE(lp_process.transform(sample_tensor, pyramid).is_ok());
 
+    for (size_t level = 0; level < PYRAMID_LEVELS; ++level) {
+        Tensor level_image;
+        op::image_from_tensor(pyramid[level], level_image);
+        REQUIRE(
+            io::save_image(
+                (testing::get_output_path()
+                 / testing::suffixed(image_file, "laplacian-level-" + std::to_string(level)))
+                    .string(),
+                level_image
+            )
+                .is_ok()
+        );
+    }
+
     Tensor reconstructed, reconstructed_image;
     lp_process.reconstruct(pyramid, reconstructed);
     REQUIRE(reconstructed.shape() == sample_tensor.shape());
+
+    
 
     op::image_from_tensor(reconstructed, reconstructed_image);
     REQUIRE(

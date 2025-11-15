@@ -48,7 +48,7 @@ WindowFunction::transform_borders(const Tensor& input, Tensor& output, size_t bo
     if (input.dims() != 2) {
         return P10Error::InvalidArgument << "Input tensor must be 2D.";
     }
-    if (border_size * 2 > input.shape(1).unwrap()) {
+    if (border_size * 2 > size_t(input.shape(1).unwrap())) {
         return P10Error::InvalidArgument << "Border size is too large for the input tensor.";
     }
 

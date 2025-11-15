@@ -8,7 +8,7 @@
             "name": "Debug All Unit Tests",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/lin-debug/native/tests/unit_tests_all",
+            "program": "${command:cmake.launchTargetPath}",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -34,7 +34,7 @@
             "name": "Debug Specific Test Case",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/lin-debug/native/tests/unit_tests_all",
+            "program": "${command:cmake.launchTargetPath}",
             "args": [
                 "${input:testCase}"
             ],
@@ -62,7 +62,7 @@
             "name": "Debug with Test Filter",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/lin-debug/native/tests/unit_tests_all",
+            "program": "${command:cmake.launchTargetPath}",
             "args": [
                 "--reporter=console",
                 "--break",

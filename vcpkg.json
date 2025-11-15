@@ -19,13 +19,14 @@
       "description": "Enable I/O functionality for image and numpy file support",
       "dependencies": [
         "zlib",
-        "stb"
+        "stb",
+        "audiofile"
       ]
     },
     "op": {
       "description": "Enable additional tensor operations",
       "dependencies": [
-        "kissfft"
+        "pocketfft"
       ]
     },
     "tests": {

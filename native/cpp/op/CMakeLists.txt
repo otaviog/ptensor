@@ -1,7 +1,7 @@
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/op)
 add_library(ptensor_op)
 
-find_package(kissfft CONFIG REQUIRED)
+find_path(POCKETFFT_INCLUDE_DIRS "pocketfft_hdronly.h" REQUIRED)
 
 ##
 # Public Headers
@@ -49,13 +49,10 @@ target_include_directories(ptensor_op
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     PRIVATE
+    ${POCKETFFT_INCLUDE_DIRS}
     ${_INCLUDE_DIR})
 
-target_link_libraries(ptensor_op PUBLIC ptensor PRIVATE kissfft::kissfft-float)
-
-# Explicitly set what dependencies are exported for consumers
-# kissfft is a private implementation detail and should not be exposed
-set_property(TARGET ptensor_op PROPERTY INTERFACE_LINK_LIBRARIES ptensor)
+target_link_libraries(ptensor_op PUBLIC ptensor PRIVATE )
 
 ptensor_target_options(ptensor_op Op)
 

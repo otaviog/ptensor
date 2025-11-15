@@ -1,9 +1,6 @@
 #pragma once
 
-#include <vector>
-
 #include <ptensor/p10_error.hpp>
-#include <ptensor/tensor.hpp>
 
 namespace p10 {
 class Tensor;
@@ -21,7 +18,7 @@ class Fft {
 
     enum Direction { Forward = 0, ForwardReal = 1, Inverse = 2, InverseReal = 3 };
 
-    Fft(size_t nfft, const FftOptions& options);
+    Fft(const FftOptions& options);
     ~Fft();
 
     Fft(const Fft&) = delete;
@@ -35,13 +32,8 @@ class Fft {
     P10Error inverse(const Tensor& input, Tensor& output) const;
     P10Error inverse_real(const Tensor& frequency, Tensor& time) const;
 
-    void* kiss_ = nullptr;
     Direction direction_ = Direction::Forward;
     Normalize normalize_ = Normalize::None;
-    size_t nfft_ = 0;
-
-    // Not thread-safe: buffer_ is modified by const methods.
-    mutable std::vector<Tensor> buffer_;
 };
 
 class FftOptions {

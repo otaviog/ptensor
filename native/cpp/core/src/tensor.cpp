@@ -41,8 +41,8 @@ P10Result<Tensor> Tensor::full(const Shape& shape, double value, const TensorOpt
     return Ok(Tensor(std::move(blob), shape, options));
 }
 
-P10Result<Tensor> Tensor::from_range(const Shape& shape, const Dtype& dtype, int64_t start) {
-    auto result_res = Tensor::zeros(shape, dtype);
+P10Result<Tensor> Tensor::from_range(const Shape& shape, const TensorOptions& options, int64_t start) {
+    auto result_res = Tensor::zeros(shape, options);
     if (result_res.is_error()) {
         return Err(result_res);
     }
@@ -51,7 +51,7 @@ P10Result<Tensor> Tensor::from_range(const Shape& shape, const Dtype& dtype, int
         std::accumulate(shape.begin(), shape.end(), int64_t(1), std::multiplies<int64_t>());
 
     auto result = result_res.unwrap();
-    dtype.visit(
+    options.dtype().visit(
         [&](auto span) {
             using SpanType = decltype(span)::value_type;
             for (auto i = 0; i < total_size; i++) {

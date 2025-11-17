@@ -103,6 +103,19 @@ namespace detail {
             return extent_[dims_ - 1];
         }
 
+        TensorExtents subextents(size_t start_dim, size_t end_dim) const {
+            if (start_dim >= dims_ || start_dim >= end_dim) {
+                return TensorExtents();
+            }
+            end_dim = end_dim > dims_ ? dims_ : end_dim;
+            TensorExtents result;
+            result.dims_ = end_dim - start_dim;
+            for (size_t i = start_dim; i < end_dim; i++) {
+                result.extent_[i - start_dim] = extent_[i];
+            }
+            return result;
+        }
+
       protected:
         TensorExtents(std::span<const int64_t> shape) {
             std::copy(shape.begin(), shape.end(), extent_.begin());

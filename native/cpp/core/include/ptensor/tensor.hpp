@@ -86,7 +86,7 @@ class Tensor {
     static P10Result<Tensor>
     empty(const Shape& shape, const TensorOptions& options = TensorOptions());
 
-    static P10Result<Tensor> from_range(const Shape& shape, const Dtype& dtype, int64_t start = 0);
+    static P10Result<Tensor> from_range(const Shape& shape, const TensorOptions& options = TensorOptions(), int64_t start = 0);
 
     P10Error create(const Shape& shape, const TensorOptions& options = TensorOptions());
 

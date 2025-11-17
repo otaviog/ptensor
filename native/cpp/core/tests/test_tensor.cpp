@@ -3,9 +3,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
-#include <ptensor/shape.hpp>
 #include <ptensor/tensor.hpp>
-#include <ptensor/tensor_options.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
 #include <ptensor/testing/compare_tensors.hpp>
 

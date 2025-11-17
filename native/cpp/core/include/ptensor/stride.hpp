@@ -30,6 +30,10 @@ class Stride: public detail::TensorExtents {
         return dims_ == 0;
     }
 
+    Stride substride(size_t start_dim, size_t end_dim = SIZE_MAX) const {
+        return Stride(detail::TensorExtents::subextents(start_dim, end_dim));
+    }
+
   private:
     explicit Stride(size_t dims) : TensorExtents(dims) {}
 

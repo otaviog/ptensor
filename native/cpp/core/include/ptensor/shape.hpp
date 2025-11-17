@@ -35,6 +35,10 @@ class Shape: public detail::TensorExtents {
         return count() == 0;
     }
 
+    Shape subshape(size_t start_dim, size_t end_dim = SIZE_MAX) const {
+        return Shape(detail::TensorExtents::subextents(start_dim, end_dim));
+    }
+
     using TensorExtents::TensorExtents;
     friend class Stride;
 };

@@ -33,6 +33,10 @@ endif()
 
 add_subdirectory(native)
 
+if (EMSCRIPTEN)
+    add_subdirectory(wasm/cpp)
+endif()
+
 # Create and install the config files
 install(EXPORT ptensorTargets
     FILE ptensorTargets.cmake

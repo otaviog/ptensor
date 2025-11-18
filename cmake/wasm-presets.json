@@ -1,0 +1,66 @@
+{
+  "version": 6,
+  "include": [
+    "common-presets.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "wasm-base",
+      "inherits": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CROSSCOMPILING_EMULATOR": "node",
+        "BUILD_TESTS": "OFF"
+      }
+    },
+    {
+      "name": "wasm-release",
+      "inherits": "wasm-base",
+      "displayName": "WebAssembly Release",
+      "description": "Release build targeting WebAssembly",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-O3 -flto",
+        "CMAKE_EXE_LINKER_FLAGS": "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1"
+      }
+    },
+    {
+      "name": "wasm-debug",
+      "inherits": "wasm-base",
+      "displayName": "WebAssembly Debug",
+      "description": "Debug build targeting WebAssembly",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-O0 -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s ASSERTIONS=1"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "wasm-release",
+      "configurePreset": "wasm-release"
+    },
+    {
+      "name": "wasm-debug",
+      "configurePreset": "wasm-debug"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "wasm-build",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "wasm-release"
+        },
+        {
+          "type": "build",
+          "name": "wasm-release"
+        }
+      ]
+    }
+  ]
+}

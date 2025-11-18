@@ -1,0 +1,14 @@
+# Compiled TypeScript
+*.js
+*.js.map
+*.d.ts
+!ptensor.d.ts
+
+# Node modules
+node_modules/
+
+# Build artifacts (will be copied from build/wasm-release/)
+ptensor.wasm
+
+# NPM
+package-lock.json

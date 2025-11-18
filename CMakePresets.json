@@ -6,6 +6,6 @@
         "patch": 0
     },
 
-    "include": ["cmake/win-presets.json", "cmake/linux-presets.json"]
+    "include": ["cmake/win-presets.json", "cmake/linux-presets.json", "cmake/wasm-presets.json"]
   }
   

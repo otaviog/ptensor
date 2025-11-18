@@ -10,6 +10,7 @@
 #include <type_traits>
 
 #include "detail/panic.hpp"
+#include "p10_result.hpp"
 
 namespace p10 {
 
@@ -44,6 +45,8 @@ struct Dtype {
         else static_assert(!std::is_same_v<ActualType, ActualType>, "Unsupported type for Dtype::from<T>()");
         // clang-format on
     }
+
+    static P10Result<Dtype> from(const std::string& type_str);
 
     Dtype() = default;
 
@@ -162,7 +165,6 @@ struct Dtype {
         }
     }
 
-
     Code value = Dtype::Float32;
 
   private:
@@ -213,6 +215,8 @@ struct Dtype {
     }
 };
 
-std::string to_string(Dtype::Code dtype);
+const char* to_cstring(Dtype::Code dtype);
+
+std::string to_string(Dtype dtype);
 
 }  // namespace p10

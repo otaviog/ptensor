@@ -1,7 +1,7 @@
 #include "dtype.hpp"
 
 namespace p10 {
-std::string to_string(Dtype::Code dtype) {
+const char *to_cstring(Dtype::Code dtype) {
     switch (dtype) {
         case Dtype::Uint8:
             return "uint8";
@@ -26,5 +26,9 @@ std::string to_string(Dtype::Code dtype) {
         default:
             return "unknown";
     }
+}
+
+std::string to_string(Dtype::Code dtype) {
+   return std::string(to_cstring(dtype));
 }
 }  // namespace p10

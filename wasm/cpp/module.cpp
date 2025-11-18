@@ -1,22 +1,12 @@
 #include <emscripten/bind.h>
-
 #include <ptensor/dtype.hpp>
 #include <ptensor/p10_error.hpp>
 #include <ptensor/shape.hpp>
 
-#include "wasm_shape.hpp"
-#include "wasm_tensor.hpp"
+#include "js_shape.hpp"
+#include "js_tensor.hpp"
 
 using namespace emscripten;
-
-// Helper function to create Dtype from string
-p10::Dtype createDtypeFromString(const std::string& dtype_str) {
-    auto result = p10::Dtype::from(dtype_str);
-    if (result.is_error()) {
-        throw std::runtime_error(result.err().to_string());
-    }
-    return result.unwrap();
-}
 
 EMSCRIPTEN_BINDINGS(P10) {
     class_<p10::P10Error>("P10Error")
@@ -25,21 +15,28 @@ EMSCRIPTEN_BINDINGS(P10) {
         .function("isOk", &p10::P10Error::is_ok)
         .function("isError", &p10::P10Error::is_error);
 
-    class_<WasmShape>("Shape")
+    class_<JsShape>("Shape")
         .constructor<>()
-        .class_function("fromArray", &WasmShape::fromArray)
-        .function("toArray", &WasmShape::toArray)
-        .function("dims", &WasmShape::dims)
-        .function("count", &WasmShape::count)
-        .function("empty", &WasmShape::empty)
-        .function("toString", &WasmShape::toString);
+        .class_function("fromArray", &JsShape::fromArray)
+        .function("toArray", &JsShape::toArray)
+        .function("dims", &JsShape::dims)
+        .function("count", &JsShape::count)
+        .function("empty", &JsShape::empty)
+        .function("toString", &JsShape::toString);
 
     class_<p10::Dtype>("Dtype")
         .constructor<>()
         .constructor<p10::Dtype::Code>()
-        .function("toString", &p10::Dtype::to_string);
-
-    function("createDtypeFromString", &createDtypeFromString);
+        .class_function("fromString", optional_override([](const std::string& type_str) -> p10::Dtype {
+            auto result = p10::Dtype::from(type_str);
+            if (result.is_error()) {
+                throw std::runtime_error(result.err().to_string());
+            }
+            return result.unwrap();
+        }))
+        .function("toString", optional_override([](const p10::Dtype& dtype) -> std::string {
+            return p10::to_string(dtype);
+        }));
 
     enum_<p10::Dtype::Code>("DtypeCode")
         .value("Float32", p10::Dtype::Float32)
@@ -53,12 +50,12 @@ EMSCRIPTEN_BINDINGS(P10) {
         .value("Int32", p10::Dtype::Int32)
         .value("Int64", p10::Dtype::Int64);
 
-    class_<WasmTensor>("Tensor")
+    class_<JsTensor>("Tensor")
         .constructor<>()
-        .class_function("zeros", &WasmTensor::zeros, allow_raw_pointers())
-        .function("fromData", &WasmTensor::fromData)
-        .function("getSize", &WasmTensor::getSize)
-        .function("getShape", &WasmTensor::getShape)
-        .function("getDtypeStr", &WasmTensor::getDtype)
-        .function("toString", &WasmTensor::toString);
+        .class_function("zeros", &JsTensor::zeros, allow_raw_pointers())
+        .class_function("fromData", &JsTensor::fromData, allow_raw_pointers())
+        .function("getSize", &JsTensor::getSize)
+        .function("getShape", &JsTensor::getShape)
+        .function("getDtype", &JsTensor::getDtype)
+        .function("toString", &JsTensor::toString);
 }

@@ -1,9 +1,12 @@
 import { initP10 } from './module-init';
-import { Tensor, zeros } from './tensor';
+import { fromArray, zeros } from './tensor';
 
 
-export default {
+export type {  Tensor } from './tensor';
+
+const p10 = {
     init: initP10,
-    Tensor,
-    zeros
+    zeros,
+    fromArray
 }
+export default p10;

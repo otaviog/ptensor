@@ -3,99 +3,50 @@
  * Provides a user-friendly TypeScript API over the raw WebAssembly bindings
  */
 
-import { createWasmDtype, DTypeString, parseDtype } from './dtype.js';
-import { MODULE, P10 } from './module-init.js';
-import { getDtypeFromTypedArray, TypedArrayType } from './typed-array.js';
+
+import { createDtype, Dtype, DTypeString } from './dtype';
+import { MODULE, P10 } from './module-init';
+import { createShape, Shape } from './shape';
+import { getDtypeFromTypedArray, TypedArrayType } from './typed-array';
+
+export interface Tensor {
+  getSize(): number;
+  getShape(): Shape;
+  getDtype(): Dtype;
+  delete(): void;
+}
 
 /**
- * Tensor class that wraps the WebAssembly Tensor
+ * Create a tensor from a typed array
  */
-export class Tensor {
-  private wasmTensor: any;
+export const fromArray = (
+  data: TypedArrayType,
+  shape: number[]
+): Tensor => {
+  const dtype = getDtypeFromTypedArray(data);
+  const wasmShape = createShape(shape);
+  const wasmDtype = createDtype(dtype);
 
-  private constructor(wasmTensor: any) {
-    this.wasmTensor = wasmTensor;
-  }
+  // Allocate memory in WebAssembly
+  const byteLength = data.byteLength;
+  const dataPtr = MODULE._malloc(byteLength);
 
-  /**
-   * Create a tensor from a typed array
-   */
-  static fromTypedArray(
-    data: TypedArrayType,
-    shape: number[]
-  ): Tensor {
-    const dtype = getDtypeFromTypedArray(data);
-    const wasmShape = createWasmShape(shape);
-    const wasmDtype = createWasmDtype(dtype);
+  try {
+    // Copy data to WebAssembly memory
+    const heapView = getHeapView(MODULE, dtype, dataPtr, data.length);
+    heapView.set(data as any);
 
-    // Allocate memory in WebAssembly
-    const byteLength = data.byteLength;
-    const dataPtr = MODULE._malloc(byteLength);
+    // Create tensor
+    const tensor = MODULE.Tensor.fromData(wasmShape, wasmDtype, dataPtr);
 
-    try {
-      // Copy data to WebAssembly memory
-      const heapView = getHeapView(MODULE, dtype, dataPtr, data.length);
-      heapView.set(data as any);
-
-      // Create tensor
-      const wasmTensor = new MODULE.Tensor();
-      const error = wasmTensor.fromData(wasmShape, wasmDtype, dataPtr);
-
-      if (error.isError()) {
-        wasmTensor.delete();
-        throw new Error(`Failed to create tensor: ${error.toString()}`);
-      }
-      error.delete();
-
-      const tensor = new Tensor(wasmTensor);
-
-      return tensor;
-    } finally {
-      MODULE._free(dataPtr);
-      wasmShape.delete();
-      wasmDtype.delete();
+    if (tensor === null) {
+      throw new Error(`Failed to create tensor`);
     }
-  }
 
-  /**
-   * Create a tensor filled with zeros
-   */
-  static zeros(shape: number[], dtype: DTypeString = 'float32'): Tensor {
-    const wasmTensor = MODULE.Tensor.zeros(createWasmShape(shape),
-      createWasmDtype(dtype));
-    return new Tensor(wasmTensor);
-  }
-
-  /**
-   * Get tensor shape
-   */
-  get shape(): number[] {
-    return this.wasmTensor.getShape().toArray();
-  }
-
-  /**
-   * Get tensor dtype
-   */
-  get dtype(): DTypeString {
-    const dtypeStr = this.wasmTensor.getDtypeStr();
-    return parseDtype(dtypeStr);
-  }
-
-  /**
-   * Get total number of elements
-   */
-  get size(): number {
-    return this.wasmTensor.getSize();
-  }
-
-  /**
-   * Delete the tensor and free memory
-   */
-  delete(): void {
-    if (this.wasmTensor) {
-      this.wasmTensor.delete();
-      this.wasmTensor = null;
-    }
+    return tensor;
+  } finally {
+    wasmShape.delete();
+    wasmDtype.delete();
   }
 }
 
@@ -128,6 +79,12 @@ const getHeapView = (
   }
 }
 
-const createWasmShape = (shape: number[]): any => {
-  return (MODULE.Shape as any).fromArray(shape);
+
+/**
+ * Create a tensor filled with zeros
+ */
+export const zeros = (shape: number[], dtype: DTypeString = 'float32'): Tensor => {
+  return MODULE.Tensor.zeros(createShape(shape),
+    createDtype(dtype));
 }
+

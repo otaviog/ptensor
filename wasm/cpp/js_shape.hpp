@@ -2,25 +2,23 @@
 
 #include <emscripten/val.h>
 #include <ptensor/shape.hpp>
-#include "ptensor/p10_error.hpp"
 
-using namespace emscripten;
+#include "common.hpp"
+#include "js_error.hpp"
 
-class WasmShape : public p10::Shape {
+class JsShape: public p10::Shape {
   public:
-    WasmShape() = default;
+    JsShape() = default;
 
-    static WasmShape fromArray(const val& dims_array) {
+    static JsShape fromArray(const val& dims_array) {
         const auto length = dims_array["length"].as<size_t>();
-        p10::Shape shape = p10::Shape::zeros(length).unwrap();
+        p10::Shape shape = js_unwrap(p10::Shape::zeros(length));
         auto shape_s = shape.as_span();
         for (size_t i = 0; i < length; ++i) {
             shape_s[i] = dims_array[i].as<int64_t>();
         }
 
-        
-
-        return WasmShape(shape);
+        return JsShape(shape);
     }
 
     val toArray() const {
@@ -32,7 +30,7 @@ class WasmShape : public p10::Shape {
         return arr;
     }
 
-    WasmShape(const p10::Shape& shape) : p10::Shape(shape) {}
+    JsShape(const p10::Shape& shape) : p10::Shape(shape) {}
 
     std::string toString() const {
         return p10::to_string(*this);

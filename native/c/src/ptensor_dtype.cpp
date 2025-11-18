@@ -6,7 +6,7 @@
 #include "update_error_state.hpp"
 
 PTENSOR_API const char* p10_dtype_to_string(P10DTypeEnum dtype) {
-    return wrap(dtype).unwrap().to_cstring();
+    return p10::to_cstring(wrap(dtype).unwrap());
 }
 
 PTENSOR_API P10ErrorEnum p10_dtype_from_string(const char* type_str, P10DTypeEnum* out_dtype) {

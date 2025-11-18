@@ -1,7 +1,35 @@
 #include "dtype.hpp"
 
+#include "p10_result.hpp"
+
 namespace p10 {
-const char *to_cstring(Dtype::Code dtype) {
+P10Result<Dtype> Dtype::from(const std::string& type_str) {
+    if (type_str == "uint8") {
+        return Ok<Dtype>(Dtype::Uint8);
+    } else if (type_str == "uint16") {
+        return Ok<Dtype>(Dtype::Uint16);
+    } else if (type_str == "uint32") {
+        return Ok<Dtype>(Dtype::Uint32);
+    } else if (type_str == "int8") {
+        return Ok<Dtype>(Dtype::Int8);
+    } else if (type_str == "int16") {
+        return Ok<Dtype>(Dtype::Int16);
+    } else if (type_str == "int32") {
+        return Ok<Dtype>(Dtype::Int32);
+    } else if (type_str == "int64") {
+        return Ok<Dtype>(Dtype::Int64);
+    } else if (type_str == "float16") {
+        return Ok<Dtype>(Dtype::Float16);
+    } else if (type_str == "float32") {
+        return Ok<Dtype>(Dtype::Float32);
+    } else if (type_str == "float64") {
+        return Ok<Dtype>(Dtype::Float64);
+    } else {
+        return Err(P10Error(P10Error::InvalidArgument, "Unknown dtype string: " + type_str));
+    }
+}
+
+const char* to_cstring(Dtype::Code dtype) {
     switch (dtype) {
         case Dtype::Uint8:
             return "uint8";
@@ -28,7 +56,8 @@ const char *to_cstring(Dtype::Code dtype) {
     }
 }
 
-std::string to_string(Dtype::Code dtype) {
-   return std::string(to_cstring(dtype));
+std::string to_string(Dtype dtype) {
+    return std::string(to_cstring(dtype));
 }
+
 }  // namespace p10

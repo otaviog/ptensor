@@ -1,6 +1,8 @@
 #ifndef PTENSOR_DTYPE_H_
 #define PTENSOR_DTYPE_H_
 
+#include "ptensor_error.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -19,6 +21,13 @@ typedef enum {
 } P10DTypeEnum;
 
 #define P10_DTYPE_LAST P10_DTYPE_INT64
+
+const char* p10_dtype_to_string(P10DTypeEnum dtype);
+
+P10ErrorEnum p10_dtype_from_string(
+    const char* type_str,
+    P10DTypeEnum* out_dtype
+);
 
 #ifdef __cplusplus
 }

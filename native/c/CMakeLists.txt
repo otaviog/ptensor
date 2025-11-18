@@ -19,7 +19,9 @@ target_sources(ptensor_capi
     src/ptensor_error.cpp
     src/ptensor_tensor.cpp
     src/dtype_wrapper.hpp
-    src/update_error_state.hpp)
+    src/update_error_state.hpp
+    src/ptensor_dtype.cpp
+    )
 target_compile_definitions(
     ptensor_capi
     PRIVATE

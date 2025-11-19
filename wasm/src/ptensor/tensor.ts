@@ -4,10 +4,10 @@
  */
 
 
-import { createDtype, Dtype, DTypeString } from './dtype';
-import { MODULE, P10 } from './module-init';
-import { createShape, Shape } from './shape';
-import { getDtypeFromTypedArray, TypedArrayType } from './typed-array';
+import { createDtype, Dtype, DTypeString } from './dtype.js';
+import { MODULE, P10 } from './module-init.js';
+import { createShape, Shape } from './shape.js';
+import { getDtypeFromTypedArray, TypedArrayType } from './typed-array.js';
 
 export interface Tensor {
   getSize(): number;

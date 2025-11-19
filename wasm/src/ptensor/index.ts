@@ -1,8 +1,8 @@
-import { initP10 } from './module-init';
-import { fromArray, zeros } from './tensor';
+import { initP10 } from './module-init.js';
+import { fromArray, zeros } from './tensor.js';
 
 
-export type {  Tensor } from './tensor';
+export type {  Tensor } from './tensor.js';
 
 const p10 = {
     init: initP10,

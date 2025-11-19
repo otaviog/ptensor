@@ -1,4 +1,4 @@
-import { MODULE } from "./module-init";
+import { MODULE } from "./module-init.js";
 
 export interface Shape {
   toArray(): number[];

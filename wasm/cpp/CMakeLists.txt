@@ -8,6 +8,14 @@ set_target_properties(p10_wasm PROPERTIES
     SUFFIX ".js"
 )
 
+# Copy TypeScript definition file to build directory
+add_custom_command(TARGET p10_wasm POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/wasm/src/p10.d.ts
+        ${CMAKE_SOURCE_DIR}/wasm/build/p10.d.ts
+    COMMENT "Copying p10.d.ts to build directory"
+)
+
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/p10.js
     ${CMAKE_CURRENT_BINARY_DIR}/p10.wasm

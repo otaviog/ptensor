@@ -4,6 +4,7 @@
 #include <span>
 #include <string>
 #include <utility>
+#include <cinttypes>
 
 #include <ptensor/ptensor_dtype.h>
 
@@ -217,6 +218,6 @@ struct Dtype {
 
 const char* to_cstring(Dtype::Code dtype);
 
-std::string to_string(Dtype dtype);
+std::string to_string(Dtype::Code dtype);
 
 }  // namespace p10

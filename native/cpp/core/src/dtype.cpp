@@ -56,7 +56,7 @@ const char* to_cstring(Dtype::Code dtype) {
     }
 }
 
-std::string to_string(Dtype dtype) {
+std::string to_string(Dtype::Code dtype) {
     return std::string(to_cstring(dtype));
 }
 

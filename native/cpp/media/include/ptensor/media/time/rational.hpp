@@ -1,0 +1,27 @@
+#pragma once
+#include <cinttypes>
+
+namespace p10::media {
+class Rational {
+  public:
+    Rational() = default;
+
+    Rational(int64_t numerator, int64_t denominator)
+        : numerator_(numerator), denominator_(denominator) {}
+
+    double to_double() const {
+        return static_cast<double>(numerator_) / static_cast<double>(denominator_);
+    }
+
+    int64_t num() const {
+        return numerator_;
+    }
+
+    int64_t den() const {
+        return denominator_;
+    }
+  private:
+    int64_t numerator_ = 0;
+    int64_t denominator_ = 1;
+};
+}  // namespace p10::media

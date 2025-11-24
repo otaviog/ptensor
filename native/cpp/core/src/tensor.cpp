@@ -41,7 +41,8 @@ P10Result<Tensor> Tensor::full(const Shape& shape, double value, const TensorOpt
     return Ok(Tensor(std::move(blob), shape, options));
 }
 
-P10Result<Tensor> Tensor::from_range(const Shape& shape, const TensorOptions& options, int64_t start) {
+P10Result<Tensor>
+Tensor::from_range(const Shape& shape, const TensorOptions& options, int64_t start) {
     auto result_res = Tensor::zeros(shape, options);
     if (result_res.is_error()) {
         return Err(result_res);

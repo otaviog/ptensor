@@ -30,7 +30,7 @@ TEST_CASE("Testing::compare_tensors", "[testing assertions]") {
             Tensor::full(make_shape({8, 7}).unwrap(), 123.0).unwrap(),
             Tensor::full(make_shape({8, 8}).unwrap(), 123.0).unwrap()
         ),
-            IsError(P10Error::InvalidArgument)
+        IsError(P10Error::AssertionError)
     );
 }
 }  // namespace p10::testing

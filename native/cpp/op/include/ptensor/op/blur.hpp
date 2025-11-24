@@ -3,10 +3,11 @@
 #include <array>
 #include <span>
 
-#include "ptensor/p10_result.hpp"
+#include <ptensor/p10_result.hpp>
+#include <memory>
 
 namespace p10 {
-class Tensor;
+  class Tensor;
 }
 
 namespace p10::op {
@@ -16,7 +17,7 @@ class GaussianBlur {
 
     static P10Result<GaussianBlur> create(size_t kernel_size, float sigma);
 
-    P10Error transform(const Tensor& input, Tensor& output) const;
+    P10Error transform(const Tensor& input, Tensor& output);
 
   private:
     using KernelStorage = std::array<float, MAX_KERNEL_SIZE>;
@@ -30,6 +31,7 @@ class GaussianBlur {
     }
 
     KernelStorage kernel_data_;
+    std::shared_ptr<Tensor> horizontal_out_;
     size_t kernel_size_;
 };
 

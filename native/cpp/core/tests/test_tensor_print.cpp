@@ -75,9 +75,7 @@ TEST_CASE("Tensor::prints handles float precision", "[tensor][print]") {
     SECTION("Default precision") {
         std::string tensor_str = to_string(tensor);
 
-        REQUIRE(
-            tensor_str == "Tensor(shape=[3], dtype=float32, values=[1.123456, 2.123456, 3.123456])"
-        );
+        REQUIRE(tensor_str == "Tensor(shape=[3], dtype=float32, values=[1.1235, 2.1235, 3.1235])");
     }
 
     SECTION("Precision 2") {

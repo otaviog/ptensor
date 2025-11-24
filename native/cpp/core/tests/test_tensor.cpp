@@ -7,6 +7,8 @@
 #include <ptensor/testing/catch2_assertions.hpp>
 #include <ptensor/testing/compare_tensors.hpp>
 
+#include "catch2/matchers/catch_matchers.hpp"
+
 namespace p10 {
 
 // ============================================================================
@@ -426,11 +428,10 @@ TEST_CASE("Tensor::as_span1d converts to 1D span", "[tensor][span]") {
     }
 
     SECTION("fails with wrong dtype") {
-        auto tensor = Tensor::full(make_shape(3), 1.0f).unwrap();
-        auto result = tensor.as_span1d<int32_t>();
-
-        REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(
+            Tensor::full(make_shape(3), 1.0f).unwrap().as_span1d<int32_t>(),
+            testing::IsError(P10Error::InvalidArgument)
+        );
     }
 
     SECTION("mutable span allows modification") {
@@ -495,19 +496,17 @@ TEST_CASE("Tensor::as_span2d converts to 2D span", "[tensor][span]") {
     }
 
     SECTION("fails for non-2D tensor") {
-        auto tensor = Tensor::zeros(make_shape(2, 3, 4)).unwrap();
-        auto result = tensor.as_span2d<float>();
-
-        REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(
+            Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_span2d<float>(),
+            testing::IsError(P10Error::InvalidArgument)
+        );
     }
 
     SECTION("fails with wrong dtype") {
-        auto tensor = Tensor::zeros(make_shape(2, 3)).unwrap();
-        auto result = tensor.as_span2d<double>();
-
-        REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(
+            Tensor::zeros(make_shape(2, 3)).unwrap().as_span2d<double>(),
+            testing::IsError(P10Error::InvalidArgument)
+        );
     }
 }
 
@@ -575,19 +574,17 @@ TEST_CASE("Tensor::as_span3d converts to 3D span", "[tensor][span]") {
     }
 
     SECTION("fails for non-3D tensor") {
-        auto tensor = Tensor::zeros(make_shape(2, 3)).unwrap();
-        auto result = tensor.as_span3d<float>();
-
-        REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(
+            Tensor::zeros(make_shape(2, 3)).unwrap().as_span3d<float>(),
+            testing::IsError(P10Error::InvalidArgument)
+        );
     }
 
     SECTION("fails with wrong dtype") {
-        auto tensor = Tensor::zeros(make_shape(2, 3, 4)).unwrap();
-        auto result = tensor.as_span3d<int32_t>();
-
-        REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(
+            Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_span3d<int32_t>(),
+            testing::IsError(P10Error::InvalidArgument)
+        );
     }
 }
 
@@ -654,19 +651,17 @@ TEST_CASE("Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]
     }
 
     SECTION("fails for non-3D tensor") {
-        auto tensor = Tensor::zeros(make_shape(2, 3, 4, 5)).unwrap();
-        auto result = tensor.as_planar_span3d<float>();
-
-        REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(
+            Tensor::zeros(make_shape(2, 3, 4, 5)).unwrap().as_planar_span3d<float>(),
+            testing::IsError(P10Error::InvalidArgument)
+        );
     }
 
     SECTION("fails with wrong dtype") {
-        auto tensor = Tensor::zeros(make_shape(2, 3, 4)).unwrap();
-        auto result = tensor.as_planar_span3d<double>();
-
-        REQUIRE(result.is_error());
-        REQUIRE(result.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(
+            Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_planar_span3d<double>(),
+            testing::IsError(P10Error::InvalidArgument)
+        );
     }
 }
 
@@ -811,31 +806,21 @@ TEST_CASE("Tensor::select_dimension", "[tensor][select_dimension]") {
     SECTION("Error: invalid dimension index") {
         auto tensor = Tensor::full(make_shape(3, 4, 5), 1.0f).unwrap();
 
-        auto result1 = tensor.select_dimension(3, 0);
-        REQUIRE(result1.is_error());
-        REQUIRE(result1.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(tensor.select_dimension(3, 0), testing::IsError(P10Error::InvalidArgument));
 
-        auto result2 = tensor.select_dimension(-1, 0);
-        REQUIRE(result2.is_error());
-        REQUIRE(result2.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(tensor.select_dimension(-1, 0), testing::IsError(P10Error::InvalidArgument));
     }
 
     SECTION("Error: index out of bounds") {
         auto tensor = Tensor::full(make_shape(3, 4, 5), 1.0f).unwrap();
 
         // Index too large
-        auto result1 = tensor.select_dimension(1, 4);
-        REQUIRE(result1.is_error());
-        REQUIRE(result1.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(tensor.select_dimension(1, 4), testing::IsError(P10Error::InvalidArgument));
 
-        auto result2 = tensor.select_dimension(2, 5);
-        REQUIRE(result2.is_error());
-        REQUIRE(result2.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(tensor.select_dimension(2, 5), testing::IsError(P10Error::InvalidArgument));
 
         // Negative index
-        auto result3 = tensor.select_dimension(0, -1);
-        REQUIRE(result3.is_error());
-        REQUIRE(result3.err().code() == P10Error::InvalidArgument);
+        REQUIRE_THAT(tensor.select_dimension(0, -1), testing::IsError(P10Error::InvalidArgument));
     }
 
     SECTION("Stride preservation") {
@@ -984,6 +969,466 @@ TEST_CASE("Tensor::transpose", "[tensor][transpose]") {
             REQUIRE_THAT(result, testing::IsError(P10Error::NotImplemented));
             REQUIRE(transposed.empty());
         }
+    }
+}
+
+// ============================================================================
+// Tensor Accessor Tests
+// ============================================================================
+
+TEST_CASE("Tensor::as_accessor1d converts to 1D accessor", "[tensor][accessor]") {
+    SECTION("creates accessor for float tensor") {
+        auto tensor = Tensor::from_range(make_shape(5), Dtype::Float32).unwrap();
+        auto accessor = tensor.as_accessor1d<float>().unwrap();
+
+        REQUIRE(accessor.size() == 5);
+        for (size_t i = 0; i < 5; i++) {
+            REQUIRE(accessor[i] == Catch::Approx(float(i)));
+        }
+    }
+
+    SECTION("const version works correctly") {
+        auto tensor = Tensor::from_range(make_shape(4), Dtype::Int32).unwrap();
+        const auto& const_tensor = tensor;
+        auto accessor = const_tensor.as_accessor1d<int32_t>().unwrap();
+
+        REQUIRE(accessor.size() == 4);
+        for (size_t i = 0; i < 4; i++) {
+            REQUIRE(accessor[i] == int32_t(i));
+        }
+    }
+
+    SECTION("accessor respects custom strides") {
+        auto tensor =
+            Tensor::from_range(make_shape(6), TensorOptions().stride(make_stride(2))).unwrap();
+        auto accessor = tensor.as_accessor1d<float>().unwrap();
+
+        REQUIRE(accessor.size() == 6);
+        // With stride 2, logical indices map to physical indices: 0->0, 1->2, 2->4, etc.
+        auto span = tensor.as_span1d<float>().unwrap();
+        for (size_t i = 0; i < 6; i++) {
+            REQUIRE(accessor[i] == span[i * 2]);
+        }
+    }
+
+    SECTION("mutable accessor allows modification") {
+        auto tensor = Tensor::zeros(make_shape(3)).unwrap();
+        auto accessor = tensor.as_accessor1d<float>().unwrap();
+
+        accessor[0] = 10.0f;
+        accessor[1] = 20.0f;
+        accessor[2] = 30.0f;
+
+        auto verify = tensor.as_span1d<float>().unwrap();
+        REQUIRE(verify[0] == Catch::Approx(10.0f));
+        REQUIRE(verify[1] == Catch::Approx(20.0f));
+        REQUIRE(verify[2] == Catch::Approx(30.0f));
+    }
+
+    SECTION("supports different dtypes") {
+        auto dtype = GENERATE(Dtype::Int32, Dtype::Int64, Dtype::Uint8, Dtype::Float64);
+        DYNAMIC_SECTION("Testing with dtype " << to_string(dtype)) {
+            auto tensor = Tensor::from_range(make_shape(4), TensorOptions().dtype(dtype)).unwrap();
+
+            tensor.visit([&](auto&& typed_span) {
+                using T = typename std::decay_t<decltype(typed_span)>::element_type;
+                auto accessor = tensor.as_accessor1d<T>().unwrap();
+                REQUIRE(accessor.size() == 4);
+                REQUIRE(accessor[2] == T(2));
+            });
+        }
+    }
+
+    SECTION("fails with wrong dtype") {
+        REQUIRE_THAT(
+            Tensor::from_range(make_shape(4), Dtype::Float32).unwrap().as_accessor1d<int32_t>(),
+            testing::IsError(P10Error::InvalidArgument)
+        );
+    }
+
+    SECTION("fails for non-1D tensor") {
+        REQUIRE_THAT(
+            Tensor::zeros(make_shape(2, 3)).unwrap().as_accessor1d<float>(),
+            testing::IsError(P10Error::InvalidArgument)
+        );
+    }
+
+    SECTION("complex numbers") {
+        SECTION("accessor works with complex numberes") {
+            auto tensor = Tensor::from_range(make_shape(4, 2), Dtype::Float32).unwrap();
+            auto accessor = tensor.as_accessor1d<std::complex<float>>().unwrap();
+            REQUIRE(accessor.size() == 4);
+        }
+
+        SECTION("fails with wrong underlying dtype") {
+            REQUIRE_THAT(
+                Tensor::from_range(make_shape(4, 2), Dtype::Int32)
+                    .unwrap()
+                    .as_accessor1d<std::complex<float>>(),
+                testing::IsError(P10Error::InvalidArgument)
+            );
+        }
+
+        SECTION("fails for non 2D tensor") {
+            REQUIRE_THAT(
+                Tensor::zeros(make_shape(4, 3, 2)).unwrap().as_accessor1d<std::complex<float>>(),
+                testing::IsError(P10Error::InvalidArgument)
+            );
+        }
+    }
+}
+
+TEST_CASE("Tensor::as_accessor2d converts to 2D accessor", "[tensor][accessor]") {
+    SECTION("creates accessor for float tensor") {
+        auto tensor = Tensor::from_range(make_shape(3, 4), Dtype::Float32).unwrap();
+        auto accessor = tensor.as_accessor2d<float>().unwrap();
+
+        REQUIRE(accessor.rows() == 3);
+        REQUIRE(accessor.cols() == 4);
+
+        // Verify data layout
+        for (size_t i = 0; i < 3; i++) {
+            for (size_t j = 0; j < 4; j++) {
+                REQUIRE(accessor[i][j] == Catch::Approx(float(i * 4 + j)));
+            }
+        }
+    }
+
+    SECTION("const version works correctly") {
+        auto tensor = Tensor::from_range(make_shape(2, 5), Dtype::Int32).unwrap();
+        const auto& const_tensor = tensor;
+        auto accessor = const_tensor.as_accessor2d<int32_t>().unwrap();
+
+        REQUIRE(accessor.rows() == 2);
+        REQUIRE(accessor.cols() == 5);
+        REQUIRE(accessor[0][0] == 0);
+        REQUIRE(accessor[1][4] == 9);
+    }
+
+    SECTION("accessor respects custom strides") {
+        // Create a column-major tensor (stride {1, 3})
+        auto tensor =
+            Tensor::from_range(make_shape(3, 4), TensorOptions().stride(make_stride(1, 3)))
+                .unwrap();
+        auto accessor = tensor.as_accessor2d<float>().unwrap();
+
+        REQUIRE(accessor.rows() == 3);
+        REQUIRE(accessor.cols() == 4);
+
+        // Physical layout: [0,1,2, 3,4,5, 6,7,8, 9,10,11]
+        // With stride {1,3}: row 0 starts at 0, row 1 starts at 1, row 2 starts at 2
+        // Within each row, stride is 3
+        auto span = tensor.as_span1d<float>().unwrap();
+        REQUIRE(accessor[0][0] == span[0]);  // 0
+        REQUIRE(accessor[0][1] == span[3]);  // 3
+        REQUIRE(accessor[1][0] == span[1]);  // 1
+        REQUIRE(accessor[2][0] == span[2]);  // 2
+    }
+
+    SECTION("mutable accessor allows modification") {
+        auto tensor = Tensor::zeros(make_shape(2, 3)).unwrap();
+        auto accessor = tensor.as_accessor2d<float>().unwrap();
+
+        accessor[0][0] = 1.0f;
+        accessor[0][2] = 2.0f;
+        accessor[1][1] = 3.0f;
+
+        auto verify = tensor.as_span1d<float>().unwrap();
+        REQUIRE(verify[0] == Catch::Approx(1.0f));
+        REQUIRE(verify[2] == Catch::Approx(2.0f));
+        REQUIRE(verify[4] == Catch::Approx(3.0f));
+    }
+
+    SECTION("nested accessor returns 1D accessor") {
+        auto tensor = Tensor::from_range(make_shape(3, 4), Dtype::Float32).unwrap();
+        auto accessor2d = tensor.as_accessor2d<float>().unwrap();
+        auto row_accessor = accessor2d[1];
+
+        REQUIRE(row_accessor.size() == 4);
+        REQUIRE(row_accessor[0] == Catch::Approx(4.0f));
+        REQUIRE(row_accessor[3] == Catch::Approx(7.0f));
+    }
+
+    SECTION("supports different dtypes") {
+        auto dtype = GENERATE(Dtype::Int32, Dtype::Int64, Dtype::Uint16, Dtype::Float64);
+        DYNAMIC_SECTION("Testing with dtype " << to_string(dtype)) {
+            auto tensor =
+                Tensor::from_range(make_shape(2, 3), TensorOptions().dtype(dtype)).unwrap();
+
+            tensor.visit([&](auto&& typed_span) {
+                using T = typename std::decay_t<decltype(typed_span)>::element_type;
+                auto accessor = tensor.as_accessor2d<T>().unwrap();
+                REQUIRE(accessor.rows() == 2);
+                REQUIRE(accessor.cols() == 3);
+                REQUIRE(accessor[1][2] == T(5));
+            });
+        }
+    }
+
+    SECTION("fails with wrong dtype") {
+        REQUIRE_THAT(
+            Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap().as_accessor2d<double>(),
+            testing::IsError(P10Error::InvalidArgument)
+        );
+    }
+
+    SECTION("fails for non-2D tensor") {
+        REQUIRE_THAT(
+            Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_accessor2d<float>(),
+            testing::IsError(P10Error::InvalidArgument)
+        );
+    }
+
+    SECTION("complex numbers") {
+        SECTION("accessor accepts complex types") {
+            auto tensor = Tensor::from_range(make_shape(3, 4, 2), Dtype::Float32).unwrap();
+            auto accessor = tensor.as_accessor2d<std::complex<float>>().unwrap();
+
+            REQUIRE(accessor.rows() == 3);
+            REQUIRE(accessor.cols() == 4);
+        }
+
+        SECTION("fails with wrong underlying dtype") {
+            REQUIRE_THAT(
+                Tensor::from_range(make_shape(3, 4, 2), Dtype::Int32)
+                    .unwrap()
+                    .as_accessor2d<std::complex<float>>(),
+                testing::IsError(P10Error::InvalidArgument)
+            );
+        }
+
+        SECTION("fails for non-3D tensor (complex requires last dim = 2)") {
+            REQUIRE_THAT(
+                Tensor::zeros(make_shape(3, 4)).unwrap().as_accessor2d<std::complex<float>>(),
+                testing::IsError(P10Error::InvalidArgument)
+            );
+        }
+
+        SECTION("fails when last dimension is not 2") {
+            REQUIRE_THAT(
+                Tensor::zeros(make_shape(3, 4, 3)).unwrap().as_accessor2d<std::complex<float>>(),
+                testing::IsError(P10Error::InvalidArgument)
+            );
+        }
+    }
+}
+
+TEST_CASE("Tensor::as_accessor3d converts to 3D accessor", "[tensor][accessor]") {
+    SECTION("creates accessor for float tensor") {
+        auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
+        auto accessor = tensor.as_accessor3d<float>().unwrap();
+
+        REQUIRE(accessor.channels() == 2);
+        REQUIRE(accessor.rows() == 3);
+        REQUIRE(accessor.cols() == 4);
+
+        // Verify data layout
+        for (size_t c = 0; c < 2; c++) {
+            for (size_t i = 0; i < 3; i++) {
+                for (size_t j = 0; j < 4; j++) {
+                    REQUIRE(accessor[c][i][j] == Catch::Approx(float(c * 12 + i * 4 + j)));
+                }
+            }
+        }
+    }
+
+    SECTION("const version works correctly") {
+        auto tensor = Tensor::from_range(make_shape(2, 2, 3), Dtype::Int32).unwrap();
+        const auto& const_tensor = tensor;
+        auto accessor = const_tensor.as_accessor3d<int32_t>().unwrap();
+
+        REQUIRE(accessor.channels() == 2);
+        REQUIRE(accessor.rows() == 2);
+        REQUIRE(accessor.cols() == 3);
+        REQUIRE(accessor[0][0][0] == 0);
+        REQUIRE(accessor[1][1][2] == 11);
+    }
+
+    SECTION("accessor respects custom strides") {
+        auto tensor =
+            Tensor::from_range(make_shape(2, 3, 4), TensorOptions().stride(make_stride(1, 8, 2)))
+                .unwrap();
+        auto accessor = tensor.as_accessor3d<float>().unwrap();
+
+        REQUIRE(accessor.channels() == 2);
+        REQUIRE(accessor.rows() == 3);
+        REQUIRE(accessor.cols() == 4);
+
+        auto span = tensor.as_span1d<float>().unwrap();
+        // Channel stride: 1, row stride: 8, col stride: 2
+        REQUIRE(accessor[0][0][0] == span[0]);
+        REQUIRE(accessor[0][0][1] == span[2]);
+        REQUIRE(accessor[0][1][0] == span[8]);
+        REQUIRE(accessor[1][0][0] == span[1]);
+    }
+
+    SECTION("mutable accessor allows modification") {
+        auto tensor = Tensor::zeros(make_shape(2, 2, 3)).unwrap();
+        auto accessor = tensor.as_accessor3d<float>().unwrap();
+
+        accessor[0][0][0] = 1.0f;
+        accessor[0][1][2] = 2.0f;
+        accessor[1][0][1] = 3.0f;
+        accessor[1][1][2] = 4.0f;
+
+        auto verify = tensor.as_span1d<float>().unwrap();
+        REQUIRE(verify[0] == Catch::Approx(1.0f));
+        REQUIRE(verify[5] == Catch::Approx(2.0f));
+        REQUIRE(verify[7] == Catch::Approx(3.0f));
+        REQUIRE(verify[11] == Catch::Approx(4.0f));
+    }
+
+    SECTION("nested accessor returns 2D accessor") {
+        auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
+        auto accessor3d = tensor.as_accessor3d<float>().unwrap();
+        auto channel_accessor = accessor3d[1];
+
+        REQUIRE(channel_accessor.rows() == 3);
+        REQUIRE(channel_accessor.cols() == 4);
+        REQUIRE(channel_accessor[0][0] == Catch::Approx(12.0f));
+        REQUIRE(channel_accessor[2][3] == Catch::Approx(23.0f));
+    }
+
+    SECTION("double nested accessor returns 1D accessor") {
+        auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
+        auto accessor3d = tensor.as_accessor3d<float>().unwrap();
+        auto row_accessor = accessor3d[0][1];
+
+        REQUIRE(row_accessor.size() == 4);
+        REQUIRE(row_accessor[0] == Catch::Approx(4.0f));
+        REQUIRE(row_accessor[3] == Catch::Approx(7.0f));
+    }
+
+    SECTION("supports different dtypes") {
+        auto dtype = GENERATE(Dtype::Int32, Dtype::Int64, Dtype::Uint8, Dtype::Float64);
+        DYNAMIC_SECTION("Testing with dtype " << to_string(dtype)) {
+            auto tensor =
+                Tensor::from_range(make_shape(2, 2, 2), TensorOptions().dtype(dtype)).unwrap();
+
+            tensor.visit([&](auto&& typed_span) {
+                using T = typename std::decay_t<decltype(typed_span)>::element_type;
+                auto accessor = tensor.as_accessor3d<T>().unwrap();
+                REQUIRE(accessor.channels() == 2);
+                REQUIRE(accessor.rows() == 2);
+                REQUIRE(accessor.cols() == 2);
+                REQUIRE(accessor[1][1][1] == T(7));
+            });
+        }
+    }
+
+    SECTION("fails with wrong dtype") {
+        REQUIRE_THAT(
+            Tensor::from_range(make_shape(2, 2, 2), Dtype::Float32)
+                .unwrap()
+                .as_accessor3d<int32_t>(),
+            testing::IsError(P10Error::InvalidArgument)
+        );
+    }
+
+    SECTION("fails for non-3D tensor") {
+        SECTION("2D tensor") {
+            REQUIRE_THAT(
+                Tensor::zeros(make_shape(3, 4)).unwrap().as_accessor3d<float>(),
+                testing::IsError(P10Error::InvalidArgument)
+            );
+        }
+
+        SECTION("4D tensor") {
+            REQUIRE_THAT(
+                Tensor::zeros(make_shape(2, 3, 4, 5)).unwrap().as_accessor3d<float>(),
+                testing::IsError(P10Error::InvalidArgument)
+            );
+        }
+    }
+
+    SECTION("complex numbers") {
+        SECTION("accessor accepts complex types") {
+            auto tensor = Tensor::from_range(make_shape(2, 3, 4, 2), Dtype::Float32).unwrap();
+            auto accessor = tensor.as_accessor3d<std::complex<float>>().unwrap();
+
+            REQUIRE(accessor.channels() == 2);
+            REQUIRE(accessor.rows() == 3);
+            REQUIRE(accessor.cols() == 4);
+        }
+
+        SECTION("nested accessor returns 2D complex accessor") {
+            auto tensor = Tensor::from_range(make_shape(2, 3, 4, 2), Dtype::Float32).unwrap();
+            auto accessor3d = tensor.as_accessor3d<std::complex<float>>().unwrap();
+            auto channel_accessor = accessor3d[1];
+
+            REQUIRE(channel_accessor.rows() == 3);
+            REQUIRE(channel_accessor.cols() == 4);
+        }
+
+        SECTION("double nested accessor returns 1D complex accessor") {
+            auto tensor = Tensor::from_range(make_shape(2, 3, 4, 2), Dtype::Float32).unwrap();
+            auto accessor3d = tensor.as_accessor3d<std::complex<float>>().unwrap();
+            auto row_accessor = accessor3d[0][1];
+
+            REQUIRE(row_accessor.size() == 4);
+        }
+
+        SECTION("fails with wrong underlying dtype") {
+            REQUIRE_THAT(
+                Tensor::from_range(make_shape(2, 3, 4, 2), Dtype::Int32)
+                    .unwrap()
+                    .as_accessor3d<std::complex<float>>(),
+                testing::IsError(P10Error::InvalidArgument)
+            );
+        }
+
+        SECTION("fails for non-4D tensor (complex requires last dim = 2)") {
+            REQUIRE_THAT(
+                Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_accessor3d<std::complex<float>>(),
+                testing::IsError(P10Error::InvalidArgument)
+            );
+        }
+
+        SECTION("fails when last dimension is not 2") {
+            REQUIRE_THAT(
+                Tensor::zeros(make_shape(2, 3, 4, 3)).unwrap().as_accessor3d<std::complex<float>>(),
+                testing::IsError(P10Error::InvalidArgument)
+            );
+        }
+    }
+}
+
+TEST_CASE("Tensor accessor with non-contiguous tensors", "[tensor][accessor]") {
+    SECTION("2D accessor with transposed view") {
+        auto tensor = Tensor::from_range(make_shape(3, 4), Dtype::Float32).unwrap();
+        auto view = Tensor::from_data(
+            tensor.as_span1d<float>().unwrap().data(),
+            make_shape(4, 3),
+            TensorOptions().dtype(Dtype::Float32).stride(make_stride(1, 4))
+        );
+
+        auto accessor = view.as_accessor2d<float>().unwrap();
+        REQUIRE(accessor.rows() == 4);
+        REQUIRE(accessor.cols() == 3);
+
+        auto original = tensor.as_span1d<float>().unwrap();
+        for (size_t i = 0; i < 4; i++) {
+            for (size_t j = 0; j < 3; j++) {
+                REQUIRE(accessor[i][j] == original[j * 4 + i]);
+            }
+        }
+    }
+
+    SECTION("3D accessor with non-contiguous stride") {
+        auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
+        auto view = Tensor::from_data(
+            tensor.as_span1d<float>().unwrap().data(),
+            make_shape(2, 3, 4),
+            TensorOptions().dtype(Dtype::Float32).stride(make_stride(12, 1, 3))
+        );
+
+        auto accessor = view.as_accessor3d<float>().unwrap();
+        auto original = tensor.as_span1d<float>().unwrap();
+
+        REQUIRE(accessor[0][0][0] == original[0]);
+        REQUIRE(accessor[0][0][1] == original[3]);
+        REQUIRE(accessor[0][1][0] == original[1]);
+        REQUIRE(accessor[1][0][0] == original[12]);
     }
 }
 }  // namespace p10

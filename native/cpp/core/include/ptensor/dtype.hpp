@@ -80,6 +80,10 @@ struct Dtype {
         }
     }
 
+    bool is_integer() const {
+        return (value != Float64 && value != Float32);
+    }
+
     template<typename F>
     auto visit(F&& visitor, std::span<std::byte> data) const {
         return do_visit(std::forward<F>(visitor), data);

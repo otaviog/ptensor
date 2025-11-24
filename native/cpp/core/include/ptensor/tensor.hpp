@@ -11,6 +11,7 @@
 #include "detail/complex_traits.hpp"
 #include "device.hpp"
 #include "dtype.hpp"
+#include "iterator.hpp"
 #include "p10_error.hpp"
 #include "p10_result.hpp"
 #include "shape.hpp"
@@ -178,6 +179,34 @@ class Tensor {
     /// Gets the size of the tensor in bytes.
     size_t size_bytes() const {
         return size() * dtype_.size_bytes();
+    }
+
+    template<typename scalar_t>
+    P10Result<Iterator<scalar_t>> iterator() {
+        auto data_res = data_as<scalar_t>();
+        if (!data_res.is_ok()) {
+            return Err(data_res.error());
+        }
+
+        return Ok(Iterator<scalar_t> {
+            data_res.unwrap(),
+            shape_.as_span(),
+            stride_.as_span(),
+        });
+    }
+
+    template<typename scalar_t>
+    P10Result<Iterator<const scalar_t>> iterator() const {
+        auto data_res = data_as<scalar_t>();
+        if (!data_res.is_ok()) {
+            return Err(data_res.error());
+        }
+
+        return Ok(Iterator<const scalar_t> {
+            data_res.unwrap(),
+            shape_.as_span(),
+            stride_.as_span(),
+        });
     }
 
     template<typename scalar_t>

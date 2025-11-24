@@ -148,30 +148,13 @@ P10Result<Tensor> Tensor::to_contiguous() const {
         [this](auto dest_span) {
             using scalar_t =
                 decltype(dest_span)::element_type;  // std::remove_pointer_t<decltype(dest_ptr)>;
-            const size_t num_elements = this->size();
-            const auto shape = this->shape_.as_span();
-            const size_t ndims = this->shape_.dims();
 
-            std::array<int64_t, P10_MAX_SHAPE> coords {};
-            const auto source_span = this->as_span1d<scalar_t>().unwrap();
+            auto iter = iterator<const scalar_t>().unwrap();
+            size_t dest_index = 0;
 
-            const auto this_stride = this->stride_.as_span();
-            for (size_t i = 0; i < num_elements; i++) {
-                int64_t from_index = 0;
-
-                for (size_t j = 0; j < ndims; j++) {
-                    from_index += coords[j] * this_stride[j];
-                }
-
-                dest_span[i] = source_span[from_index];
-                for (int j = int(ndims) - 1; j >= 0; j--) {
-                    if (coords[j] < shape[j] - 1) {
-                        coords[j] += 1;
-                        break;
-                    } else {
-                        coords[j] = 0;
-                    }
-                }
+            while (iter.has_next()) {
+                dest_span[dest_index] = iter.next();
+                dest_index++;
             }
         },
         contiguous_tensor.as_bytes()

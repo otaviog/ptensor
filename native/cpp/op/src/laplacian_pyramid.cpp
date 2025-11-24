@@ -1,7 +1,6 @@
 #include "laplacian_pyramid.hpp"
 
 #include "elemwise.hpp"
-#include "ptensor/p10_error.hpp"
 #include "resize.hpp"
 
 namespace p10::op {
@@ -12,8 +11,7 @@ namespace {
 
 }  // namespace
 
-P10Error
-LaplacianPyramid::transform(const Tensor& in_tensor, std::span<Tensor> out_laplacian_pyr) const {
+P10Error LaplacianPyramid::transform(const Tensor& in_tensor, std::span<Tensor> out_laplacian_pyr) {
     if (const auto error = validate_process_arguments(in_tensor, out_laplacian_pyr);
         error.is_error()) {
         return error;
@@ -25,7 +23,7 @@ LaplacianPyramid::transform(const Tensor& in_tensor, std::span<Tensor> out_lapla
     return P10Error::Ok;
 }
 
-void LaplacianPyramid::store_gaussian_pyramid(const Tensor& in_tensor, size_t num_levels) const {
+void LaplacianPyramid::store_gaussian_pyramid(const Tensor& in_tensor, size_t num_levels) {
     gaussian_pyramid_.resize(num_levels);
     gaussian_pyramid_[0] = in_tensor.clone().unwrap();
     Tensor blur_buffer;
@@ -35,7 +33,8 @@ void LaplacianPyramid::store_gaussian_pyramid(const Tensor& in_tensor, size_t nu
         const auto half_width = prev.shape(2).unwrap() / 2;
 
         blur_op_.transform(prev, blur_buffer).expect("Blur failed");
-        resize(blur_buffer, gaussian_pyramid_[level], half_width, half_height).expect("Resize failed");
+        resize(blur_buffer, gaussian_pyramid_[level], half_width, half_height)
+            .expect("Resize failed");
     }
 }
 
@@ -55,7 +54,7 @@ void LaplacianPyramid::pyramid_from_gaussian_to_laplacian(std::span<Tensor> outp
     }
     output.back() = gaussian_pyramid_.back().clone().expect("Clone failed");
 }
- 
+
 P10Error LaplacianPyramid::reconstruct(std::span<const Tensor> pyramid, Tensor& output) const {
     if (const auto err = validate_reconstruct_arguments(pyramid); err.is_error()) {
         return err;

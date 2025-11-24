@@ -206,12 +206,12 @@ P10Error Tensor::unsqueeze(int64_t dim) {
 
     auto new_shape_res = Shape::zeros(size_t(dims() + 1));
     if (new_shape_res.is_error()) {
-        return new_shape_res.err();
+        return new_shape_res.error();
     }
 
     auto new_stride_res = Stride::zeros(size_t(dims() + 1));
     if (new_stride_res.is_error()) {
-        return new_stride_res.err();
+        return new_stride_res.error();
     }
 
     auto old_shape_s = shape_.as_span();

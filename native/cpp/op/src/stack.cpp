@@ -41,7 +41,7 @@ p10::P10Error stack(std::span<const p10::Tensor> inputs, int64_t axis, p10::Tens
     // Compute output shape
     auto shape_res = Shape::zeros(dims + 1);
     if (shape_res.is_error()) {
-        return shape_res.err();
+        return shape_res.error();
     }
     Shape out_shape = shape_res.unwrap();
     auto out_shape_s = out_shape.as_span();

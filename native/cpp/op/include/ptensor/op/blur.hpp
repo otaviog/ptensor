@@ -1,13 +1,13 @@
 #pragma once
 
 #include <array>
+#include <memory>
 #include <span>
 
 #include <ptensor/p10_result.hpp>
-#include <memory>
 
 namespace p10 {
-  class Tensor;
+class Tensor;
 }
 
 namespace p10::op {

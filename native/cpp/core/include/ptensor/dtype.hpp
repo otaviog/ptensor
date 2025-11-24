@@ -1,10 +1,9 @@
 #pragma once
 #include <cassert>
-
+#include <cinttypes>
 #include <span>
 #include <string>
 #include <utility>
-#include <cinttypes>
 
 #include <ptensor/ptensor_dtype.h>
 
@@ -80,8 +79,12 @@ struct Dtype {
         }
     }
 
+    bool is_floating() const {
+        return (value == Float32 || value == Float64);
+    }
+
     bool is_integer() const {
-        return (value != Float64 && value != Float32);
+        return !is_floating();
     }
 
     template<typename F>

@@ -18,7 +18,8 @@ class WindowFunction {
 
     P10Error transform(const Tensor& input, Tensor& output);
 
-    P10Error transform_borders(const Tensor &input, Tensor &output, size_t border_size);
+    P10Error transform_borders(const Tensor& input, Tensor& output, size_t border_size);
+
   private:
     P10Error generate_window(size_t size, Dtype type);
 

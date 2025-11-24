@@ -66,6 +66,10 @@ class Blob {
         return new_blob;
     }
 
+    bool is_aligned(size_t alignment) const {
+        return (reinterpret_cast<uintptr_t>(data_) % alignment) == 0;
+    }
+
   private:
     void* data_ = nullptr;
     std::optional<std::function<void(void*)>> dealloc_;

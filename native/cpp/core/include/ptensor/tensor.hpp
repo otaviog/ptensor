@@ -184,7 +184,7 @@ class Tensor {
     P10Result<std::span<const scalar_t>> as_span1d() const {
         auto data_res = data_as<scalar_t>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
         auto elem_count = size();
         if constexpr (detail::is_complex_v<std::remove_const_t<scalar_t>>) {
@@ -197,7 +197,7 @@ class Tensor {
     P10Result<std::span<scalar_t>> as_span1d() {
         auto data_res = data_as<scalar_t>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
         auto elem_count = size();
         if constexpr (detail::is_complex_v<std::remove_const_t<scalar_t>>) {
@@ -211,7 +211,7 @@ class Tensor {
         P10_RETURN_ERR_IF_ERROR(check_dims_for_2d_span<T>());
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
         const auto shape = shape_.as_span();
         return Ok(Span2D<T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1])});
@@ -223,7 +223,7 @@ class Tensor {
 
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
         const auto shape = shape_.as_span();
         return Ok(Span2D<const T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1])});
@@ -235,7 +235,7 @@ class Tensor {
 
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
         const auto shape = shape_.as_span();
         return Ok(
@@ -249,7 +249,7 @@ class Tensor {
 
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
         const auto shape = shape_.as_span();
         return Ok(Span3D<const T> {
@@ -266,7 +266,7 @@ class Tensor {
 
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
 
         const auto shape = shape_.as_span();
@@ -283,7 +283,7 @@ class Tensor {
         P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_span<T>());
         auto data_res = data_as<const T>();
         if (data_res.is_error()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
         const auto shape = shape_.as_span();
         return Ok(PlanarSpan3D<const T> {
@@ -300,7 +300,7 @@ class Tensor {
 
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
 
         return Ok(Accessor1D<T> {
@@ -316,7 +316,7 @@ class Tensor {
 
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
 
         return Ok(Accessor1D<const T> {
@@ -332,7 +332,7 @@ class Tensor {
 
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
 
         auto shape = shape_.as_span();
@@ -354,7 +354,7 @@ class Tensor {
 
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
 
         auto shape = shape_.as_span();
@@ -376,7 +376,7 @@ class Tensor {
 
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
 
         auto shape = shape_.as_span();
@@ -399,7 +399,7 @@ class Tensor {
 
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
 
         auto shape = shape_.as_span();

@@ -31,13 +31,13 @@ class P10Result {
         if (is_ok()) {
             return unwrap();
         } else {
-            err().expect(message);
+            error().expect(message);
             // This line should never be reached because err().expect() will panic
             return unwrap();
         }
     }
 
-    const P10Error& err() const {
+    const P10Error& error() const {
         return std::get<P10Error>(value_);
     }
 
@@ -73,7 +73,6 @@ P10Result<OkType> Ok(OkType&& value) {
     return P10Result<OkType> {std::forward<OkType>(value)};
 }
 
-
 /// Helper class for template argument deduction for Err function
 /// Unlike Ok, Err needs to deduce the template type from the context
 /// so we use this intermediate struct to hold the error and convert it to PtensorResult<T>
@@ -107,7 +106,7 @@ inline ErrTypeDeduct Err(P10Error::Code err_code, const std::string_view& messag
 
 template<typename TransferOkType>
 inline ErrTypeDeduct Err(const P10Result<TransferOkType>& result) {
-    return Err(result.err());
+    return Err(result.error());
 }
 
 }  // namespace p10

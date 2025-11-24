@@ -15,7 +15,7 @@ struct ErrorMatcher: Catch::Matchers::MatcherBase<P10Error> {
         if (actual.is_ok() && expected_.is_ok()) {
             return true;
         }
-        return match(actual.err());
+        return match(actual.error());
     }
 
     bool match(const P10Error& actual) const override {
@@ -45,7 +45,7 @@ struct IsOkMatcher: Catch::Matchers::MatcherBase<P10Error> {
         if (actual.is_ok()) {
             return true;
         }
-        return match(actual.err());
+        return match(actual.error());
     }
 
     bool match(const P10Error& actual) const override {

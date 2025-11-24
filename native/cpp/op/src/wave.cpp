@@ -27,7 +27,8 @@ generate_sine_wave(size_t num_samples, Dtype type, const SineWaveParams& params,
     const double phase = params.phaseRadians();
 
     const size_t period_samples = static_cast<size_t>(
-        params.period().has_value() ? params.period().value() * sample_rate : (sample_rate / frequency)
+        params.period().has_value() ? params.period().value() * sample_rate
+                                    : (sample_rate / frequency)
     );
     if (period_samples == 0) {
         return P10Error::InvalidArgument << "Period results in zero samples.";
@@ -38,7 +39,8 @@ generate_sine_wave(size_t num_samples, Dtype type, const SineWaveParams& params,
         const scalar_t amplitude_val = static_cast<scalar_t>(amplitude);
         const scalar_t phase_val = static_cast<scalar_t>(phase);
 
-        const scalar_t phase_increment = static_cast<scalar_t>(2.0 * M_PI * frequency / sample_rate);
+        const scalar_t phase_increment =
+            static_cast<scalar_t>(2.0 * M_PI * frequency / sample_rate);
         for (size_t i = 0; i < span.size(); ++i) {
             const scalar_t t = static_cast<scalar_t>(i % period_samples);
             const scalar_t normalized_phase = phase_increment * t;

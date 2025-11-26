@@ -3,6 +3,7 @@
 #include <ptensor/op/image_rgb_to_gray.hpp>
 #include <ptensor/tensor.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+
 #include "ptensor/p10_error.hpp"
 
 namespace p10::op {

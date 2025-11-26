@@ -2,14 +2,17 @@
 
 #include <cstdint>
 #include <optional>
+#include <random>
 
 #include <type_traits>
 
+#include "accessor3d.hpp"
 #include "axis.hpp"
 #include "detail/blob.hpp"
 #include "detail/complex_traits.hpp"
 #include "device.hpp"
 #include "dtype.hpp"
+#include "iterator.hpp"
 #include "p10_error.hpp"
 #include "p10_result.hpp"
 #include "shape.hpp"
@@ -86,7 +89,19 @@ class Tensor {
     static P10Result<Tensor>
     empty(const Shape& shape, const TensorOptions& options = TensorOptions());
 
-    static P10Result<Tensor> from_range(const Shape& shape, const TensorOptions& options = TensorOptions(), int64_t start = 0);
+    static P10Result<Tensor> from_range(
+        const Shape& shape,
+        const TensorOptions& options = TensorOptions(),
+        int64_t start = 0
+    );
+
+    static P10Result<Tensor> from_random(
+        const Shape& shape,
+        std::mt19937_64 rng,
+        const TensorOptions& options = TensorOptions(),
+        double min = 0.0,
+        double max = 1.0
+    );
 
     P10Error create(const Shape& shape, const TensorOptions& options = TensorOptions());
 
@@ -176,10 +191,38 @@ class Tensor {
     }
 
     template<typename scalar_t>
+    P10Result<Iterator<scalar_t>> iterator() {
+        auto data_res = data_as<scalar_t>();
+        if (!data_res.is_ok()) {
+            return Err(data_res.error());
+        }
+
+        return Ok(Iterator<scalar_t> {
+            data_res.unwrap(),
+            shape_.as_span(),
+            stride_.as_span(),
+        });
+    }
+
+    template<typename scalar_t>
+    P10Result<Iterator<const scalar_t>> iterator() const {
+        auto data_res = data_as<scalar_t>();
+        if (!data_res.is_ok()) {
+            return Err(data_res.error());
+        }
+
+        return Ok(Iterator<const scalar_t> {
+            data_res.unwrap(),
+            shape_.as_span(),
+            stride_.as_span(),
+        });
+    }
+
+    template<typename scalar_t>
     P10Result<std::span<const scalar_t>> as_span1d() const {
         auto data_res = data_as<scalar_t>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
         auto elem_count = size();
         if constexpr (detail::is_complex_v<std::remove_const_t<scalar_t>>) {
@@ -192,7 +235,7 @@ class Tensor {
     P10Result<std::span<scalar_t>> as_span1d() {
         auto data_res = data_as<scalar_t>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
         auto elem_count = size();
         if constexpr (detail::is_complex_v<std::remove_const_t<scalar_t>>) {
@@ -203,10 +246,10 @@ class Tensor {
 
     template<typename T>
     P10Result<Span2D<T>> as_span2d() {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_span2d<T>());
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_2d_span<T>());
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
         const auto shape = shape_.as_span();
         return Ok(Span2D<T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1])});
@@ -214,11 +257,11 @@ class Tensor {
 
     template<typename T>
     P10Result<Span2D<const T>> as_span2d() const {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_span2d<T>());
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_2d_span<T>());
 
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
         const auto shape = shape_.as_span();
         return Ok(Span2D<const T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1])});
@@ -226,14 +269,13 @@ class Tensor {
 
     template<typename T>
     P10Result<Span3D<T>> as_span3d() {
-        if (dims() != 3) {
-            return Err(P10Error::InvalidArgument, "Tensor must have 3 dimensions");
-        }
-        auto shape = shape_.as_span();
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_span<T>());
+
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
+        const auto shape = shape_.as_span();
         return Ok(
             Span3D<T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1]), size_t(shape[2])}
         );
@@ -241,14 +283,13 @@ class Tensor {
 
     template<typename T>
     P10Result<Span3D<const T>> as_span3d() const {
-        if (dims() != 3) {
-            return Err(P10Error::InvalidArgument << "Tensor must have 3 dimensions");
-        }
-        auto shape = shape_.as_span();
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_span<T>());
+
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
+        const auto shape = shape_.as_span();
         return Ok(Span3D<const T> {
             data_res.unwrap(),
             size_t(shape[0]),
@@ -259,15 +300,14 @@ class Tensor {
 
     template<typename T>
     P10Result<PlanarSpan3D<T>> as_planar_span3d() {
-        if (dims() != 3) {
-            return Err(P10Error::InvalidArgument << "Tensor must have 3 dimensions");
-        }
-        auto shape = shape_.as_span();
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_span<T>());
+
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
 
+        const auto shape = shape_.as_span();
         return Ok(PlanarSpan3D<T> {
             data_res.unwrap(),
             size_t(shape[0]),
@@ -278,19 +318,139 @@ class Tensor {
 
     template<typename T>
     P10Result<PlanarSpan3D<const T>> as_planar_span3d() const {
-        if (dims() != 3) {
-            return Err(P10Error::InvalidArgument << "Tensor must have 3 dimensions");
-        }
-        auto shape = shape_.as_span();
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_span<T>());
         auto data_res = data_as<const T>();
         if (data_res.is_error()) {
-            return Err(data_res.err());
+            return Err(data_res.error());
         }
+        const auto shape = shape_.as_span();
         return Ok(PlanarSpan3D<const T> {
             data_res.unwrap(),
             size_t(shape[0]),
             size_t(shape[1]),
             size_t(shape[2])
+        });
+    }
+
+    template<typename T>
+    P10Result<Accessor1D<T>> as_accessor1d() {
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_accessor1d<T>());
+
+        auto data_res = data_as<T>();
+        if (!data_res.is_ok()) {
+            return Err(data_res.error());
+        }
+
+        return Ok(Accessor1D<T> {
+            data_res.unwrap(),
+            shape_[0].unwrap(),
+            stride_[0].unwrap(),
+        });
+    }
+
+    template<typename T>
+    P10Result<Accessor1D<const T>> as_accessor1d() const {
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_accessor1d<T>());
+
+        auto data_res = data_as<const T>();
+        if (!data_res.is_ok()) {
+            return Err(data_res.error());
+        }
+
+        return Ok(Accessor1D<const T> {
+            data_res.unwrap(),
+            shape_[0].unwrap(),
+            stride_[0].unwrap(),
+        });
+    }
+
+    template<typename T>
+    P10Result<Accessor2D<T>> as_accessor2d() {
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_2d_access<T>());
+
+        auto data_res = data_as<T>();
+        if (!data_res.is_ok()) {
+            return Err(data_res.error());
+        }
+
+        auto shape = shape_.as_span();
+        auto stride = stride_.as_span();
+
+        return Ok(Accessor2D<T> {
+            data_res.unwrap(),
+            std::array<int64_t, 2> {shape[0], shape[1]},
+            std::array<int64_t, 2> {
+                stride[0],
+                stride[1],
+            }
+        });
+    }
+
+    template<typename T>
+    P10Result<Accessor2D<const T>> as_accessor2d() const {
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_2d_access<T>());
+
+        auto data_res = data_as<const T>();
+        if (!data_res.is_ok()) {
+            return Err(data_res.error());
+        }
+
+        auto shape = shape_.as_span();
+        auto stride = stride_.as_span();
+
+        return Ok(Accessor2D<const T> {
+            data_res.unwrap(),
+            std::array<int64_t, 2> {shape[0], shape[1]},
+            std::array<int64_t, 2> {
+                stride[0],
+                stride[1],
+            }
+        });
+    }
+
+    template<typename T>
+    P10Result<Accessor3D<T>> as_accessor3d() {
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_access<T>());
+
+        auto data_res = data_as<T>();
+        if (!data_res.is_ok()) {
+            return Err(data_res.error());
+        }
+
+        auto shape = shape_.as_span();
+        auto stride = stride_.as_span();
+
+        return Ok(Accessor3D<T> {
+            data_res.unwrap(),
+            std::array<int64_t, 3> {shape[0], shape[1], shape[2]},
+            std::array<int64_t, 3> {
+                stride[0],
+                stride[1],
+                stride[2],
+            }
+        });
+    }
+
+    template<typename T>
+    P10Result<Accessor3D<const T>> as_accessor3d() const {
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_access<T>());
+
+        auto data_res = data_as<const T>();
+        if (!data_res.is_ok()) {
+            return Err(data_res.error());
+        }
+
+        auto shape = shape_.as_span();
+        auto stride = stride_.as_span();
+
+        return Ok(Accessor3D<const T> {
+            data_res.unwrap(),
+            std::array<int64_t, 3> {shape[0], shape[1], shape[2]},
+            std::array<int64_t, 3> {
+                stride[0],
+                stride[1],
+                stride[2],
+            }
         });
     }
 
@@ -384,7 +544,22 @@ class Tensor {
     }
 
     template<typename T>
-    P10Error check_dims_for_span2d() const {
+    P10Error check_dims_for_accessor1d() const {
+        if constexpr (detail::is_complex_v<std::remove_const_t<T>>) {
+            if (dims() != 2) {
+                return P10Error::InvalidArgument
+                    << "Tensor must have 2 dimensions [N x 2] for complex types";
+            }
+        } else {
+            if (dims() != 1) {
+                return P10Error::InvalidArgument << "Tensor must have 1 dimension";
+            }
+        }
+        return P10Error::Ok;
+    }
+
+    template<typename T>
+    P10Error check_dims_for_2d_access() const {
         if constexpr (detail::is_complex_v<std::remove_const_t<T>>) {
             if (dims() != 3) {
                 return P10Error::InvalidArgument
@@ -396,6 +571,37 @@ class Tensor {
             }
         }
         return P10Error::Ok;
+    }
+
+    template<typename T>
+    P10Error check_dims_for_3d_access() const {
+        if constexpr (detail::is_complex_v<std::remove_const_t<T>>) {
+            if (dims() != 4) {
+                return P10Error::InvalidArgument
+                    << "Tensor must have 4 dimensions [N x H x W x 2] for complex types";
+            }
+        } else {
+            if (dims() != 3) {
+                return P10Error::InvalidArgument << "Tensor must have 3 dimensions";
+            }
+        }
+        return P10Error::Ok;
+    }
+
+    template<typename T>
+    P10Error check_dims_for_2d_span() const {
+        if (!is_contiguous()) {
+            return P10Error::InvalidArgument << "Tensor must be contiguous for Span2D access";
+        }
+        return check_dims_for_2d_access<T>();
+    }
+
+    template<typename T>
+    P10Error check_dims_for_3d_span() const {
+        if (!is_contiguous()) {
+            return P10Error::InvalidArgument << "Tensor must be contiguous for Span3D access";
+        }
+        return check_dims_for_3d_access<T>();
     }
 
     Blob blob_;

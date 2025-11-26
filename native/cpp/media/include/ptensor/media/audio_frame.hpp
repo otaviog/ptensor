@@ -1,12 +1,13 @@
 #pragma once
 
 #include <optional>
+
 #include <ptensor/tensor.hpp>
+
 #include "time/time.hpp"
 
 namespace p10::media {
 struct AudioFrame {
-
     Tensor samples;
     double sample_rate_hz = 0.0;
     std::optional<Time> start_time;
@@ -24,4 +25,4 @@ struct AudioFrame {
     }
 };
 
-}
+}  // namespace p10::media

@@ -1,4 +1,5 @@
 #include "ffmpeg_sws.hpp"
+
 #include "ffmpeg_wrap_error.hpp"
 
 namespace p10::media {
@@ -18,15 +19,7 @@ P10Error FfmpegSws::transform(const AVFrame* frame, VideoFrame& output_frame) {
     int dst_linesize[1] = {int(output_frame.width()) * 3};
 
     return wrap_error(
-        sws_scale(
-            sws_ctx,
-            frame->data,
-            frame->linesize,
-            0,
-            frame->height,
-            dst_data,
-            dst_linesize
-        ),
+        sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, dst_data, dst_linesize),
         "sws_scale failed"
     );
 }

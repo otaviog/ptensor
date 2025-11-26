@@ -4,6 +4,7 @@
 #include <ptensor/op/stack.hpp>
 #include <ptensor/tensor.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+
 #include "ptensor/p10_error.hpp"
 
 namespace p10::op {
@@ -113,7 +114,8 @@ TEST_CASE("Stack: Multiple tensors", "[stack]") {
     auto t3 = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
     auto t4 = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
 
-    Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap(), t3.clone().unwrap(), t4.clone().unwrap()};
+    Tensor inputs[] =
+        {t1.clone().unwrap(), t2.clone().unwrap(), t3.clone().unwrap(), t4.clone().unwrap()};
     Tensor output;
 
     REQUIRE_THAT(stack(inputs, 0, output), IsOk());

@@ -18,7 +18,7 @@ void to_string_1d_tensor(
     ss << "[";
 
     const int64_t total_elements = shape[0].unwrap();
-    const int64_t max_elements = options.max_elements().value_or(total_elements*2);
+    const int64_t max_elements = options.max_elements().value_or(total_elements * 2);
 
     for (int64_t i = 0; i < total_elements; i++) {
         if (i > 0) {

@@ -77,3 +77,21 @@ Two binding options are available:
 
 * English - default
 * Don't make over the top statements, this is a simple library.
+
+## Coding tips
+
+* Use testing::IsError and testing::IsOk helpers for Result checks in tests. Like:
+  ```cpp
+    REQUIRE_THAT(
+        some_function_call(),
+        testing::IsError(P10Error::InvalidArgument)
+    );
+    ```
+* When writing test for Dtype multiple times, use GENERATE and DYNAMIC_SECTION to avoid code duplication. Like:
+  ```cpp
+    auto dtype = GENERATE(Dtype::Float32, Dtype::Int32, Dtype::UInt8);
+    DYNAMIC_SECTION("Testing with dtype " << dtype) {
+        // test code here
+    }
+  ```
+* Use clang-format for C/C++ code formatting. Run `clang-format -i <file>` to format a file in place.

@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <ptensor/shape.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+
 #include "ptensor/p10_error.hpp"
 
 namespace p10 {
@@ -101,7 +102,7 @@ TEST_CASE("Shape empty initialization", "[shape][creation]") {
 
 TEST_CASE("Shape exceeding maximum dimensions", "[shape][validation]") {
     REQUIRE_THAT(make_shape({1, 2, 3, 4, 5, 6, 7, 8}), testing::IsOk());
-    REQUIRE_THAT(make_shape({1, 2, 3, 4, 5, 6, 7, 8, 9}), testing::IsError(P10Error::InvalidArgument));
+    REQUIRE_THAT(make_shape({1, 2, 3, 4, 5, 6, 7, 8, 9}), testing::IsError(P10Error::OutOfRange));
 }
 
 TEST_CASE("Shape with zero dimensions", "[shape][validation]") {
@@ -164,8 +165,8 @@ TEST_CASE("Shape::operator[] accesses dimensions", "[shape][properties]") {
     }
 
     SECTION("out of bounds index") {
-        REQUIRE_THAT(shape[3], testing::IsError(P10Error::InvalidArgument));
-        REQUIRE_THAT(shape[10], testing::IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(shape[3], testing::IsError(P10Error::OutOfRange));
+        REQUIRE_THAT(shape[10], testing::IsError(P10Error::OutOfRange));
     }
 }
 

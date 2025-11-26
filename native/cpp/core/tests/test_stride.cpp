@@ -1,7 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
-#include <ptensor/stride.hpp>
 #include <ptensor/shape.hpp>
+#include <ptensor/stride.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+
 #include "ptensor/p10_error.hpp"
 
 namespace p10 {
@@ -76,13 +77,12 @@ TEST_CASE("Stride creation from span", "[stride][creation]") {
 
 TEST_CASE("Stride exceeding maximum dimensions", "[stride][validation]") {
     REQUIRE_THAT(make_stride({1, 2, 3, 4, 5, 6, 7, 8}), testing::IsOk());
-    REQUIRE_THAT(make_stride({1, 2, 3, 4, 5, 6, 7, 8, 9}), testing::IsError(P10Error::InvalidArgument));
+    REQUIRE_THAT(make_stride({1, 2, 3, 4, 5, 6, 7, 8, 9}), testing::IsError(P10Error::OutOfRange));
 }
 
 // ============================================================================
 // String Conversion Tests
 // ============================================================================
-
 
 TEST_CASE("Stride to_string conversion", "[stride][formatting]") {
     REQUIRE(to_string(Stride()) == "[]");

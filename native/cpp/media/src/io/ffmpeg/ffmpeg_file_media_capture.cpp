@@ -129,7 +129,7 @@ void FfmpegFileMediaCapture::decode_video_packet(const AVPacket* pkt) {
     video_decoder_->decode_packet(pkt, current_video_frame_);
 }
 
-void FfmpegFileMediaCapture::decode_audio_packet(const AVPacket* ) {
+void FfmpegFileMediaCapture::decode_audio_packet(const AVPacket*) {
     //AVFrame* frame = audio_decoder_->decode_packet(pkt);
 }
 }  // namespace p10::media

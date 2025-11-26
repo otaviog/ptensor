@@ -106,7 +106,7 @@ P10Error Fft::inverse(const Tensor&, Tensor&) const {
 P10Error Fft::inverse_real(const Tensor& freq_in, Tensor& signal_out) const {
     auto validation = validate_frequency_arguments(freq_in);
     if (validation.is_error()) {
-        return validation.err();
+        return validation.error();
     }
     const auto type = freq_in.dtype();
     const auto num_signals = validation.unwrap();

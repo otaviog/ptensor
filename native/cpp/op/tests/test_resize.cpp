@@ -21,7 +21,8 @@ TEST_CASE("Tensorop: Resize", "[tensorop]") {
         Tensor resized_image;
         image_from_tensor(resized_tensor, resized_image);
         io::save_image(
-            (testing::get_output_path() / testing::suffixed(image_file, "downsample-nearest")).string(),
+            (testing::get_output_path() / testing::suffixed(image_file, "downsample-nearest"))
+                .string(),
             resized_image
         );
     }
@@ -33,7 +34,8 @@ TEST_CASE("Tensorop: Resize", "[tensorop]") {
         Tensor resized_image;
         image_from_tensor(resized_tensor, resized_image);
         io::save_image(
-            (testing::get_output_path() / testing::suffixed(image_file, "upsample-nearest.jpg")).string(),
+            (testing::get_output_path() / testing::suffixed(image_file, "upsample-nearest.jpg"))
+                .string(),
             resized_image
         );
     }

@@ -17,12 +17,51 @@
 
 * Linux / MacOS: `cmake --workflow --preset lin-dev`
 * Windows: `cmake --workflow --preset win-dev`
+* WebAssembly: `cmake --workflow --preset wasm-build`
 
 If vcpkg is not clone yet, run the following command first:
 
 ```shell
 git submodule update --init --recursive
 ```
+
+### WebAssembly Build
+
+To build for WebAssembly, you need to have Emscripten SDK installed:
+
+1. Install Emscripten:
+   ```shell
+   git clone https://github.com/emscripten-core/emsdk.git
+   cd emsdk
+   ./emsdk install latest
+   ./emsdk activate latest
+   source ./emsdk_env.sh
+   ```
+
+2. Build the project:
+   ```shell
+   cmake --workflow --preset wasm-build
+   ```
+
+The output will be in `build/wasm-release/` with files:
+- `ptensor.js` - JavaScript loader
+- `ptensor.wasm` - WebAssembly binary
+
+### TypeScript/JavaScript Bindings
+
+Two binding options are available:
+
+1. **WebAssembly bindings** (for browsers and Node.js):
+   - Located in `native/bindings/ptensor_bindings.cpp`
+   - TypeScript wrappers in `bindings/typescript/ptensor-wrapper.ts`
+   - Build with `cmake --workflow --preset wasm-build`
+   - Use in browsers and Node.js
+
+2. **FFI bindings** (for Node.js only):
+   - Located in `bindings/typescript/src/`
+   - Uses Koffi for native C API access
+   - Requires built native library
+   - Node.js only (better performance for server-side)
 
 ## Project Structure
 

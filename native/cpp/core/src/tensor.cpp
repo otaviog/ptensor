@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <random>
 
 #include <type_traits>
 
@@ -48,9 +49,7 @@ Tensor::from_range(const Shape& shape, const TensorOptions& options, int64_t sta
         return Err(result_res);
     }
 
-    auto total_size =
-        std::accumulate(shape.begin(), shape.end(), int64_t(1), std::multiplies<int64_t>());
-
+    auto total_size = shape.count();
     auto result = result_res.unwrap();
     options.dtype().visit(
         [&](auto span) {
@@ -61,6 +60,30 @@ Tensor::from_range(const Shape& shape, const TensorOptions& options, int64_t sta
         },
         result.as_bytes()
     );
+    return Ok(std::move(result));
+}
+
+P10Result<Tensor> Tensor::from_random(
+    const Shape& shape,
+    std::mt19937_64 rng,
+    const TensorOptions& options,
+    double min,
+    double max
+) {
+    auto result_res = Tensor::zeros(shape, options);
+    if (result_res.is_error()) {
+        return Err(result_res);
+    }
+
+    auto result = result_res.unwrap();
+    result.visit([&rng, min, max](auto span) {
+        using SpanType = typename std::decay_t<decltype(span)>::value_type;
+        std::uniform_real_distribution<double> dist(min, max);
+        for (size_t i = 0; i < span.size(); ++i) {
+            span[i] = static_cast<SpanType>(dist(rng));
+        }
+    });
+
     return Ok(std::move(result));
 }
 

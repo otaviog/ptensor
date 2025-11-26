@@ -41,6 +41,37 @@ namespace {
         }
     }
 
+    __attribute__((target("avx2"))) void apply_horizontal_kernel(
+        Accessor2D<const float> input,
+        Accessor2D<float> output,
+        std::span<const float> kernel,
+        float /*factor*/
+    ) {
+        const int half_size = int(kernel.size()) / 2;
+        const int height = int(input.rows());
+        const int width = int(input.cols());
+
+        for (int y = 0; y < height; ++y) {
+            const auto input_row = input[y];
+            auto output_row = output[y];
+            for (int x = 0; x < width; ++x) {
+                float sum = 0;
+                for (int k = -half_size; k <= half_size; k += 8) {
+                    __m256 kernel_vec = _mm256_loadu_ps(&kernel[k + half_size]);
+                    __m256 pixel_vec = _mm256_loadu_ps(&input_row.data()[std::clamp(x + k, 0, width - 1)]);
+                    
+                    pixel_vec = _mm256_mul_ps(kernel_vec, pixel_vec);
+                    pixel_vec = _mm256_hadd_ps(pixel_vec, pixel_vec);
+                    
+                    
+                    const int xx = std::clamp(x + k, 0, width - 1);
+                    sum += float(input_row[xx]) * kernel[k + half_size];
+                }
+                output_row[x] = sum;
+            }
+        }
+    }
+
     template<typename scalar_t, typename fixed_t>
     void apply_vertical_kernel(
         Accessor2D<const scalar_t> input,

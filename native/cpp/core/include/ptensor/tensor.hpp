@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <random>
 
 #include <type_traits>
 
@@ -92,6 +93,14 @@ class Tensor {
         const Shape& shape,
         const TensorOptions& options = TensorOptions(),
         int64_t start = 0
+    );
+
+    static P10Result<Tensor> from_random(
+        const Shape& shape,
+        std::mt19937_64 rng,
+        const TensorOptions& options = TensorOptions(),
+        double min = 0.0,
+        double max = 1.0
     );
 
     P10Error create(const Shape& shape, const TensorOptions& options = TensorOptions());

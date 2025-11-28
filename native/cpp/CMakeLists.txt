@@ -1,3 +1,4 @@
+add_subdirectory(simd)
 add_subdirectory(core)
 
 set(WITH_IO OFF CACHE BOOL "Build Input/Output library")

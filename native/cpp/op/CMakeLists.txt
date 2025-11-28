@@ -31,6 +31,7 @@ set_source_files_properties(${PUBLIC_HEADERS} PROPERTIES VS_FOLDER "Public Heade
 # Source to public headers
 target_sources(ptensor_op
     PRIVATE
+    src/accumulator_traits.hpp
     src/blur.cpp
     src/elemwise.cpp
     src/tensor_scalar.cpp
@@ -52,7 +53,7 @@ target_include_directories(ptensor_op
     ${POCKETFFT_INCLUDE_DIRS}
     ${_INCLUDE_DIR})
 
-target_link_libraries(ptensor_op PUBLIC ptensor PRIVATE )
+target_link_libraries(ptensor_op PUBLIC ptensor PRIVATE $<BUILD_INTERFACE:ptensor_simd_>)
 
 ptensor_target_options(ptensor_op Op)
 

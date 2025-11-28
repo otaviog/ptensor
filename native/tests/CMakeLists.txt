@@ -1,24 +1,20 @@
 add_executable(unit_tests_all)
-
-target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_core> $<TARGET_OBJECTS:unit_tests_testing>
-$<TARGET_OBJECTS:unit_tests_op>
-)
 ptensor_target_options(unit_tests_all "Tests")
-if (WITH_IO)
-    target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_io>)
-endif()
 
-if (WITH_OP)
-    target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_op>)
-endif()
+target_sources(unit_tests_all PRIVATE 
+    $<TARGET_OBJECTS:unit_tests_core>
+    $<TARGET_OBJECTS:unit_tests_testing>
+    $<TARGET_OBJECTS:unit_tests_simd>)
 
 target_link_libraries(unit_tests_all PRIVATE Catch2::Catch2WithMain ptensor)
 
 if (WITH_IO)
+    target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_io>)
     target_link_libraries(unit_tests_all PRIVATE ptensor_io)
 endif()
 
 if (WITH_OP)
+    target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_op>)
     target_link_libraries(unit_tests_all PRIVATE ptensor_op)
 endif()
 

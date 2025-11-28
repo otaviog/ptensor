@@ -913,25 +913,30 @@ TEST_CASE("Tensor::transpose", "[tensor][transpose]") {
     SECTION("2D tensor transpose") {
         auto type = GENERATE(Dtype::Float32, Dtype::Int64, Dtype::Uint8);
         DYNAMIC_SECTION("Testing transpose with type " << to_string(type)) {
-            auto tensor = Tensor::from_range(make_shape(2, 3), type).unwrap();
+            const auto rows = 560;
+            const auto cols = 430;
+
+            auto tensor = Tensor::from_range(make_shape(rows, cols), type).unwrap();
             Tensor transposed;
             REQUIRE(tensor.transpose(transposed).is_ok());
 
-            REQUIRE(transposed.shape() == make_shape(3, 2));
-            REQUIRE(transposed.stride(0).unwrap() == 2);
+            REQUIRE(transposed.shape() == make_shape(cols, rows));
+            REQUIRE(transposed.stride(0).unwrap() == rows);
             REQUIRE(transposed.stride(1).unwrap() == 1);
-
-            REQUIRE(tensor.stride(0).unwrap() == 3);
-            REQUIRE(tensor.stride(1).unwrap() == 1);
 
             // Verify data correctness
             tensor.visit([&](const auto& type) {
-                using T = typename std::decay_t<decltype(type)>::element_type;
-                auto original_data = tensor.as_span1d<T>().unwrap();
-                auto transposed_data = transposed.as_span1d<T>().unwrap();
-                for (size_t i = 0; i < 2; i++) {
-                    for (size_t j = 0; j < 3; j++) {
-                        REQUIRE(transposed_data[j * 2 + i] == original_data[i * 3 + j]);
+                using scalar_t = typename std::decay_t<decltype(type)>::element_type;
+                auto original_data = tensor.as_span1d<scalar_t>().unwrap();
+                auto transposed_data = transposed.as_span1d<scalar_t>().unwrap();
+                for (size_t i = 0; i < rows; i++) {
+                    for (size_t j = 0; j < cols; j++) {
+                        const scalar_t expected_value = original_data[i * cols + j];
+                        const scalar_t actual_value = transposed_data[j * rows + i];
+                        if (actual_value != expected_value) {
+                            CAPTURE(i, j, expected_value, actual_value);
+                        }
+                        REQUIRE(actual_value == expected_value);
                     }
                 }
             });

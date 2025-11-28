@@ -38,6 +38,7 @@ target_sources(ptensor
     src/p10_error.cpp
     src/stride.cpp
     src/tensor.cpp
+    src/tensor.transpose.cpp
     src/tensor_print.cpp
     src/detail/blob.cpp
     src/dtype.cpp

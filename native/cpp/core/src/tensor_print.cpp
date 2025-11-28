@@ -57,13 +57,15 @@ void to_string_rec(
         return to_string_1d_tensor(ss, data, shape, stride, options);
     }
     ss << "[";
-    for (int64_t i = 0; i < shape[0].unwrap(); i++) {
+    const int64_t shape0 = shape[0].unwrap();
+    const int64_t stride0 = stride[0].unwrap();
+    for (int64_t i = 0; i < shape0; i++) {
         if (i > 0) {
             ss << ",\n";
         }
         to_string_rec(
             ss,
-            data + i * stride[0].unwrap(),
+            data + i * stride0,
             shape.subshape(1),
             stride.substride(1),
             options

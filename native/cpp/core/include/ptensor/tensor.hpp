@@ -591,7 +591,7 @@ class Tensor {
     template<typename T>
     P10Error check_dims_for_2d_span() const {
         if (!is_contiguous()) {
-            return P10Error::InvalidArgument << "Tensor must be contiguous for Span2D access";
+            return P10Error::NotImplemented << "Tensor must be contiguous for Span2D access";
         }
         return check_dims_for_2d_access<T>();
     }

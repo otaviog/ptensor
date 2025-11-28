@@ -311,41 +311,6 @@ P10Error Tensor::reshape(const Shape& new_shape) {
     return P10Error::Ok;
 }
 
-P10Error Tensor::transpose(Tensor& other) const {
-    if (dims() != 2) {
-        return P10Error::InvalidArgument << "Tensor must have 2 dimensions for transpose";
-    }
-
-    if (blob_.device() != Device::Cpu) {
-        return P10Error::NotImplemented << "Transpose is only implemented for CPU tensors";
-    }
-
-    if (!is_contiguous()) {
-        return P10Error::NotImplemented << "Transpose is only implemented for contiguous tensors";
-    }
-
-    Shape trans_shape = make_shape(shape_[1].unwrap(), shape_[0].unwrap());
-    other.create(trans_shape, dtype());
-    dtype_.visit(
-        [this, &other](auto type_span) {
-            using scalar_t = std::remove_const_t<typename decltype(type_span)::element_type>;
-            auto src_span = this->as_span2d<const scalar_t>().unwrap();
-            auto dest_span = other.as_span2d<scalar_t>().unwrap();
-            const auto rows = src_span.height();
-            const auto cols = src_span.width();
-
-            for (size_t r = 0; r < rows; r++) {
-                const auto src_row = src_span.row(r);
-                for (size_t c = 0; c < cols; c++) {
-                    dest_span.row(c)[r] = src_row[c];
-                }
-            }
-        },
-        as_bytes()
-    );
-    return P10Error::Ok;
-}
-
 P10Error Tensor::fill(double value) {
     if (device() != Device::Cpu) {
         return P10Error::NotImplemented << "Fill is only implemented for CPU tensors";

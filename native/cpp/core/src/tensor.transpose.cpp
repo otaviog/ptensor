@@ -1,15 +1,14 @@
 #include "tensor.hpp"
 
 #include <cstdint>
-#include <iostream>
 
 #include <immintrin.h>
 
 #include "cpuid/cpuid.hpp"
 #include "p10_error.hpp"
-#include "tensor_print.hpp"
 
 namespace p10 {
+
 template<typename scalar_t>
 void transpose_generic(
     int64_t rows,
@@ -133,6 +132,12 @@ transpose_avx2_8x8_32(int32_t const* src, size_t src_stride, int32_t* dst, size_
     _mm256_storeu_si256((__m256i*)(dst + 7 * dst_stride), row7t);
 }
 
+template<size_t b>
+constexpr inline size_t bitwise_modulo(size_t a) {
+    static_assert((b & (b - 1)) == 0, "b must be a power of two");
+    return a & (b - 1);
+}
+
 P10Error Tensor::transpose(Tensor& other) const {
     if (blob_.device() != Device::Cpu) {
         return P10Error::NotImplemented << "Transpose is only implemented for CPU tensors";
@@ -152,10 +157,13 @@ P10Error Tensor::transpose(Tensor& other) const {
         const size_t rows = src_span.height();
         const size_t cols = src_span.width();
 
-        const size_t src_stride = size_t(src_span.width());
-        const size_t dst_stride = size_t(dest_span.width());
+        const size_t src_stride = src_span.width();
+        const size_t dst_stride = dest_span.width();
 
-        if (rows < 8 || cols < 8) {
+        constexpr size_t CACHE_BLOCK = 64;
+        constexpr size_t SIMD_BLOCK = 8;
+
+        if (rows < CACHE_BLOCK || cols < CACHE_BLOCK) {
             // Fallback to generic transpose for small tensors
             transpose_generic(
                 rows,
@@ -168,30 +176,39 @@ P10Error Tensor::transpose(Tensor& other) const {
             return P10Error::Ok;
         }
 
-        const size_t aligned_max_rows = rows - (rows % 8);
-        const size_t aligned_max_cols = cols - (cols % 8);
+        const size_t aligned_max_rows = rows - bitwise_modulo<CACHE_BLOCK>(rows);
+        const size_t aligned_max_cols = cols - bitwise_modulo<CACHE_BLOCK>(cols);
+        const bool avx2_supported = is_avx2_supported();
 
-        for (size_t r = 0; r < aligned_max_rows; r += 8) {
-            const auto src_row = src_span.row(r);
-            for (size_t c = 0; c < aligned_max_cols; c += 8) {
-                const scalar_t* src_block = &src_row[c];
-                scalar_t* dest_block = &dest_span.row(c)[r];
+        for (size_t block_row = 0; block_row < aligned_max_rows; block_row += CACHE_BLOCK) {
+            for (size_t block_col = 0; block_col < aligned_max_cols; block_col += CACHE_BLOCK) {
+                for (size_t simd_row = block_row; simd_row < block_row + CACHE_BLOCK;
+                     simd_row += SIMD_BLOCK) {
+                    const auto src_row = src_span.row(simd_row);
 
-                if constexpr (sizeof(scalar_t) == sizeof(int32_t)) {
-                    if (is_avx2_supported()) {
-                        transpose_avx2_8x8_32(
-                            reinterpret_cast<const int32_t*>(&src_row[c]),
-                            src_stride,
-                            reinterpret_cast<int32_t*>(&dest_span.row(c)[r]),
-                            dst_stride
-                        );
-                        continue;
+                    for (size_t simd_col = block_col; simd_col < block_col + CACHE_BLOCK;
+                         simd_col += SIMD_BLOCK) {
+                        const scalar_t* src_block = &src_row[simd_col];
+                        scalar_t* dest_block = &dest_span.row(simd_col)[simd_row];
+
+                        if constexpr (sizeof(scalar_t) == sizeof(int32_t)) {
+                            if (avx2_supported) {
+                                transpose_avx2_8x8_32(
+                                    reinterpret_cast<const int32_t*>(src_block),
+                                    src_stride,
+                                    reinterpret_cast<int32_t*>(dest_block),
+                                    dst_stride
+                                );
+                                continue;
+                            }
+                        }
+
+                        transpose_8x8_generic(src_block, src_stride, dest_block, dst_stride);
                     }
                 }
-
-                transpose_8x8_generic(src_block, src_stride, dest_block, dst_stride);
             }
-            for (size_t rr = r; rr < r + 8; rr++) {
+
+            for (size_t rr = block_row; rr < block_row + CACHE_BLOCK; rr++) {
                 const auto src_row = src_span.row(rr);
                 for (size_t c = aligned_max_cols; c < cols; c++) {
                     dest_span.row(c)[rr] = src_row[c];

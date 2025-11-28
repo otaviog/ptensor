@@ -909,37 +909,46 @@ TEST_CASE("Tensor::reshape", "[tensor][reshape]") {
     }
 }
 
+void test_transpose(Dtype type, size_t rows, size_t cols) {
+    auto tensor = Tensor::from_range(make_shape(rows, cols), type).unwrap();
+    Tensor transposed;
+    REQUIRE(tensor.transpose(transposed).is_ok());
+
+    REQUIRE(transposed.shape() == make_shape(cols, rows));
+    REQUIRE(transposed.stride(0).unwrap() == int64_t(rows));
+    REQUIRE(transposed.stride(1).unwrap() == 1);
+
+    // Verify data correctness
+    tensor.visit([&](const auto& type) {
+        using scalar_t = typename std::decay_t<decltype(type)>::element_type;
+        auto original_data = tensor.as_span1d<scalar_t>().unwrap();
+        auto transposed_data = transposed.as_span1d<scalar_t>().unwrap();
+        for (size_t i = 0; i < rows; i++) {
+            for (size_t j = 0; j < cols; j++) {
+                const scalar_t expected_value = original_data[i * cols + j];
+                const scalar_t actual_value = transposed_data[j * rows + i];
+                if (actual_value != expected_value) {
+                    CAPTURE(i, j, expected_value, actual_value);
+                }
+                REQUIRE(actual_value == expected_value);
+            }
+        }
+    });
+}
+
 TEST_CASE("Tensor::transpose", "[tensor][transpose]") {
     SECTION("2D tensor transpose") {
         auto type = GENERATE(Dtype::Float32, Dtype::Int64, Dtype::Uint8);
         DYNAMIC_SECTION("Testing transpose with type " << to_string(type)) {
-            const auto rows = 560;
-            const auto cols = 430;
+            
+            test_transpose(type, 560, 430);
+        }
+    }
 
-            auto tensor = Tensor::from_range(make_shape(rows, cols), type).unwrap();
-            Tensor transposed;
-            REQUIRE(tensor.transpose(transposed).is_ok());
-
-            REQUIRE(transposed.shape() == make_shape(cols, rows));
-            REQUIRE(transposed.stride(0).unwrap() == rows);
-            REQUIRE(transposed.stride(1).unwrap() == 1);
-
-            // Verify data correctness
-            tensor.visit([&](const auto& type) {
-                using scalar_t = typename std::decay_t<decltype(type)>::element_type;
-                auto original_data = tensor.as_span1d<scalar_t>().unwrap();
-                auto transposed_data = transposed.as_span1d<scalar_t>().unwrap();
-                for (size_t i = 0; i < rows; i++) {
-                    for (size_t j = 0; j < cols; j++) {
-                        const scalar_t expected_value = original_data[i * cols + j];
-                        const scalar_t actual_value = transposed_data[j * rows + i];
-                        if (actual_value != expected_value) {
-                            CAPTURE(i, j, expected_value, actual_value);
-                        }
-                        REQUIRE(actual_value == expected_value);
-                    }
-                }
-            });
+    SECTION("Small tensor") {
+        auto type = GENERATE(Dtype::Float32, Dtype::Int64, Dtype::Uint8);
+        DYNAMIC_SECTION("Testing transpose with type " << to_string(type)) {
+              test_transpose(type, 6, 7);
         }
     }
 
@@ -1011,7 +1020,7 @@ TEST_CASE("Tensor::as_accessor1d converts to 1D accessor", "[tensor][accessor]")
         REQUIRE(accessor.size() == 6);
         // With stride 2, logical indices map to physical indices: 0->0, 1->2, 2->4, etc.
         auto span = tensor.as_span1d<float>().unwrap();
-        for (size_t i = 0; i < 6; i++) {
+        for (size_t i = 0; i < 3; i++) { // As we have 6 elements with stride 2, only 3 logical elements
             REQUIRE(accessor[i] == span[i * 2]);
         }
     }

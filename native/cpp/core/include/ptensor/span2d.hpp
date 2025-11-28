@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <span>
 
 namespace p10 {
 template<typename T>
@@ -19,6 +20,16 @@ class Span2D {
     const T* row(size_t row) const {
         assert(row < height_);
         return data_ + row * width_;
+    }
+
+    std::span<const T> row_span(size_t row) const {
+        assert(row < height_);
+        return std::span<const T>(data_ + row * width_, width_);
+    }
+
+    std::span<T> row_span(size_t row) {
+        assert(row < height_);
+        return std::span<T>(data_ + row * width_, width_);
     }
 
     size_t height() const {

@@ -5,9 +5,8 @@
 
 #include <immintrin.h>  // AVX2 intrinsics
 #include <ptensor/dtype.hpp>
+#include <ptensor/simd/cpuid.hpp>
 #include <ptensor/tensor.hpp>
-
-#include "cpuid.hpp"
 
 namespace p10::op {
 namespace {
@@ -52,7 +51,7 @@ P10Error resize(const Tensor& input, Tensor& output, size_t new_width, size_t ne
         };
 
         if constexpr (std::is_same_v<scalar_t, uint8_t>) {
-            if (is_avx2_supported() && input.is_contiguous()) {
+            if (simd::is_avx2_supported() && input.is_contiguous()) {
                 return resize_avx2_impl(
                     input_accessor,
                     output.as_accessor3d<scalar_t>().unwrap(),
@@ -134,19 +133,15 @@ namespace {
 
                 // Process 8 pixels at a time with SIMD
                 for (; col + 8 <= new_width; col += 8) {
-                    
                     __m256i col_indices = _mm256_add_epi32(
                         _mm256_set1_epi32(static_cast<int32_t>(col)),
                         _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7)
                     );
 
-                    
                     __m256 src_x_f = _mm256_mul_ps(_mm256_cvtepi32_ps(col_indices), x_scale_vec);
 
-                    
                     __m256i src_x = _mm256_cvtps_epi32(src_x_f);
 
-                    
                     src_x = _mm256_min_epi32(src_x, width_max_vec);
                     src_x = _mm256_max_epi32(src_x, _mm256_setzero_si256());
 

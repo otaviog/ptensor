@@ -5,23 +5,135 @@
 #include <numbers>
 
 #include <immintrin.h>  // AVX2 intrinsics
+#include <ptensor/simd/bitwise_math.hpp>
 #include <ptensor/dtype.hpp>
 #include <ptensor/p10_error.hpp>
 #include <ptensor/tensor.hpp>
 
-#include "fixed_point_type.hpp"
+#include <type_traits>
+
+#include "accumulator_traits.hpp"
 
 namespace p10::op {
+using detail::accumulator_traits;
 
 namespace {
     void create_gaussian_kernel_(std::span<float> kernel, float sigma);
+
+#if 0
+    template<typename scalar_t, typename accum_t>
+    void apply_1d_kernel_generic(
+        std::span<const scalar_t> input,
+        std::span<scalar_t> output,
+        std::span<const accum_t> kernel,
+        int kernel_half_size
+    ) {
+        for (int x = 0; x < int(input.size()); ++x) {
+            accumulator_traits<scalar_t> sum = 0;
+            for (int k = -kernel_half_size; k <= kernel_half_size; ++k) {
+                const int xx = x + k;
+                if (xx < 0 || xx >= int(input.size())) {
+                    continue;
+                }
+                sum += accum_t(input[xx]) * kernel[k + kernel_half_size];
+            }
+            output[x] = accumulator_traits<scalar_t>::to_scalar(sum);
+        }
+    }
+
+    template<typename scalar_t, typename accum_t>
+    void apply_1d_kernel_8_generic(
+        scalar_t* input,
+        const scalar_t* output,
+        const accum_t* kernel,
+        int kernel_half_size
+    ) {
+        for (int x = 0; x < 8; ++x) {
+            accumulator_traits<scalar_t> sum = 0;
+            for (int k = -kernel_half_size; k <= kernel_half_size; ++k) {
+                sum += accum_t(input[x + k]) * kernel[k + kernel_half_size];
+            }
+            output[x] = accumulator_traits<scalar_t>::to_scalar(sum);
+        }
+    }
+
+    __attribute__((target("avx2"))) void apply_1d_kernel_8_avx(
+        float* input,
+        const float* output,
+        const float* kernel,
+        int kernel_half_size
+    ) {
+        // TODO: implement AVX version
+    }
+#endif
+
+    template<typename scalar_t, typename accum_t>
+    void apply_1d_kernel(
+        Span2D<const scalar_t> input,
+        Span2D<scalar_t> output,
+        std::span<const accum_t> kernel
+    ) {
+        constexpr size_t BLOCK_SIZE = 64;
+        constexpr size_t SIMD_SIZE = 8;
+
+        const auto rows = input.rows();
+        const auto cols = input.cols();
+        const bool avx2_supported = false;  //is_avx2_supported();
+
+        const auto kernel_half_size = int(kernel.size() / 2);
+        const auto aligned_max_cols = cols - bitwise_modulo<BLOCK_SIZE>(cols) - kernel.size() + 1;
+
+        for (size_t row = 0; row < rows; row++) {
+            apply_1d_kernel_generic(
+                input.row_span(row).subspan(0, kernel_half_size),
+                output.row_span(row).subspan(0, kernel_half_size),
+                kernel,
+                kernel_half_size
+            );
+            apply_1d_kernel_generic(
+                input.row_span(row).subspan(cols - kernel_half_size, kernel_half_size),
+                output.row_span(row).subspan(cols - kernel_half_size, kernel_half_size),
+                kernel,
+                kernel_half_size
+            );
+
+            const auto input_row = input.row(row);
+            auto output_row = output.row(row);
+
+            for (size_t block_col = kernel_half_size; block_col < aligned_max_cols;
+                 block_col += BLOCK_SIZE) {
+                for (size_t simd_col = block_col; simd_col < block_col + BLOCK_SIZE;
+                     simd_col += SIMD_SIZE) {
+                    const scalar_t* input_block = &input_row[simd_col];
+                    scalar_t* output_block = &output.row(row)[simd_col];
+
+                    if constexpr (std::is_same_v<scalar_t, float>) {
+                        if (avx2_supported) {
+                            apply_1d_kernel_8_avx(
+                                input_block,
+                                output_block,
+                                kernel.data(),
+                                kernel_half_size
+                            );
+                            continue;
+                        }
+                    }
+                    apply_1d_kernel_8_generic(
+                        input_block,
+                        output_block,
+                        reinterpret_cast<const accum_t*>(kernel.data()),
+                        kernel_half_size
+                    );
+                }
+            }
+        }
+    }
 
     template<typename scalar_t, typename fixed_t>
     void apply_horizontal_kernel(
         Accessor2D<const scalar_t> input,
         Accessor2D<scalar_t> output,
-        std::span<const fixed_t> kernel,
-        fixed_t factor
+        std::span<const fixed_t> kernel
     ) {
         const int half_size = int(kernel.size()) / 2;
         const int height = int(input.rows());
@@ -36,38 +148,7 @@ namespace {
                     const int xx = std::clamp(x + k, 0, width - 1);
                     sum += fixed_t(input_row[xx]) * kernel[k + half_size];
                 }
-                output_row[x] = scalar_t(sum / factor);
-            }
-        }
-    }
-
-    __attribute__((target("avx2"))) void apply_horizontal_kernel(
-        Accessor2D<const float> input,
-        Accessor2D<float> output,
-        std::span<const float> kernel,
-        float /*factor*/
-    ) {
-        const int half_size = int(kernel.size()) / 2;
-        const int height = int(input.rows());
-        const int width = int(input.cols());
-
-        for (int y = 0; y < height; ++y) {
-            const auto input_row = input[y];
-            auto output_row = output[y];
-            for (int x = 0; x < width; ++x) {
-                float sum = 0;
-                for (int k = -half_size; k <= half_size; k += 8) {
-                    __m256 kernel_vec = _mm256_loadu_ps(&kernel[k + half_size]);
-                    __m256 pixel_vec = _mm256_loadu_ps(&input_row.data()[std::clamp(x + k, 0, width - 1)]);
-                    
-                    pixel_vec = _mm256_mul_ps(kernel_vec, pixel_vec);
-                    pixel_vec = _mm256_hadd_ps(pixel_vec, pixel_vec);
-                    
-                    
-                    const int xx = std::clamp(x + k, 0, width - 1);
-                    sum += float(input_row[xx]) * kernel[k + half_size];
-                }
-                output_row[x] = sum;
+                output_row[x] = scalar_t(accumulator_traits<scalar_t>::to_scalar(sum));
             }
         }
     }
@@ -76,8 +157,7 @@ namespace {
     void apply_vertical_kernel(
         Accessor2D<const scalar_t> input,
         Accessor2D<scalar_t> output,
-        std::span<const fixed_t> kernel,
-        fixed_t factor
+        std::span<const fixed_t> kernel
     ) {
         const int half_size = int(kernel.size()) / 2;
         const int height = int(input.rows());
@@ -90,7 +170,7 @@ namespace {
                     const int yy = std::clamp(y + k, 0, height - 1);
                     sum += fixed_t(input[yy][x]) * kernel[k + half_size];
                 }
-                output_row[x] = scalar_t(sum / factor);
+                output_row[x] = scalar_t(accumulator_traits<scalar_t>::to_scalar(sum));
             }
         }
     }
@@ -141,41 +221,41 @@ P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) {
     if (horizontal_out_ == nullptr) {
         horizontal_out_ = std::make_shared<Tensor>();
     }
+
     P10_RETURN_IF_ERROR(horizontal_out_->create(input.shape(), dtype));
     P10_RETURN_IF_ERROR(output.create(input.shape(), dtype));
 
     return dtype.match([&](auto type_tag) -> P10Error {
         using scalar_t = typename decltype(type_tag)::type;
+        using accum_t = accumulator_traits<scalar_t>::accum_type;
 
-        if constexpr (detail::has_fixed_point_type<scalar_t>::value) {
+        if constexpr (!std::is_same_v<accum_t, detail::AccumulatorNotDefined>) {
             auto input_acc = input.as_accessor3d<const scalar_t>().unwrap();
             auto horizontal_out_acc = horizontal_out_->as_accessor3d<scalar_t>().unwrap();
             auto output_acc = output.as_accessor3d<scalar_t>().unwrap();
 
             const auto float_kernel = get_kernel();
-            using fixed_t = typename detail::fixed_point_type<scalar_t>::type;
-            std::array<fixed_t, MAX_KERNEL_SIZE> kernel;
-            const fixed_t factor = detail::fixed_point_type<scalar_t>::factor;
+
+            std::array<accum_t, MAX_KERNEL_SIZE> kernel;
             std::transform(
                 float_kernel.begin(),
                 float_kernel.end(),
                 kernel.begin(),
-                [=](float value) { return fixed_t(value * factor); }
+                [](float value) { return accumulator_traits<scalar_t>::from_float(value); }
             );
-            std::span<const fixed_t> kernel_span {kernel.data(), get_kernel().size()};
+
+            std::span<const accum_t> kernel_span {kernel.data(), get_kernel().size()};
 
             for (int64_t channel_plane = 0; channel_plane < input_acc.channels(); channel_plane++) {
-                apply_horizontal_kernel<scalar_t, fixed_t>(
+                apply_horizontal_kernel<scalar_t, accum_t>(
                     input_acc[channel_plane],
                     horizontal_out_acc[channel_plane],
-                    kernel_span,
-                    factor
+                    kernel_span
                 );
-                apply_vertical_kernel<scalar_t, fixed_t>(
+                apply_vertical_kernel<scalar_t, accum_t>(
                     horizontal_out_acc[channel_plane].as_const(),
                     output_acc[channel_plane],
-                    kernel_span,
-                    factor
+                    kernel_span
                 );
             }
         } else {

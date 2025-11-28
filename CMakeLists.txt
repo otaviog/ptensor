@@ -29,6 +29,9 @@ if(BUILD_TESTS)
         FOLDER Libraries)
     set_target_properties(Catch2WithMain PROPERTIES
         FOLDER Libraries)
+
+    find_package(Threads REQUIRED)
+    find_package(benchmark CONFIG REQUIRED)
 endif()
 
 add_subdirectory(native)

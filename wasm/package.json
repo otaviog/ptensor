@@ -7,8 +7,10 @@
   "types": "./build/ptensor-wrapper.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "build:app": "tsc exampleApp/app.ts --outDir exampleApp --module es2020 --target es2020 --moduleResolution node",
     "clean": "rm -rf build",
-    "example": "tsx example.ts"
+    "example": "tsx example.ts",
+    "serve": "python3 -m http.server 8080"
   },
   "keywords": [
     "tensor",

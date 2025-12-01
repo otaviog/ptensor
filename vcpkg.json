@@ -32,7 +32,8 @@
     "tests": {
       "description": "Build tests (for development)",
       "dependencies": [
-        "catch2"
+        "catch2",
+        "benchmark"
       ]
     }
   }

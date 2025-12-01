@@ -10,7 +10,7 @@
       "host": true
     },
     {
-      "name": "vcpkg-cmake-config", 
+      "name": "vcpkg-cmake-config",
       "host": true
     }
   ],
@@ -32,7 +32,21 @@
     "tests": {
       "description": "Build tests (for development)",
       "dependencies": [
-        "catch2"
+        "catch2",
+        "benchmark"
+      ]
+    },
+    "media": {
+      "description": "Enable FFmpeg support for media processing",
+      "dependencies": [
+        {
+          "name": "ffmpeg",
+          "features": [
+            "ffmpeg",
+            "webp",
+            "x265"
+          ]
+        }
       ]
     }
   }

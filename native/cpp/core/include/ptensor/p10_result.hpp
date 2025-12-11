@@ -11,6 +11,8 @@ class P10Result {
   public:
     P10Result() = default;
 
+    explicit P10Result(P10Error&& error) : value_(std::move(error)) {}
+
     bool is_ok() const {
         return std::holds_alternative<OkType>(value_);
     }
@@ -45,7 +47,15 @@ class P10Result {
         return std::move(std::get<P10Error>(value_));
     }
 
-    explicit P10Result(P10Error&& error) : value_(std::move(error)) {}
+    template<typename Func>
+    auto map(Func&& func) -> P10Result<decltype(func(std::declval<OkType>()))> {
+        using NewOkType = decltype(func(std::declval<OkType>()));
+        if (is_ok()) {
+            return P10Result<NewOkType>(func(unwrap()));
+        } else {
+            return P10Result<NewOkType>(error());
+        }
+    }
 
   private:
     explicit P10Result(const OkType& value) : value_(value) {}

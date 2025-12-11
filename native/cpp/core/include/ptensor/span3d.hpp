@@ -77,12 +77,12 @@ class PlanarSpan3D {
         height_(height),
         width_(width) {}
 
-    Span2D<const T> plane(size_t channel) const {
+    Span2D<const T> operator[](size_t channel) const {
         assert(channel < channels_);
         return Span2D<const T>(data_ + width_ * height_ * channel, height_, width_);
     }
 
-    Span2D<T> plane(size_t channel) {
+    Span2D<T> operator[](size_t channel) {
         assert(channel < channels_);
         return Span2D<T>(data_ + width_ * height_ * channel, height_, width_);
     }

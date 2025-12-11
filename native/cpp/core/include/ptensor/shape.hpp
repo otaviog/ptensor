@@ -39,6 +39,22 @@ class Shape: public detail::TensorExtents {
         return Shape(detail::TensorExtents::subextents(start_dim, end_dim));
     }
 
+    P10Result<Shape> permute(const std::span<const size_t>& perm) const {
+        return detail::TensorExtents::permute_extents(perm).map([](auto&& extents) {
+            return Shape(std::forward<decltype(extents)>(extents));
+        });
+    }
+
+    P10Result<Shape> transpose() const {
+        if (dims_ != 2) {
+            return Err(
+                P10Error::InvalidArgument,
+                "Transpose is only supported for 2D shapes"
+            );
+        }
+        return Ok(Shape({extent_[1], extent_[0]}));
+    }
+
     using TensorExtents::TensorExtents;
     friend class Stride;
 };

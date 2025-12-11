@@ -22,12 +22,12 @@ class Span2D {
         return data_ + row * width_;
     }
 
-    std::span<const T> row_span(size_t row) const {
+    std::span<const T> operator[](size_t row) const {
         assert(row < height_);
         return std::span<const T>(data_ + row * width_, width_);
     }
 
-    std::span<T> row_span(size_t row) {
+    std::span<T> operator[](size_t row) {
         assert(row < height_);
         return std::span<T>(data_ + row * width_, width_);
     }
@@ -38,16 +38,6 @@ class Span2D {
 
     size_t width() const {
         return width_;
-    }
-
-    T& operator[](size_t index) {
-        assert(index < height_ * width_);
-        return data_[index];
-    }
-
-    const T& operator[](size_t index) const {
-        assert(index < height_ * width_);
-        return data_[index];
     }
 
   private:

@@ -49,11 +49,10 @@ class P10Result {
 
     template<typename Func>
     auto map(Func&& func) -> P10Result<decltype(func(std::declval<OkType>()))> {
-        using NewOkType = decltype(func(std::declval<OkType>()));
         if (is_ok()) {
-            return P10Result<NewOkType>(func(unwrap()));
+            return Ok(func(unwrap()));
         } else {
-            return P10Result<NewOkType>(error());
+            return Err(error());
         }
     }
 
@@ -62,8 +61,12 @@ class P10Result {
 
     explicit P10Result(OkType&& value) : value_(std::move(value)) {}
 
+    explicit P10Result(const P10Error& error) : value_(error) {}
+
   private:
     std::variant<OkType, P10Error> value_;
+
+    friend class P10Result;
 
     template<typename T>
     friend P10Result<T> Ok(T&& value);

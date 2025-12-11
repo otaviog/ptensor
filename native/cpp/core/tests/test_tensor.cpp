@@ -599,7 +599,7 @@ TEST_CASE("Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]
 
         // Set values in each plane
         for (size_t c = 0; c < 3; c++) {
-            auto plane = span.plane(c);
+            auto plane = span[c];
             for (size_t h = 0; h < 4; h++) {
                 for (size_t w = 0; w < 5; w++) {
                     plane.row(h)[w] = float(c * 100 + h * 10 + w);
@@ -608,10 +608,10 @@ TEST_CASE("Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]
         }
 
         // Verify values
-        REQUIRE(span.plane(0).row(0)[0] == Catch::Approx(0.0f));
-        REQUIRE(span.plane(0).row(1)[2] == Catch::Approx(12.0f));
-        REQUIRE(span.plane(1).row(2)[3] == Catch::Approx(123.0f));
-        REQUIRE(span.plane(2).row(3)[4] == Catch::Approx(234.0f));
+        REQUIRE(span[0][0][0] == Catch::Approx(0.0f));
+        REQUIRE(span[0][1][2] == Catch::Approx(12.0f));
+        REQUIRE(span[1][2][3] == Catch::Approx(123.0f));
+        REQUIRE(span[2][3][4] == Catch::Approx(234.0f));
     }
 
     SECTION("const version works correctly") {
@@ -623,7 +623,7 @@ TEST_CASE("Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]
         REQUIRE(span.height() == 3);
         REQUIRE(span.width() == 4);
 
-        auto plane0 = span.plane(0);
+        auto plane0 = span[0];
         REQUIRE(plane0.row(0)[0] == Catch::Approx(9.0f));
         REQUIRE(plane0.row(2)[3] == Catch::Approx(9.0f));
     }
@@ -636,7 +636,7 @@ TEST_CASE("Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]
         REQUIRE(span.channels() == 2);
         REQUIRE(span.height() == 3);
         REQUIRE(span.width() == 4);
-        REQUIRE(span.plane(0).row(0)[0] == 1000);
+        REQUIRE(span[0].row(0)[0] == 1000);
     }
 
     SECTION("plane dimensions are correct") {
@@ -644,7 +644,7 @@ TEST_CASE("Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]
         auto span = tensor.as_planar_span3d<float>().unwrap();
 
         for (size_t c = 0; c < 3; c++) {
-            auto plane = span.plane(c);
+            auto plane = span[c];
             REQUIRE(plane.height() == 10);
             REQUIRE(plane.width() == 20);
         }

@@ -16,3 +16,6 @@ coverage-html: _run_coverage
 
 clang-format:
     find native -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec clang-format -i {} +
+
+run-ci:
+    act --job linux-check

@@ -11,13 +11,19 @@ namespace p10::media {
 
 class VideoQueue {
   public:
+    enum EmplaceResult { Ok, Cancelled };
+
     VideoQueue(size_t max_size) : max_size_(max_size) {}
 
-    void emplace(VideoFrame&& frame) {
+    EmplaceResult emplace(VideoFrame&& frame) {
         std::unique_lock lock(mutex_);
-        cv_.wait(lock, [this]() { return queue_.size() < max_size_; });
+        cv_.wait(lock, [this]() { return queue_.size() < max_size_ || cancel_; });
+        if (cancel_) {
+            return EmplaceResult::Cancelled;
+        }
         queue_.emplace(std::move(frame));
         cv_.notify_all();
+        return EmplaceResult::Ok;
     }
 
     std::optional<VideoFrame> wait_and_pop() {

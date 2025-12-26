@@ -7,12 +7,16 @@
 namespace p10::media {
 class MediaCapture::Impl {
   public:
+    virtual ~Impl() = default;
+
+    virtual void close() = 0;
+
     virtual MediaParameters get_parameters() const = 0;
 
     virtual P10Error next_frame() = 0;
 
-    virtual P10Result<VideoFrame> get_video() = 0;
+    virtual P10Error get_video(VideoFrame& frame) = 0;
 
-    virtual P10Result<AudioFrame> get_audio() = 0;
+    virtual P10Error get_audio(AudioFrame& frame) = 0;
 };
 }  // namespace p10::media

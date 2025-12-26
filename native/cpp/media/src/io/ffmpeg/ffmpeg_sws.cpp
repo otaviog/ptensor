@@ -1,6 +1,7 @@
 #include "ffmpeg_sws.hpp"
 
 #include "ffmpeg_wrap_error.hpp"
+#include "video_frame.hpp"
 
 namespace p10::media {
 
@@ -15,10 +16,13 @@ P10Error FfmpegSws::transform(const AVFrame* frame, VideoFrame& output_frame) {
         return P10Error(P10Error::UnknownError, "Failed to get SwsContext");
     }
 
-    uint8_t* dst_data[1] = {output_frame.as_bytes().data()};
-    int dst_linesize[1] = {int(output_frame.width()) * 3};
+    output_frame.create(frame->width, frame->height, PixelFormat::RGB24);
 
-    return wrap_error(
+    uint8_t* dst_data[1] = {output_frame.as_bytes().data()};
+    int dst_linesize[1] = {int(output_frame.stride().byte_stride(output_frame.dtype(), 0).unwrap())
+    };
+
+    return wrap_ffmpeg_error(
         sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, dst_data, dst_linesize),
         "sws_scale failed"
     );

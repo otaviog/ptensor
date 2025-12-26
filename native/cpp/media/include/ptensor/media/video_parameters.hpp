@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../time/rational.hpp"
+#include "time/rational.hpp"
 
 namespace p10::media {
 class VideoParameters {

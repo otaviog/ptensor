@@ -5,11 +5,11 @@
 namespace p10::media {
 class MediaParameters {
   public:
-    AudioParameters get_audio_parameters() const {
+    AudioParameters audio_parameters() const {
         return audio_;
     }
 
-    VideoParameters get_video_parameters() const {
+    VideoParameters video_parameters() const {
         return video_;
     }
 

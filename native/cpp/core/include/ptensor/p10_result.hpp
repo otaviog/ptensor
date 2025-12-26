@@ -6,6 +6,12 @@
 #include "p10_error.hpp"
 
 namespace p10 {
+
+template<class OkType>
+class P10Result;
+template<typename OkType>
+P10Result<OkType> Ok(OkType&& value);
+
 template<class OkType>
 class P10Result {
   public:

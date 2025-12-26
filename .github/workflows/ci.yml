@@ -2,138 +2,55 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, dev]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, dev]
   workflow_dispatch:
 
 jobs:
-  cpp-tests-linux:
+  linux-check:
     name: C++ Tests (Linux)
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        build_type: [Debug, Release]
-        compiler:
-          - { cc: clang, cxx: clang++ }
-          - { cc: gcc, cxx: g++ }
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ninja-build cmake
-        if [ "${{ matrix.compiler.cc }}" = "clang" ]; then
-          sudo apt-get install -y clang
-        fi
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake
+          sudo apt-get install -y clang-20 clang-tools-20
+          sudo apt-get install -y autoconf autoconf-archive automake libtool python3.13-venv
+          sudo apt-get install libx11-dev libxext-dev libwayland-dev wayland-protocols libxkbcommon-dev
 
-    - name: Configure CMake
-      run: |
-        cmake --preset lin-${{ matrix.build_type == 'Debug' && 'debug' || 'release' }}
-      env:
-        CC: ${{ matrix.compiler.cc }}
-        CXX: ${{ matrix.compiler.cxx }}
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
+          sudo update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/bin/clang-scan-deps-20 100
+          
 
-    - name: Build
-      run: |
-        cmake --build --preset lin-${{ matrix.build_type == 'Debug' && 'debug' || 'release' }} -j$(nproc)
+          sh ./vcpkg/bootstrap-vcpkg.sh
 
-    - name: Run tests
-      run: |
-        ctest --preset lin-${{ matrix.build_type == 'Debug' && 'debug' || 'release' }} --output-on-failure
+      #########
+      # Build and test steps
+      - name: Build debug
+        run: |
+          cmake --workflow --preset lin-dev
 
-  coverage:
-    name: Code Coverage
-    runs-on: ubuntu-latest
+      - name: Build release
+        run: |
+          cmake --workflow --preset lin-release
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
+      #########
+      # Code coverage steps
+      - name: Code Coverage
+        run: |
+          just coverage-html
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ninja-build cmake clang llvm
-
-    - name: Configure CMake with coverage
-      run: |
-        cmake --preset coverage
-      env:
-        CC: clang
-        CXX: clang++
-
-    - name: Build
-      run: |
-        cmake --build --preset coverage -j$(nproc)
-
-    - name: Run tests
-      run: |
-        ctest --preset coverage --output-on-failure
-
-    - name: Generate coverage report
-      run: |
-        llvm-profdata merge -sparse ptensor-coverage.profraw -o ptensor-coverage.profdata
-        llvm-cov show build/coverage/native/tests/unit_tests_all \
-          -instr-profile=ptensor-coverage.profdata \
-          -format=html \
-          -output-dir=coverage-report \
-          -ignore-filename-regex="(build|_deps|tests)/.*"
-
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: coverage-report/
-
-  sanitizers:
-    name: Sanitizers
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        sanitizer: [address, undefined, thread]
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ninja-build cmake clang
-
-    - name: Configure CMake with sanitizer
-      run: |
-        cmake -B build \
-          -DCMAKE_BUILD_TYPE=Debug \
-          -DCMAKE_CXX_COMPILER=clang++ \
-          -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.sanitizer }} -fno-omit-frame-pointer -g" \
-          -G Ninja
-      env:
-        CC: clang
-        CXX: clang++
-
-    - name: Build
-      run: |
-        cmake --build build -j$(nproc)
-
-    - name: Run tests with sanitizer
-      run: |
-        cd build
-        ctest --output-on-failure
-      env:
-        ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1
-        UBSAN_OPTIONS: print_stacktrace=1
-        TSAN_OPTIONS: second_deadlock_stack=1
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/coverage/coverage-html

@@ -87,6 +87,39 @@
             ],
             "preLaunchTask": "",
             "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug Video Viewer with Custom Video",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.launchTargetPath}",
+            "args": [
+                "${input:videoPath}"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "DISPLAY",
+                    "value": ":0"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "",
+            "miDebuggerPath": "/usr/bin/gdb"
         }
     ],
     "inputs": [
@@ -101,6 +134,12 @@
             "type": "promptString",
             "description": "Test filter pattern (e.g., '[dtype]' or 'Tensor*')",
             "default": ""
+        },
+        {
+            "id": "videoPath",
+            "type": "promptString",
+            "description": "Path to video file",
+            "default": "${workspaceFolder}/tests/data/video/file_example_MP4_480_1_5MG.mp4"
         }
     ]
 }

@@ -2,7 +2,12 @@
 
 A simple tensor library designed to be portable between languages and operating systems.
 
-## Build
+## Build dev
+
+```bash
+$ sudo apt install git cmake ninja-build clang clang-tools clang-format autoconf libxcb1
+```
+
 
 
 ```bash

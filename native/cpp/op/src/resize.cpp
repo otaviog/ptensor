@@ -5,6 +5,7 @@
 
 #include <immintrin.h>  // AVX2 intrinsics
 #include <ptensor/dtype.hpp>
+#include <ptensor/simd/compiler.hpp>
 #include <ptensor/simd/cpuid.hpp>
 #include <ptensor/tensor.hpp>
 
@@ -18,7 +19,7 @@ namespace {
         int64_t new_height
     );
 
-    __attribute__((target("avx2"))) P10Error resize_avx2_impl(
+    PTENSOR_AVX2 P10Error resize_avx2_impl(
         Accessor3D<const uint8_t> input,
         Accessor3D<uint8_t> output,
         int64_t new_width,
@@ -102,15 +103,15 @@ namespace {
         return P10Error::Ok;
     }
 
-    __attribute__((target("avx2"))) P10Error resize_avx2_impl(
+    PTENSOR_AVX2 P10Error resize_avx2_impl(
         Accessor3D<const uint8_t> input,
         Accessor3D<uint8_t> output,
         int64_t new_width,
         int64_t new_height
     ) {
         const auto channels = input.channels();
-        const auto height = input.rows();
-        const auto width = input.cols();
+        const int32_t height = int32_t(input.rows());
+        const int32_t width = int32_t(input.cols());
 
         const float x_scale = float(width) / float(new_width);
         const float y_scale = float(height) / float(new_height);
@@ -124,7 +125,7 @@ namespace {
             auto plane_in = input[chn];
 
             for (int64_t row = 0; row < new_height; ++row) {
-                const auto src_y = std::min(int64_t(float(row) * y_scale), height - 1);
+                const auto src_y = std::min(int32_t(float(row) * y_scale), height - 1);
 
                 auto row_out = plane_out[row];
                 auto row_in = plane_in[src_y];
@@ -161,7 +162,7 @@ namespace {
 
                 // Handle remaining pixels with scalar code
                 for (; col < new_width; ++col) {
-                    const auto src_x = std::min(int64_t(float(col) * x_scale), width - 1);
+                    const auto src_x = std::min(int32_t(float(col) * x_scale), width - 1);
                     row_out[col] = row_in[src_x];
                 }
             }

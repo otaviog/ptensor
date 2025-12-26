@@ -22,9 +22,9 @@ typedef enum {
 
 #define P10_DTYPE_LAST P10_DTYPE_INT64
 
-const char* p10_dtype_to_string(P10DTypeEnum dtype);
+PTENSOR_API const char* p10_dtype_to_string(P10DTypeEnum dtype);
 
-P10ErrorEnum p10_dtype_from_string(
+PTENSOR_API P10ErrorEnum p10_dtype_from_string(
     const char* type_str,
     P10DTypeEnum* out_dtype
 );

@@ -55,7 +55,7 @@
         "imgui",
         {
           "name": "sdl2",
-          "features": ["vulkan", "wayland", "x11"]
+          "features": ["vulkan"]
         },
         "vulkan",
         "cli11"

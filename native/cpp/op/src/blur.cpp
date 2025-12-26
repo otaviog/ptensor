@@ -258,10 +258,11 @@ P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) {
                     kernel_span
                 );
             }
+            return P10Error::Ok;
         } else {
             return P10Error::InvalidArgument << "Unsupported data type for this operation.";
         }
-        return P10Error::Ok;
+        
     });
 }
 

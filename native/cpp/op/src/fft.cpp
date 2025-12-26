@@ -4,7 +4,15 @@
 #include <cstddef>
 #include <cstdint>
 
+#ifdef _MSC_VER
+    #pragma warning(push)
+    #pragma warning(disable : 4324 4458 4456 26495)
+#endif
 #include <pocketfft_hdronly.h>
+#ifdef _MSC_VER
+    #pragma warning(pop)
+#endif
+
 #include <ptensor/tensor.hpp>
 #include <ptensor/tensor_print.hpp>
 

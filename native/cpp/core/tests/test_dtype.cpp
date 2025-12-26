@@ -118,10 +118,10 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
         std::vector<std::byte> data(source_data.size() * sizeof(uint32_t));
         std::memcpy(data.data(), source_data.data(), data.size());
 
-        uint32_t sum = 0;
+        uint64_t sum = 0;
         auto visitor = [&sum](auto typed_span) {
             for (const auto& val : typed_span) {
-                sum += val;
+                sum += uint64_t(val);
             }
         };
 

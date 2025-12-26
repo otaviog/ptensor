@@ -20,14 +20,14 @@ namespace detail {
 
         TensorExtents(size_t dims) : dims_(dims) {}
 
-        TensorExtents(TensorExtents&& other) {
+        TensorExtents(TensorExtents&& other) noexcept {
             dims_ = other.dims_;
             extent_ = std::move(other.extent_);
             other.dims_ = 0;
             other.extent_.fill(0);
         }
 
-        TensorExtents& operator=(TensorExtents&& other) {
+        TensorExtents& operator=(TensorExtents&& other) noexcept {
             dims_ = other.dims_;
             extent_ = std::move(other.extent_);
             other.dims_ = 0;

@@ -33,7 +33,7 @@ target_include_directories(ptensor_media
 target_link_directories(ptensor_media PRIVATE ${FFMPEG_LIBRARY_DIRS})
 target_link_libraries(ptensor_media PUBLIC ptensor PRIVATE ${FFMPEG_LIBRARIES})
 
-ptensor_target_options(ptensor_media "MEDIA")
+ptensor_target_options(ptensor_media "Media")
 
 if(BUILD_TESTS)
   add_subdirectory(tests)

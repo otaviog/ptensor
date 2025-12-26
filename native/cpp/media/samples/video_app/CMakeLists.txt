@@ -17,3 +17,10 @@ target_link_libraries(sample_video_app PRIVATE
     $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
 )
+if (MSVC)
+    set_target_properties(
+        sample_video_app PROPERTIES
+        VS_DEBUGGER_COMMAND_ARGUMENTS ${CMAKE_SOURCE_DIR}/tests/data/video/file_example_MP4_480_1_5MG.mp4
+        VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+endif()

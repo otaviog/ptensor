@@ -1,5 +1,7 @@
 #include "wave.hpp"
 
+#include <numbers>
+
 #include <ptensor/tensor.hpp>
 
 #include "ptensor/p10_error.hpp"
@@ -40,7 +42,7 @@ generate_sine_wave(size_t num_samples, Dtype type, const SineWaveParams& params,
         const scalar_t phase_val = static_cast<scalar_t>(phase);
 
         const scalar_t phase_increment =
-            static_cast<scalar_t>(2.0 * M_PI * frequency / sample_rate);
+            static_cast<scalar_t>(2.0 * std::numbers::pi * frequency / sample_rate);
         for (size_t i = 0; i < span.size(); ++i) {
             const scalar_t t = static_cast<scalar_t>(i % period_samples);
             const scalar_t normalized_phase = phase_increment * t;

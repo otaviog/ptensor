@@ -1,6 +1,13 @@
 #include "audio.hpp"
 
+#ifdef _MSC_VER
+    #pragma warning(push)
+    #pragma warning(disable : 4701)
+#endif
 #include <AudioFile/AudioFile.h>
+#ifdef _MSC_VER
+    #pragma warning(pop)
+#endif
 #include <ptensor/tensor.hpp>
 
 namespace p10::io {

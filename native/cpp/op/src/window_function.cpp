@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <numbers>
 
 #include <ptensor/tensor.hpp>
 
@@ -99,16 +100,16 @@ P10Error WindowFunction::generate_window(size_t size, Dtype type) {
         using scalar_t = typename decltype(out_span)::value_type;
 
         for (size_t n = 0; n < size; ++n) {
-            scalar_t value = 1.0;
+            scalar_t value = scalar_t(1.0);
             switch (func_) {
                 case Function::Hanning:
                     value = static_cast<scalar_t>(
-                        0.5 * (1.0 - std::cos((2.0 * M_PI * n) / (size - 1)))
+                        0.5 * (1.0 - std::cos((2.0 * std::numbers::pi * n) / (size - 1)))
                     );
                     break;
                 case Function::Hamming:
                     value = static_cast<scalar_t>(
-                        0.54 - 0.46 * std::cos((2.0 * M_PI * n) / (size - 1))
+                        0.54 - 0.46 * std::cos((2.0 * std::numbers::pi * n) / (size - 1))
                     );
                     break;
                 case Function::Identity:

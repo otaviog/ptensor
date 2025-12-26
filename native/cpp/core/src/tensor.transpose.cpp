@@ -5,6 +5,7 @@
 #include <immintrin.h>
 
 #include <ptensor/simd/cpuid.hpp>
+#include <ptensor/simd/compiler.hpp>
 #include "p10_error.hpp"
 
 namespace p10 {
@@ -39,7 +40,7 @@ void transpose_8x8_generic(
     }
 }
 
-__attribute__((target("avx2"))) void
+PTENSOR_AVX2 void
 transpose_avx2_8x8_32(int32_t const* src, size_t src_stride, int32_t* dst, size_t dst_stride) {
     __m256i row0 = _mm256_loadu_si256((__m256i const*)src);
     __m256i row1 = _mm256_loadu_si256((__m256i const*)(src + src_stride));

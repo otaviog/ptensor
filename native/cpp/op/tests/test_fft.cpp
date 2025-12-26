@@ -1,4 +1,5 @@
 #include <complex>
+#include <numbers>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
@@ -80,10 +81,10 @@ TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
         SineWaveParams params;
         params.sample_rate(SAMPLE_RATE).period(0.01);
         const std::array<SineWaveParams, NUM_SIGNALS> waves = {
-            params.frequency(16000.0).amplitude(1.0).phaseRadians(M_PI / 2),
-            params.frequency(16500.0).amplitude(0.75).phaseRadians(M_PI / 4),
-            params.frequency(17000.0).amplitude(0.50).phaseRadians(M_PI / 6),
-            params.frequency(17500.0).amplitude(0.25).phaseRadians(M_PI / 8),
+            params.frequency(16000.0).amplitude(1.0).phaseRadians(std::numbers::pi / 2),
+            params.frequency(16500.0).amplitude(0.75).phaseRadians(std::numbers::pi / 4),
+            params.frequency(17000.0).amplitude(0.50).phaseRadians(std::numbers::pi / 6),
+            params.frequency(17500.0).amplitude(0.25).phaseRadians(std::numbers::pi / 8),
         };
 
         for (size_t signal_idx = 0; signal_idx < 4; ++signal_idx) {

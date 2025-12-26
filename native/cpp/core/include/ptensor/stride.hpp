@@ -1,9 +1,11 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <span>
 
 #include "detail/tensor_extents.hpp"
+#include "dtype.hpp"
 #include "p10_result.hpp"
 
 namespace p10 {
@@ -32,6 +34,10 @@ class Stride: public detail::TensorExtents {
 
     Stride substride(size_t start_dim, size_t end_dim = SIZE_MAX) const {
         return Stride(detail::TensorExtents::subextents(start_dim, end_dim));
+    }
+
+    P10Result<int64_t> byte_stride(Dtype dtype, size_t dim) const {
+        return (*this)[dim].map([dtype](int64_t s) { return s * int64_t(dtype.size_bytes()); });
     }
 
   private:

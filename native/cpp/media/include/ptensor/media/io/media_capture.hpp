@@ -2,17 +2,19 @@
 #include <memory>
 #include <string>
 
-#include <ptensor/p10_error.hpp>
+#include <ptensor/p10_result.hpp>
 
 #include "../audio_frame.hpp"
 #include "../video_frame.hpp"
-#include "media_parameters.hpp"
+#include "../media_parameters.hpp"
 
 namespace p10::media {
 class MediaCapture {
   public:
     class Impl;
     static P10Result<MediaCapture> open_file(const std::string& path);
+
+    void close();
 
     MediaParameters get_parameters() const;
 

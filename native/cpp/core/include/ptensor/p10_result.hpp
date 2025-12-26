@@ -6,10 +6,18 @@
 #include "p10_error.hpp"
 
 namespace p10 {
+
+template<class OkType>
+class P10Result;
+template<typename OkType>
+P10Result<OkType> Ok(OkType&& value);
+
 template<class OkType>
 class P10Result {
   public:
     P10Result() = default;
+
+    explicit P10Result(P10Error&& error) : value_(std::move(error)) {}
 
     bool is_ok() const {
         return std::holds_alternative<OkType>(value_);
@@ -45,15 +53,26 @@ class P10Result {
         return std::move(std::get<P10Error>(value_));
     }
 
-    explicit P10Result(P10Error&& error) : value_(std::move(error)) {}
+    template<typename Func>
+    auto map(Func&& func) -> P10Result<decltype(func(std::declval<OkType>()))> {
+        if (is_ok()) {
+            return Ok(func(unwrap()));
+        } else {
+            return Err(error());
+        }
+    }
 
   private:
     explicit P10Result(const OkType& value) : value_(value) {}
 
     explicit P10Result(OkType&& value) : value_(std::move(value)) {}
 
+    explicit P10Result(const P10Error& error) : value_(error) {}
+
   private:
     std::variant<OkType, P10Error> value_;
+
+    friend class P10Result;
 
     template<typename T>
     friend P10Result<T> Ok(T&& value);

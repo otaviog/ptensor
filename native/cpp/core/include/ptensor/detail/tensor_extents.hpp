@@ -116,6 +116,20 @@ namespace detail {
             return result;
         }
 
+        P10Result<TensorExtents> permute_extents(const std::span<const size_t>& perm) const {
+            if (perm.size() != dims_) {
+                return Err(P10Error::OutOfRange << "Permutation size does not match number of dimensions");
+            }
+
+            TensorExtents result;
+            result.dims_ = dims_;
+            for (size_t i = 0; i < dims_; i++) {
+                size_t perm_index = perm[i];
+                result.extent_[i] = extent_[perm_index];
+            }
+            return Ok(std::move(result));
+        }
+
       protected:
         TensorExtents(std::span<const int64_t> shape) {
             std::copy(shape.begin(), shape.end(), extent_.begin());

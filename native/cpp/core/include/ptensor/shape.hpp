@@ -22,6 +22,8 @@ class Shape: public detail::TensorExtents {
         }
     }
 
+    Shape(const detail::TensorExtents& extents) : TensorExtents(extents) {}
+
     int64_t count() const {
         if (dims_ == 0) {
             return 0;
@@ -38,6 +40,14 @@ class Shape: public detail::TensorExtents {
     Shape subshape(size_t start_dim, size_t end_dim = SIZE_MAX) const {
         return Shape(detail::TensorExtents::subextents(start_dim, end_dim));
     }
+
+    P10Result<Shape> permute(const std::span<const size_t>& perm) const {
+        return detail::TensorExtents::permute_extents(perm).map([](auto&& extents) {
+            return Shape(std::forward<decltype(extents)>(extents));
+        });
+    }
+
+    P10Result<Shape> transpose() const;
 
     using TensorExtents::TensorExtents;
     friend class Stride;
@@ -69,6 +79,13 @@ inline Shape make_shape(int64_t s0, int64_t s1, int64_t s2, int64_t s3) {
 
 inline Shape make_shape(int64_t s0, int64_t s1, int64_t s2, int64_t s3, int64_t s4) {
     return make_shape({s0, s1, s2, s3, s4}).unwrap();
+}
+
+inline P10Result<Shape> Shape::transpose() const {
+    if (dims_ != 2) {
+        return Err(P10Error::InvalidArgument, "Transpose is only supported for 2D shapes");
+    }
+    return Ok(make_shape(extent_[1], extent_[0]));
 }
 
 /// Converts a shape to a string.

@@ -19,6 +19,7 @@ target_sources(ptensor_media
   src/io/media_capture.cpp
   src/io/ffmpeg/ffmpeg_file_media_capture.hpp src/io/ffmpeg/ffmpeg_file_media_capture.cpp
   src/io/ffmpeg/ffmpeg_sws.hpp src/io/ffmpeg/ffmpeg_sws.cpp
+  src/io/ffmpeg/ffmpeg_video_decoder.hpp src/io/ffmpeg/ffmpeg_video_decoder.cpp
 )
 
 target_include_directories(ptensor_media
@@ -35,7 +36,11 @@ target_link_libraries(ptensor_media PUBLIC ptensor PRIVATE ${FFMPEG_LIBRARIES})
 ptensor_target_options(ptensor_media "MEDIA")
 
 if(BUILD_TESTS)
-  # add_subdirectory(tests)
+  add_subdirectory(tests)
+endif()
+
+if(BUILD_SAMPLES)
+  add_subdirectory(samples/video_app)
 endif()
 
 # Create alias for use in build tree and install

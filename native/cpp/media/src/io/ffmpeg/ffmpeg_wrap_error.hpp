@@ -6,7 +6,7 @@ extern "C" {
 #include <ptensor/p10_error.hpp>
 
 namespace p10::media {
-inline P10Error wrap_error(int ffmpeg_error_code, const std::string& context_message = "") {
+inline P10Error wrap_ffmpeg_error(int ffmpeg_error_code, const std::string& context_message = "") {
     if (ffmpeg_error_code >= 0) {
         return P10Error::Ok;
     }

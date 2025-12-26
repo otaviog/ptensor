@@ -98,9 +98,9 @@ TEST_CASE("Image from tensor value clamping", "[imageop]") {
     // Set values: channel 0 = -0.5 (below 0), channel 1 = 0.5 (normal), channel 2 = 1.5 (above 1)
     for (size_t row = 0; row < tensor_span.height(); row++) {
         for (size_t col = 0; col < tensor_span.width(); col++) {
-            tensor_span.plane(0).row(row)[col] = -0.5f;
-            tensor_span.plane(1).row(row)[col] = 0.5f;
-            tensor_span.plane(2).row(row)[col] = 1.5f;
+            tensor_span[0][row][col] = -0.5f;
+            tensor_span[1][row][col] = 0.5f;
+            tensor_span[2][row][col] = 1.5f;
         }
     }
 

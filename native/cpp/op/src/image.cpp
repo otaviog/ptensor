@@ -1,7 +1,6 @@
 #include "image.hpp"
 
 #include <algorithm>
-#include <array>
 
 #include <ptensor/tensor.hpp>
 
@@ -31,18 +30,11 @@ P10Error image_to_tensor(const Tensor& image, Tensor& tensor) {
     );
     auto tensor_span = tensor.as_planar_span3d<float>().unwrap();
 
-    std::array<Span2D<float>, P10_MAX_SHAPE> planes_array;
-    auto planes = std::span(planes_array.data(), num_channels);
-    for (size_t c = 0; c < num_channels; c++) {
-        planes[c] = tensor_span.plane(c);
-    }
-
     for (size_t row = 0; row < image_span.height(); row++) {
         for (size_t col = 0; col < image_span.width(); col++) {
             const auto& input_channel = image_span.channel(row, col);
-            const size_t plannar_offset = row * image_span.width() + col;
             for (size_t c = 0; c < num_channels; c++) {
-                planes[c][plannar_offset] = float(input_channel[c]) / 255.0f;
+                tensor_span[c].row(row)[col] = float(input_channel[c]) / 255.0f;
             }
         }
     }
@@ -71,18 +63,12 @@ P10Error image_from_tensor(const Tensor& tensor, Tensor& image) {
 
     auto output_span = image.as_span3d<uint8_t>().unwrap();
 
-    std::array<Span2D<const float>, P10_MAX_SHAPE> planes_array;
-    auto planes = std::span(planes_array.data(), num_planes);
-    for (size_t p = 0; p < num_planes; p++) {
-        planes[p] = input_span.plane(p);
-    }
-
     for (size_t row = 0; row < input_span.height(); row++) {
         for (size_t col = 0; col < input_span.width(); col++) {
             auto output_channel = output_span.channel(row, col);
 
             for (size_t c = 0; c < num_planes; c++) {
-                float value = planes[c].row(row)[col] * 255.0f;
+                float value = input_span[c].row(row)[col] * 255.0f;
                 value = std::clamp(value, 0.0f, 255.0f);
                 output_channel[c] = static_cast<uint8_t>(value);
             }

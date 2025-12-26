@@ -26,4 +26,8 @@ class Rational {
     int64_t numerator_ = 0;
     int64_t denominator_ = 1;
 };
+
+inline bool operator==(const Rational& lhs, const Rational& rhs) {
+    return lhs.num() == rhs.num() && lhs.den() == rhs.den();
+}
 }  // namespace p10::media

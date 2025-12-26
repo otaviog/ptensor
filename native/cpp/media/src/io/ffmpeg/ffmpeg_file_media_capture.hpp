@@ -23,16 +23,19 @@ class FfmpegFileMediaCapture: public MediaCapture::Impl {
   public:
     enum CaptureStatus { Reading, Stopped, Error, EndOfFile };
 
+    ~FfmpegFileMediaCapture() override;
+
     static P10Result<std::shared_ptr<FfmpegFileMediaCapture>> open(const std::string& path);
+
+    void close() override;
 
     MediaParameters get_parameters() const override;
 
     P10Error next_frame() override;
 
-    P10Result<VideoFrame> get_video() override;
-    P10Result<AudioFrame> get_audio() override;
+    P10Error get_video(VideoFrame& frame) override;
 
-    void start_decoding_thread();
+    P10Error get_audio(AudioFrame& frame) override;
 
     bool is_open() const {
         return format_ctx_ != nullptr;
@@ -52,6 +55,7 @@ class FfmpegFileMediaCapture: public MediaCapture::Impl {
     void read_next_packet();
     void decode_video_packet(const AVPacket* pkt);
     void decode_audio_packet(const AVPacket* pkt);
+    void start_decoding_thread();
 
     CaptureStatus status_ = CaptureStatus::Stopped;
     AVFormatContext* format_ctx_ = nullptr;

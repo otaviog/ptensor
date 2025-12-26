@@ -5,9 +5,10 @@
 #include <mutex>
 
 #include "ffmpeg_audio_decoder.hpp"
+#include "ffmpeg_memory.hpp"
 #include "ffmpeg_video_decoder.hpp"
 #include "ffmpeg_wrap_error.hpp"
-#include "io/media_parameters.hpp"
+#include "media_parameters.hpp"
 
 extern "C" {
 #include <libavcodec/packet.h>
@@ -15,6 +16,10 @@ extern "C" {
 }
 
 namespace p10::media {
+
+FfmpegFileMediaCapture::~FfmpegFileMediaCapture() {
+    close();
+}
 
 P10Result<std::shared_ptr<FfmpegFileMediaCapture>>
 FfmpegFileMediaCapture::open(const std::string& path) {
@@ -58,11 +63,35 @@ FfmpegFileMediaCapture::open(const std::string& path) {
     auto capture = std::shared_ptr<FfmpegFileMediaCapture>(
         new FfmpegFileMediaCapture(format_ctx, audio_decoder, video_decoder)
     );
+
+    capture->start_decoding_thread();
     return Ok(std::move(capture));
 }
 
+void FfmpegFileMediaCapture::close() {
+    {
+        std::scoped_lock lock(mutex_);
+        status_ = CaptureStatus::Stopped;
+    }
+    video_queue_.cancel();
+
+    if (decode_thread_.joinable()) {
+        decode_thread_.join();
+    }
+    avformat_close_input(&format_ctx_);
+    format_ctx_ = nullptr;
+}
+
 MediaParameters FfmpegFileMediaCapture::get_parameters() const {
-    return MediaParameters();
+    if (!is_open()) {
+        return MediaParameters();
+    }
+
+    MediaParameters params;
+    params.video_parameters(video_decoder_->get_video_parameters());
+    // TODO: Get audio parameters
+    // params.audio_parameters(audio_decoder_->get_audio_parameters());
+    return params;
 }
 
 P10Error FfmpegFileMediaCapture::next_frame() {
@@ -70,18 +99,17 @@ P10Error FfmpegFileMediaCapture::next_frame() {
     return P10Error::Ok;
 }
 
-P10Result<VideoFrame> FfmpegFileMediaCapture::get_video() {
+P10Error FfmpegFileMediaCapture::get_video(VideoFrame& frame) {
     if (current_frame_.has_value()) {
-        return Ok(std::move(current_frame_.value()));
+        frame = std::move(current_frame_.value());
+        return P10Error::Ok;
     } else {
-        return Err(
-            P10Error::InvalidArgument << "No video frame available, did you call next_frame()?"
-        );
+        return P10Error::InvalidArgument << "No video frame available, did you call next_frame()?";
     }
 }
 
-P10Result<AudioFrame> FfmpegFileMediaCapture::get_audio() {
-    return Err(P10Error::NotImplemented);
+P10Error FfmpegFileMediaCapture::get_audio(AudioFrame& /*frame*/) {
+    return P10Error::NotImplemented;
 }
 
 void FfmpegFileMediaCapture::start_decoding_thread() {
@@ -101,18 +129,21 @@ void FfmpegFileMediaCapture::read_packets_loop() {
 }
 
 void FfmpegFileMediaCapture::read_next_packet() {
-    std::unique_lock lock(mutex_);
-
+    int read_ret_code = 0;
     UniqueAvPacketRef pkt(av_packet_alloc());
+    {
+        std::scoped_lock lock(mutex_);
 
-    int read_ret_code = av_read_frame(format_ctx_, pkt.get());
+        read_ret_code = av_read_frame(format_ctx_, pkt.get());
+    }
+    // Must release before decoding trying to emplace to avoid deadlocks
 
     if (read_ret_code < 0) {
         if (read_ret_code == AVERROR_EOF) {
             status_ = CaptureStatus::EndOfFile;
         } else {
             status_ = CaptureStatus::Error;
-            last_error_ = wrap_error(read_ret_code, "Failed to read frame");
+            last_error_ = wrap_ffmpeg_error(read_ret_code, "Failed to read frame");
         }
         return;
     }
@@ -125,8 +156,9 @@ void FfmpegFileMediaCapture::read_next_packet() {
 }
 
 void FfmpegFileMediaCapture::decode_video_packet(const AVPacket* pkt) {
-    VideoFrame current_video_frame_;
-    video_decoder_->decode_packet(pkt, current_video_frame_);
+    VideoFrame current_video_frame;
+    video_decoder_->decode_packet(pkt, current_video_frame);
+    video_queue_.emplace(std::move(current_video_frame));
 }
 
 void FfmpegFileMediaCapture::decode_audio_packet(const AVPacket*) {

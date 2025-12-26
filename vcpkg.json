@@ -48,6 +48,18 @@
           ]
         }
       ]
+    },
+    "samples": {
+      "description": "Build sample applications (for development)",
+      "dependencies": [
+        "imgui",
+        {
+          "name": "sdl2",
+          "features": ["vulkan", "wayland", "x11"]
+        },
+        "vulkan",
+        "cli11"
+      ]
     }
   }
 }

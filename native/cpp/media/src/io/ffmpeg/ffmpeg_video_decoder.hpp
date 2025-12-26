@@ -5,10 +5,9 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 
-#include "ffmpeg_memory.hpp"
 #include "ffmpeg_sws.hpp"
-#include "ffmpeg_wrap_error.hpp"
 #include "video_frame.hpp"
+#include "video_parameters.hpp"
 
 namespace p10::media {
 class FfmpegVideoDecoder {
@@ -26,30 +25,13 @@ class FfmpegVideoDecoder {
         stream_ = nullptr;
     }
 
-    P10Error decode_packet(const AVPacket* pkt, VideoFrame& out_frame) {
-        while (true) {
-            UniqueAvFrame frame(av_frame_alloc());
-            int ret = avcodec_send_packet(codec_ctx_, pkt);
-            if (ret < 0) {
-                return wrap_error(ret);
-            }
-
-            ret = avcodec_receive_frame(codec_ctx_, frame.get());
-            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-                break;
-            } else if (ret < 0) {
-                return wrap_error(ret);
-            }
-
-            return sws_converter.transform(frame.get(), out_frame);
-        }
-
-        return P10Error::Ok;
-    }
+    P10Error decode_packet(const AVPacket* pkt, VideoFrame& out_frame);
 
     int index() const {
         return index_;
     }
+
+    VideoParameters get_video_parameters() const;
 
   private:
     AVStream* stream_ = nullptr;

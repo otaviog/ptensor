@@ -18,5 +18,10 @@ if (WITH_OP)
     target_link_libraries(unit_tests_all PRIVATE ptensor_op)
 endif()
 
+if (WITH_MEDIA)
+    target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_media>)
+    target_link_libraries(unit_tests_all PRIVATE ptensor_media)
+endif()
+
 catch_discover_tests(unit_tests_all
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

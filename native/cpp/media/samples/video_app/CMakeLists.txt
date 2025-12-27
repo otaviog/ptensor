@@ -1,6 +1,4 @@
-add_executable(sample_video_app main.cpp
-    imgui_impl_sdl2.h imgui_impl_sdl2.cpp
-    imgui_impl_vulkan.h imgui_impl_vulkan.cpp)
+add_executable(sample_video_app main.cpp)
 ptensor_target_options(sample_video_app Media)
 
 find_package(Vulkan REQUIRED)

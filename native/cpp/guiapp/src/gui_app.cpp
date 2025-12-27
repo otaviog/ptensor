@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 
 #include "gui_app.impl.hpp"
+#include "vulkan_context.hpp"
 
 namespace p10::guiapp {
 GuiApp::GuiApp() : impl_(new GuiApp::Impl(*this)) {}
@@ -49,6 +50,10 @@ void GuiApp::on_render() {
         ImGui::Text("%04d: Some text", n);
     ImGui::EndChild();
     ImGui::End();
+}
+
+ImageTexture GuiApp::create_texture() {
+    return impl_->create_texture();
 }
 
 void GuiApp::quit() {

@@ -3,6 +3,7 @@
 #include <SDL.h>
 #include <SDL_vulkan.h>
 
+#include "image_texture.impl.hpp"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_vulkan.h"
 #include "vulkan_context.hpp"
@@ -160,6 +161,15 @@ void GuiApp::Impl::main_loop() {
 
         vkQueuePresentKHR(vk_->queue, &present_info);
     }
+}
+
+ImageTexture GuiApp::Impl::create_texture() {
+    ImageTextureVkContext context;
+    context.command_pool = vk_->command_pool;
+    context.device = vk_->device;
+    context.physical_device = vk_->physical_device;
+    context.queue = vk_->queue;
+    return ImageTexture(new ImageTexture::Impl(context));
 }
 
 void GuiApp::Impl::quit() {

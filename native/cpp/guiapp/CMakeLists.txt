@@ -9,6 +9,8 @@ ptensor_target_options(ptensor_guiapp "private/guiapp")
 
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/gui_app.hpp
+  ${_INCLUDE_DIR}/gui_app_parameters.hpp
+  ${_INCLUDE_DIR}/image_texture.hpp
 )
 
 target_sources(ptensor_guiapp
@@ -19,6 +21,8 @@ target_sources(ptensor_guiapp
   PRIVATE
   src/gui_app.cpp
   src/gui_app.impl.hpp src/gui_app.impl.cpp
+  src/image_texture.cpp
+  src/image_texture.impl.hpp src/image_texture.impl.cpp
   src/imgui_impl_sdl2.h src/imgui_impl_sdl2.cpp
   src/imgui_impl_vulkan.h src/imgui_impl_vulkan.cpp
   src/vulkan_error.hpp src/vulkan_error.cpp

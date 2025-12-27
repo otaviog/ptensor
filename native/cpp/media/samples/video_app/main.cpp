@@ -10,10 +10,9 @@
 #include <SDL.h>
 #include <SDL_vulkan.h>
 #include <imgui.h>
-#include <vulkan/vulkan.h>
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_vulkan.h"
 #include <ptensor/media/io/media_capture.hpp>
+#include <vulkan/vulkan.h>
+
 
 // Vulkan data
 struct VulkanContext {
@@ -313,7 +312,7 @@ void cleanup_vulkan(VulkanContext& vk) {
 }
 
 int main(int argc, char** argv) {
-    CLI::App app{"PTensor Video Viewer - ImGui + Vulkan + SDL2"};
+    CLI::App app("PTensor Video Viewer - ImGui + Vulkan + SDL2");
 
     std::string video_path;
     app.add_option("video", video_path, "Path to video file")
@@ -324,8 +323,7 @@ int main(int argc, char** argv) {
     int window_height = 720;
     app.add_option("-W,--width", window_width, "Window width")
         ->default_val(1280);
-    app.add_option("-H,--height", window_height, "Window height")
-        ->default_val(720);
+    app.add_option("-H,--height", window_height, "Window height")->default_val(720);
 
     bool fullscreen = false;
     app.add_flag("-f,--fullscreen", fullscreen, "Start in fullscreen mode");
@@ -354,7 +352,7 @@ int main(int argc, char** argv) {
     }
 
     // Check if Vulkan is available
-    if (!SDL_Vulkan_LoadLibrary(nullptr)) {
+    if (SDL_Vulkan_LoadLibrary(nullptr) != 0) {
         std::cerr << "Vulkan support not available: " << SDL_GetError() << std::endl;
         SDL_Quit();
         return 1;

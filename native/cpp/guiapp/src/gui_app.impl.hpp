@@ -2,6 +2,7 @@
 
 #include "gui_app.hpp"
 #include "gui_app_parameters.hpp"
+#include "image_texture.hpp"
 
 struct SDL_Window;
 
@@ -22,7 +23,13 @@ class GuiApp::Impl {
 
     P10Error start(const GuiAppParameters& params);
 
+    ImageTexture create_texture();
+
     void quit();
+
+    VulkanContext& get_vulkan_context() {
+        return *vk_;
+    }
 
   private:
     void main_loop();

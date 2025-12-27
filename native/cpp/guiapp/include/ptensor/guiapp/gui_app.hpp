@@ -5,8 +5,11 @@
 #include <imgui.h>
 #include <ptensor/p10_error.hpp>
 
+#include "image_texture.hpp"
+
 namespace p10::guiapp {
 class GuiAppParameters;
+struct VulkanContext;
 
 class GuiApp {
   private:
@@ -20,6 +23,8 @@ class GuiApp {
     P10Error start(const GuiAppParameters& params);
 
     void quit();
+
+    ImageTexture create_texture();
 
   protected:
     virtual void on_initialize() {}

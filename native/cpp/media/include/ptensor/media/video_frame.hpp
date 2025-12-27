@@ -11,11 +11,10 @@
 
 namespace p10::media {
 enum class PixelFormat {
-    RGB24, // 3 bytes per pixel
+    RGB24,  // 3 bytes per pixel
 };
 
 class VideoFrame {
-
   public:
     VideoFrame() = default;
 
@@ -26,7 +25,6 @@ class VideoFrame {
             return P10Error(P10Error::InvalidArgument, "Unsupported pixel format");
         }
         return image_.create(make_shape(height, width, 3), Dtype::Uint8);
-
     }
 
     PixelFormat pixel_format() const {
@@ -84,6 +82,9 @@ class VideoFrame {
         return image_.dtype();
     }
 
+    const Tensor& image() const {
+        return image_;
+    }
   private:
     Tensor image_;
     Time time_;

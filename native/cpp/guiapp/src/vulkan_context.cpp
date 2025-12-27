@@ -330,28 +330,54 @@ namespace {
 }  // namespace
 
 void cleanup_vulkan(VulkanContext& vk) {
-    vkDeviceWaitIdle(vk.device);
+    if (vk.device) {
+        vkDeviceWaitIdle(vk.device);
 
-    vkDestroySemaphore(vk.device, vk.image_available_semaphore, nullptr);
-    vkDestroySemaphore(vk.device, vk.render_finished_semaphore, nullptr);
-    vkDestroyFence(vk.device, vk.in_flight_fence, nullptr);
+        if (vk.image_available_semaphore) {
+            vkDestroySemaphore(vk.device, vk.image_available_semaphore, nullptr);
+        }
 
-    vkDestroyCommandPool(vk.device, vk.command_pool, nullptr);
+        if (vk.render_finished_semaphore) {
+            vkDestroySemaphore(vk.device, vk.render_finished_semaphore, nullptr);
+        }
+        if (vk.in_flight_fence) {
+            vkDestroyFence(vk.device, vk.in_flight_fence, nullptr);
+        }
+        if (vk.command_pool) {
+            vkDestroyCommandPool(vk.device, vk.command_pool, nullptr);
+        }
 
-    for (auto framebuffer : vk.framebuffers) {
-        vkDestroyFramebuffer(vk.device, framebuffer, nullptr);
+        for (auto framebuffer : vk.framebuffers) {
+            if (framebuffer) {
+                vkDestroyFramebuffer(vk.device, framebuffer, nullptr);
+            }
+        }
+
+        for (auto image_view : vk.swapchain_image_views) {
+            if (image_view) {
+                vkDestroyImageView(vk.device, image_view, nullptr);
+            }
+        }
+
+        if (vk.render_pass) {
+            vkDestroyRenderPass(vk.device, vk.render_pass, nullptr);
+        }
+
+        if (vk.swapchain) {
+            vkDestroySwapchainKHR(vk.device, vk.swapchain, nullptr);
+        }
+        if (vk.descriptor_pool) {
+            vkDestroyDescriptorPool(vk.device, vk.descriptor_pool, nullptr);
+        }
+        if (vk.surface) {
+            vkDestroySurfaceKHR(vk.instance, vk.surface, nullptr);
+        }
+        vkDestroyDevice(vk.device, nullptr);
     }
 
-    for (auto image_view : vk.swapchain_image_views) {
-        vkDestroyImageView(vk.device, image_view, nullptr);
+    if (vk.instance) {
+        vkDestroyInstance(vk.instance, nullptr);
     }
-
-    vkDestroyRenderPass(vk.device, vk.render_pass, nullptr);
-    vkDestroySwapchainKHR(vk.device, vk.swapchain, nullptr);
-    vkDestroyDescriptorPool(vk.device, vk.descriptor_pool, nullptr);
-    vkDestroySurfaceKHR(vk.instance, vk.surface, nullptr);
-    vkDestroyDevice(vk.device, nullptr);
-    vkDestroyInstance(vk.instance, nullptr);
 }
 
 }  // namespace p10::guiapp

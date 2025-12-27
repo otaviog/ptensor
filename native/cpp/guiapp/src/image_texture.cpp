@@ -25,11 +25,11 @@ P10Error ImageTexture::upload(const Tensor& tensor) {
     return impl_->upload(tensor);
 }
 
-ImTextureID ImageTexture::get_texture_id() const {
+ImTextureID ImageTexture::texture_id() const {
     if (!impl_) {
         return (ImTextureID)0;
     }
-    return impl_->get_texture_id();
+    return impl_->texture_id();
 }
 
 int ImageTexture::width() const {

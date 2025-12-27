@@ -52,7 +52,7 @@ class ImageTexture {
      * Get the ImGui texture ID for use with ImGui::Image().
      * Returns nullptr if no texture has been uploaded.
      */
-    ImTextureID get_texture_id() const;
+    ImTextureID texture_id() const;
 
     /**
      * Get the texture width in pixels.

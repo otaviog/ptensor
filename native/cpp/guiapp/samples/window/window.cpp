@@ -18,7 +18,7 @@ class WindowApp: public p10::guiapp::GuiApp {
         ImGui::Begin("Image Viewer");
         if (texture_.is_valid()) {
             ImGui::Image(
-                texture_.get_texture_id(),
+                texture_.texture_id(),
                 ImVec2(static_cast<float>(texture_.width()), static_cast<float>(texture_.height()))
             );
         }

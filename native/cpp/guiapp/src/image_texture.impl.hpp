@@ -27,7 +27,7 @@ class ImageTexture::Impl {
 
     P10Error upload(const Tensor& tensor);
 
-    ImTextureID get_texture_id() const {
+    ImTextureID texture_id() const {
         return (ImTextureID)descriptor_set_;
     }
 

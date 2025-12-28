@@ -82,7 +82,17 @@ P10Error ImageTexture::Impl::upload(const Tensor& tensor) {
         return P10Error::InvalidArgument << "Unsupported dtype: " << to_string(tensor.dtype());
     }
 
-    return create_texture(static_cast<int>(width), static_cast<int>(height), rgba_data.data());
+    const int new_width = static_cast<int>(width);
+    const int new_height = static_cast<int>(height);
+
+    // Only recreate texture if dimensions changed or texture doesn't exist
+    if (!is_valid() || width_ != new_width || height_ != new_height) {
+        return create_texture(new_width, new_height, rgba_data.data());
+
+    } else {
+        // Reuse existing texture, just upload new data
+        return upload_data(rgba_data.data(), width_ * height_ * 4);
+    }
 }
 
 P10Error ImageTexture::Impl::create_texture(int width, int height, const void* data) {
@@ -349,10 +359,8 @@ P10Error ImageTexture::Impl::create_descriptor_set() {
     return P10Error::Ok;
 }
 
-uint32_t ImageTexture::Impl::find_memory_type(
-    uint32_t type_filter,
-    VkMemoryPropertyFlags properties
-) {
+uint32_t
+ImageTexture::Impl::find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties) {
     VkPhysicalDeviceMemoryProperties mem_properties;
     vkGetPhysicalDeviceMemoryProperties(context_.physical_device, &mem_properties);
 

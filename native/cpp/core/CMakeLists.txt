@@ -11,6 +11,10 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/dtype.hpp
   ${_INCLUDE_DIR}/shape.hpp
   ${_INCLUDE_DIR}/stride.hpp
+  ${_INCLUDE_DIR}/accessor1d.hpp
+  ${_INCLUDE_DIR}/accessor2d.hpp
+  ${_INCLUDE_DIR}/accessor3d.hpp
+  ${_INCLUDE_DIR}/iterator.hpp
   ${_INCLUDE_DIR}/span2d.hpp
   ${_INCLUDE_DIR}/span3d.hpp
   ${_INCLUDE_DIR}/tensor.hpp

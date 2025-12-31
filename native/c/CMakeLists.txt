@@ -37,13 +37,12 @@ target_include_directories(ptensor_capi
     ${_INCLUDE_DIR}
 )
 target_link_libraries(ptensor_capi ptensor)
-set_target_properties(ptensor_capi PROPERTIES
-        FOLDER "Core")
 
+# Install the target
 install(TARGETS ptensor_capi
     EXPORT ptensorTargets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
+    ARCHIVE DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
+    RUNTIME DESTINATION ${PTENSOR_INSTALL_BIN_DIR}
     FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )

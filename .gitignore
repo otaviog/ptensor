@@ -13,3 +13,5 @@ wheels/
 build/
 compile_commands.json
 lcov.info
+imgui.ini
+.claude/settings.local.json

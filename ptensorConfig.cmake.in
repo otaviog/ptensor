@@ -5,8 +5,33 @@ include(CMakeFindDependencyMacro)
 # Add any required dependencies here
 find_dependency(ZLIB REQUIRED)
 
-# Include the exported targets
+# Include the exported targets first
 include("${CMAKE_CURRENT_LIST_DIR}/ptensorTargets.cmake")
+
+# Find and link FFmpeg dependencies if ptensor_media is available
+if(TARGET p10::ptensor_media)
+    find_package(FFMPEG QUIET)
+    find_package(WebP CONFIG QUIET)
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(x265 QUIET IMPORTED_TARGET x265)
+    endif()
+
+    # Reattach the FFmpeg dependencies to the imported target
+    if(FFMPEG_FOUND)
+        target_include_directories(p10::ptensor_media INTERFACE ${FFMPEG_INCLUDE_DIRS})
+        target_link_libraries(p10::ptensor_media INTERFACE ${FFMPEG_LIBRARIES})
+    endif()
+
+    if(TARGET WebP::webp)
+        target_link_libraries(p10::ptensor_media INTERFACE
+            WebP::webp WebP::webpdecoder WebP::webpdemux WebP::libwebpmux)
+    endif()
+
+    if(TARGET PkgConfig::x265)
+        target_link_libraries(p10::ptensor_media INTERFACE PkgConfig::x265)
+    endif()
+endif()
 
 # Create aliases if not already defined
 if(NOT TARGET p10::core)
@@ -23,6 +48,10 @@ endif()
 
 if(TARGET p10::ptensor_op AND NOT TARGET p10::op)
     add_library(p10::op ALIAS p10::ptensor_op)
+endif()
+
+if(TARGET p10::ptensor_media AND NOT TARGET p10::media)
+    add_library(p10::media ALIAS p10::ptensor_media)
 endif()
 
 check_required_components(ptensor)

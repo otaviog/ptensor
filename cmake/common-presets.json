@@ -21,7 +21,6 @@
                 "WITH_OP": "ON",
                 "WITH_MEDIA": "ON",
                 "BUILD_TESTS": "ON",
-                "BUILD_SAMPLES": "ON",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/installed"
             }
         },

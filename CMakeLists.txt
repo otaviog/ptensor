@@ -35,6 +35,9 @@ if(BUILD_TESTS)
 endif()
 set(BUILD_SAMPLES OFF CACHE BOOL "Build sample applications")
 
+set(PTENSOR_INSTALL_LIB_DIR $<IF:$<CONFIG:Debug>,debug/lib,lib>)
+set(PTENSOR_INSTALL_BIN_DIR $<IF:$<CONFIG:Debug>,debug/bin,bin>)
+
 add_subdirectory(native)
 
 if (EMSCRIPTEN)
@@ -42,13 +45,8 @@ if (EMSCRIPTEN)
 endif()
 
 # Create and install the config files
-install(EXPORT ptensorTargets
-    FILE ptensorTargets.cmake
-    NAMESPACE p10::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ptensor
-)
-
-# Create and install the config files
+# The export will generate ptensorTargets.cmake and configuration-specific files
+# like ptensorTargets-debug.cmake and ptensorTargets-release.cmake
 install(EXPORT ptensorTargets
     FILE ptensorTargets.cmake
     NAMESPACE p10::

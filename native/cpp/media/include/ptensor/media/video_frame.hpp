@@ -56,7 +56,7 @@ class VideoFrame {
         return image_.shape(2).unwrap();
     }
 
-    Time get_time() const {
+    Time time() const {
         return time_;
     }
 

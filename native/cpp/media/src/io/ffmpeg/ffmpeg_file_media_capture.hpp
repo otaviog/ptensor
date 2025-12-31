@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <thread>
 
@@ -21,7 +22,7 @@ class FfmpegAudioDecoder;
 
 class FfmpegFileMediaCapture: public MediaCapture::Impl {
   public:
-    enum CaptureStatus { Reading, Stopped, Error, EndOfFile };
+    enum CaptureStatus : int8_t { Reading, Stopped, Error, EndOfFile };
 
     ~FfmpegFileMediaCapture() override;
 
@@ -31,7 +32,7 @@ class FfmpegFileMediaCapture: public MediaCapture::Impl {
 
     MediaParameters get_parameters() const override;
 
-    P10Error next_frame() override;
+    P10Result<bool> next_frame() override;
 
     P10Error get_video(VideoFrame& frame) override;
 
@@ -57,11 +58,12 @@ class FfmpegFileMediaCapture: public MediaCapture::Impl {
     void decode_audio_packet(const AVPacket* pkt);
     void start_decoding_thread();
 
-    CaptureStatus status_ = CaptureStatus::Stopped;
+    std::atomic<CaptureStatus> status_ = CaptureStatus::Stopped;
+    
     AVFormatContext* format_ctx_ = nullptr;
 
     std::thread decode_thread_;
-    std::mutex mutex_;
+
 
     std::shared_ptr<FfmpegAudioDecoder> audio_decoder_;
     std::shared_ptr<FfmpegVideoDecoder> video_decoder_;

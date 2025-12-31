@@ -13,7 +13,7 @@ class MediaCapture::Impl {
 
     virtual MediaParameters get_parameters() const = 0;
 
-    virtual P10Error next_frame() = 0;
+    virtual P10Result<bool> next_frame() = 0;
 
     virtual P10Error get_video(VideoFrame& frame) = 0;
 

@@ -31,11 +31,10 @@ FfmpegFileMediaCapture::open(const std::string& path) {
     }
 
     avformat_find_stream_info(format_ctx, nullptr);
-    int video_stream_idx = av_find_best_stream(format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
-    int audio_stream_idx = av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
 
+    const int video_stream_idx =
+        av_find_best_stream(format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
     std::shared_ptr<FfmpegVideoDecoder> video_decoder;
-    std::shared_ptr<FfmpegAudioDecoder> audio_decoder;
     if (video_stream_idx >= 0) {
         AVStream* video_stream = format_ctx->streams[video_stream_idx];
         const AVCodec* video_codec = avcodec_find_decoder(video_stream->codecpar->codec_id);
@@ -49,6 +48,9 @@ FfmpegFileMediaCapture::open(const std::string& path) {
             std::make_shared<FfmpegVideoDecoder>(video_stream, video_codec_ctx, video_stream_idx);
     }
 
+    const int audio_stream_idx =
+        av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+    std::shared_ptr<FfmpegAudioDecoder> audio_decoder;
     if (audio_stream_idx >= 0) {
         AVStream* audio_stream = format_ctx->streams[audio_stream_idx];
         const AVCodec* audio_codec = avcodec_find_decoder(audio_stream->codecpar->codec_id);
@@ -60,6 +62,7 @@ FfmpegFileMediaCapture::open(const std::string& path) {
         audio_decoder =
             std::make_shared<FfmpegAudioDecoder>(audio_stream, audio_codec_ctx, audio_stream_idx);
     }
+
     auto capture = std::shared_ptr<FfmpegFileMediaCapture>(
         new FfmpegFileMediaCapture(format_ctx, audio_decoder, video_decoder)
     );
@@ -69,10 +72,8 @@ FfmpegFileMediaCapture::open(const std::string& path) {
 }
 
 void FfmpegFileMediaCapture::close() {
-    {
-        std::scoped_lock lock(mutex_);
-        status_ = CaptureStatus::Stopped;
-    }
+    status_ = CaptureStatus::Stopped;
+
     video_queue_.cancel();
 
     if (decode_thread_.joinable()) {
@@ -94,9 +95,27 @@ MediaParameters FfmpegFileMediaCapture::get_parameters() const {
     return params;
 }
 
-P10Error FfmpegFileMediaCapture::next_frame() {
-    current_frame_ = video_queue_.wait_and_pop();
-    return P10Error::Ok;
+P10Result<bool> FfmpegFileMediaCapture::next_frame() {
+    CaptureStatus capture_status = status_;
+    if (capture_status == CaptureStatus::Reading) {
+        current_frame_ = video_queue_.wait_and_pop();
+        if (current_frame_.has_value()) {
+            return Ok(true);
+        }
+    } else if (capture_status == CaptureStatus::EndOfFile) {
+        current_frame_ = video_queue_.try_pop();
+        if (current_frame_.has_value()) {
+            return Ok(true);
+        } else {
+            return Ok(false);
+        }
+    } else if (capture_status == CaptureStatus::Stopped) {
+        return Ok(false);
+    } else if (capture_status == CaptureStatus::Error) {
+        return Err(last_error_);
+    } else {
+        return Err(P10Error::NotImplemented << "Invalid capture status");
+    }
 }
 
 P10Error FfmpegFileMediaCapture::get_video(VideoFrame& frame) {
@@ -129,14 +148,9 @@ void FfmpegFileMediaCapture::read_packets_loop() {
 }
 
 void FfmpegFileMediaCapture::read_next_packet() {
-    int read_ret_code = 0;
     UniqueAvPacketRef pkt(av_packet_alloc());
-    {
-        std::scoped_lock lock(mutex_);
 
-        read_ret_code = av_read_frame(format_ctx_, pkt.get());
-    }
-    // Must release before decoding trying to emplace to avoid deadlocks
+    const int read_ret_code = av_read_frame(format_ctx_, pkt.get());
 
     if (read_ret_code < 0) {
         if (read_ret_code == AVERROR_EOF) {
@@ -148,9 +162,9 @@ void FfmpegFileMediaCapture::read_next_packet() {
         return;
     }
 
-    if (pkt->stream_index == video_decoder_->index()) {
+    if (video_decoder_ != nullptr && pkt->stream_index == video_decoder_->index()) {
         decode_video_packet(pkt.get());
-    } else if (pkt->stream_index == audio_decoder_->index()) {
+    } else if (audio_decoder_ != nullptr && pkt->stream_index == audio_decoder_->index()) {
         decode_audio_packet(pkt.get());
     }
 }

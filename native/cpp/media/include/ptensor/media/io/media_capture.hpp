@@ -5,20 +5,21 @@
 #include <ptensor/p10_result.hpp>
 
 #include "../audio_frame.hpp"
-#include "../video_frame.hpp"
 #include "../media_parameters.hpp"
+#include "../video_frame.hpp"
 
 namespace p10::media {
 class MediaCapture {
   public:
     class Impl;
+
     static P10Result<MediaCapture> open_file(const std::string& path);
 
     void close();
 
     MediaParameters get_parameters() const;
 
-    P10Error next_frame();
+    P10Result<bool> next_frame();
 
     P10Error get_video(VideoFrame& frame);
 

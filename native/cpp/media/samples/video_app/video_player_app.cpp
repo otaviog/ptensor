@@ -2,25 +2,47 @@
 
 #include <iostream>
 
-VideoPlayerApp::VideoPlayerApp(p10::media::MediaCapture capture) : capture_(std::move(capture)) {}
+VideoPlayerApp::VideoPlayerApp(p10::media::MediaCapture capture) :
+    capture_(std::move(capture)),
+    video_frame_rate_(capture_.get_parameters().video_parameters().frame_rate().inverse()) {}
 
 void VideoPlayerApp::on_initialize() {
     video_texture_ = create_texture();
+    timer_.start();
 }
 
 void VideoPlayerApp::on_render() {
-    p10::media::VideoFrame frame;
-    if (auto status = capture_.next_frame(); status.is_error()) {
-        std::cerr << status.to_string() << std::endl;
-        return;
+    bool should_grab_next = false;
+
+    if (play_state_ == PlayState::Step) {
+        should_grab_next = true;
+    } else if (play_state_ == PlayState::Playing) {
+        const auto elapsed_time = timer_.elapsed(video_frame_rate_);
+        should_grab_next = elapsed_time.stamp() > current_frame_ts_.stamp();
     }
 
-    auto status = capture_.get_video(frame);
-    if (status.is_ok()) {
-        if (frame.width() > 0)
-        video_texture_.upload(frame.image()).expect("Unable to upload image");
-    } else {
-        std::cerr << status.to_string() << std::endl;
+    if (should_grab_next) {
+        auto next_frame_res = capture_.next_frame();
+        if (next_frame_res.is_ok()) {
+            const bool has_next_frame = next_frame_res.unwrap();
+            if (has_next_frame) {
+                auto status = capture_.get_video(current_frame_);
+                if (status.is_ok()) {
+                    video_texture_.upload(current_frame_.image()).expect("Unable to upload image");
+                    current_frame_ts_ = current_frame_.time();
+                } else {
+                    std::cerr << status.to_string() << std::endl;
+                }
+                if (play_state_ == PlayState::Step) {
+                    play_state_ = PlayState::Paused;
+                }
+            } else {
+                play_state_ = PlayState::Stopped;
+            }
+        } else if (next_frame_res.is_error()) {
+            play_state_ = PlayState::Stopped;
+            return;
+        }
     }
 
     ImGui::Begin("Video Player");

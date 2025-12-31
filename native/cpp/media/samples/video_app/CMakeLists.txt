@@ -1,5 +1,6 @@
 add_executable(sample_video_app 
     main.cpp
+    timer.hpp
     video_player_app.hpp video_player_app.cpp)
 ptensor_target_options(sample_video_app Media)
 
@@ -18,3 +19,12 @@ if (MSVC)
         VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
 endif()
+
+add_executable(unit_test_sample_video_app
+    timer.hpp
+    test_timer.cpp)
+
+target_link_libraries(unit_test_sample_video_app PRIVATE
+    ptensor_media
+    Catch2::Catch2WithMain)
+ptensor_target_options(unit_test_sample_video_app Media)

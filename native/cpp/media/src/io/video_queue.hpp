@@ -38,6 +38,20 @@ class VideoQueue {
         return frame;
     }
 
+    std::optional<VideoFrame> try_pop() {
+        std::unique_lock lock(mutex_);
+        if (cancel_) {
+            return std::nullopt;
+        }
+        if (queue_.empty()) {
+            return std::nullopt;
+        }
+        VideoFrame frame = std::move(queue_.front());
+        queue_.pop();
+        cv_.notify_all();
+        return frame;
+    }
+
     void cancel() {
         cancel_ = true;
         cv_.notify_all();

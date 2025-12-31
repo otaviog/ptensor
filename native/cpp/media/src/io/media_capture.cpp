@@ -18,7 +18,7 @@ P10Result<MediaCapture> MediaCapture::open_file(const std::string& path) {
     return Ok(MediaCapture(result.unwrap()));
 }
 
-P10Error MediaCapture::next_frame() {
+P10Result<bool> MediaCapture::next_frame() {
     return impl_->next_frame();
 }
 

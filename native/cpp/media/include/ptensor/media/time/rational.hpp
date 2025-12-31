@@ -4,9 +4,9 @@
 namespace p10::media {
 class Rational {
   public:
-    Rational() = default;
+    constexpr Rational() = default;
 
-    Rational(int64_t numerator, int64_t denominator) :
+    constexpr Rational(int64_t numerator, int64_t denominator) :
         numerator_(numerator),
         denominator_(denominator) {}
 
@@ -20,6 +20,14 @@ class Rational {
 
     int64_t den() const {
         return denominator_;
+    }
+
+    Rational inverse() const {
+        return Rational {
+            denominator_,
+            numerator_
+
+        };
     }
 
   private:

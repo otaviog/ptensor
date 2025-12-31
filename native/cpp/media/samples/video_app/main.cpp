@@ -13,7 +13,7 @@
 #include "video_player_app.hpp"
 
 int main(int argc, char** argv) {
-    CLI::App app("PTensor Video Viewer - ImGui + Vulkan + SDL2");
+    CLI::App app("PTensor Video Viewer");
 
     std::string video_path;
     app.add_option("video", video_path, "Path to video file")->required()->check(CLI::ExistingFile);

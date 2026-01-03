@@ -102,6 +102,7 @@ P10Result<bool> FfmpegFileMediaCapture::next_frame() {
         if (current_frame_.has_value()) {
             return Ok(true);
         }
+        return Ok(false);
     } else if (capture_status == CaptureStatus::EndOfFile) {
         current_frame_ = video_queue_.try_pop();
         if (current_frame_.has_value()) {
@@ -170,9 +171,26 @@ void FfmpegFileMediaCapture::read_next_packet() {
 }
 
 void FfmpegFileMediaCapture::decode_video_packet(const AVPacket* pkt) {
-    VideoFrame current_video_frame;
-    video_decoder_->decode_packet(pkt, current_video_frame);
-    video_queue_.emplace(std::move(current_video_frame));
+    auto decode_status = video_decoder_->decode_packet(pkt, video_queue_);
+    if (decode_status.is_error()) {
+        status_ = CaptureStatus::Error;
+        last_error_ = decode_status.error();
+        return;
+    }
+
+    switch (decode_status.unwrap()) {
+        case FfmpegVideoDecoder::DecodeStatus::Eof:
+            status_ = CaptureStatus::EndOfFile;
+            break;
+        case FfmpegVideoDecoder::DecodeStatus::Cancelled:
+            status_ = CaptureStatus::Stopped;
+            break;
+        case FfmpegVideoDecoder::DecodeStatus::FrameDecoded:
+        case FfmpegVideoDecoder::DecodeStatus::Again:
+        default:
+            // Do nothing, continue reading packets
+            break;
+    }
 }
 
 void FfmpegFileMediaCapture::decode_audio_packet(const AVPacket*) {

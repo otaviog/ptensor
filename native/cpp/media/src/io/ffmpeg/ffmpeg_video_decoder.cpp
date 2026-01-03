@@ -1,29 +1,37 @@
 #include "ffmpeg_video_decoder.hpp"
 
+#include "../video_queue.hpp"
 #include "ffmpeg_memory.hpp"
 #include "ffmpeg_wrap_error.hpp"
 
 namespace p10::media {
 
-P10Error FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoFrame& out_frame) {
+P10Result<FfmpegVideoDecoder::DecodeStatus>
+FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
+    VideoFrame new_frame;
     while (true) {
         UniqueAvFrame frame(av_frame_alloc());
         int ret = avcodec_send_packet(codec_ctx_, pkt);
         if (ret < 0) {
-            return wrap_ffmpeg_error(ret);
+            return Err(wrap_ffmpeg_error(ret));
         }
 
         ret = avcodec_receive_frame(codec_ctx_, frame.get());
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-            break;
+        if (ret == AVERROR(EAGAIN)) {
+            return Ok(DecodeStatus::Again);
+        } else if (ret == AVERROR_EOF) {
+            return Ok(DecodeStatus::Eof);
         } else if (ret < 0) {
-            return wrap_ffmpeg_error(ret);
+            return Err(wrap_ffmpeg_error(ret));
         }
 
-        return sws_converter.transform(frame.get(), out_frame);
+        sws_converter.transform(frame.get(), new_frame);
+        if (queue.emplace(std::move(new_frame)) == VideoQueue::Cancelled) {
+            return Ok(DecodeStatus::Cancelled);
+        }
     }
 
-    return P10Error::Ok;
+    return Ok(DecodeStatus::FrameDecoded);
 }
 
 VideoParameters FfmpegVideoDecoder::get_video_parameters() const {

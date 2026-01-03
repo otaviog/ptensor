@@ -4,7 +4,12 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(x265 REQUIRED IMPORTED_TARGET x265)
 
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/media)
-add_library(ptensor_media STATIC)
+add_library(ptensor_media SHARED)
+
+# On Windows, automatically export all symbols to generate the import library (.lib)
+set_target_properties(ptensor_media PROPERTIES
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
+)
 
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/video_frame.hpp
@@ -37,19 +42,20 @@ target_include_directories(ptensor_media
     ${_INCLUDE_DIR}
     $<BUILD_INTERFACE:${FFMPEG_INCLUDE_DIRS}>
 )
-target_link_directories(ptensor_media PRIVATE ${FFMPEG_LIBRARY_DIRS})
-
-# Create interface library for FFmpeg dependencies that won't be exported
-add_library(ptensor_media_deps INTERFACE)
-target_link_libraries(ptensor_media_deps INTERFACE
-  ${FFMPEG_LIBRARIES}
-  WebP::webp WebP::webpdecoder WebP::webpdemux WebP::libwebpmux
-  PkgConfig::x265
-)
+# On Windows with SHARED libraries (DLL), consumers need access to FFmpeg libraries
+# because symbols aren't automatically re-exported from DLLs
+if(WIN32)
+  set(_FFMPEG_LINK_SCOPE PUBLIC)
+else()
+  set(_FFMPEG_LINK_SCOPE PRIVATE)
+endif()
 
 target_link_libraries(ptensor_media
   PUBLIC ptensor
-  PRIVATE $<BUILD_INTERFACE:ptensor_media_deps>
+  ${_FFMPEG_LINK_SCOPE}
+    ${FFMPEG_LIBRARIES}
+    WebP::webp WebP::webpdecoder WebP::webpdemux WebP::libwebpmux
+    PkgConfig::x265
 )
 
 ptensor_target_options(ptensor_media "Media")

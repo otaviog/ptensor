@@ -10,8 +10,11 @@ extern "C" {
 #include "video_parameters.hpp"
 
 namespace p10::media {
+class VideoQueue;
+
 class FfmpegVideoDecoder {
   public:
+    enum class DecodeStatus { FrameDecoded = 0, Eof, Again, Cancelled };
     FfmpegVideoDecoder() = default;
 
     FfmpegVideoDecoder(AVStream* stream, AVCodecContext* codec_ctx, int stream_index) :
@@ -25,7 +28,7 @@ class FfmpegVideoDecoder {
         stream_ = nullptr;
     }
 
-    P10Error decode_packet(const AVPacket* pkt, VideoFrame& out_frame);
+    P10Result<DecodeStatus> decode_packet(const AVPacket* pkt, VideoQueue& queue);
 
     int index() const {
         return index_;

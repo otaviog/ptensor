@@ -44,7 +44,10 @@
           "features": [
             "ffmpeg",
             "webp",
-            "x265"
+            "x265",
+            "swscale",
+            "swresample",
+            "avcodec"
           ]
         }
       ]

@@ -18,10 +18,6 @@ if (WITH_OP)
   add_subdirectory(op)
 endif (WITH_OP)
 
-if (BUILD_SAMPLES)
-  add_subdirectory(guiapp)
-endif ()
-
 if (WITH_MEDIA)
   add_subdirectory(media)
 endif (WITH_MEDIA)

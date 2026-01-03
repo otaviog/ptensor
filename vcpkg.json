@@ -51,18 +51,6 @@
           ]
         }
       ]
-    },
-    "samples": {
-      "description": "Build sample applications (for development)",
-      "dependencies": [
-        "imgui",
-        {
-          "name": "sdl2",
-          "features": ["vulkan"]
-        },
-        "vulkan",
-        "cli11"
-      ]
     }
   }
 }

@@ -33,7 +33,6 @@ if(BUILD_TESTS)
     find_package(Threads REQUIRED)
     find_package(benchmark CONFIG REQUIRED)
 endif()
-set(BUILD_SAMPLES OFF CACHE BOOL "Build sample applications")
 
 set(PTENSOR_INSTALL_LIB_DIR $<IF:$<CONFIG:Debug>,debug/lib,lib>)
 set(PTENSOR_INSTALL_BIN_DIR $<IF:$<CONFIG:Debug>,debug/bin,bin>)

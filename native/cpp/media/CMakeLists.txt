@@ -64,10 +64,6 @@ if(BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
-if(BUILD_SAMPLES)
-  add_subdirectory(samples/video_app)
-endif()
-
 # Create alias for use in build tree and install
 add_library(p10::media ALIAS ptensor_media)
 

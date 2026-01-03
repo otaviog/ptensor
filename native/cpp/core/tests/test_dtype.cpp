@@ -7,7 +7,7 @@
 
 namespace p10 {
 
-TEST_CASE("Dtype construction and enum values", "[dtype]") {
+TEST_CASE("Dtype::construction and enum values", "[dtype]") {
     SECTION("Default construction") {
         Dtype dtype;
         REQUIRE(dtype == Dtype::Float32);
@@ -197,7 +197,7 @@ TEST_CASE("Dtype::match() functionality", "[dtype]") {
     }
 }
 
-TEST_CASE("to_string() function", "[dtype]") {
+TEST_CASE("Dtype::to_string() function", "[dtype]") {
     REQUIRE(to_string(Dtype::Float32).length() > 0);
     REQUIRE(to_string(Dtype::Float64).length() > 0);
     REQUIRE(to_string(Dtype::Float16).length() > 0);
@@ -210,7 +210,7 @@ TEST_CASE("to_string() function", "[dtype]") {
     REQUIRE(to_string(Dtype::Int64).length() > 0);
 }
 
-TEST_CASE("Dtype edge cases and error conditions", "[dtype]") {
+TEST_CASE("Dtype::edge cases and error conditions", "[dtype]") {
     SECTION("Visit with invalid dtype") {
         std::vector<std::byte> data(8);
         auto visitor = [](auto) {};

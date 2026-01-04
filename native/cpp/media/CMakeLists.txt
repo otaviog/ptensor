@@ -71,3 +71,7 @@ install(TARGETS ptensor_media
   RUNTIME DESTINATION ${PTENSOR_INSTALL_BIN_DIR}
   FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+
+if (MSVC)
+  install(FILES $<TARGET_PDB_FILE:ptensor_media> DESTINATION bin)
+endif()

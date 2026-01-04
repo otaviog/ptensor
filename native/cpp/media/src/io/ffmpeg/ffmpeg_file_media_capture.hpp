@@ -64,7 +64,6 @@ class FfmpegFileMediaCapture: public MediaCapture::Impl {
 
     std::thread decode_thread_;
 
-
     std::shared_ptr<FfmpegAudioDecoder> audio_decoder_;
     std::shared_ptr<FfmpegVideoDecoder> video_decoder_;
 

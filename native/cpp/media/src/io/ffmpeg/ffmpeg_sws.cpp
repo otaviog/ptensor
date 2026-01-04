@@ -22,10 +22,13 @@ P10Error FfmpegSws::transform(const AVFrame* frame, VideoFrame& output_frame) {
     int dst_linesize[1] = {int(output_frame.stride().byte_stride(output_frame.dtype(), 0).unwrap())
     };
 
-    return wrap_ffmpeg_error(
-        sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, dst_data, dst_linesize),
-        "sws_scale failed"
-    );
+    int result =
+        sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, dst_data, dst_linesize);
+
+    if (result <= 0) {
+        return wrap_ffmpeg_error(result, "sws_scale failed");
+    }
+    return P10Error::Ok;
 }
 
 SwsContext* FfmpegSws::get_sws_context(const AVFrame* frame) {

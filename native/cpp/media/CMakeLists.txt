@@ -42,17 +42,12 @@ target_include_directories(ptensor_media
     ${_INCLUDE_DIR}
     $<BUILD_INTERFACE:${FFMPEG_INCLUDE_DIRS}>
 )
-# On Windows with SHARED libraries (DLL), consumers need access to FFmpeg libraries
-# because symbols aren't automatically re-exported from DLLs
-if(WIN32)
-  set(_FFMPEG_LINK_SCOPE PUBLIC)
-else()
-  set(_FFMPEG_LINK_SCOPE PRIVATE)
-endif()
 
+# Link all external dependencies as PRIVATE to avoid exporting absolute paths
+# Dependencies will be re-attached in ptensorConfig.cmake for consumers
 target_link_libraries(ptensor_media
   PUBLIC ptensor
-  ${_FFMPEG_LINK_SCOPE}
+  PRIVATE
     ${FFMPEG_LIBRARIES}
     WebP::webp WebP::webpdecoder WebP::webpdemux WebP::libwebpmux
     PkgConfig::x265

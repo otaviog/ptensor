@@ -17,6 +17,13 @@ class FfmpegAudioDecoder {
         codec_ctx_(codec_ctx),
         index_(stream_index) {}
 
+    ~FfmpegAudioDecoder() {
+        if (codec_ctx_ != nullptr) {
+            avcodec_free_context(&codec_ctx_);
+            codec_ctx_ = nullptr;
+        }
+    }
+
     P10Error decode_packet(const AVPacket*, AudioFrame&) {
         return P10Error::NotImplemented;
     }

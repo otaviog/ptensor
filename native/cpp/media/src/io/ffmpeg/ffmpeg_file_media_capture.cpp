@@ -24,13 +24,15 @@ FfmpegFileMediaCapture::~FfmpegFileMediaCapture() {
 P10Result<std::shared_ptr<FfmpegFileMediaCapture>>
 FfmpegFileMediaCapture::open(const std::string& path) {
     AVFormatContext* format_ctx = nullptr;
-    avformat_open_input(&format_ctx, path.c_str(), nullptr, nullptr);
+    P10_RETURN_ERR_IF_ERROR(
+        wrap_ffmpeg_error(avformat_open_input(&format_ctx, path.c_str(), nullptr, nullptr))
+    );
 
     if (!format_ctx) {
         return Err(P10Error(P10Error::IoError, "Failed to open media file: " + path));
     }
 
-    avformat_find_stream_info(format_ctx, nullptr);
+    P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(avformat_find_stream_info(format_ctx, nullptr)));
 
     const int video_stream_idx =
         av_find_best_stream(format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
@@ -40,8 +42,12 @@ FfmpegFileMediaCapture::open(const std::string& path) {
         const AVCodec* video_codec = avcodec_find_decoder(video_stream->codecpar->codec_id);
 
         AVCodecContext* video_codec_ctx = avcodec_alloc_context3(video_codec);
-        avcodec_parameters_to_context(video_codec_ctx, video_stream->codecpar);
-        avcodec_open2(video_codec_ctx, video_codec, nullptr);
+        P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(
+            avcodec_parameters_to_context(video_codec_ctx, video_stream->codecpar)
+        ));
+        P10_RETURN_ERR_IF_ERROR(
+            wrap_ffmpeg_error(avcodec_open2(video_codec_ctx, video_codec, nullptr))
+        );
 
         // Create decoder
         video_decoder =
@@ -56,8 +62,12 @@ FfmpegFileMediaCapture::open(const std::string& path) {
         const AVCodec* audio_codec = avcodec_find_decoder(audio_stream->codecpar->codec_id);
 
         AVCodecContext* audio_codec_ctx = avcodec_alloc_context3(audio_codec);
-        avcodec_parameters_to_context(audio_codec_ctx, audio_stream->codecpar);
-        avcodec_open2(audio_codec_ctx, audio_codec, nullptr);
+        P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(
+            avcodec_parameters_to_context(audio_codec_ctx, audio_stream->codecpar)
+        ));
+        P10_RETURN_ERR_IF_ERROR(
+            wrap_ffmpeg_error(avcodec_open2(audio_codec_ctx, audio_codec, nullptr))
+        );
 
         audio_decoder =
             std::make_shared<FfmpegAudioDecoder>(audio_stream, audio_codec_ctx, audio_stream_idx);
@@ -78,7 +88,7 @@ void FfmpegFileMediaCapture::close() {
 
     if (decode_thread_.joinable()) {
         decode_thread_.join();
-    }
+}
     avformat_close_input(&format_ctx_);
     format_ctx_ = nullptr;
 }

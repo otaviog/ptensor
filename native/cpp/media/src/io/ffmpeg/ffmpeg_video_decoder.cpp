@@ -8,14 +8,13 @@ namespace p10::media {
 
 P10Result<FfmpegVideoDecoder::DecodeStatus>
 FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
-    VideoFrame new_frame;
+    int ret = avcodec_send_packet(codec_ctx_, pkt);
+    if (ret < 0) {
+        return Err(wrap_ffmpeg_error(ret));
+    }
+
     while (true) {
         UniqueAvFrame frame(av_frame_alloc());
-        int ret = avcodec_send_packet(codec_ctx_, pkt);
-        if (ret < 0) {
-            return Err(wrap_ffmpeg_error(ret));
-        }
-
         ret = avcodec_receive_frame(codec_ctx_, frame.get());
         if (ret == AVERROR(EAGAIN)) {
             return Ok(DecodeStatus::Again);
@@ -25,13 +24,15 @@ FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
             return Err(wrap_ffmpeg_error(ret));
         }
 
+        VideoFrame new_frame;
         sws_converter.transform(frame.get(), new_frame);
+        new_frame.update_time(
+            Time {Rational {stream_->time_base.num, stream_->time_base.den}, frame.get()->pts}
+        );
         if (queue.emplace(std::move(new_frame)) == VideoQueue::Cancelled) {
             return Ok(DecodeStatus::Cancelled);
         }
     }
-
-    return Ok(DecodeStatus::FrameDecoded);
 }
 
 VideoParameters FfmpegVideoDecoder::get_video_parameters() const {

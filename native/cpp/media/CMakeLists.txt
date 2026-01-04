@@ -57,6 +57,7 @@ ptensor_target_options(ptensor_media "Media")
 
 if(BUILD_TESTS)
   add_subdirectory(tests)
+  add_subdirectory(samples)
 endif()
 
 # Create alias for use in build tree and install

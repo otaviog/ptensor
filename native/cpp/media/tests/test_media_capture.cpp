@@ -6,7 +6,7 @@
 #include <ptensor/testing/catch2_assertions.hpp>
 
 namespace p10::media {
-TEST_CASE("MediaCapture: Error cases", "[media][capture]") {
+TEST_CASE("MediaCapture::error cases", "[media][capture]") {
     SECTION("Should return error for non-existent file") {
         REQUIRE_THAT(
             MediaCapture::open_file("non_existent_file.mp4"),
@@ -26,7 +26,7 @@ TEST_CASE("MediaCapture: Error cases", "[media][capture]") {
     }
 }
 
-TEST_CASE("MediaCapture: Basic functionality", "[media][capture]") {
+TEST_CASE("MediaCapture::basic functionality", "[media][capture]") {
     const std::string VALID_FILE = "tests/data/video/file_example_MP4_480_1_5MG.mp4";
     // Assuming test_video.mp4 is a valid media file present in the test directory.
     MediaCapture capture = MediaCapture::open_file(VALID_FILE).expect("should open valid file");

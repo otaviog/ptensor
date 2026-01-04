@@ -88,7 +88,7 @@ void FfmpegFileMediaCapture::close() {
 
     if (decode_thread_.joinable()) {
         decode_thread_.join();
-}
+    }
     avformat_close_input(&format_ctx_);
     format_ctx_ = nullptr;
 }
@@ -147,12 +147,12 @@ void FfmpegFileMediaCapture::start_decoding_thread() {
         if (decode_thread_.joinable()) {
             decode_thread_.join();
         }
+        status_ = CaptureStatus::Reading;
         decode_thread_ = std::thread(&FfmpegFileMediaCapture::read_packets_loop, this);
     }
 }
 
 void FfmpegFileMediaCapture::read_packets_loop() {
-    status_ = CaptureStatus::Reading;
     while (status_ == CaptureStatus::Reading) {
         read_next_packet();
     }
@@ -199,6 +199,7 @@ void FfmpegFileMediaCapture::decode_video_packet(const AVPacket* pkt) {
         case FfmpegVideoDecoder::DecodeStatus::Again:
         default:
             // Do nothing, continue reading packets
+            assert(status_ == CaptureStatus::Reading);
             break;
     }
 }

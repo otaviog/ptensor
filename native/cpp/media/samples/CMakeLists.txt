@@ -1,0 +1,3 @@
+add_executable(sample_transcoder transcoder.cpp)
+ptensor_target_options(sample_transcoder "Media")
+target_link_libraries(sample_transcoder PRIVATE ptensor_media)

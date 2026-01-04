@@ -85,6 +85,7 @@ class VideoFrame {
     const Tensor& image() const {
         return image_;
     }
+
   private:
     Tensor image_;
     Time time_;

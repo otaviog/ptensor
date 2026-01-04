@@ -59,7 +59,7 @@ class FfmpegFileMediaCapture: public MediaCapture::Impl {
     void start_decoding_thread();
 
     std::atomic<CaptureStatus> status_ = CaptureStatus::Stopped;
-    
+
     AVFormatContext* format_ctx_ = nullptr;
 
     std::thread decode_thread_;

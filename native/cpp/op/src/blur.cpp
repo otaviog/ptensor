@@ -5,9 +5,9 @@
 #include <numbers>
 
 #include <immintrin.h>  // AVX2 intrinsics
-#include <ptensor/simd/bitwise_math.hpp>
 #include <ptensor/dtype.hpp>
 #include <ptensor/p10_error.hpp>
+#include <ptensor/simd/bitwise_math.hpp>
 #include <ptensor/tensor.hpp>
 
 #include <type_traits>
@@ -262,7 +262,6 @@ P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) {
         } else {
             return P10Error::InvalidArgument << "Unsupported data type for this operation.";
         }
-        
     });
 }
 

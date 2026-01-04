@@ -940,7 +940,6 @@ TEST_CASE("Tensor::transpose", "[tensor][transpose]") {
     SECTION("2D tensor transpose") {
         auto type = GENERATE(Dtype::Float32, Dtype::Int64, Dtype::Uint8);
         DYNAMIC_SECTION("Testing transpose with type " << to_string(type)) {
-            
             test_transpose(type, 560, 430);
         }
     }
@@ -948,7 +947,7 @@ TEST_CASE("Tensor::transpose", "[tensor][transpose]") {
     SECTION("Small tensor") {
         auto type = GENERATE(Dtype::Float32, Dtype::Int64, Dtype::Uint8);
         DYNAMIC_SECTION("Testing transpose with type " << to_string(type)) {
-              test_transpose(type, 6, 7);
+            test_transpose(type, 6, 7);
         }
     }
 
@@ -1020,7 +1019,8 @@ TEST_CASE("Tensor::as_accessor1d converts to 1D accessor", "[tensor][accessor]")
         REQUIRE(accessor.size() == 6);
         // With stride 2, logical indices map to physical indices: 0->0, 1->2, 2->4, etc.
         auto span = tensor.as_span1d<float>().unwrap();
-        for (size_t i = 0; i < 3; i++) { // As we have 6 elements with stride 2, only 3 logical elements
+        for (size_t i = 0; i < 3;
+             i++) {  // As we have 6 elements with stride 2, only 3 logical elements
             REQUIRE(accessor[i] == span[i * 2]);
         }
     }

@@ -63,13 +63,7 @@ void to_string_rec(
         if (i > 0) {
             ss << ",\n";
         }
-        to_string_rec(
-            ss,
-            data + i * stride0,
-            shape.subshape(1),
-            stride.substride(1),
-            options
-        );
+        to_string_rec(ss, data + i * stride0, shape.subshape(1), stride.substride(1), options);
     }
     ss << "]";
 }

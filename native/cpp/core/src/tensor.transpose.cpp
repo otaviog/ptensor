@@ -3,9 +3,9 @@
 #include <cstdint>
 
 #include <immintrin.h>
-
-#include <ptensor/simd/cpuid.hpp>
 #include <ptensor/simd/compiler.hpp>
+#include <ptensor/simd/cpuid.hpp>
+
 #include "p10_error.hpp"
 
 namespace p10 {

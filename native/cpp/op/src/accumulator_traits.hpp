@@ -43,18 +43,12 @@ struct accumulator_traits {
     using accum_type = AccumulatorNotDefined;
 
     static constexpr accum_type from_float(float) {
-        static_assert(
-            sizeof(T) == 0,
-            "accumulator_traits not defined for this type"
-        );
+        static_assert(sizeof(T) == 0, "accumulator_traits not defined for this type");
         return {};
     }
 
     static constexpr scalar_type to_scalar(accum_type) {
-        static_assert(
-            sizeof(T) == 0,
-            "accumulator_traits not defined for this type"
-        );
+        static_assert(sizeof(T) == 0, "accumulator_traits not defined for this type");
         return {};
     }
 };
@@ -148,7 +142,7 @@ struct accumulator_traits<float> {
     using scalar_type = float;
     using accum_type = float;
 
-    static constexpr accum_type  from_float(float value) {
+    static constexpr accum_type from_float(float value) {
         return value;
     }
 
@@ -162,7 +156,7 @@ struct accumulator_traits<double> {
     using scalar_type = double;
     using accum_type = double;
 
-    static constexpr accum_type  from_float(float value) {
+    static constexpr accum_type from_float(float value) {
         return value;
     }
 

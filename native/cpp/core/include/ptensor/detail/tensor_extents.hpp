@@ -118,7 +118,9 @@ namespace detail {
 
         P10Result<TensorExtents> permute_extents(const std::span<const size_t>& perm) const {
             if (perm.size() != dims_) {
-                return Err(P10Error::OutOfRange << "Permutation size does not match number of dimensions");
+                return Err(
+                    P10Error::OutOfRange << "Permutation size does not match number of dimensions"
+                );
             }
 
             TensorExtents result;

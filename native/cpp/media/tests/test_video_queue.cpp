@@ -13,7 +13,6 @@ TEST_CASE("VideoQueue", "[media][capture]") {
                 VideoFrame frame;
                 frame.create(640, 480, PixelFormat::RGB24);
                 CHECK(video_queue.emplace(std::move(frame)) == VideoQueue::EmplaceResult::Ok);
-
             }
         });
         std::thread consumer([&video_queue]() {

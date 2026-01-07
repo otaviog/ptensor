@@ -86,6 +86,10 @@ class VideoFrame {
         return image_;
     }
 
+    Tensor& image() {
+        return image_;
+    }
+
   private:
     Tensor image_;
     Time time_;

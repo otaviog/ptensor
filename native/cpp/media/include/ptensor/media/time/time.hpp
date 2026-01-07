@@ -32,6 +32,8 @@ class Time {
         return static_cast<double>(stamp_) * base_.num() / base_.den();
     }
 
+    friend bool operator>(const Time& lhs, const Time& rhs);
+
   private:
     Rational base_ = {0, 1};
     int64_t stamp_ = 0;

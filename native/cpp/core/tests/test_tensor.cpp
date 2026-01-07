@@ -15,7 +15,7 @@ namespace p10 {
 // Tensor Creation Tests
 // ============================================================================
 
-TEST_CASE("Tensor::full creates tensor filled with specified value", "[tensor][creation]") {
+TEST_CASE("core::Tensor::full creates tensor filled with specified value", "[tensor][creation]") {
     auto tensor = Tensor::full(make_shape(2, 3), 3.0).expect("Could not create tensor");
 
     REQUIRE(tensor.dtype() == Dtype::Float32);
@@ -30,7 +30,7 @@ TEST_CASE("Tensor::full creates tensor filled with specified value", "[tensor][c
     }
 }
 
-TEST_CASE("Tensor::full with different data types", "[tensor][creation]") {
+TEST_CASE("core::Tensor::full with different data types", "[tensor][creation]") {
     SECTION("int32") {
         auto tensor =
             Tensor::full(make_shape(3, 3), 42, TensorOptions().dtype(Dtype::Int32)).unwrap();
@@ -52,7 +52,7 @@ TEST_CASE("Tensor::full with different data types", "[tensor][creation]") {
     }
 }
 
-TEST_CASE("Tensor::zeros creates tensor filled with zeros", "[tensor][creation]") {
+TEST_CASE("core::Tensor::zeros creates tensor filled with zeros", "[tensor][creation]") {
     auto tensor = Tensor::zeros(make_shape(2, 3)).expect("Could not create tensor");
 
     REQUIRE(tensor.dtype() == Dtype::Float32);
@@ -67,7 +67,7 @@ TEST_CASE("Tensor::zeros creates tensor filled with zeros", "[tensor][creation]"
     }
 }
 
-TEST_CASE("Tensor::zeros with explicit dtype", "[tensor][creation]") {
+TEST_CASE("core::Tensor::zeros with explicit dtype", "[tensor][creation]") {
     auto tensor = Tensor::zeros(make_shape(3, 4), TensorOptions().dtype(Dtype::Int64)).unwrap();
 
     REQUIRE(tensor.dtype() == Dtype::Int64);
@@ -77,7 +77,7 @@ TEST_CASE("Tensor::zeros with explicit dtype", "[tensor][creation]") {
     }
 }
 
-TEST_CASE("Tensor::empty allocates uninitialized tensor", "[tensor][creation]") {
+TEST_CASE("core::Tensor::empty allocates uninitialized tensor", "[tensor][creation]") {
     auto tensor = Tensor::empty(make_shape(2, 3)).expect("Could not create tensor");
 
     REQUIRE(tensor.dtype() == Dtype::Float32);
@@ -87,7 +87,7 @@ TEST_CASE("Tensor::empty allocates uninitialized tensor", "[tensor][creation]") 
     REQUIRE(tensor.dims() == 2);
 }
 
-TEST_CASE("Tensor::empty with various shapes", "[tensor][creation]") {
+TEST_CASE("core::Tensor::empty with various shapes", "[tensor][creation]") {
     SECTION("1D tensor") {
         auto tensor = Tensor::empty(make_shape(10)).unwrap();
         REQUIRE(tensor.dims() == 1);
@@ -111,7 +111,7 @@ TEST_CASE("Tensor::empty with various shapes", "[tensor][creation]") {
 // Tensor move constructs
 // ===========================================================================
 
-TEST_CASE("Tensor move constructor transfers ownership", "[tensor][move]") {
+TEST_CASE("core::Tensor::move constructor transfers ownership", "[tensor][move]") {
     auto original = Tensor::full(make_shape(2, 2), 7.0, Dtype::Int32).unwrap();
     auto original_data_ptr = original.as_span1d<int32_t>().unwrap().data();
 
@@ -128,7 +128,7 @@ TEST_CASE("Tensor move constructor transfers ownership", "[tensor][move]") {
     REQUIRE(original.dtype() == Dtype::Float32);
 }
 
-TEST_CASE("Tensor move assign transfers ownership", "[tensor][move]") {
+TEST_CASE("core::Tensor::move assign transfers ownership", "[tensor][move]") {
     auto original = Tensor::full(make_shape(2, 2), 7.0, Dtype::Int32).unwrap();
     auto original_data_ptr = original.as_span1d<int32_t>().unwrap().data();
 
@@ -149,7 +149,7 @@ TEST_CASE("Tensor move assign transfers ownership", "[tensor][move]") {
 // Tensor Copy
 // ============================================================================
 
-TEST_CASE("Tensor::copy_from copies data from another tensor", "[tensor][copy]") {
+TEST_CASE("core::Tensor::copy_from copies data from another tensor", "[tensor][copy]") {
     SECTION("Empty dest tensor") {
         auto source = Tensor::full(make_shape(2, 3), 5.0, Dtype::Float32).unwrap();
         Tensor destination;
@@ -182,7 +182,7 @@ TEST_CASE("Tensor::copy_from copies data from another tensor", "[tensor][copy]")
 // Tensor Properties Tests
 // ============================================================================
 
-TEST_CASE("Tensor dtype and device can be configured", "[tensor][properties]") {
+TEST_CASE("core::Tensor::dtype and device can be configured", "[tensor][properties]") {
     const auto all_dtypes = {
         Dtype::Uint8,
         Dtype::Uint16,
@@ -212,7 +212,7 @@ TEST_CASE("Tensor dtype and device can be configured", "[tensor][properties]") {
     }
 }
 
-TEST_CASE("Tensor strides are computed correctly", "[tensor][properties]") {
+TEST_CASE("core::Tensor::strides are computed correctly", "[tensor][properties]") {
     SECTION("default row-major strides") {
         auto tensor = Tensor::empty(make_shape(2, 3)).expect("Could not create tensor");
 
@@ -238,7 +238,7 @@ TEST_CASE("Tensor strides are computed correctly", "[tensor][properties]") {
     }
 }
 
-TEST_CASE("Tensor dimensions are tracked correctly", "[tensor][properties]") {
+TEST_CASE("core::Tensor dimensions are tracked correctly", "[tensor][properties]") {
     auto tensor = Tensor::empty(make_shape(2, 3, 4, 5)).expect("Unable to create tensor");
 
     REQUIRE(tensor.dims() == 4);
@@ -247,7 +247,7 @@ TEST_CASE("Tensor dimensions are tracked correctly", "[tensor][properties]") {
     REQUIRE(tensor.axes().dims() == 4);
 }
 
-TEST_CASE("Tensor::empty() detects empty tensors", "[tensor][properties]") {
+TEST_CASE("core::Tensor::empty() detects empty tensors", "[tensor][properties]") {
     SECTION("non-empty tensor") {
         auto tensor = Tensor::empty(make_shape(2, 3)).unwrap();
         REQUIRE_FALSE(tensor.empty());
@@ -268,7 +268,7 @@ TEST_CASE("Tensor::empty() detects empty tensors", "[tensor][properties]") {
 // Tensor Contiguity Tests
 // ============================================================================
 
-TEST_CASE("Tensor::is_contiguous detects memory layout", "[tensor][contiguity]") {
+TEST_CASE("core::Tensor::is_contiguous detects memory layout", "[tensor][contiguity]") {
     SECTION("default tensors are contiguous") {
         auto tensor = Tensor::empty(make_shape(2, 3)).unwrap();
         REQUIRE(tensor.is_contiguous());
@@ -281,7 +281,7 @@ TEST_CASE("Tensor::is_contiguous detects memory layout", "[tensor][contiguity]")
     }
 }
 
-TEST_CASE("Tensor::to_contiguous creates contiguous copy", "[tensor][contiguity]") {
+TEST_CASE("core::Tensor::to_contiguous creates contiguous copy", "[tensor][contiguity]") {
     auto tensor =
         Tensor::empty(make_shape(2, 3), TensorOptions().stride(make_stride(1, 2))).unwrap();
 
@@ -305,7 +305,7 @@ TEST_CASE("Tensor::to_contiguous creates contiguous copy", "[tensor][contiguity]
     }
 }
 
-TEST_CASE("Tensor::to_contiguous on already contiguous tensor", "[tensor][contiguity]") {
+TEST_CASE("core::Tensor::to_contiguous on already contiguous tensor", "[tensor][contiguity]") {
     auto tensor = Tensor::full(make_shape(3, 3), 1.0).unwrap();
     REQUIRE(tensor.is_contiguous());
 
@@ -319,7 +319,7 @@ TEST_CASE("Tensor::to_contiguous on already contiguous tensor", "[tensor][contig
 // Tensor View Tests
 // ============================================================================
 
-TEST_CASE("Tensor::as_view creates view sharing data", "[tensor][view]") {
+TEST_CASE("core::Tensor::as_view creates view sharing data", "[tensor][view]") {
     auto tensor = Tensor::zeros(make_shape(2, 3)).unwrap();
 
     auto tensor_view = tensor.as_view();
@@ -340,7 +340,7 @@ TEST_CASE("Tensor::as_view creates view sharing data", "[tensor][view]") {
     }
 }
 
-TEST_CASE("Tensor::as_view with non-contiguous tensor", "[tensor][view]") {
+TEST_CASE("core::Tensor::as_view with non-contiguous tensor", "[tensor][view]") {
     auto tensor =
         Tensor::full(make_shape(3, 4), 2.5, TensorOptions().stride(make_stride(2, 1))).unwrap();
 
@@ -353,13 +353,13 @@ TEST_CASE("Tensor::as_view with non-contiguous tensor", "[tensor][view]") {
 // Edge Cases and Error Handling
 // ============================================================================
 
-TEST_CASE("Tensor handles single element", "[tensor][edge-cases]") {
+TEST_CASE("core::Tensor handles single element", "[tensor][edge-cases]") {
     auto tensor = Tensor::full(make_shape(1), 42.0).unwrap();
     REQUIRE(tensor.size() == 1);
     REQUIRE(tensor.as_span1d<float>().unwrap()[0] == Catch::Approx(42.0f));
 }
 
-TEST_CASE("Tensor with large dimensions", "[tensor][edge-cases]") {
+TEST_CASE("core::Tensor with large dimensions", "[tensor][edge-cases]") {
     auto tensor = Tensor::empty(make_shape(100, 200)).unwrap();
     REQUIRE(tensor.size() == 20000);
     REQUIRE(tensor.is_contiguous());
@@ -369,7 +369,7 @@ TEST_CASE("Tensor with large dimensions", "[tensor][edge-cases]") {
 // Tensor Span Access Tests
 // ============================================================================
 
-TEST_CASE("Tensor::as_bytes provides byte-level access", "[tensor][span]") {
+TEST_CASE("core::Tensor::as_bytes provides byte-level access", "[tensor][span]") {
     auto tensor = Tensor::full(make_shape(2, 3), 42.0f).unwrap();
 
     SECTION("const version") {
@@ -386,7 +386,7 @@ TEST_CASE("Tensor::as_bytes provides byte-level access", "[tensor][span]") {
     }
 }
 
-TEST_CASE("Tensor::as_span1d converts to 1D span", "[tensor][span]") {
+TEST_CASE("core::Tensor::as_span1d converts to 1D span", "[tensor][span]") {
     SECTION("creates span for float tensor") {
         auto tensor = Tensor::full(make_shape(2, 3), 1.5f).unwrap();
         auto span = tensor.as_span1d<float>().unwrap();
@@ -451,7 +451,7 @@ TEST_CASE("Tensor::as_span1d converts to 1D span", "[tensor][span]") {
     }
 }
 
-TEST_CASE("Tensor::as_span2d converts to 2D span", "[tensor][span]") {
+TEST_CASE("core::Tensor::as_span2d converts to 2D span", "[tensor][span]") {
     SECTION("creates 2D span for float tensor") {
         auto tensor = Tensor::zeros(make_shape(3, 4)).unwrap();
         auto span = tensor.as_span2d<float>().unwrap();
@@ -510,7 +510,7 @@ TEST_CASE("Tensor::as_span2d converts to 2D span", "[tensor][span]") {
     }
 }
 
-TEST_CASE("Tensor::as_span3d converts to 3D span", "[tensor][span]") {
+TEST_CASE("core::Tensor::as_span3d converts to 3D span", "[tensor][span]") {
     SECTION("creates 3D span for float tensor") {
         auto tensor = Tensor::zeros(make_shape(2, 3, 4)).unwrap();
         auto span = tensor.as_span3d<float>().unwrap();
@@ -588,7 +588,7 @@ TEST_CASE("Tensor::as_span3d converts to 3D span", "[tensor][span]") {
     }
 }
 
-TEST_CASE("Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]") {
+TEST_CASE("core::Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]") {
     SECTION("creates planar 3D span for float tensor") {
         auto tensor = Tensor::zeros(make_shape(3, 4, 5)).unwrap();
         auto span = tensor.as_planar_span3d<float>().unwrap();
@@ -665,7 +665,7 @@ TEST_CASE("Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]
     }
 }
 
-TEST_CASE("Tensor::select_dimension", "[tensor][select_dimension]") {
+TEST_CASE("core::Tensor::select_dimension", "[tensor][select_dimension]") {
     SECTION("Select dimension reduces tensor rank") {
         auto tensor = Tensor::full(make_shape(3, 4, 5), 1.0f).unwrap();
         auto selected = tensor.select_dimension(1, 2).unwrap();
@@ -761,6 +761,13 @@ TEST_CASE("Tensor::select_dimension", "[tensor][select_dimension]") {
         REQUIRE(last.is_contiguous());
     }
 
+    SECTION("Select dimension with negative index") {
+        auto tensor = Tensor::full(make_shape(4, 5, 6), 3.0f).unwrap();
+        // Select last index using negative indexing
+        auto selected = tensor.select_dimension(1, -1 + 5).unwrap();  // equivalent to index 4
+        REQUIRE(selected.shape() == make_shape(4, 6));
+    }
+
     SECTION("Select dimension with different dtypes") {
         SECTION("int64") {
             auto tensor =
@@ -820,7 +827,7 @@ TEST_CASE("Tensor::select_dimension", "[tensor][select_dimension]") {
         REQUIRE_THAT(tensor.select_dimension(2, 5), testing::IsError(P10Error::InvalidArgument));
 
         // Negative index
-        REQUIRE_THAT(tensor.select_dimension(0, -1), testing::IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(tensor.select_dimension(0, -4), testing::IsError(P10Error::InvalidArgument));
     }
 
     SECTION("Stride preservation") {
@@ -838,7 +845,7 @@ TEST_CASE("Tensor::select_dimension", "[tensor][select_dimension]") {
     }
 }
 
-TEST_CASE("Tensor::reshape", "[tensor][reshape]") {
+TEST_CASE("core::Tensor::reshape", "[tensor][reshape]") {
     SECTION("Valid shapes") {
         auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
         size_t tensor_size = tensor.size();
@@ -936,7 +943,7 @@ void test_transpose(Dtype type, size_t rows, size_t cols) {
     });
 }
 
-TEST_CASE("Tensor::transpose", "[tensor][transpose]") {
+TEST_CASE("core::Tensor::transpose", "[tensor][transpose]") {
     SECTION("2D tensor transpose") {
         auto type = GENERATE(Dtype::Float32, Dtype::Int64, Dtype::Uint8);
         DYNAMIC_SECTION("Testing transpose with type " << to_string(type)) {
@@ -989,7 +996,7 @@ TEST_CASE("Tensor::transpose", "[tensor][transpose]") {
 // Tensor Accessor Tests
 // ============================================================================
 
-TEST_CASE("Tensor::as_accessor1d converts to 1D accessor", "[tensor][accessor]") {
+TEST_CASE("core::Tensor::as_accessor1d converts to 1D accessor", "[tensor][accessor]") {
     SECTION("creates accessor for float tensor") {
         auto tensor = Tensor::from_range(make_shape(5), Dtype::Float32).unwrap();
         auto accessor = tensor.as_accessor1d<float>().unwrap();
@@ -1092,7 +1099,7 @@ TEST_CASE("Tensor::as_accessor1d converts to 1D accessor", "[tensor][accessor]")
     }
 }
 
-TEST_CASE("Tensor::as_accessor2d converts to 2D accessor", "[tensor][accessor]") {
+TEST_CASE("core::Tensor::as_accessor2d converts to 2D accessor", "[tensor][accessor]") {
     SECTION("creates accessor for float tensor") {
         auto tensor = Tensor::from_range(make_shape(3, 4), Dtype::Float32).unwrap();
         auto accessor = tensor.as_accessor2d<float>().unwrap();
@@ -1227,7 +1234,7 @@ TEST_CASE("Tensor::as_accessor2d converts to 2D accessor", "[tensor][accessor]")
     }
 }
 
-TEST_CASE("Tensor::as_accessor3d converts to 3D accessor", "[tensor][accessor]") {
+TEST_CASE("core::Tensor::as_accessor3d converts to 3D accessor", "[tensor][accessor]") {
     SECTION("creates accessor for float tensor") {
         auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
         auto accessor = tensor.as_accessor3d<float>().unwrap();
@@ -1407,7 +1414,7 @@ TEST_CASE("Tensor::as_accessor3d converts to 3D accessor", "[tensor][accessor]")
     }
 }
 
-TEST_CASE("Tensor accessor with non-contiguous tensors", "[tensor][accessor]") {
+TEST_CASE("core::Tensor::accessor with non-contiguous tensors", "[tensor][accessor]") {
     SECTION("2D accessor with transposed view") {
         auto tensor = Tensor::from_range(make_shape(3, 4), Dtype::Float32).unwrap();
         auto view = Tensor::from_data(

@@ -266,6 +266,10 @@ P10Result<Tensor> Tensor::select_dimension(int64_t dim, int64_t index) {
         );
     }
 
+    if (index < 0) {
+        index = shape_[dim].unwrap() + index;
+    }
+
     if (index < 0 || index >= shape_[dim].unwrap()) {
         return Err(
             P10Error::InvalidArgument << "Cannot select index " + std::to_string(index)

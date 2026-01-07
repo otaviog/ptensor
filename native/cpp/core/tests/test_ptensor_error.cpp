@@ -4,7 +4,7 @@
 
 namespace p10 {
 
-TEST_CASE("PtensorError::(to_string() and code())", "[error]") {
+TEST_CASE("core::P110Error::(to_string() and code())", "[error]") {
     P10Error error = P10Error::InvalidOperation;
     REQUIRE(error.to_string() == "Invalid operation");
     REQUIRE(error.code() == P10Error::InvalidOperation);
@@ -18,13 +18,13 @@ TEST_CASE("PtensorError::(to_string() and code())", "[error]") {
     REQUIRE(error.code() == P10Error::NotImplemented);
 }
 
-TEST_CASE("PtensorError::fromAssert()", "[error]") {
+TEST_CASE("core::P110Error::fromAssert()", "[error]") {
     P10Error error = P10Error::fromAssert("assertion failed", "file.cpp", 42);
     REQUIRE(error.code() == P10Error::AssertionError);
     REQUIRE(error.to_string() == "Assertion error: assertion failed (file.cpp:42)");
 }
 
-TEST_CASE("PtensorResult::(Ok and Err)", "[result]") {
+TEST_CASE("core::P110Result::(Ok and Err)", "[result]") {
     P10Result<int> ok = Ok<int>(42);
     REQUIRE(ok.is_ok());
     REQUIRE(ok.unwrap() == 42);

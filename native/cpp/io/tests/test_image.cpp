@@ -9,7 +9,7 @@
 
 namespace p10::io {
 
-TEST_CASE("save_image and load_image roundtrip", "[io][image]") {
+TEST_CASE("io::image::save_image and load_image roundtrip", "[io][image]") {
     const std::string filename = "test_image.png";
 
     // Create a simple 8x8 RGB image (height, width, channels)
@@ -41,7 +41,7 @@ TEST_CASE("save_image and load_image roundtrip", "[io][image]") {
     std::filesystem::remove(filename);
 }
 
-TEST_CASE("save_image with grayscale tensor", "[io][image]") {
+TEST_CASE("io::image::save_image with grayscale tensor", "[io][image]") {
     const std::string filename = "test_grayscale.png";
 
     // Create a grayscale image (height, width)
@@ -63,7 +63,7 @@ TEST_CASE("save_image with grayscale tensor", "[io][image]") {
     std::filesystem::remove(filename);
 }
 
-TEST_CASE("save_image with RGBA tensor", "[io][image]") {
+TEST_CASE("io::image::save_image with RGBA tensor", "[io][image]") {
     const std::string filename = "test_rgba.png";
 
     // Create an RGBA image (height, width, 4 channels)
@@ -79,12 +79,12 @@ TEST_CASE("save_image with RGBA tensor", "[io][image]") {
     std::filesystem::remove(filename);
 }
 
-TEST_CASE("load_image with non-existent file returns error", "[io][image]") {
+TEST_CASE("io::image::load_image with non-existent file returns error", "[io][image]") {
     auto result = load_image("non_existent_image.png");
     REQUIRE(!result.is_ok());
 }
 
-TEST_CASE("save_image creates valid file", "[io][image]") {
+TEST_CASE("io::image::save_image creates valid file", "[io][image]") {
     const std::string filename = "test_save_creates_file.jpg";
 
     auto tensor =
@@ -99,7 +99,7 @@ TEST_CASE("save_image creates valid file", "[io][image]") {
     std::filesystem::remove(filename);
 }
 
-TEST_CASE("save_image with different formats", "[io][image]") {
+TEST_CASE("io::image::save_image with different formats", "[io][image]") {
     auto tensor =
         Tensor::full(make_shape(4, 4, 3), 200, TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
@@ -111,7 +111,7 @@ TEST_CASE("save_image with different formats", "[io][image]") {
         std::filesystem::remove(filename);
     }
 
-    SECTION("JPEG format") {
+    SECTION("io::image::JPEG format") {
         const std::string filename = "test.jpg";
         auto err = save_image(filename, tensor);
         REQUIRE_THAT(err, p10::testing::IsOk());
@@ -119,7 +119,7 @@ TEST_CASE("save_image with different formats", "[io][image]") {
         std::filesystem::remove(filename);
     }
 
-    SECTION("BMP format") {
+    SECTION("io::image::BMP format") {
         const std::string filename = "test.bmp";
         auto err = save_image(filename, tensor);
         REQUIRE_THAT(err, p10::testing::IsOk());
@@ -128,7 +128,7 @@ TEST_CASE("save_image with different formats", "[io][image]") {
     }
 }
 
-TEST_CASE("load_image returns correct dtype", "[io][image]") {
+TEST_CASE("io::image::load_image returns correct dtype", "[io][image]") {
     const std::string filename = "test_dtype.png";
 
     auto tensor = Tensor::zeros(make_shape(6, 6, 3), TensorOptions().dtype(Dtype::Uint8)).unwrap();

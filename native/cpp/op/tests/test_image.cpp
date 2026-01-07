@@ -6,7 +6,7 @@
 
 namespace p10::op {
 
-TEST_CASE("Image to tensor", "[imageop]") {
+TEST_CASE("op::image::to tensor", "[imageop]") {
     Tensor image_tensor = Tensor::zeros(make_shape(256, 256, 3), Dtype::Uint8).unwrap();
     Tensor float_tensor;
     image_to_tensor(image_tensor, float_tensor);
@@ -14,19 +14,19 @@ TEST_CASE("Image to tensor", "[imageop]") {
     REQUIRE(float_tensor.dtype() == Dtype::Float32);
 }
 
-TEST_CASE("Image to tensor with invalid type", "[imageop]") {
+TEST_CASE("op::image::to tensor with invalid type", "[imageop]") {
     Tensor image_tensor = Tensor::zeros(make_shape(256, 256, 3), Dtype::Float32).unwrap();
     Tensor float_tensor;
     REQUIRE(image_to_tensor(image_tensor, float_tensor) == P10Error::InvalidArgument);
 }
 
-TEST_CASE("Image to tensor with invalid shape", "[imageop]") {
+TEST_CASE("op::image::to tensor with invalid shape", "[imageop]") {
     Tensor image_tensor = Tensor::zeros(make_shape(256, 256), Dtype::Uint8).unwrap();
     Tensor float_tensor;
     REQUIRE(image_to_tensor(image_tensor, float_tensor) == P10Error::InvalidArgument);
 }
 
-TEST_CASE("Image from tensor", "[imageop]") {
+TEST_CASE("op::image::from tensor", "[imageop]") {
     Tensor float_tensor = Tensor::zeros(make_shape(3, 256, 256), Dtype::Float32).unwrap();
     Tensor image_tensor;
     image_from_tensor(float_tensor, image_tensor);
@@ -34,19 +34,19 @@ TEST_CASE("Image from tensor", "[imageop]") {
     REQUIRE(image_tensor.dtype() == Dtype::Uint8);
 }
 
-TEST_CASE("Image from tensor with invalid type", "[imageop]") {
+TEST_CASE("op::image::from tensor with invalid type", "[imageop]") {
     Tensor float_tensor = Tensor::zeros(make_shape(3, 256, 256), Dtype::Uint8).unwrap();
     Tensor image_tensor;
     REQUIRE_THROWS_AS(image_from_tensor(float_tensor, image_tensor), P10Error);
 }
 
-TEST_CASE("Image from tensor with invalid shape", "[imageop]") {
+TEST_CASE("op::image::from tensor with invalid shape", "[imageop]") {
     Tensor float_tensor = Tensor::zeros(make_shape(256, 256), Dtype::Float32).unwrap();
     Tensor image_tensor;
     REQUIRE_THROWS_AS(image_from_tensor(float_tensor, image_tensor), P10Error);
 }
 
-TEST_CASE("Image to tensor and back conversion", "[imageop]") {
+TEST_CASE("op::image::to tensor and back conversion", "[imageop]") {
     // Create a test image with known values
     Tensor original_image = Tensor::zeros(make_shape(64, 64, 3), Dtype::Uint8).unwrap();
     auto image_span = original_image.as_span3d<uint8_t>().unwrap();
@@ -90,7 +90,7 @@ TEST_CASE("Image to tensor and back conversion", "[imageop]") {
     }
 }
 
-TEST_CASE("Image from tensor value clamping", "[imageop]") {
+TEST_CASE("op::image::from tensor value clamping", "[imageop]") {
     // Create a float tensor with values outside [0, 1] range
     Tensor float_tensor = Tensor::zeros(make_shape(3, 8, 8), Dtype::Float32).unwrap();
     auto tensor_span = float_tensor.as_planar_span3d<float>().unwrap();

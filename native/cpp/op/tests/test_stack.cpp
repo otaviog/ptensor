@@ -12,7 +12,7 @@ using Catch::Approx;
 using p10::testing::IsError;
 using p10::testing::IsOk;
 
-TEST_CASE("Stack: Basic stacking along axis 0", "[stack]") {
+TEST_CASE("op::Stack: Basic stacking along axis 0", "[stack]") {
     auto type = GENERATE(Dtype::Float32, Dtype::Int32, Dtype::Uint8);
     DYNAMIC_SECTION("Testing stack with type " << to_string(type)) {
         auto t1 = Tensor::from_range(make_shape(2, 3), type).unwrap();
@@ -45,7 +45,7 @@ TEST_CASE("Stack: Basic stacking along axis 0", "[stack]") {
     }
 }
 
-TEST_CASE("Stack: Stacking along axis 1", "[stack]") {
+TEST_CASE("op::Stack::Stacking along axis 1", "[stack]") {
     auto type = GENERATE(Dtype::Float32, Dtype::Int32);
     DYNAMIC_SECTION("Testing stack along axis 1 with type " << to_string(type)) {
         auto t1 = Tensor::from_range(make_shape(2, 3), type).unwrap();

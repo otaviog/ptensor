@@ -28,6 +28,7 @@ target_sources(ptensor_media
     BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     FILES ${PUBLIC_HEADERS}
   PRIVATE
+    src/time/time.cpp
     src/io/media_capture.cpp
     src/io/ffmpeg/ffmpeg_file_media_capture.hpp src/io/ffmpeg/ffmpeg_file_media_capture.cpp
     src/io/ffmpeg/ffmpeg_sws.hpp src/io/ffmpeg/ffmpeg_sws.cpp
@@ -73,5 +74,6 @@ install(TARGETS ptensor_media
 )
 
 if (MSVC)
-  install(FILES $<TARGET_PDB_FILE:ptensor_media> DESTINATION bin)
+  install(FILES $<TARGET_PDB_FILE:ptensor_media> DESTINATION bin
+          CONFIGURATIONS Debug)
 endif()

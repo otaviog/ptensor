@@ -17,6 +17,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/time/time.hpp
   ${_INCLUDE_DIR}/time/rational.hpp
   ${_INCLUDE_DIR}/io/media_capture.hpp
+  ${_INCLUDE_DIR}/io/media_writer.hpp
   ${_INCLUDE_DIR}/media_parameters.hpp
   ${_INCLUDE_DIR}/audio_parameters.hpp
   ${_INCLUDE_DIR}/video_parameters.hpp
@@ -33,6 +34,9 @@ target_sources(ptensor_media
     src/io/ffmpeg/ffmpeg_file_media_capture.hpp src/io/ffmpeg/ffmpeg_file_media_capture.cpp
     src/io/ffmpeg/ffmpeg_sws.hpp src/io/ffmpeg/ffmpeg_sws.cpp
     src/io/ffmpeg/ffmpeg_video_decoder.hpp src/io/ffmpeg/ffmpeg_video_decoder.cpp
+    src/io/media_writer.impl.hpp 
+    src/io/media_writer.cpp
+    src/io/ffmpeg/ffmpeg_media_writer.hpp src/io/ffmpeg/ffmpeg_media_writer.cpp
 )
 
 target_include_directories(ptensor_media

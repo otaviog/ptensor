@@ -1,8 +1,6 @@
 #include "io/media_capture.hpp"
 
 #include "ffmpeg/ffmpeg_file_media_capture.hpp"
-#include "ptensor/p10_error.hpp"
-#include "ptensor/p10_result.hpp"
 
 namespace p10::media {
 

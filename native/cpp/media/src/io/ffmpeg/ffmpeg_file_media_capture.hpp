@@ -5,8 +5,6 @@
 #include <thread>
 
 #include "../media_capture.impl.hpp"
-#include "ptensor/p10_error.hpp"
-#include "ptensor/p10_result.hpp"
 #include "video_frame.hpp"
 
 extern "C" {

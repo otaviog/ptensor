@@ -4,11 +4,12 @@
 
 #include <ptensor/p10_result.hpp>
 
-#include "../audio_frame.hpp"
 #include "../media_parameters.hpp"
-#include "../video_frame.hpp"
 
 namespace p10::media {
+class VideoFrame;
+class AudioFrame;
+
 class MediaCapture {
   public:
     class Impl;

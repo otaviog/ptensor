@@ -1,10 +1,9 @@
 #include "ffmpeg/ffmpeg_media_writer.hpp"
-#include "media_writer.impl.hpp"
 
 namespace p10::media {
 
-static P10Result<MediaWriter>
-MediaWriter::create_file(const std::string& path, const MediaParameters& params) {
+P10Result<MediaWriter>
+MediaWriter::open_file(const std::string& path, const MediaParameters& params) {
     auto result = FfmpegMediaWriter::create(path, params);
     if (result.is_error()) {
         return Err(result.error());

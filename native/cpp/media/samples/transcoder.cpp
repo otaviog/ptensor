@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <ptensor/media/io/media_capture.hpp>
+#include <ptensor/media/video_frame.hpp>
 
 int main(int argc, char** argv) {
     if (argc < 2) {

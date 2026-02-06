@@ -8,8 +8,8 @@
 * Targets projects that what offer numerical and AI inference features without bringing in large dependencies.
 * Do not aim to be near a full-featured tensor library like PyTorch or TensorFlow.
 * Not have any external dependencies
-* Support basic tensor operations (e.g., add, multiply, matmul, etc).
-* Try to optimize with SIMD where possible
+* Support basic tensor operations (e.g., add, multiply, image resize, fft, etc). Stuff needed for preprocessing. 
+* Try to optimize with SIMD where possible (prefer AVX2)
 * Not tied to any specific backend (e.g., no CUDA, no OpenCL, etc).
 * Easy to use C API for bindings.
 

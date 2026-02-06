@@ -10,7 +10,7 @@ class Time {
   public:
     Time() = default;
 
-    Time(Rational base, int64_t stamp) : stamp_(stamp), base_(base) {}
+    Time(Rational base, int64_t stamp) : base_(base), stamp_(stamp) {}
 
     static Time from_seconds(Rational base, double seconds) {
         return Time {base, int64_t(seconds * base.den()) / base.num()};

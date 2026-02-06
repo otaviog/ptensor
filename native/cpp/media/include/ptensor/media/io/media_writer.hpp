@@ -3,16 +3,18 @@
 #include <memory>
 #include <string>
 
+#include <ptensor/media/media_parameters.hpp>
+#include <ptensor/p10_error.hpp>
+#include <ptensor/p10_result.hpp>
+
 namespace p10::media {
-class MediaParameters;
 class VideoFrame;
 class AudioFrame;
 
 class MediaWriter {
   public:
     class Impl;
-    static P10Result<MediaWriter>
-    create_file(const std::string& path, const MediaParameters& params);
+    static P10Result<MediaWriter> open_file(const std::string& path, const MediaParameters& params);
 
     void close();
 

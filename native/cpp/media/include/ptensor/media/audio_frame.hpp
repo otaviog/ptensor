@@ -7,7 +7,7 @@
 #include "time/time.hpp"
 
 namespace p10::media {
-struct AudioFrame {
+class AudioFrame {
     Tensor samples;
     double sample_rate_hz = 0.0;
     std::optional<Time> start_time;

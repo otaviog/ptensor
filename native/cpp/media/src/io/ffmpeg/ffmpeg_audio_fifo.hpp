@@ -1,76 +1,48 @@
 #pragma once
 
 extern "C" {
-#include <libavutil/audio_fifo.h>
 #include <libavutil/channel_layout.h>
 #include <libavutil/frame.h>
 }
-#include "Exception.hpp"
-#include "Frame.hpp"
+
+struct AVAudioFifo;
 
 namespace p10::media {
 
 class FfmpegAudioFifo {
   public:
-    FfmpegAudioFifo() {
-        av_channel_layout_default(&m_channelLayout, 2);
+    FfmpegAudioFifo();
+
+    FfmpegAudioFifo(AVChannelLayout channel_layout, AVSampleFormat sample_format, int sample_rate);
+
+    ~FfmpegAudioFifo();
+
+    // Non-copyable
+    FfmpegAudioFifo(const FfmpegAudioFifo&) = delete;
+    FfmpegAudioFifo& operator=(const FfmpegAudioFifo&) = delete;
+
+    // Movable
+    FfmpegAudioFifo(FfmpegAudioFifo&& other) noexcept;
+    FfmpegAudioFifo& operator=(FfmpegAudioFifo&& other) noexcept;
+
+    void add_samples(AVFrame* frame);
+    void add_zeros(int pad_size);
+    AVFrame* pop_samples(int frame_size);
+    bool empty() const;
+    int num_samples() const;
+
+    int sample_rate() const {
+        return sample_rate_;
     }
 
-    FfmpegAudioFifo(AVChannelLayout channelLayout, AVSampleFormat sampleFormat, int sampleRate) :
-        m_channelLayout(channelLayout),
-        m_sampleFormat(sampleFormat),
-        m_sampleRate(sampleRate) {}
-
-    ~FfmpegAudioFifo() {
-        av_audio_fifo_free(m_audioFifo);
-    }
-
-    void addSamples(const AudioFrame& audioFrame);
-
-    void addSamples(AVFrame* frame);
-
-    void addZeros(int padSize);
-
-    AVFrame* popSamples(int frameSize);
-
-    AudioFrame popSamplesAsFrame(size_t numOfPopSamples);
-
-    bool empty() const {
-        if (m_audioFifo == nullptr) {
-            return true;
-        }
-        return av_audio_fifo_size(m_audioFifo) == 0;
-    }
-
-    int numSamples() const {
-        if (m_audioFifo == nullptr) {
-            return 0;
-        }
-        return av_audio_fifo_size(m_audioFifo);
-    }
-
-    int sampleRate() const {
-        return m_sampleRate;
-    }
-
-    void clear() {
-        if (m_audioFifo != nullptr) {
-            av_audio_fifo_reset(m_audioFifo);
-        }
-    }
+    void clear();
 
   private:
-    AVAudioFifo* getFifo() {
-        if (m_audioFifo == nullptr) {
-            m_audioFifo = av_audio_fifo_alloc(m_sampleFormat, m_channelLayout.nb_channels, 1);
-        }
-        return m_audioFifo;
-    }
+    AVAudioFifo* get_fifo();
 
-    AVAudioFifo* m_audioFifo = nullptr;
-    AVChannelLayout m_channelLayout;
-    AVSampleFormat m_sampleFormat = AV_SAMPLE_FMT_NONE;
-
-    int m_sampleRate = 0;
+    AVAudioFifo* audio_fifo_ = nullptr;
+    AVChannelLayout channel_layout_;
+    AVSampleFormat sample_format_ = AV_SAMPLE_FMT_NONE;
+    int sample_rate_ = 0;
 };
 }  // namespace p10::media

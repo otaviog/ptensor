@@ -37,6 +37,14 @@ class FfmpegSws {
         target_height_ = std::nullopt;
     }
 
+    void set_target_pixel_format(AVPixelFormat format) {
+        target_pixel_format_ = format;
+    }
+
+    AVPixelFormat target_pixel_format() const {
+        return target_pixel_format_;
+    }
+
   private:
     struct TargetSwsContextKey {
         int source_width;

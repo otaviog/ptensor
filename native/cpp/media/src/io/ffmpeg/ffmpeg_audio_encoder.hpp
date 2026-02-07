@@ -15,14 +15,24 @@ class AudioParameters;
 
 class FfmpegAudioEncoder {
   public:
+    FfmpegAudioEncoder() = default;
+    ~FfmpegAudioEncoder();
+
     P10Error create(const AudioParameters& audio_params, AVStream* audio_stream);
+
+    AVStream* stream() const {
+        return stream_;
+    }
+
+    AVCodecContext* codec_context() const {
+        return codec_context_;
+    }
 
   private:
     AVStream* stream_ = nullptr;
     AVCodecContext* codec_context_ = nullptr;
     FfmpegSwr resampler_;
     FfmpegAudioFifo fifo_;
-    int64_t m_audioCurrentPts = 0;
-    int64_t m_videoAudioSamplesDiff = 0;
+    int64_t audio_pts_ = 0;
 };
 }  // namespace p10::media

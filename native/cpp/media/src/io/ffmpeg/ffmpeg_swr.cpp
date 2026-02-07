@@ -38,7 +38,8 @@ P10Result<SwrContext*> FfmpegSwr::get_swr_context(
     int source_sample_rate
 ) {
     if (swr_ != nullptr) {
-        return Ok(swr_);
+        SwrContext* result = swr_;
+        return Ok(std::move(result));
     }
 
     P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(swr_alloc_set_opts2(
@@ -54,13 +55,14 @@ P10Result<SwrContext*> FfmpegSwr::get_swr_context(
     )));
 
     P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(swr_init(swr_)));
-    return Ok(swr_);
+    SwrContext* result = swr_;
+    return Ok(std::move(result));
 }
 
 P10Error FfmpegSwr::transform(const AVFrame* source_frame, AVFrame** output_frame) {
     *output_frame = nullptr;
 
-    auto target_frame = UniqueAVFrame(av_frame_alloc());
+    AVFrame* target_frame = av_frame_alloc();
     target_frame->sample_rate = target_sample_rate_;
     target_frame->format = target_sample_format_;
     target_frame->nb_samples =
@@ -93,73 +95,35 @@ P10Error FfmpegSwr::transform(const AVFrame* source_frame, AVFrame** output_fram
     );
     if (ret < 0) {
         av_frame_free(&target_frame);
-        return FfmpegWrapError(ret, "Could not fill target frame arrays");
+        return wrap_ffmpeg_error(ret, "Could not fill target frame arrays");
     }
 
-    SwrContext* swrConvContext = nullptr;
-    try {
-        swrConvContext = get_swr_context(
-            source_frame->ch_layout,
-            AVSampleFormat(source_frame->format),
-            source_frame->sample_rate
-        );
-    } catch (const AvException&) {
+    auto swr_result = get_swr_context(
+        source_frame->ch_layout,
+        AVSampleFormat(source_frame->format),
+        source_frame->sample_rate
+    );
+    if (swr_result.is_error()) {
         av_frame_free(&target_frame);
-        throw;
+        return swr_result.error();
     }
+    SwrContext* swrConvContext = swr_result.unwrap();
+
     const uint8_t** inData = (const uint8_t**)source_frame->data;
-    P10_RETURN_IF_ERROR(wrap_ffmpeg_error(swr_convert(
+    int convert_result = swr_convert(
         swrConvContext,
         target_frame->data,
         target_frame->nb_samples,
         inData,
         source_frame->nb_samples
-    )));
-
-    *output_frame = target_frame.release();
-    return Ok(target_frame.release());
-}
-
-AudioFrame FfmpegSwr::resample(const AudioFrame& sourceFrame) {
-    AudioFrame targetFrame(
-        target_channel_layout_.nb_channels,
-        int((sourceFrame.sampleSize() * size_t(target_sample_rate_))
-            / size_t(sourceFrame.sampleRate())),
-        toDtype(target_sample_format_),
-        target_sample_rate_
     );
-    AVChannelLayout source_channel_layout;
-    av_channel_layout_default(&source_channel_layout, int(sourceFrame.channels()));
-    SwrContext* swrConvContext = get_swr_context(
-        source_channel_layout,
-        toAVSampleFormat(sourceFrame.type()),
-        sourceFrame.sampleRate()
-    );
-
-    std::array<const uint8_t*, 8> inPlanes;
-    std::array<uint8_t*, 8> outPlanes;
-    for (size_t i = 0; i < sourceFrame.channels(); ++i) {
-        inPlanes[i] = sourceFrame.data<uint8_t>(i);
-        outPlanes[i] = targetFrame.data<uint8_t>(i);
+    if (convert_result < 0) {
+        av_frame_free(&target_frame);
+        return wrap_ffmpeg_error(convert_result, "Could not convert audio samples");
     }
 
-    FfmpegExpect(
-        swr_convert(
-            swrConvContext,
-            outPlanes.data(),
-            int(targetFrame.sampleSize()),
-            inPlanes.data(),
-            int(sourceFrame.sampleSize())
-        ),
-        "Could not resample audio frame: "
-    );
-
-    return targetFrame;
-}
-
-AVFrame* FfmpegSwr::operator()(const AudioFrame& inFrame) {
-    UniqueAVFrame avInFrame(asAVFrame(inFrame));
-    return operator()(avInFrame.get());
+    *output_frame = target_frame;
+    return P10Error::Ok;
 }
 
 }  // namespace p10::media

@@ -16,6 +16,12 @@ extern "C" {
 
 namespace p10::media {
 
+FfmpegAudioEncoder::~FfmpegAudioEncoder() {
+    if (codec_context_ != nullptr) {
+        avcodec_free_context(&codec_context_);
+    }
+}
+
 namespace {
     AVCodecID codec_id_from_audio_parameters(AudioCodec codec) {
         switch (codec.type()) {
@@ -40,10 +46,15 @@ P10Error FfmpegAudioEncoder::create(const AudioParameters& audio_params, AVStrea
     }
 
     codec_context_ = avcodec_alloc_context3(audioCodec);
-    codec_context_->bit_rate = audio_params.bit_rate();
-    codec_context_->sample_rate = audio_params.audio_sample_rate_hz();
-    codec_context_->sample_fmt = audioCodec->sample_fmts[0];
-    av_channel_layout_default(&codec_context_->ch_layout, audio_params.audio_channels());
+    codec_context_->bit_rate = static_cast<int64_t>(audio_params.bit_rate());
+    codec_context_->sample_rate = static_cast<int>(audio_params.audio_sample_rate_hz());
+
+    // Use FLTP as default sample format for AAC encoder
+    codec_context_->sample_fmt = AV_SAMPLE_FMT_FLTP;
+    av_channel_layout_default(
+        &codec_context_->ch_layout,
+        static_cast<int>(audio_params.audio_channels())
+    );
     // Time
     const AVRational audioTimeBase {1, static_cast<int>(audio_params.audio_sample_rate_hz())};
     stream_->time_base = audioTimeBase;
@@ -58,14 +69,13 @@ P10Error FfmpegAudioEncoder::create(const AudioParameters& audio_params, AVStrea
         wrap_ffmpeg_error(avcodec_parameters_from_context(stream_->codecpar, codec_context_))
     );
 
-    m_audioResampler = FfmpegAudioResampler(
+    resampler_.reset(
         codec_context_->ch_layout,
         codec_context_->sample_fmt,
         codec_context_->sample_rate
     );
-    m_audioFifo = FfmpegAudioFifo(
-        codec_context_->ch_layout,
-        codec_context_->sample_fmt,
-        codec_context_->sample_rate
-    );  // Bug, invert fifo and resampler.
+
+    return P10Error::Ok;
 }
+
+}  // namespace p10::media

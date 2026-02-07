@@ -1,6 +1,9 @@
 #include "ffmpeg_sws.hpp"
 
+extern "C" {
 #include <libavutil/frame.h>
+#include <libavutil/imgutils.h>
+}
 
 #include "ffmpeg_wrap_error.hpp"
 #include "video_frame.hpp"
@@ -72,14 +75,17 @@ P10Error FfmpegSws::transform(const VideoFrame& src, AVFrame** dst) {
         src_data,
         src_linesize,
         0,
-        dst_frame->height,
+        static_cast<int>(src.height()),
         dst_frame->data,
         dst_frame->linesize
     );
 
     if (result <= 0) {
+        av_frame_free(&dst_frame);
         return wrap_ffmpeg_error(result, "sws_scale failed");
     }
+
+    *dst = dst_frame;
     return P10Error::Ok;
 }
 

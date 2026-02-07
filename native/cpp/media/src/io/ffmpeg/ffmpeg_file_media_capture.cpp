@@ -27,11 +27,7 @@ FfmpegFileMediaCapture::open(const std::string& path) {
     P10_RETURN_ERR_IF_ERROR(
         wrap_ffmpeg_error(avformat_open_input(&format_ctx, path.c_str(), nullptr, nullptr))
     );
-
-    if (!format_ctx) {
-        return Err(P10Error(P10Error::IoError, "Failed to open media file: " + path));
-    }
-
+    assert(format_ctx != nullptr);
     P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(avformat_find_stream_info(format_ctx, nullptr)));
 
     const int video_stream_idx =

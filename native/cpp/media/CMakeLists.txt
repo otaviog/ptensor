@@ -59,6 +59,11 @@ target_include_directories(ptensor_media
     $<BUILD_INTERFACE:${FFMPEG_INCLUDE_DIRS}>
 )
 
+# Required when linking static FFmpeg into a shared library (recommended by vcpkg FFmpeg port)
+if(NOT WIN32)
+  target_link_options(ptensor_media PRIVATE -Wl,-Bsymbolic)
+endif()
+
 # Link all external dependencies as PRIVATE to avoid exporting absolute paths
 # Dependencies will be re-attached in ptensorConfig.cmake for consumers
 target_link_libraries(ptensor_media

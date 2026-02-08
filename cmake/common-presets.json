@@ -16,6 +16,7 @@
             "hidden": true,
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
                 "VCPKG_MANIFEST_FEATURES": "io;tests;op;media",
                 "WITH_IO": "ON",
                 "WITH_OP": "ON",

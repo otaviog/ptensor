@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ptensor/p10_error.hpp"
 extern "C" {
 #include <libavutil/channel_layout.h>
 #include <libavutil/frame.h>
@@ -9,11 +10,11 @@ struct AVAudioFifo;
 
 namespace p10::media {
 
+class AudioFrame;
+
 class FfmpegAudioFifo {
   public:
     FfmpegAudioFifo();
-
-    FfmpegAudioFifo(AVChannelLayout channel_layout, AVSampleFormat sample_format, int sample_rate);
 
     ~FfmpegAudioFifo();
 
@@ -25,11 +26,19 @@ class FfmpegAudioFifo {
     FfmpegAudioFifo(FfmpegAudioFifo&& other) noexcept;
     FfmpegAudioFifo& operator=(FfmpegAudioFifo&& other) noexcept;
 
-    void add_samples(AVFrame* frame);
-    void add_zeros(int pad_size);
-    AVFrame* pop_samples(int frame_size);
+    void reset();
+
+    void reset(AVChannelLayout channel_layout, AVSampleFormat sample_format, int sample_rate);
+
+    P10Error add_samples(AVFrame* frame);
+
+    P10Error add_samples(AudioFrame& frame);
+
+    P10Error pop_samples(int frame_size, AVFrame** out_frame);
+
     bool empty() const;
-    int num_samples() const;
+
+    size_t num_samples() const;
 
     int sample_rate() const {
         return sample_rate_;
@@ -38,6 +47,7 @@ class FfmpegAudioFifo {
     void clear();
 
   private:
+    P10Error add_samples(void** data, int nb_samples, int sample_rate);
     AVAudioFifo* get_fifo();
 
     AVAudioFifo* audio_fifo_ = nullptr;

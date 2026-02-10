@@ -1,5 +1,7 @@
 #include "ffmpeg_video_encoder.hpp"
 
+#include "ffmpeg_memory.hpp"
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavcodec/codec_id.h>
@@ -17,14 +19,14 @@ extern "C" {
 
 namespace p10::media {
 namespace {
-AVCodecID codec_id_from_video_parameters(const VideoParameters& video_params) {
-    switch (video_params.codec().type()) {
-        case VideoCodec::CodecType::H264:
-            return AV_CODEC_ID_H264;
-        default:
-            return AV_CODEC_ID_NONE;
+    AVCodecID codec_id_from_video_parameters(const VideoParameters& video_params) {
+        switch (video_params.codec().type()) {
+            case VideoCodec::CodecType::H264:
+                return AV_CODEC_ID_H264;
+            default:
+                return AV_CODEC_ID_NONE;
+        }
     }
-}
 
 }  // namespace
 
@@ -39,14 +41,12 @@ FfmpegVideoEncoder::~FfmpegVideoEncoder() {
     }
 }
 
-P10Error FfmpegVideoEncoder::create(
-    const VideoParameters& video_params,
-    AVFormatContext* output_format
-) {
+P10Error
+FfmpegVideoEncoder::create(const VideoParameters& video_params, AVFormatContext* output_format) {
     AVCodecID codec_id = codec_id_from_video_parameters(video_params);
     if (codec_id == AV_CODEC_ID_NONE) {
-        // Default to H264 if no codec specified
-        codec_id = AV_CODEC_ID_H264;
+        return P10Error::IoError << std::string("Could not find video codec for codec ")
+            + video_params.codec().to_string();
     }
 
     const AVCodec* codec = avcodec_find_encoder(codec_id);
@@ -54,12 +54,12 @@ P10Error FfmpegVideoEncoder::create(
         return P10Error::IoError << "Could not find video encoder for codec";
     }
 
-    video_stream_ = avformat_new_stream(output_format, codec);
-    if (video_stream_ == nullptr) {
+    stream_ = avformat_new_stream(output_format, codec);
+    if (stream_ == nullptr) {
         return P10Error::InvalidOperation << "Could not add video stream";
     }
 
-    video_stream_->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
+    stream_->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
     video_encoder_context_ = avcodec_alloc_context3(codec);
     if (video_encoder_context_ == nullptr) {
         return P10Error::OutOfMemory << "Could not allocate video codec context";
@@ -84,7 +84,7 @@ P10Error FfmpegVideoEncoder::create(
         static_cast<int>(frame_rate.num()),
         static_cast<int>(frame_rate.den())
     };
-    video_stream_->time_base = video_encoder_context_->time_base;
+    stream_->time_base = video_encoder_context_->time_base;
 
     // Some formats require global headers
     if (output_format->oformat->flags & AVFMT_GLOBALHEADER) {
@@ -93,7 +93,7 @@ P10Error FfmpegVideoEncoder::create(
 
     P10_RETURN_IF_ERROR(wrap_ffmpeg_error(avcodec_open2(video_encoder_context_, codec, nullptr)));
     P10_RETURN_IF_ERROR(wrap_ffmpeg_error(
-        avcodec_parameters_from_context(video_stream_->codecpar, video_encoder_context_)
+        avcodec_parameters_from_context(stream_->codecpar, video_encoder_context_)
     ));
 
     video_rescaler_.set_target_size(video_params.width(), video_params.height());
@@ -102,14 +102,14 @@ P10Error FfmpegVideoEncoder::create(
     return P10Error::Ok;
 }
 
-P10Error FfmpegVideoEncoder::encode_frame(const VideoFrame& frame, int64_t pts) {
+P10Error FfmpegVideoEncoder::encode(const VideoFrame& frame, int64_t pts) {
     AVFrame* av_frame = nullptr;
     P10_RETURN_IF_ERROR(video_rescaler_.transform(frame, &av_frame));
 
     av_frame->pts = pts;
     av_frame->pkt_dts = pts;
 
-    P10Error err = send_frame(av_frame);
+    P10Error err = wrap_ffmpeg_error(avcodec_send_frame(video_encoder_context_, av_frame));
     av_frame_free(&av_frame);
 
     if (err.is_error()) {
@@ -121,47 +121,41 @@ P10Error FfmpegVideoEncoder::encode_frame(const VideoFrame& frame, int64_t pts) 
 
 P10Error FfmpegVideoEncoder::flush() {
     // Send NULL frame to signal end of stream
-    int ret = avcodec_send_frame(video_encoder_context_, nullptr);
-    if (ret < 0 && ret != AVERROR_EOF) {
-        return wrap_ffmpeg_error(ret, "Failed to flush video encoder");
+    int err = avcodec_send_frame(video_encoder_context_, nullptr);
+    if (err < 0 && err != AVERROR_EOF) {
+        return wrap_ffmpeg_error(err, "Failed to send flush frame to video encoder");
+    }
+    if (err == AVERROR_EOF) {
+        // Encoder is already flushed
+        return P10Error::Ok;
     }
     return receive_packets();
 }
 
-P10Error FfmpegVideoEncoder::send_frame(AVFrame* frame) {
-    int ret = avcodec_send_frame(video_encoder_context_, frame);
-    if (ret < 0) {
-        return wrap_ffmpeg_error(ret, "Failed to send frame to video encoder");
-    }
-    return P10Error::Ok;
-}
-
-P10Error FfmpegVideoEncoder::receive_packets() {
-    while (true) {
-        AVPacket* pkt = av_packet_alloc();
-        int ret = avcodec_receive_packet(video_encoder_context_, pkt);
-
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-            av_packet_free(&pkt);
-            break;
-        } else if (ret < 0) {
-            av_packet_free(&pkt);
-            return wrap_ffmpeg_error(ret, "Failed to receive packet from video encoder");
-        }
-
-        pkt->stream_index = video_stream_->index;
-        packet_queue_.push(pkt);
-    }
-    return P10Error::Ok;
-}
-
-AVPacket* FfmpegVideoEncoder::pop_packet() {
+AVPacket* FfmpegVideoEncoder::pop_encoded_packet() {
     if (packet_queue_.empty()) {
         return nullptr;
     }
     AVPacket* pkt = packet_queue_.front();
     packet_queue_.pop();
     return pkt;
+}
+
+P10Error FfmpegVideoEncoder::receive_packets() {
+    while (true) {
+        UniqueAvPacket pkt(av_packet_alloc());
+        int ret = avcodec_receive_packet(video_encoder_context_, pkt.get());
+
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+            break;
+        } else if (ret < 0) {
+            return wrap_ffmpeg_error(ret, "Failed to receive packet from video encoder");
+        }
+
+        pkt->stream_index = stream_->index;
+        packet_queue_.push(pkt.release());
+    }
+    return P10Error::Ok;
 }
 
 }  // namespace p10::media

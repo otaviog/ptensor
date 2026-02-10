@@ -20,7 +20,7 @@ class FfmpegVideoEncoder {
 
     P10Error create(const VideoParameters& video_params, AVFormatContext* output_format);
 
-    P10Error encode_frame(const VideoFrame& frame, int64_t pts);
+    P10Error encode(const VideoFrame& frame, int64_t pts);
 
     P10Error flush();
 
@@ -28,10 +28,10 @@ class FfmpegVideoEncoder {
         return !packet_queue_.empty();
     }
 
-    AVPacket* pop_packet();
+    AVPacket* pop_encoded_packet();
 
     AVStream* stream() const {
-        return video_stream_;
+        return stream_;
     }
 
     AVCodecContext* codec_context() const {
@@ -39,10 +39,9 @@ class FfmpegVideoEncoder {
     }
 
   private:
-    P10Error send_frame(AVFrame* frame);
     P10Error receive_packets();
 
-    AVStream* video_stream_ = nullptr;
+    AVStream* stream_ = nullptr;
     AVCodecContext* video_encoder_context_ = nullptr;
     FfmpegSws video_rescaler_;
 

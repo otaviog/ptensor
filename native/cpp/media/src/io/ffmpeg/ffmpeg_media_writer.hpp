@@ -41,7 +41,6 @@ class FfmpegMediaWriter: public MediaWriter::Impl {
     AVFormatContext* format_context_ = nullptr;
     MediaParameters params_;
     bool header_written_ = false;
-    bool closed_ = false;
 
     std::unique_ptr<FfmpegVideoEncoder> video_encoder_;
     std::unique_ptr<FfmpegAudioEncoder> audio_encoder_;

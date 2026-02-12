@@ -1,0 +1,146 @@
+{
+  "version": 6,
+  "include": [
+    "common-presets.json"
+  ],
+  "configurePresets": [
+    {
+      "inherits": "base-dev",
+      "name": "mac-base-dev",
+      "hidden": true,
+      "generator": "Ninja",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "inherits": "mac-base-dev",
+      "name": "mac-debug",
+      "hidden": false,
+      "displayName": "Dev debug (macOS)",
+      "description": "Development DEBUG build with Ninja on macOS",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-O0",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "inherits": "mac-base-dev",
+      "name": "mac-debug-asan",
+      "hidden": false,
+      "displayName": "Dev debug asan (macOS)",
+      "description": "Development DEBUG with address sanitizer build with Ninja on macOS",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-fsanitize=address -O0",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "inherits": "mac-base-dev",
+      "name": "mac-release",
+      "hidden": false,
+      "displayName": "Dev release (macOS)",
+      "description": "Development RELEASE build with Ninja on macOS",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "mac-debug",
+      "configurePreset": "mac-debug"
+    },
+    {
+      "name": "mac-debug-install",
+      "configurePreset": "mac-debug",
+      "targets": [
+        "install"
+      ]
+    },
+    {
+      "name": "mac-release",
+      "configurePreset": "mac-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "-mac-base-test",
+      "hidden": true,
+      "description": "Run tests",
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": false
+      },
+      "filter": {
+        "include": {
+          "name": ".*"
+        }
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "mac-debug",
+      "configurePreset": "mac-debug",
+      "inherits": "-mac-base-test"
+    },
+    {
+      "name": "mac-release",
+      "configurePreset": "mac-release",
+      "inherits": "-mac-base-test"
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "mac-dev-package",
+      "configurePreset": "mac-release",
+      "generators": [
+        "TGZ"
+      ]
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "mac-dev",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "mac-debug"
+        },
+        {
+          "type": "build",
+          "name": "mac-debug"
+        },
+        {
+          "type": "test",
+          "name": "mac-debug"
+        }
+      ]
+    },
+    {
+      "name": "mac-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "mac-release"
+        },
+        {
+          "type": "build",
+          "name": "mac-release"
+        },
+        {
+          "type": "test",
+          "name": "mac-release"
+        },
+        {
+          "type": "package",
+          "name": "mac-dev-package"
+        }
+      ]
+    }
+  ]
+}

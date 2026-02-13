@@ -3,6 +3,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include <ptensor/media/io/media_capture.hpp>
+#include <ptensor/media/video_frame.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
 
 namespace p10::media {

@@ -1,7 +1,7 @@
 #include "time/time.hpp"
 
 namespace p10::media {
-bool Time::operator>(const Time& lhs, const Time& rhs) {
+bool operator>(const Time& lhs, const Time& rhs) {
     if (lhs.base_.den() == rhs.base_.den()) {
         return lhs.stamp_ > rhs.stamp_;
     }

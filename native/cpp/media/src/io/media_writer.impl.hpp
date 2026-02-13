@@ -1,6 +1,6 @@
 #pragma once
 
-#include "media_writer.hpp"
+#include "io/media_writer.hpp"
 
 namespace p10::media {
 class MediaWriter::Impl {

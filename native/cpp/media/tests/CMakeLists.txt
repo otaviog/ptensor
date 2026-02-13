@@ -1,5 +1,5 @@
 add_library(unit_tests_media OBJECT
-    test_media_capture.cpp test_video_queue.cpp
+    test_media_capture.cpp test_video_queue.cpp test_media_writer.cpp
 )
 target_include_directories(
     unit_tests_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src

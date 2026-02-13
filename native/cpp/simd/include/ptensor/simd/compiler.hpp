@@ -1,7 +1,9 @@
 #pragma once
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
     #define PTENSOR_AVX2
-#else
+#elif defined(__x86_64__) || defined(__i386__)
     #define PTENSOR_AVX2 __attribute__((target("avx2")))
+#else
+    #define PTENSOR_AVX2
 #endif

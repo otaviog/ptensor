@@ -4,11 +4,14 @@
 #include <cmath>
 #include <numbers>
 
-#include <immintrin.h>  // AVX2 intrinsics
 #include <ptensor/dtype.hpp>
 #include <ptensor/p10_error.hpp>
 #include <ptensor/simd/bitwise_math.hpp>
 #include <ptensor/tensor.hpp>
+
+#if PTENSOR_HAS_INTRINSICS_H
+#include <immintrin.h>  // AVX2 intrinsics
+#endif
 
 #include <type_traits>
 

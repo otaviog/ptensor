@@ -3,11 +3,14 @@
 #include <cstddef>
 #include <cstdint>
 
-#include <immintrin.h>  // AVX2 intrinsics
 #include <ptensor/dtype.hpp>
 #include <ptensor/simd/compiler.hpp>
 #include <ptensor/simd/cpuid.hpp>
 #include <ptensor/tensor.hpp>
+
+#if PTENSOR_HAS_INTRINSICS_H
+#include <immintrin.h>  // AVX2 intrinsics
+#endif
 
 namespace p10::op {
 namespace {
@@ -19,12 +22,14 @@ namespace {
         int64_t new_height
     );
 
+#if PTENSOR_HAS_INTRINSICS_H
     PTENSOR_AVX2 P10Error resize_avx2_impl(
         Accessor3D<const uint8_t> input,
         Accessor3D<uint8_t> output,
         int64_t new_width,
         int64_t new_height
     );
+#endif
 }  // namespace
 
 P10Error resize(const Tensor& input, Tensor& output, size_t new_width, size_t new_height) {
@@ -52,6 +57,7 @@ P10Error resize(const Tensor& input, Tensor& output, size_t new_width, size_t ne
         };
 
         if constexpr (std::is_same_v<scalar_t, uint8_t>) {
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
             if (simd::is_avx2_supported() && input.is_contiguous()) {
                 return resize_avx2_impl(
                     input_accessor,
@@ -62,6 +68,9 @@ P10Error resize(const Tensor& input, Tensor& output, size_t new_width, size_t ne
             } else {
                 return default_impl();
             }
+#else
+            return default_impl();
+#endif
         } else {
             return default_impl();
         }
@@ -103,6 +112,7 @@ namespace {
         return P10Error::Ok;
     }
 
+#if PTENSOR_HAS_INTRINSICS_H
     PTENSOR_AVX2 P10Error resize_avx2_impl(
         Accessor3D<const uint8_t> input,
         Accessor3D<uint8_t> output,
@@ -170,6 +180,7 @@ namespace {
 
         return P10Error::Ok;
     }
+#endif  // x86
 }  // namespace
 
 }  // namespace p10::op

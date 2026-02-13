@@ -4,6 +4,10 @@
     #include <intrin.h>
 #endif
 
+#if __has_include(<intrinsics.h>)
+    #define PTENSOR_HAS_INTRINSICS_H
+#endif
+
 namespace p10::simd {
 inline bool is_avx2_supported() {
 #if defined(_MSC_VER)
@@ -16,8 +20,10 @@ inline bool is_avx2_supported() {
         return (cpuInfo[1] & (1 << 5)) != 0;  // EBX bit 5 is AVX2
     }
     return false;
-#else
+#elif defined(__x86_64__) || defined(__i386__)
     return __builtin_cpu_supports("avx2");
+#else
+    return false;
 #endif
 }
 }  // namespace p10::simd

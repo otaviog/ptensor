@@ -2,8 +2,12 @@
 
 #include <cstdint>
 
-#include <immintrin.h>
 #include <ptensor/simd/compiler.hpp>
+
+#ifdef PTENSOR_HAS_INTRINSICS_H
+    #include <intrinsics.h>
+#endif
+
 #include <ptensor/simd/cpuid.hpp>
 
 #include "p10_error.hpp"
@@ -40,6 +44,7 @@ void transpose_8x8_generic(
     }
 }
 
+#if PTENSOR_HAS_INTRINSICS_H
 PTENSOR_AVX2 void
 transpose_avx2_8x8_32(int32_t const* src, size_t src_stride, int32_t* dst, size_t dst_stride) {
     __m256i row0 = _mm256_loadu_si256((__m256i const*)src);
@@ -132,6 +137,7 @@ transpose_avx2_8x8_32(int32_t const* src, size_t src_stride, int32_t* dst, size_
     _mm256_storeu_si256((__m256i*)(dst + 6 * dst_stride), row6t);
     _mm256_storeu_si256((__m256i*)(dst + 7 * dst_stride), row7t);
 }
+#endif  // x86
 
 template<size_t b>
 constexpr inline size_t bitwise_modulo(size_t a) {
@@ -179,7 +185,7 @@ P10Error Tensor::transpose(Tensor& other) const {
 
         const size_t aligned_max_rows = rows - bitwise_modulo<CACHE_BLOCK>(rows);
         const size_t aligned_max_cols = cols - bitwise_modulo<CACHE_BLOCK>(cols);
-        const bool avx2_supported = simd::is_avx2_supported();
+        [[maybe_unused]] const bool avx2_supported = simd::is_avx2_supported();
 
         for (size_t block_row = 0; block_row < aligned_max_rows; block_row += CACHE_BLOCK) {
             for (size_t block_col = 0; block_col < aligned_max_cols; block_col += CACHE_BLOCK) {
@@ -192,6 +198,7 @@ P10Error Tensor::transpose(Tensor& other) const {
                         const scalar_t* src_block = &src_row[simd_col];
                         scalar_t* dest_block = &dest_span.row(simd_col)[simd_row];
 
+#if PTENSOR_HAS_INTRINSICS_H
                         if constexpr (sizeof(scalar_t) == sizeof(int32_t)) {
                             if (avx2_supported) {
                                 transpose_avx2_8x8_32(
@@ -203,6 +210,7 @@ P10Error Tensor::transpose(Tensor& other) const {
                                 continue;
                             }
                         }
+#endif
 
                         transpose_8x8_generic(src_block, src_stride, dest_block, dst_stride);
                     }

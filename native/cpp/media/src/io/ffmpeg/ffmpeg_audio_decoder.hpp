@@ -12,8 +12,7 @@ class FfmpegAudioDecoder {
   public:
     FfmpegAudioDecoder() = default;
 
-    FfmpegAudioDecoder(AVStream* stream, AVCodecContext* codec_ctx, int stream_index) :
-        stream_(stream),
+    FfmpegAudioDecoder(AVCodecContext* codec_ctx, int stream_index) :
         codec_ctx_(codec_ctx),
         index_(stream_index) {}
 
@@ -33,7 +32,6 @@ class FfmpegAudioDecoder {
     }
 
   private:
-    AVStream* stream_ = nullptr;
     AVCodecContext* codec_ctx_ = nullptr;
     int index_ = -1;
 };

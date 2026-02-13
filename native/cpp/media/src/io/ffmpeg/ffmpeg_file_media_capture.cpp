@@ -66,7 +66,7 @@ FfmpegFileMediaCapture::open(const std::string& path) {
         );
 
         audio_decoder =
-            std::make_shared<FfmpegAudioDecoder>(audio_stream, audio_codec_ctx, audio_stream_idx);
+            std::make_shared<FfmpegAudioDecoder>(audio_codec_ctx, audio_stream_idx);
     }
 
     auto capture = std::shared_ptr<FfmpegFileMediaCapture>(

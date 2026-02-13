@@ -1,6 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
 
+#include <chrono>
+#include <thread>
+
 #include "io/video_queue.hpp"
 
 namespace p10::media {

@@ -60,7 +60,7 @@ target_include_directories(ptensor_media
 )
 
 # Required when linking static FFmpeg into a shared library (recommended by vcpkg FFmpeg port)
-if(NOT WIN32)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   target_link_options(ptensor_media PRIVATE -Wl,-Bsymbolic)
 endif()
 

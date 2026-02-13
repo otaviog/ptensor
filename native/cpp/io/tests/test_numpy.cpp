@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <map>
 
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <ptensor/io/numpy.hpp>
 #include <ptensor/tensor.hpp>
@@ -10,7 +11,7 @@
 
 namespace p10::io {
 
-TEST_CASE("save_npz and load_npz with single tensor", "[io][numpy]") {
+TEST_CASE("io::numpy::save_npz and load_npz with single tensor", "[io][numpy]") {
     const std::string filename = "test_single.npz";
 
     // Create a test tensor
@@ -47,20 +48,20 @@ TEST_CASE("save_npz and load_npz with single tensor", "[io][numpy]") {
     std::filesystem::remove(filename);
 }
 
-TEST_CASE("save_npz and load_npz with multiple tensors", "[io][numpy]") {
+TEST_CASE("io::numpy::save_npz and load_npz with multiple tensors", "[io][numpy]") {
     const std::string filename = "test_multiple.npz";
 
     // Create test tensors
     auto tensor1 = Tensor::full(make_shape({2, 3}).unwrap(), 1.0).unwrap();
     auto tensor2 = Tensor::full(make_shape({4, 5}).unwrap(), 42.0f).unwrap();
     auto tensor3 =
-        Tensor::full(make_shape({10}).unwrap(), 5, TensorOptions().dtype(Dtype::Int32)).unwrap();
+        Tensor::full(make_shape({10}).unwrap(), 5, TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     // Save to npz
     std::map<std::string, Tensor> tensors_to_save;
     tensors_to_save["ones"] = tensor1.clone().unwrap();
     tensors_to_save["forties"] = tensor2.clone().unwrap();
-    tensors_to_save["range"] = tensor3.clone().unwrap();
+    tensors_to_save["bytes"] = tensor3.clone().unwrap();
     auto save_err = save_npz(filename, tensors_to_save);
     REQUIRE_THAT(save_err, p10::testing::IsOk());
 
@@ -96,16 +97,15 @@ TEST_CASE("save_npz and load_npz with multiple tensors", "[io][numpy]") {
         }
     }
 
-    SECTION("verify range tensor") {
-        SKIP("Skipping: needs to change cnpy to support more dtypes");
-        REQUIRE(loaded_tensors.count("range") == 1);
-        auto& loaded = loaded_tensors["range"];
+    SECTION("verify bytes tensor") {
+        REQUIRE(loaded_tensors.count("bytes") == 1);
+        auto& loaded = loaded_tensors["bytes"];
         REQUIRE(loaded.shape() == tensor3.shape());
         REQUIRE(loaded.dtype() == tensor3.dtype());
 
-        auto data = loaded.as_span1d<int32_t>().unwrap();
+        auto data = loaded.as_span1d<uint8_t>().unwrap();
         for (size_t i = 0; i < data.size(); i++) {
-            REQUIRE(data[i] == static_cast<int32_t>(i));
+            REQUIRE(data[i] == static_cast<uint8_t>(5));
         }
     }
 
@@ -113,19 +113,18 @@ TEST_CASE("save_npz and load_npz with multiple tensors", "[io][numpy]") {
     std::filesystem::remove(filename);
 }
 
-TEST_CASE("save_npz with different data types", "[io][numpy]") {
-    SKIP("Skipping: needs to change cnpy to support more dtypes");
+TEST_CASE("io::numpy::save_npz with different data types", "[io][numpy]") {
     const std::string filename = "test_dtypes.npz";
 
-    auto float64_tensor =
-        Tensor::full(make_shape({2, 2}).unwrap(), 3.14, TensorOptions().dtype(Dtype::Float64))
+    auto float32_tensor =
+        Tensor::full(make_shape({2, 2}).unwrap(), 3.14f, TensorOptions().dtype(Dtype::Float32))
             .unwrap();
-    auto int32_tensor =
-        Tensor::full(make_shape({2, 3}).unwrap(), 3, TensorOptions().dtype(Dtype::Int32)).unwrap();
+    auto uint8_tensor =
+        Tensor::full(make_shape({2, 3}).unwrap(), 3, TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     std::map<std::string, Tensor> tensors_to_save;
-    tensors_to_save["float64"] = std::move(float64_tensor);
-    tensors_to_save["int32"] = std::move(int32_tensor);
+    tensors_to_save["float32"] = std::move(float32_tensor);
+    tensors_to_save["uint8"] = std::move(uint8_tensor);
 
     auto save_err = save_npz(filename, tensors_to_save);
     REQUIRE_THAT(save_err, p10::testing::IsOk());
@@ -136,32 +135,32 @@ TEST_CASE("save_npz with different data types", "[io][numpy]") {
     auto loaded_tensors = loaded_result.unwrap();
     REQUIRE(loaded_tensors.size() == 2);
 
-    // Verify float64
-    auto& loaded_float64 = loaded_tensors["float64"];
-    REQUIRE(loaded_float64.dtype() == Dtype::Float64);
-    auto float64_data = loaded_float64.as_span1d<double>().unwrap();
-    for (size_t i = 0; i < float64_data.size(); i++) {
-        REQUIRE(float64_data[i] == 3.14);
+    // Verify float32
+    auto& loaded_float32 = loaded_tensors["float32"];
+    REQUIRE(loaded_float32.dtype() == Dtype::Float32);
+    auto float32_data = loaded_float32.as_span1d<float>().unwrap();
+    for (size_t i = 0; i < float32_data.size(); i++) {
+        REQUIRE(float32_data[i] == Catch::Approx(3.14f));
     }
 
-    // Verify int32
-    auto& loaded_int32 = loaded_tensors["int32"];
-    REQUIRE(loaded_int32.dtype() == Dtype::Int32);
-    auto int32_data = loaded_int32.as_span1d<int32_t>().unwrap();
-    for (size_t i = 0; i < int32_data.size(); i++) {
-        REQUIRE(int32_data[i] == static_cast<int32_t>(i));
+    // Verify uint8
+    auto& loaded_uint8 = loaded_tensors["uint8"];
+    REQUIRE(loaded_uint8.dtype() == Dtype::Uint8);
+    auto uint8_data = loaded_uint8.as_span1d<uint8_t>().unwrap();
+    for (size_t i = 0; i < uint8_data.size(); i++) {
+        REQUIRE(uint8_data[i] == static_cast<uint8_t>(3));
     }
 
     // Cleanup
     std::filesystem::remove(filename);
 }
 
-TEST_CASE("load_npz with non-existent file returns error", "[io][numpy]") {
+TEST_CASE("io::numpy::load_npz with non-existent file returns error", "[io][numpy]") {
     auto result = load_npz("non_existent_file.npz");
     REQUIRE(!result.is_ok());
 }
 
-TEST_CASE("save_npz creates valid file", "[io][numpy]") {
+TEST_CASE("io::numpy::save_npz creates valid file", "[io][numpy]") {
     const std::string filename = "test_file_exists.npz";
 
     auto tensor = Tensor::zeros(make_shape({2, 2}).unwrap()).unwrap();

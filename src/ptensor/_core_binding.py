@@ -15,12 +15,14 @@ def get_library() -> ctypes.CDLL:
 
     _current_dir = Path(__file__).absolute().parent
     _SEARCH_PATHS = [
+        _current_dir / "../../build/mac-release/native/c",
+        _current_dir / "../../build/mac-debug/native/c",
         _current_dir / "../../build/lin-release/native/c",
         _current_dir / "../../build/lin-debug/native/c",
         _current_dir / "../../build/msbuild/native/c/Release",
         _current_dir / "../../build/msbuild/native/c/Debug",
     ]
-    _SEARCH_FILES = ["libptensor_capi.so", "ptensor_capi.dll"]
+    _SEARCH_FILES = ["libptensor_capi.dylib", "libptensor_capi.so", "ptensor_capi.dll"]
     for path in _SEARCH_PATHS:
         if not path.exists():
             continue

@@ -166,6 +166,7 @@ void FfmpegFileMediaCapture::read_next_packet() {
             status_ = CaptureStatus::Error;
             last_error_ = wrap_ffmpeg_error(read_ret_code, "Failed to read frame");
         }
+        video_queue_.cancel();
         return;
     }
 

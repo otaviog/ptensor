@@ -1,5 +1,6 @@
 #include "ffmpeg_media_writer.hpp"
 
+#include "ffmpeg_audio_encoder.hpp"
 #include "ffmpeg_wrap_error.hpp"
 #include "ptensor/p10_error.hpp"
 
@@ -49,14 +50,18 @@ FfmpegMediaWriter::create(const std::string& path, const MediaParameters& params
     }
 
     // Audio encoder part
+    std::unique_ptr<FfmpegAudioEncoder> audio_encoder = nullptr;
+
+#if 0
     const auto& audio_params = params.audio_parameters();
-    auto audio_encoder = std::make_unique<FfmpegAudioEncoder>();
+    audio_encoder = std::make_unique<FfmpegAudioEncoder>();
     error = audio_encoder->create(audio_params, format_ctx);
     if (error.is_error()) {
         avformat_free_context(format_ctx);
         format_ctx = nullptr;
         return Err(error);
     }
+#endif
 
     // Open output file
     if (!(format_ctx->oformat->flags & AVFMT_NOFILE)) {

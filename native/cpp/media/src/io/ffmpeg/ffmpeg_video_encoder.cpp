@@ -19,14 +19,7 @@ extern "C" {
 
 namespace p10::media {
 namespace {
-    AVCodecID codec_id_from_video_parameters(const VideoParameters& video_params) {
-        switch (video_params.codec().type()) {
-            case VideoCodec::CodecType::H264:
-                return AV_CODEC_ID_H264;
-            default:
-                return AV_CODEC_ID_NONE;
-        }
-    }
+    AVCodecID codec_id_from_video_parameters(const VideoParameters& video_params);
 
 }  // namespace
 
@@ -157,5 +150,17 @@ P10Error FfmpegVideoEncoder::receive_packets() {
     }
     return P10Error::Ok;
 }
+
+namespace {
+    AVCodecID codec_id_from_video_parameters(const VideoParameters& video_params) {
+        switch (video_params.codec().type()) {
+            case VideoCodec::CodecType::H264:
+                return AV_CODEC_ID_H264;
+            default:
+                return AV_CODEC_ID_NONE;
+        }
+    }
+
+}  // namespace
 
 }  // namespace p10::media

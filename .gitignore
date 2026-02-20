@@ -15,3 +15,5 @@ compile_commands.json
 lcov.info
 imgui.ini
 .claude/settings.local.json
+*.profraw
+.vscode/settings.json

@@ -6,7 +6,6 @@ extern "C" {
 }
 
 #include "ffmpeg_sws.hpp"
-#include "video_frame.hpp"
 #include "video_parameters.hpp"
 
 namespace p10::media {
@@ -35,6 +34,17 @@ class FfmpegVideoDecoder {
     }
 
     VideoParameters get_video_parameters() const;
+
+    std::optional<int64_t> video_frame_count() const {
+        if (stream_->nb_frames != 0) {
+            return stream_->nb_frames;
+        } else {
+            double duration_sec = stream_->duration * av_q2d(stream_->time_base);
+            double fps = av_q2d(stream_->avg_frame_rate);
+            return (int64_t)(duration_sec * fps);
+        }
+        return std::nullopt;
+    }
 
   private:
     AVStream* stream_ = nullptr;

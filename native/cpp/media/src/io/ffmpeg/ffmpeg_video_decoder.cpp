@@ -61,5 +61,4 @@ VideoParameters FfmpegVideoDecoder::get_video_parameters() const {
 
     return params;
 }
-
 }  // namespace p10::media

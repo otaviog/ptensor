@@ -204,4 +204,20 @@ void FfmpegFileMediaCapture::decode_video_packet(const AVPacket* pkt) {
 void FfmpegFileMediaCapture::decode_audio_packet(const AVPacket*) {
     //AVFrame* frame = audio_decoder_->decode_packet(pkt);
 }
+
+std::optional<int64_t> FfmpegFileMediaCapture::video_frame_count() const {
+    if (video_decoder_ != nullptr) {
+        return video_decoder_->video_frame_count();
+    } 
+    return std::nullopt;
+}
+
+std::optional<double> FfmpegFileMediaCapture::duration() const {
+    if (format_ctx_ != nullptr) {
+        if (format_ctx_->duration != AV_NOPTS_VALUE) {
+            return format_ctx_->duration / double(AV_TIME_BASE);
+        }
+    }
+    return std::nullopt;
+}
 }  // namespace p10::media

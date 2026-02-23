@@ -3,6 +3,7 @@
 extern "C" {
 #include <libavutil/frame.h>
 #include <libavutil/imgutils.h>
+#include <libswscale/swscale.h>
 }
 
 #include "ffmpeg_wrap_error.hpp"

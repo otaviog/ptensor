@@ -36,6 +36,7 @@ class FfmpegMediaWriter: public MediaWriter::Impl {
     P10Error flush_video_encoder();
     P10Error flush_audio_encoder();
     P10Error write_video_packet(AVPacket* packet);
+    P10Error pop_video_packets();
     P10Error write_audio_packet(AVPacket* packet);
 
     AVFormatContext* format_context_ = nullptr;
@@ -44,7 +45,5 @@ class FfmpegMediaWriter: public MediaWriter::Impl {
 
     std::unique_ptr<FfmpegVideoEncoder> video_encoder_;
     std::unique_ptr<FfmpegAudioEncoder> audio_encoder_;
-
-    int64_t video_pts_ = 0;
 };
 }  // namespace p10::media

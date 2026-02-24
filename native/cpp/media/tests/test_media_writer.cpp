@@ -89,10 +89,13 @@ TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
 
         MediaParameters new_params = original_params;
 
+        const int new_width = original_params.video_parameters().width() / 2;
+        const int new_height = (original_params.video_parameters().height() / 2) & ~1;
+
         new_params.video_parameters()
             .frame_rate(NEW_FRAME_RATE)
-            .width(original_params.video_parameters().width() / 2)
-            .height(original_params.video_parameters().height() / 2);
+            .width(new_width)
+            .height(new_height);
 
         MediaWriter writer = MediaWriter::open_file(OUT_FILE, new_params)
                                  .expect("should open output file for write");
@@ -105,17 +108,13 @@ TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
         }
         writer.close();
 
-        // check media read with different parameters"
+        // check media read with different parameters
         MediaCapture capture_out =
             MediaCapture::open_file(OUT_FILE).expect("should open output file");
 
         MediaParameters params = capture_out.get_parameters();
-        REQUIRE(
-            params.video_parameters().width() == original_params.video_parameters().width() / 2
-        );
-        REQUIRE(
-            params.video_parameters().height() == original_params.video_parameters().height() / 2
-        );
+        REQUIRE(params.video_parameters().width() == new_width);
+        REQUIRE(params.video_parameters().height() == new_height);
         REQUIRE(params.video_parameters().frame_rate() == NEW_FRAME_RATE);
     }
 }

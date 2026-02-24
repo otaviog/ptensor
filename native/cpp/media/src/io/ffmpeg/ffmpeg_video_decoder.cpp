@@ -22,7 +22,7 @@ namespace {
 P10Result<FfmpegVideoDecoder::DecodeStatus>
 FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
     int ret = avcodec_send_packet(codec_ctx_, pkt);
-    if (ret < 0) {
+    if (ret < 0 && ret != AVERROR_EOF) {
         return Err(wrap_ffmpeg_error(ret));
     }
 

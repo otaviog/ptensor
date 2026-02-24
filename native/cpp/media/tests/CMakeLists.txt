@@ -4,7 +4,8 @@ add_library(unit_tests_media OBJECT
 )
 target_include_directories(
     unit_tests_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/ptensor/media)
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/ptensor/media
+    ${FFMPEG_INCLUDE_DIRS})
 ptensor_target_options(unit_tests_media Media)
 target_link_libraries(unit_tests_media
     PUBLIC ptensor ptensor_media PRIVATE Catch2::Catch2 ptensor_testing ${FFMPEG_LIBRARIES})

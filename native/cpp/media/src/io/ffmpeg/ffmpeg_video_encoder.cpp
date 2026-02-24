@@ -140,11 +140,7 @@ P10Error FfmpegVideoEncoder::receive_packets() {
 P10Error FfmpegVideoEncoder::flush() {
     // Send NULL frame to signal end of stream
     int err = avcodec_send_frame(video_encoder_context_, nullptr);
-    if (err == AVERROR_EOF) {
-        // Encoder is already flushed
-        return P10Error::Ok;
-    }
-    if (err < 0) {
+    if (err < 0 && err != AVERROR_EOF) {
         return wrap_ffmpeg_error(err, "Failed to send flush frame to video encoder");
     }
 

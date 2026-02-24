@@ -29,7 +29,7 @@ class VideoQueue {
     std::optional<VideoFrame> wait_and_pop() {
         std::unique_lock lock(mutex_);
         cv_.wait(lock, [this]() { return !queue_.empty() || cancel_; });
-        if (cancel_) {
+        if (queue_.empty()) {
             return std::nullopt;
         }
         VideoFrame frame = std::move(queue_.front());
@@ -40,9 +40,6 @@ class VideoQueue {
 
     std::optional<VideoFrame> try_pop() {
         std::unique_lock lock(mutex_);
-        if (cancel_) {
-            return std::nullopt;
-        }
         if (queue_.empty()) {
             return std::nullopt;
         }

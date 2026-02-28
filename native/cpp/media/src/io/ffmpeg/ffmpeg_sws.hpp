@@ -1,13 +1,14 @@
 #pragma once
 
 extern "C" {
-#include <libavcodec/packet.h>
-#include <libavutil/frame.h>
-#include <libswscale/swscale.h>
+#include <libavutil/pixfmt.h>
 }
 #include <ptensor/p10_error.hpp>
 
 #include "video_frame.hpp"
+
+struct SwsContext;
+struct AVFrame;
 
 namespace p10::media {
 class FfmpegSws {

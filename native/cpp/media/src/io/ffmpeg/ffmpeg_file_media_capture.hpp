@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <thread>
 
@@ -35,6 +36,10 @@ class FfmpegFileMediaCapture: public MediaCapture::Impl {
     P10Error get_video(VideoFrame& frame) override;
 
     P10Error get_audio(AudioFrame& frame) override;
+
+    std::optional<int64_t> video_frame_count() const override;
+
+    std::optional<double> duration() const override;
 
     bool is_open() const {
         return format_ctx_ != nullptr;

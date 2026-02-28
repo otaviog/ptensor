@@ -1,4 +1,5 @@
 #include "ffmpeg_video_encoder.hpp"
+#include <cstdint>
 
 #include "ffmpeg_memory.hpp"
 
@@ -19,14 +20,15 @@ extern "C" {
 
 namespace p10::media {
 namespace {
-    AVCodecID codec_id_from_video_parameters(const VideoParameters& video_params) {
-        switch (video_params.codec().type()) {
-            case VideoCodec::CodecType::H264:
-                return AV_CODEC_ID_H264;
-            default:
-                return AV_CODEC_ID_NONE;
-        }
+
+AVCodecID codec_id_from_video_parameters(const VideoParameters& video_params) {
+    switch (video_params.codec().type()) {
+        case VideoCodec::CodecType::H264:
+            return AV_CODEC_ID_H264;
+        default:
+            return AV_CODEC_ID_NONE;
     }
+}
 
 }  // namespace
 
@@ -79,10 +81,10 @@ FfmpegVideoEncoder::create(const VideoParameters& video_params, AVFormatContext*
     video_encoder_context_->height = video_params.height();
 
     // Time base - use frame rate
-    Rational frame_rate = video_params.frame_rate();
+    time_base_ = video_params.frame_rate().inverse();
     video_encoder_context_->time_base = {
-        static_cast<int>(frame_rate.num()),
-        static_cast<int>(frame_rate.den())
+        static_cast<int>(time_base_.num()),
+        static_cast<int>(time_base_.den())
     };
     stream_->time_base = video_encoder_context_->time_base;
 
@@ -102,12 +104,11 @@ FfmpegVideoEncoder::create(const VideoParameters& video_params, AVFormatContext*
     return P10Error::Ok;
 }
 
-P10Error FfmpegVideoEncoder::encode(const VideoFrame& frame, int64_t pts) {
+P10Error FfmpegVideoEncoder::encode(const VideoFrame& frame) {
     AVFrame* av_frame = nullptr;
     P10_RETURN_IF_ERROR(video_rescaler_.transform(frame, &av_frame));
 
-    av_frame->pts = pts;
-    av_frame->pkt_dts = pts;
+    av_frame->pts = frame_count_++;
 
     P10Error err = wrap_ffmpeg_error(avcodec_send_frame(video_encoder_context_, av_frame));
     av_frame_free(&av_frame);
@@ -117,28 +118,6 @@ P10Error FfmpegVideoEncoder::encode(const VideoFrame& frame, int64_t pts) {
     }
 
     return receive_packets();
-}
-
-P10Error FfmpegVideoEncoder::flush() {
-    // Send NULL frame to signal end of stream
-    int err = avcodec_send_frame(video_encoder_context_, nullptr);
-    if (err < 0 && err != AVERROR_EOF) {
-        return wrap_ffmpeg_error(err, "Failed to send flush frame to video encoder");
-    }
-    if (err == AVERROR_EOF) {
-        // Encoder is already flushed
-        return P10Error::Ok;
-    }
-    return receive_packets();
-}
-
-AVPacket* FfmpegVideoEncoder::pop_encoded_packet() {
-    if (packet_queue_.empty()) {
-        return nullptr;
-    }
-    AVPacket* pkt = packet_queue_.front();
-    packet_queue_.pop();
-    return pkt;
 }
 
 P10Error FfmpegVideoEncoder::receive_packets() {
@@ -156,6 +135,25 @@ P10Error FfmpegVideoEncoder::receive_packets() {
         packet_queue_.push(pkt.release());
     }
     return P10Error::Ok;
+}
+
+P10Error FfmpegVideoEncoder::flush() {
+    // Send NULL frame to signal end of stream
+    int err = avcodec_send_frame(video_encoder_context_, nullptr);
+    if (err < 0 && err != AVERROR_EOF) {
+        return wrap_ffmpeg_error(err, "Failed to send flush frame to video encoder");
+    }
+
+    return receive_packets();
+}
+
+AVPacket* FfmpegVideoEncoder::pop_encoded_packet() {
+    if (packet_queue_.empty()) {
+        return nullptr;
+    }
+    AVPacket* pkt = packet_queue_.front();
+    packet_queue_.pop();
+    return pkt;
 }
 
 }  // namespace p10::media

@@ -1,5 +1,5 @@
 #pragma once
-#include <cinttypes>
+#include <cstdint>
 
 namespace p10::media {
 class Rational {

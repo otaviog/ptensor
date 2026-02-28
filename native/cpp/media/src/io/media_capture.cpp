@@ -5,7 +5,9 @@
 namespace p10::media {
 
 void MediaCapture::close() {
-    impl_->close();
+    if (impl_) {
+        impl_->close();
+    }
 }
 
 P10Result<MediaCapture> MediaCapture::open_file(const std::string& path) {
@@ -30,5 +32,13 @@ P10Error MediaCapture::get_audio(AudioFrame& frame) {
 
 MediaParameters MediaCapture::get_parameters() const {
     return impl_->get_parameters();
+}
+
+std::optional<int64_t> MediaCapture::video_frame_count() const {
+    return impl_->video_frame_count();
+}
+
+std::optional<double> MediaCapture::duration() const {
+    return impl_->duration();
 }
 }  // namespace p10::media

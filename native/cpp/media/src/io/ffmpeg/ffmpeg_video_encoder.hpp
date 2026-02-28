@@ -3,6 +3,7 @@
 #include <queue>
 
 #include "ffmpeg_sws.hpp"
+#include "time/rational.hpp"
 
 struct AVFormatContext;
 struct AVStream;
@@ -20,7 +21,7 @@ class FfmpegVideoEncoder {
 
     P10Error create(const VideoParameters& video_params, AVFormatContext* output_format);
 
-    P10Error encode(const VideoFrame& frame, int64_t pts);
+    P10Error encode(const VideoFrame& frame);
 
     P10Error flush();
 
@@ -44,6 +45,8 @@ class FfmpegVideoEncoder {
     AVStream* stream_ = nullptr;
     AVCodecContext* video_encoder_context_ = nullptr;
     FfmpegSws video_rescaler_;
+    Rational time_base_;
+    int64_t frame_count_ = 0;
 
     std::queue<AVPacket*> packet_queue_;
 };

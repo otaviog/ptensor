@@ -110,7 +110,7 @@ P10Result<bool> FfmpegFileMediaCapture::next_frame() {
         }
         return Ok(false);
     } else if (capture_status == CaptureStatus::EndOfFile) {
-        current_frame_ = video_queue_.try_pop();
+        current_frame_ = video_queue_.wait_and_pop();
         if (current_frame_.has_value()) {
             return Ok(true);
         } else {
@@ -162,6 +162,9 @@ void FfmpegFileMediaCapture::read_next_packet() {
     if (read_ret_code < 0) {
         if (read_ret_code == AVERROR_EOF) {
             status_ = CaptureStatus::EndOfFile;
+            if (video_decoder_ != nullptr) {
+                decode_video_packet(nullptr);
+            }
         } else {
             status_ = CaptureStatus::Error;
             last_error_ = wrap_ffmpeg_error(read_ret_code, "Failed to read frame");
@@ -196,12 +199,27 @@ void FfmpegFileMediaCapture::decode_video_packet(const AVPacket* pkt) {
         case FfmpegVideoDecoder::DecodeStatus::Again:
         default:
             // Do nothing, continue reading packets
-            assert(status_ == CaptureStatus::Reading);
             break;
     }
 }
 
 void FfmpegFileMediaCapture::decode_audio_packet(const AVPacket*) {
     //AVFrame* frame = audio_decoder_->decode_packet(pkt);
+}
+
+std::optional<int64_t> FfmpegFileMediaCapture::video_frame_count() const {
+    if (video_decoder_ != nullptr) {
+        return video_decoder_->video_frame_count();
+    } 
+    return std::nullopt;
+}
+
+std::optional<double> FfmpegFileMediaCapture::duration() const {
+    if (format_ctx_ != nullptr) {
+        if (format_ctx_->duration != AV_NOPTS_VALUE) {
+            return format_ctx_->duration / double(AV_TIME_BASE);
+        }
+    }
+    return std::nullopt;
 }
 }  // namespace p10::media

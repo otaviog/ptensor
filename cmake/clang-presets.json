@@ -1,0 +1,139 @@
+{
+  "version": 6,
+  "include": [
+    "common-presets.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "-clang-dev",
+	  "inherits": "base-dev",
+      "hidden": true,
+      "generator": "Ninja",
+	  "cacheVariables": {
+		"CMAKE_INSTALL_PREFIX": "${sourceDir}/build/clang-installed"
+	  }
+    },
+    {
+      "name": "clang/debug",
+	  "inherits": "-clang-dev",
+      "hidden": false,
+      "displayName": "Dev debug (clang)",
+      "description": "Development DEBUG build with Ninja using clang as compiler",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-O0",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+	  "name": "clang/debug-asan",
+      "inherits": "-clang-dev",
+      "hidden": false,
+      "displayName": "Dev debug asan (clang)",
+      "description": "Development DEBUG with address sanitizer build with Ninja on clang",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-fsanitize=address -O0",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "clang/release",
+	  "inherits": "-clang-dev",
+      "hidden": false,
+      "displayName": "Dev release (clang)",
+      "description": "Development RELEASE build with Ninja on clang",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "clang/debug",
+      "configurePreset": "clang/debug"
+    },
+    {
+      "name": "clang/debug/install",
+      "configurePreset": "clang/debug",
+      "targets": [
+        "install"
+      ]
+    },
+    {
+      "name": "clang/release",
+      "configurePreset": "clang/release"
+    },
+	{
+      "name": "clang/release/install",
+      "configurePreset": "clang/release",
+      "targets": [
+        "install"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "-clang-base-test",
+      "hidden": true,
+      "description": "Run tests",
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": false
+      },
+      "filter": {
+        "include": {
+          "name": ".*"
+        }
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang/debug",
+	  "inherits": "-clang-base-test",
+      "configurePreset": "clang/debug"
+    },
+    {
+      "name": "clang/release",
+	  "inherits": "-clang-base-test",
+      "configurePreset": "clang/release"
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "clang/release/package",
+      "configurePreset": "clang/release",
+      "generators": [
+        "TGZ"
+      ]
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "clang/debug/install",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "clang/debug"
+        },
+        {
+          "type": "build",
+          "name": "clang/debug/install"
+        }
+      ]
+    },
+    {
+      "name": "clang/release/install",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "clang/release"
+        },
+        {
+          "type": "build",
+          "name": "clang/release/install"
+        }
+      ]
+    }
+  ]
+}

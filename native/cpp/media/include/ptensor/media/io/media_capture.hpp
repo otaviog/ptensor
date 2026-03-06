@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <ptensor/p10_result.hpp>

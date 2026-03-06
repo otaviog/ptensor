@@ -8,4 +8,4 @@ target_include_directories(
     ${FFMPEG_INCLUDE_DIRS})
 ptensor_target_options(unit_tests_media Media)
 target_link_libraries(unit_tests_media
-    PUBLIC ptensor ptensor_media PRIVATE Catch2::Catch2 ptensor_testing ${FFMPEG_LIBRARIES})
+    PUBLIC ptensor ptensor_media ${FFMPEG_LIBRARIES} PRIVATE Catch2::Catch2 ptensor_testing)

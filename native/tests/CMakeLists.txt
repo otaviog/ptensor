@@ -19,8 +19,7 @@ if (WITH_OP)
 endif()
 
 if (WITH_MEDIA)
-    target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_media>)
-    target_link_libraries(unit_tests_all PRIVATE ptensor_media)
+    target_link_libraries(unit_tests_all PRIVATE unit_tests_media)
 endif()
 
 catch_discover_tests(unit_tests_all

@@ -4,8 +4,8 @@
     #include <intrin.h>
 #endif
 
-#if __has_include(<intrinsics.h>)
-    #define PTENSOR_HAS_INTRINSICS_H
+#if __has_include(<intrinsics.h>) || defined(_MSC_VER)
+    #define PTENSOR_HAS_INTRINSICS_H 1
 #endif
 
 namespace p10::simd {

@@ -15,20 +15,10 @@ include("./cmake/ptensor_target_options.cmake")
 
 set(BUILD_TESTS OFF CACHE BOOL "Build tests")
 if(BUILD_TESTS)
-    include(FetchContent)
-    FetchContent_Declare(
-        Catch2
-        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG v3.4.0 # or a later release
-    )
-    FetchContent_MakeAvailable(Catch2)
+    find_package(Catch2 CONFIG REQUIRED)
     include(CTest)
     include(Catch)
     enable_testing()
-    set_target_properties(Catch2 PROPERTIES
-        FOLDER Libraries)
-    set_target_properties(Catch2WithMain PROPERTIES
-        FOLDER Libraries)
 
     find_package(Threads REQUIRED)
     find_package(benchmark CONFIG REQUIRED)

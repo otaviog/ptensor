@@ -1,96 +1,131 @@
 {
-    "version": 6,
-    "include": [
-        "common-presets.json"
-    ],
-    "configurePresets": [
+  "version": 6,
+  "include": [
+    "common-presets.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "msbuild",
+      "inherits": "base-dev",
+      "hidden": false,
+      "displayName": "Visual Studio 2022 (Dev)",
+      "description": "Development build with Visual Studio (2022)",
+      "generator": "Visual Studio 17 2022",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "-msbuild-base",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+	{
+	  "name": "msbuild/debug",
+      "inherits": "-msbuild-base",
+      "configurePreset": "msbuild",
+      "configuration": "Debug"
+    },
+    {
+	  "name": "msbuild/release",
+      "inherits": "-msbuild-base",
+      "configurePreset": "msbuild",
+      "configuration": "Release"
+    },
+    {
+	  "name": "msbuild/debug/install",
+      "inherits": "-msbuild-base",
+      "configurePreset": "msbuild",
+      "configuration": "Debug",
+      "targets": [
+        "install"
+      ]
+    },
+	{
+	  "name": "msbuild/relwithdebinfo/install",
+      "inherits": "-msbuild-base",
+      "configurePreset": "msbuild",
+      "configuration": "RelWithDebInfo",
+      "targets": [
+        "install"
+      ]
+	},
+    {
+	  "name": "msbuild/release/install",
+      "inherits": "-msbuild-base",
+      "configurePreset": "msbuild",
+      "configuration": "Release",
+      "targets": [
+        "install"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "msbuild/debug",
+      "configurePreset": "msbuild",
+	  "configuration": "Debug"
+    },
+	{
+      "name": "msbuild/release",
+      "configurePreset": "msbuild",
+	  "configuration": "Release"
+    }	
+  ],
+  "workflowPresets": [
+    {
+      "name": "msbuild/install",
+      "steps": [
         {
-            "name": "msbuild",
-            "inherits": "base-dev",
-            "hidden": false,
-            "displayName": "Visual Studio 2022 (Dev)",
-            "description": "Development build with Visual Studio (2022)",
-            "generator": "Visual Studio 17 2022",
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Windows"
-            }
-        }
-    ],
-    "buildPresets": [
-        {
-            "name": "msbuild-base",
-            "hidden": true,
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Windows"
-            }
+          "type": "configure",
+          "name": "msbuild"
         },
         {
-            "inherits": "msbuild-base",
-            "name": "msbuild-debug",
-            "configurePreset": "msbuild",
-            "configuration": "Debug",
-            "targets": [
-                "install"
-            ]
+          "type": "build",
+          "name": "msbuild/debug/install"
+        },
+		{
+          "type": "build",
+          "name": "msbuild/release/install"
+        },
+		{
+		  "type": "build",
+          "name": "msbuild/relwithdebinfo/install"
+		}
+      ]
+    },
+    {
+      "name": "msbuild/test",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "msbuild"
         },
         {
-            "inherits": "msbuild-base",
-            "name": "msbuild-release",
-            "configurePreset": "msbuild",
-            "configuration": "Release",
-            "targets": [
-                "install"
-            ]
-        }
-    ],
-    "testPresets": [
-        {
-            "name": "msbuild",
-            "configurePreset": "msbuild"
-        }
-    ],
-    "workflowPresets": [
-        {
-            "name": "win-dev",
-            "steps": [
-                {
-                    "type": "configure",
-                    "name": "msbuild"
-                },
-                {
-                    "type": "build",
-                    "name": "msbuild-release"
-                },
-                {
-                    "type": "build",
-                    "name": "msbuild-debug"
-                }
-            ]
+          "type": "build",
+          "name": "msbuild/release"
         },
         {
-            "name": "win-verify",
-            "steps": [
-                {
-                    "type": "configure",
-                    "name": "msbuild"
-                },
-                {
-                    "type": "build",
-                    "name": "msbuild-release"
-                },
-                {
-                    "type": "build",
-                    "name": "msbuild-debug"
-                },
-                {
-                    "type": "test",
-                    "name": "msbuild"
-                }
-            ]
+          "type": "build",
+          "name": "msbuild/debug"
+        },
+        {
+          "type": "test",
+          "name": "msbuild/debug"
+        },
+		{
+          "type": "test",
+          "name": "msbuild/release"
         }
-    ]
+      ]
+    }
+  ]
 }

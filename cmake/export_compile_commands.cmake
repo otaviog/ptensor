@@ -1,4 +1,4 @@
-if(PROJECT_IS_TOP_LEVEL AND UNIX)
+if(PROJECT_IS_TOP_LEVEL)
   execute_process(
     COMMAND ${CMAKE_COMMAND} -E create_symlink
     ${CMAKE_BINARY_DIR}/compile_commands.json

@@ -8,7 +8,6 @@
 #include <type_traits>
 
 #include "p10_error.hpp"
-#include "ptensor/config.h"
 #include "shape.hpp"
 #include "stride.hpp"
 

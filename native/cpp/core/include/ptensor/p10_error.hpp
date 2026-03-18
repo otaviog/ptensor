@@ -20,7 +20,8 @@ class P10Error {
         OutOfRange = P10_OUT_OF_RANGE,  // Out of range
         NotImplemented = P10_NOT_IMPLEMENTED,  // Not implemented
         OsError = P10_OS_ERROR,
-        IoError = P10_IO_ERROR
+        IoError = P10_IO_ERROR,
+        InferError = P10_INFER_ERROR
     };
 
     static P10Error fromAssert(std::string_view message, std::string_view file, int line);

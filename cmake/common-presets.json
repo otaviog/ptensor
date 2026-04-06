@@ -2,7 +2,7 @@
     "version": 6,
     "configurePresets": [
         {
-            "name": "base",
+            "name": "hidden/base",
             "description": "Base for all configs",
             "hidden": true,
             "binaryDir": "${sourceDir}/build/${presetName}",
@@ -11,8 +11,8 @@
             }
         },
         {
-            "name": "base-dev",
-            "inherits": "base",
+            "name": "hidden/base-dev",
+            "inherits": "hidden/base",
             "hidden": true,
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
@@ -25,11 +25,11 @@
             }
         },
         {
-            "inherits": "base",
+            "inherits": "hidden/base",
             "name": "package-core"
         },
         {
-            "inherits": "base",
+            "inherits": "hidden/base",
             "name": "package-dependencies",
             "cacheVariables": {
                 "WITH_IO": "ON",

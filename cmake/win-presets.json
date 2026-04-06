@@ -6,11 +6,11 @@
   "configurePresets": [
     {
       "name": "msbuild",
-      "inherits": "base-dev",
+      "inherits": "hidden/base-dev",
       "hidden": false,
-      "displayName": "Visual Studio 2022 (Dev)",
-      "description": "Development build with Visual Studio (2022)",
-      "generator": "Visual Studio 17 2022",
+      "displayName": "Visual Studio 2026 (Dev)",
+      "description": "Development build with Visual Studio (2026)",
+      "generator": "Visual Studio 18 2026",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -20,7 +20,7 @@
   ],
   "buildPresets": [
     {
-      "name": "-msbuild-base",
+      "name": "hidden/msbuild/base",
       "hidden": true,
       "condition": {
         "type": "equals",
@@ -30,19 +30,19 @@
     },
 	{
 	  "name": "msbuild/debug",
-      "inherits": "-msbuild-base",
+      "inherits": "hidden/msbuild/base",
       "configurePreset": "msbuild",
       "configuration": "Debug"
     },
     {
 	  "name": "msbuild/release",
-      "inherits": "-msbuild-base",
+      "inherits": "hidden/msbuild/base",
       "configurePreset": "msbuild",
       "configuration": "Release"
     },
     {
 	  "name": "msbuild/debug/install",
-      "inherits": "-msbuild-base",
+      "inherits": "hidden/msbuild/base",
       "configurePreset": "msbuild",
       "configuration": "Debug",
       "targets": [
@@ -51,7 +51,7 @@
     },
 	{
 	  "name": "msbuild/relwithdebinfo/install",
-      "inherits": "-msbuild-base",
+      "inherits": "hidden/msbuild/base",
       "configurePreset": "msbuild",
       "configuration": "RelWithDebInfo",
       "targets": [
@@ -60,7 +60,7 @@
 	},
     {
 	  "name": "msbuild/release/install",
-      "inherits": "-msbuild-base",
+      "inherits": "hidden/msbuild/base",
       "configurePreset": "msbuild",
       "configuration": "Release",
       "targets": [

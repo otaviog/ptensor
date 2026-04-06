@@ -5,8 +5,8 @@
   ],
   "configurePresets": [
     {
-      "name": "wasm-base",
-      "inherits": "base",
+      "name": "hidden/wasm/base",
+      "inherits": "hidden/base",
       "hidden": true,
       "generator": "Ninja",
       "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
@@ -17,8 +17,8 @@
       }
     },
     {
-      "name": "wasm-release",
-      "inherits": "wasm-base",
+      "name": "wasm/release",
+      "inherits": "hidden/wasm/base",
       "displayName": "WebAssembly Release",
       "description": "Release build targeting WebAssembly",
       "cacheVariables": {
@@ -27,8 +27,8 @@
       }
     },
     {
-      "name": "wasm-debug",
-      "inherits": "wasm-base",
+      "name": "wasm/debug",
+      "inherits": "hidden/wasm/base",
       "displayName": "WebAssembly Debug",
       "description": "Debug build targeting WebAssembly",
       "cacheVariables": {
@@ -40,25 +40,25 @@
   ],
   "buildPresets": [
     {
-      "name": "wasm-release",
-      "configurePreset": "wasm-release"
+      "name": "wasm/release",
+      "configurePreset": "wasm/release"
     },
     {
-      "name": "wasm-debug",
-      "configurePreset": "wasm-debug"
+      "name": "wasm/debug",
+      "configurePreset": "wasm/debug"
     }
   ],
   "workflowPresets": [
     {
-      "name": "wasm-build",
+      "name": "wasm/build",
       "steps": [
         {
           "type": "configure",
-          "name": "wasm-release"
+          "name": "wasm/release"
         },
         {
           "type": "build",
-          "name": "wasm-release"
+          "name": "wasm/release"
         }
       ]
     }

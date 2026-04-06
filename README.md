@@ -22,3 +22,10 @@ $ cmake --workflow --preset mac-dev
 # Win dev
 $ cmake --workflow --preset win-dev
 ```
+
+## Win deps:
+
+```powershell
+winget install -e --id Ninja-build.Ninja 
+winget install -e --id Kitware.CMake
+```

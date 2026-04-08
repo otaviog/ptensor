@@ -1,56 +1,64 @@
 {
-  "name": "ptensor",
-  "version": "1.0.0",
-  "description": "A portable tensor library for C++",
-  "homepage": "https://github.com/yourusername/ptensor",
-  "license": "MIT",
-  "dependencies": [
-    {
-      "name": "vcpkg-cmake",
-      "host": true
-    },
-    {
-      "name": "vcpkg-cmake-config",
-      "host": true
-    }
-  ],
-  "features": {
-    "io": {
-      "description": "Enable I/O functionality for image and numpy file support",
-      "dependencies": [
-        "zlib",
-        "stb",
-        "audiofile"
-      ]
-    },
-    "op": {
-      "description": "Enable additional tensor operations",
-      "dependencies": [
-        "pocketfft"
-      ]
-    },
-    "tests": {
-      "description": "Build tests (for development)",
-      "dependencies": [
-        "catch2",
-        "benchmark"
-      ]
-    },
-    "media": {
-      "description": "Enable FFmpeg support for media processing",
-      "dependencies": [
-        {
-          "name": "ffmpeg",
-          "features": [
-            "ffmpeg",
-            "webp",
-            "x265",
-            "swscale",
-            "swresample",
-            "avcodec"
-          ]
-        }
-      ]
-    }
-  }
+	"name": "ptensor",
+	"version": "1.0.0",
+	"description": "A portable tensor library for C++",
+	"homepage": "https://github.com/yourusername/ptensor",
+	"license": "MIT",
+	"dependencies": [
+		{
+			"name": "vcpkg-cmake",
+			"host": true
+		},
+		{
+			"name": "vcpkg-cmake-config",
+			"host": true
+		}
+	],
+	"features": {
+		"io": {
+			"description": "Enable I/O functionality for image and numpy file support",
+			"dependencies": [
+				"zlib",
+				"stb",
+				"audiofile"
+			]
+		},
+		"op": {
+			"description": "Enable additional tensor operations",
+			"dependencies": [
+				"pocketfft"
+			]
+		},
+		"tests": {
+			"description": "Build tests (for development)",
+			"dependencies": [
+				"catch2",
+				"benchmark"
+			]
+		},
+		"media": {
+			"description": "Enable FFmpeg support for media processing",
+			"dependencies": [
+				{
+					"name": "ffmpeg",
+					"features": [
+						"ffmpeg",
+						"webp",
+						"x265",
+						"swscale",
+						"swresample",
+						"avcodec"
+					]
+				}
+			]
+		},
+		"infer": {
+			"description": "Inference support",
+			"dependencies": [
+				"onnxruntime",
+				"ng-log",
+				"cli11"
+			]
+		}
+	}
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <random>
 
@@ -31,7 +32,7 @@ using OptionalDeallocationFunction = std::optional<std::function<void(void*)>>;
 /// The tensor class provides a way to store and manipulate data in a
 /// multi-dimensional array.
 /// The tensor class can own its data or can be a view of another pointer data.
-/// depending if the constructor froblob__view is used with a deallocation function.
+/// depending if the constructor froblob_view is used with a deallocation function.
 class Tensor {
   public:
     /// Creates a tensor from a blob.
@@ -103,7 +104,11 @@ class Tensor {
         double max = 1.0
     );
 
-    P10Error create(const Shape& shape, const TensorOptions& options = TensorOptions());
+    P10Error create(
+        const Shape& shape,
+        const TensorOptions& options = TensorOptions(),
+        std::optional<std::reference_wrapper<bool>> new_allocated = std::nullopt
+    );
 
     P10Error create_like(const Tensor& other) {
         return create(other.shape(), other.options());
@@ -455,10 +460,12 @@ class Tensor {
     }
 
     auto visit(auto&& visitor) {
+        assert(is_contiguous());
         return dtype_.visit(std::forward<decltype(visitor)>(visitor), as_bytes());
     }
 
     auto visit(auto&& visitor) const {
+        assert(is_contiguous());
         return dtype_.visit(std::forward<decltype(visitor)>(visitor), as_bytes());
     }
 
@@ -493,6 +500,8 @@ class Tensor {
     P10Error fill(double value);
 
     P10Error copy_from(const Tensor& src);
+
+    P10Error convert_from(const Tensor& dest, const TensorOptions options);
 
   private:
     Tensor(Blob&& blob, const Shape& shape, const TensorOptions& options) :

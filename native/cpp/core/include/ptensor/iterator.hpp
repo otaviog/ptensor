@@ -1,9 +1,7 @@
 #pragma once
 
 #include <array>
-#include <cinttypes>
 #include <numeric>
-#include <optional>
 #include <span>
 
 #include <ptensor/config.h>

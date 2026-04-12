@@ -1,41 +1,42 @@
 {
-    "version": 6,
-    "configurePresets": [
-        {
-            "name": "base",
-            "description": "Base for all configs",
-            "hidden": true,
-            "binaryDir": "${sourceDir}/build/${presetName}",
-            "cacheVariables": {
-                "SKBUILD_PROJECT_NAME": "ptensor"
-            }
-        },
-        {
-            "name": "base-dev",
-            "inherits": "base",
-            "hidden": true,
-            "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
-                "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
-              "VCPKG_MANIFEST_FEATURES": "io;tests;op;media;infer",
-                "WITH_IO": "ON",
-                "WITH_OP": "ON",
-              "WITH_MEDIA": "ON",
-			  "WITH_INFER": "ON",
-                "BUILD_TESTS": "ON"
-            }
-        },
-        {
-            "inherits": "base",
-            "name": "package-core"
-        },
-        {
-            "inherits": "base",
-            "name": "package-dependencies",
-            "cacheVariables": {
-                "WITH_IO": "ON",
-                "WITH_OP": "ON"
-            }
-        }
-    ]
+	"version": 6,
+	"configurePresets": [
+		{
+			"name": "base",
+			"description": "Base for all configs",
+			"hidden": true,
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"cacheVariables": {
+				"SKBUILD_PROJECT_NAME": "ptensor"
+			}
+		},
+		{
+			"name": "base-dev",
+			"inherits": "base",
+			"hidden": true,
+			"cacheVariables": {
+				"CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+				"VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
+				"VCPKG_MANIFEST_FEATURES": "io;tests;op;media;infer",
+				"WITH_IO": "ON",
+				"WITH_OP": "ON",
+				"WITH_MEDIA": "ON",
+				"WITH_INFER": "ON",
+				"WITH_RECOG": "ON",
+				"BUILD_TESTS": "ON"
+			}
+		},
+		{
+			"inherits": "base",
+			"name": "package-core"
+		},
+		{
+			"inherits": "base",
+			"name": "package-dependencies",
+			"cacheVariables": {
+				"WITH_IO": "ON",
+				"WITH_OP": "ON"
+			}
+		}
+	]
 }

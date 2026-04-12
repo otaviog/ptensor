@@ -3,7 +3,7 @@
 namespace p10::infer {
 class InferConfig {
   public:
-    enum Engine { Onnx };
+    enum Engine { Ort };
 
     InferConfig& engine(Engine engine) {
         engine_ = engine;

@@ -7,7 +7,7 @@
 namespace p10::infer {
 P10Result<IInfer*>
 IInfer::from_onnx(const std::string& onnx_model_path, const InferConfig& config) {
-    if (config.engine() == InferConfig::Engine::Onnx) {
+    if (config.engine() == InferConfig::Engine::Ort) {
         return OrtInfer::create(onnx_model_path);
     }
     return Err(P10Error::InvalidArgument << "Unsupported inference engine");

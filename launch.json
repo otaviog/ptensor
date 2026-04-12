@@ -1,0 +1,46 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+		{
+			"name": "debug/unit-test",
+			"type": "lldb-vscode",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/clang/debug/native/tests/unit_tests_all",
+		  "args": [
+			"[ort]"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"externalConsole": true,
+			"MIMode": "lldb"
+		},
+		{
+			"name": "debug/transcoder",
+			"type": "lldb-vscode",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/clang/debug/native/cpp/media/samples/sample_transcoder",
+			"args": [
+				"${input:videoPath}"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"externalConsole": false,
+			"MIMode": "lldb"
+		}
+	],
+	"inputs": [
+		{
+			"id": "testFilter",
+			"type": "promptString",
+			"description": "Test filter pattern (e.g., '[dtype]' or 'Tensor*')",
+			"default": ""
+		},
+		{
+			"id": "videoPath",
+			"type": "promptString",
+			"description": "Path to video file",
+			"default": "${workspaceFolder}/tests/data/video/file_example_MP4_480_1_5MG.mp4"
+		}
+	]
+}

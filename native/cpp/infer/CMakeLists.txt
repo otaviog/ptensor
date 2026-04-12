@@ -1,4 +1,5 @@
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/infer)
+set(onnxruntime_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/onnxruntime-osx-arm64-1.24.4/lib/cmake/onnxruntime)
 find_package(onnxruntime CONFIG REQUIRED)
 
 find_package(ng-log CONFIG REQUIRED)
@@ -25,10 +26,12 @@ target_include_directories(
   ${_INCLUDE_DIR})
 
 target_link_libraries(ptensor_infer
-  PRIVATE
+  PUBLIC
     ptensor
+  PRIVATE
     onnxruntime::onnxruntime
-    onnxruntime::onnxruntime_lora
-    onnxruntime::onnxruntime_mlas
-    onnxruntime::onnxruntime_util
     ng-log::ng-log)
+
+if(BUILD_TESTS)
+  add_subdirectory(tests)
+endif()

@@ -25,15 +25,20 @@ OrtInfer::OrtInfer(const std::string& modelPath, Ort::Env&& env) :
     model_path_(modelPath),
     env_(std::move(env)),
     session_options_() {
-    session_options_.SetIntraOpNumThreads(1);
     session_options_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
-#if defined(_MSC_VER)
+
     session_.reset(
-        new Ort::Session(env_, string_to_wstring(model_path_).unwrap().c_str(), session_options_)
-    );
+        new Ort::Session(
+            env_,
+#if defined(_MSC_VER)
+            string_to_wstring(model_path_).unwrap().c_str(),
 #else
-    session_.reset(new Ort::Session(env_, model_path_.c_str(), session_options_));
+            model_path_.c_str(),
 #endif
+            session_options_
+            )
+    );
+
     collect_input_output_names();
 }
 

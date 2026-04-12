@@ -55,8 +55,7 @@
 		"infer": {
 			"description": "Inference support",
 			"dependencies": [
-				"onnxruntime",
-				"ng-log",
+			  "ng-log",
 				"cli11"
 			]
 		}

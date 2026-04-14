@@ -23,7 +23,8 @@
 				"WITH_MEDIA": "ON",
 				"WITH_INFER": "ON",
 				"WITH_RECOG": "ON",
-				"BUILD_TESTS": "ON"
+				"BUILD_TESTS": "ON",
+				"BUILD_SAMPLES": "ON"
 			}
 		},
 		{

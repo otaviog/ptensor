@@ -29,13 +29,17 @@ target_include_directories(
 target_link_libraries(ptensor_recog
   PUBLIC
   ptensor
-  PRIVATE
   ptensor_infer
+  PRIVATE
   ptensor_op
     # ng-log::ng-log
   )
 
 if(BUILD_TESTS)
-  #add_subdirectory(tests)
+  add_subdirectory(tests)
+endif()
+
+if (BUILD_SAMPLES)
+  add_subdirectory(apps/face_detect)
 endif()
 

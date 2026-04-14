@@ -29,6 +29,8 @@ class FaceDetectorConfig {
   public:
     enum Model { BlazeFace };
 
+    FaceDetectorConfig(Model model) : model_(model) {}
+
     FaceDetectorConfig& model(Model model) {
         model_ = model;
         return *this;

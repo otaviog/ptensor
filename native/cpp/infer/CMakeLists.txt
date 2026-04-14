@@ -3,6 +3,7 @@ set(onnxruntime_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/onnxruntime-osx-arm64-1.24.4
 find_package(onnxruntime CONFIG REQUIRED)
 
 find_package(ng-log CONFIG REQUIRED)
+find_package(CURL REQUIRED)
 
 add_library(ptensor_infer STATIC)
 
@@ -17,6 +18,7 @@ target_sources(ptensor_infer
     FILES ${PUBLIC_HEADERS}
   PRIVATE
     src/infer.cpp
+    src/model_downloader.hpp src/model_downloader.cpp
     src/ort_conversions.hpp
     src/ort_infer.hpp src/ort_infer.cpp)
 
@@ -30,7 +32,8 @@ target_link_libraries(ptensor_infer
     ptensor
   PRIVATE
     onnxruntime::onnxruntime
-    ng-log::ng-log)
+    ng-log::ng-log
+    CURL::libcurl)
 
 if(BUILD_TESTS)
   add_subdirectory(tests)

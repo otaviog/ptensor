@@ -7,7 +7,7 @@ namespace p10::recog {
 P10Result<IFaceDetector*> IFaceDetector::create(FaceDetectorConfig config, infer::IInfer* infer_engine) {
     switch (config.model()) {
         case FaceDetectorConfig::BlazeFace:
-            return Ok(new recog::BlazeFace(infer_engine));
+            return Ok<IFaceDetector*>(new recog::BlazeFace(infer_engine));
             break;
     default:
         return Err(P10Error::InvalidArgument << "Unsupported face detection model");

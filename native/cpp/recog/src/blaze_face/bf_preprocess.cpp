@@ -58,7 +58,7 @@ P10Result<float> BfPreprocessing::process(Tensor& images, Tensor& preprocessed) 
         out_shape[2]
     ));
 
-    return Ok(resize_ratio);
+    return Ok(static_cast<float>(resize_ratio));
 }
 
 namespace {
@@ -144,10 +144,10 @@ P10Result<std::tuple<size_t, size_t, float>>
         auto accessor = image.as_accessor3d<uint8_t>().unwrap();
         auto base_ptr = &accessor[0][top][left];
 
-        return Ok<Tensor>(Tensor::from_data<float>(
+        return Ok<Tensor>(Tensor::from_data(
             base_ptr,
             make_shape(num_images, int64_t(view_height), int64_t(view_width)),
-            image.stride()
+            MakeViewOptions<uint8_t>().stride(image.stride())
         ));
     }
 

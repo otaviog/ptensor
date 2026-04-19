@@ -158,7 +158,7 @@ int main(int argc, char** argv) {
     }
     infer::IInfer* infer_engine = infer_result.unwrap();
 
-    auto detector_result = IFaceDetector::create(FaceDetectorConfig::BlazeFace, infer_engine);
+    auto detector_result = IFaceDetector::create(BlazeFaceModel(), infer_engine);
     if (detector_result.is_error()) {
         std::cerr << "Failed to create face detector: " << detector_result.error().to_string()
                   << "\n";

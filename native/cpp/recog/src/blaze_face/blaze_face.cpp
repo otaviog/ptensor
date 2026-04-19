@@ -2,8 +2,7 @@
 
 #include <ptensor/op/resize.hpp>
 #include <ptensor/tensor.hpp>
-
-#include "ptensor/p10_error.hpp"
+#include <ptensor/infer/infer.hpp>
 
 namespace p10::recog {
 

@@ -7,10 +7,6 @@
 
 namespace p10::recog {
 
-BfPostprocess::BfPostprocess(const BfAnchorsParameters& anchor_params, Nms nms) :
-    anchors_(anchor_params),
-    nms_(std::move(nms)) {}
-
 void BfPostprocess::process(
     size_t input_width,
     size_t input_height,

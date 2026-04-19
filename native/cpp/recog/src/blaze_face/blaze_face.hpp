@@ -1,13 +1,13 @@
 #pragma once
 
-#include <ptensor/tensor.hpp>
 #include <array>
 #include <memory>
 
-#include "face_detection.hpp"
+#include <ptensor/tensor.hpp>
 
-#include "bf_preprocess.hpp"
 #include "bf_postprocess.hpp"
+#include "bf_preprocess.hpp"
+#include "face_detection.hpp"
 
 namespace p10::infer {
 class IInfer;
@@ -17,17 +17,24 @@ namespace p10::recog {
 
 class BlazeFace: public IFaceDetector {
   public:
-    BlazeFace(infer::IInfer* infer);
-    ~BlazeFace();
+    BlazeFace(
+        infer::IInfer* infer,
+        size_t target_size,
+        const SsdAnchorParameters& anchor_params,
+        float nms_iou_threshold,
+        float threshold
+    ) :
+        infer_(infer),
+        pre_process_(target_size),
+        post_process_(anchor_params, nms_iou_threshold, threshold) {}
+
+    ~BlazeFace() = default;
 
     P10Error detect(Tensor& images, std::span<FaceDetection> out_detections) override;
 
   private:
     std::unique_ptr<infer::IInfer> infer_;
 
-    size_t target_size_ = 224;
-    float threshold_ = 0.7;
-    
     BfPreprocessing pre_process_;
     std::array<Tensor, 1> input_buffer_;
 

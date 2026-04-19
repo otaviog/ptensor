@@ -13,13 +13,18 @@ target_sources(ptensor_recog
   BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
   FILES ${PUBLIC_HEADERS}
   PRIVATE
-  src/face_detection.cpp
-  src/anchors.hpp
-  src/blaze_face/blaze_face.hpp src/blaze_face/blaze_face.cpp
-  src/blaze_face/bf_preprocess.hpp src/blaze_face/bf_preprocess.cpp
-  src/blaze_face/bf_postprocess.hpp src/blaze_face/bf_postprocess.cpp
-  src/blaze_face/bf_anchors.hpp src/blaze_face/bf_anchors.cpp
-  src/nms.hpp src/nms.cpp)
+    # Main detection factory
+    src/face_detection.cpp
+    # Common algorithms
+    src/nms.hpp src/nms.cpp
+    # Ssd anchors
+    src/ssd_anchors/ssd_anchor_rect.hpp
+    src/ssd_anchors/ssd_anchor_cache.hpp src/ssd_anchors/ssd_anchor_cache.cpp
+    src/ssd_anchors/ssd_anchor_decoder.hpp src/ssd_anchors/ssd_anchor_decoder.cpp
+    # Blaze face
+    src/blaze_face/blaze_face.hpp src/blaze_face/blaze_face.cpp
+    src/blaze_face/bf_preprocess.hpp src/blaze_face/bf_preprocess.cpp
+    src/blaze_face/bf_postprocess.hpp src/blaze_face/bf_postprocess.cpp)
 
 target_include_directories(
   ptensor_recog
@@ -28,10 +33,10 @@ target_include_directories(
 
 target_link_libraries(ptensor_recog
   PUBLIC
-  ptensor
-  ptensor_infer
+    ptensor
+    ptensor_infer
   PRIVATE
-  ptensor_op
+    ptensor_op
     # ng-log::ng-log
   )
 

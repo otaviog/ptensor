@@ -6,4 +6,4 @@ target_include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/ptensor/recog)
 ptensor_target_options(unit_tests_recog Recog)
 target_link_libraries(unit_tests_recog
-    PUBLIC ptensor ptensor_recog PRIVATE Catch2::Catch2 ptensor_testing ptensor_io)
+    PUBLIC ptensor ptensor_recog PRIVATE Catch2::Catch2 ptensor_testing ptensor_io ptensor_op)

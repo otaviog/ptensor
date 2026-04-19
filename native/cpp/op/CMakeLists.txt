@@ -9,7 +9,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/blur.hpp
   ${_INCLUDE_DIR}/elemwise.hpp
   ${_INCLUDE_DIR}/resize.hpp
-  ${_INCLUDE_DIR}/image.hpp
+  ${_INCLUDE_DIR}/image_layout.hpp
   ${_INCLUDE_DIR}/laplacian_pyramid.hpp
   ${_INCLUDE_DIR}/fft.hpp
   ${_INCLUDE_DIR}/tensor_scalar.hpp
@@ -36,7 +36,7 @@ target_sources(ptensor_op
     src/elemwise.cpp
     src/tensor_scalar.cpp
     src/resize.cpp
-    src/image.cpp
+    src/image_layout.cpp
     src/laplacian_pyramid.cpp
     src/fft.cpp
     src/stack.cpp

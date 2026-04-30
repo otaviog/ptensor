@@ -1,0 +1,139 @@
+---
+# Checks enabled for the ptensor codebase.
+# Rationale:
+#   - bugprone / cert / clang-analyzer / portability: catch real defects.
+#   - performance: relevant for a tensor library.
+#   - modernize / readability: keep the C++20 codebase consistent.
+#   - cppcoreguidelines: high-signal subset (many noisy checks disabled below).
+#   - misc: a handful of non-noisy checks.
+# Anything not listed is off by default.
+Checks: >
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  -cert-dcl21-cpp,
+  -cert-err58-cpp,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-union-access,
+  -cppcoreguidelines-pro-type-vararg,
+  -cppcoreguidelines-narrowing-conversions,
+  -cppcoreguidelines-macro-usage,
+  -misc-no-recursion,
+  -misc-non-private-member-variables-in-classes,
+  -misc-include-cleaner,
+  -modernize-avoid-c-arrays,
+  -modernize-use-nodiscard,
+  -modernize-use-trailing-return-type,
+  -portability-avoid-pragma-once,
+  -readability-avoid-const-params-in-decls,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-named-parameter,
+  -readability-redundant-access-specifiers,
+  -readability-uppercase-literal-suffix
+
+# Treat all enabled checks as advisory; CI / pre-commit can opt in to errors.
+WarningsAsErrors: ''
+
+# Only diagnose project headers; vcpkg / system / generated headers are noise.
+HeaderFilterRegex: '(native|bindings|wasm)/.*\.(h|hpp)$'
+
+# Skip vendored & build-output trees regardless of HeaderFilterRegex.
+ExcludeHeaderFilterRegex: '(vcpkg|build|_deps|external|third_party)/'
+
+FormatStyle: file
+SystemHeaders: false
+
+CheckOptions:
+  # --- Naming conventions (matches existing codebase) ---
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.ScopedEnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.MethodCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: _
+  - key: readability-identifier-naming.ProtectedMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.ProtectedMemberSuffix
+    value: _
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.StaticConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+
+  # --- Function/argument shape ---
+  - key: readability-function-size.LineThreshold
+    value: 200
+  - key: readability-function-size.StatementThreshold
+    value: 150
+  - key: readability-function-size.ParameterThreshold
+    value: 8
+
+  # --- Modernize ---
+  - key: modernize-use-default-member-init.UseAssignment
+    value: true
+  - key: modernize-loop-convert.MinConfidence
+    value: reasonable
+  - key: modernize-pass-by-value.IncludeStyle
+    value: google
+
+  # --- Performance ---
+  - key: performance-for-range-copy.WarnOnAllAutoCopies
+    value: true
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: 'Tensor;Shape;Stride;Dtype'
+
+  # --- Bugprone ---
+  - key: bugprone-argument-comment.StrictMode
+    value: true
+  - key: bugprone-assert-side-effect.AssertMacros
+    value: 'assert,P10_ASSERT'
+  - key: bugprone-suspicious-string-compare.WarnOnLogicalNotComparison
+    value: true

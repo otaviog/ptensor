@@ -2,7 +2,7 @@
 #include <catch2/generators/catch_generators.hpp>
 #include <ptensor/io/image.hpp>
 #include <ptensor/op/blur.hpp>
-#include <ptensor/op/image.hpp>
+#include <ptensor/op/image_layout.hpp>
 
 #include "testing.hpp"
 

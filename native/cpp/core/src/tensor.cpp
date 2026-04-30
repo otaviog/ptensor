@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <new>
 #include <random>
 
 #include <type_traits>
@@ -121,13 +122,22 @@ Tensor& Tensor::operator=(Tensor&& other) {
     return *this;
 }
 
-P10Error Tensor::create(const Shape& shape, const TensorOptions& options) {
+P10Error Tensor::create(
+    const Shape& shape,
+    const TensorOptions& options,
+    std::optional<std::reference_wrapper<bool>> new_allocated
+) {
     if (auto status = are_options_valid_for_creation(options); !status.is_ok()) {
         return status;
     }
-
+    if (new_allocated) {
+        new_allocated->get() = false;
+    }
     const auto ask_size = compute_size_bytes(shape, options.dtype());
     if (ask_size > size_bytes()) {
+        if (new_allocated) {
+            new_allocated->get() = true;
+        }
         blob_ = Blob::allocate(ask_size);
     }
 
@@ -334,6 +344,26 @@ P10Error Tensor::copy_from(const Tensor& src) {
     P10_RETURN_IF_ERROR(create(src.shape(), src.options()));
 
     std::memcpy(as_bytes().data(), src.as_bytes().data(), src.size_bytes());
+
+    return P10Error::Ok;
+}
+
+P10Error Tensor::convert_from(const Tensor& source, const TensorOptions options) {
+    P10_RETURN_IF_ERROR(create(source.shape(), options));
+
+    visit([&](auto dest_span) {
+        using dest_scalar_t = decltype(dest_span)::element_type;
+        source.visit([&](const auto source_span) {
+            using source_scalar_t = decltype(source_span)::element_type;
+            Iterator<const source_scalar_t> src_it(
+                source_span.data(), source.shape().as_span(), source.stride().as_span()
+            );
+            dest_scalar_t* dest_ptr = dest_span.data();
+            while (src_it.has_next()) {
+                *dest_ptr++ = static_cast<dest_scalar_t>(src_it.next());
+            }
+        });
+    });
 
     return P10Error::Ok;
 }

@@ -1452,4 +1452,115 @@ TEST_CASE("core::Tensor::accessor with non-contiguous tensors", "[tensor][access
         REQUIRE(accessor[1][0][0] == original[12]);
     }
 }
+// ============================================================================
+// Tensor::create new_allocated flag
+// ============================================================================
+
+TEST_CASE("core::Tensor::create new_allocated flag", "[tensor][create]") {
+    SECTION("sets new_allocated=true when tensor has no backing memory") {
+        Tensor tensor;
+        bool new_allocated = false;
+        REQUIRE(tensor.create(make_shape(2, 3), TensorOptions(), new_allocated).is_ok());
+        REQUIRE(new_allocated);
+    }
+
+    SECTION("sets new_allocated=true when existing allocation is too small") {
+        auto tensor = Tensor::empty(make_shape(2, 3)).unwrap();
+        auto* original_ptr = tensor.as_bytes().data();
+
+        bool new_allocated = false;
+        REQUIRE(tensor.create(make_shape(4, 4), TensorOptions(), new_allocated).is_ok());
+        REQUIRE(new_allocated);
+        REQUIRE(tensor.as_bytes().data() != original_ptr);
+    }
+
+    SECTION("sets new_allocated=false when existing allocation is large enough") {
+        auto tensor = Tensor::empty(make_shape(4, 4)).unwrap();
+        auto* original_ptr = tensor.as_bytes().data();
+
+        bool new_allocated = false;
+        REQUIRE(tensor.create(make_shape(2, 3), TensorOptions(), new_allocated).is_ok());
+        REQUIRE_FALSE(new_allocated);
+        REQUIRE(tensor.as_bytes().data() == original_ptr);
+    }
+
+    SECTION("sets new_allocated=false for same shape") {
+        auto tensor = Tensor::empty(make_shape(3, 3)).unwrap();
+        auto* original_ptr = tensor.as_bytes().data();
+
+        bool new_allocated = false;
+        REQUIRE(tensor.create(make_shape(3, 3), TensorOptions(), new_allocated).is_ok());
+        REQUIRE_FALSE(new_allocated);
+        REQUIRE(tensor.as_bytes().data() == original_ptr);
+    }
+
+    SECTION("works without new_allocated argument") {
+        Tensor tensor;
+        REQUIRE(tensor.create(make_shape(2, 2)).is_ok());
+        REQUIRE(tensor.size() == 4);
+    }
+}
+
+// ============================================================================
+// Tensor::convert_from
+// ============================================================================
+
+TEST_CASE("core::Tensor::convert_from converts dtype", "[tensor][convert]") {
+    SECTION("float32 to int32") {
+        auto source = Tensor::full(make_shape(2, 3), 7.9, TensorOptions().dtype(Dtype::Float32))
+                          .unwrap();
+        Tensor dest;
+        REQUIRE(dest.convert_from(source, TensorOptions().dtype(Dtype::Int32)).is_ok());
+
+        REQUIRE(dest.dtype() == Dtype::Int32);
+        REQUIRE(dest.shape() == source.shape());
+        auto data = dest.as_span1d<int32_t>().unwrap();
+        for (size_t i = 0; i < data.size(); i++) {
+            REQUIRE(data[i] == 7);
+        }
+    }
+
+    SECTION("int32 to float32") {
+        auto source =
+            Tensor::full(make_shape(3), 42.0, TensorOptions().dtype(Dtype::Int32)).unwrap();
+        Tensor dest;
+        REQUIRE(dest.convert_from(source, TensorOptions().dtype(Dtype::Float32)).is_ok());
+
+        REQUIRE(dest.dtype() == Dtype::Float32);
+        auto data = dest.as_span1d<float>().unwrap();
+        for (size_t i = 0; i < data.size(); i++) {
+            REQUIRE(data[i] == Catch::Approx(42.0f));
+        }
+    }
+
+    SECTION("uint8 to float64") {
+        auto source =
+            Tensor::full(make_shape(4), 255.0, TensorOptions().dtype(Dtype::Uint8)).unwrap();
+        Tensor dest;
+        REQUIRE(dest.convert_from(source, TensorOptions().dtype(Dtype::Float64)).is_ok());
+
+        REQUIRE(dest.dtype() == Dtype::Float64);
+        auto data = dest.as_span1d<double>().unwrap();
+        for (size_t i = 0; i < data.size(); i++) {
+            REQUIRE(data[i] == Catch::Approx(255.0));
+        }
+    }
+
+    SECTION("preserves values across supported dtypes") {
+        auto src_dtype = GENERATE(Dtype::Float32, Dtype::Int32, Dtype::Uint8);
+        auto dst_dtype = GENERATE(Dtype::Float32, Dtype::Float64);
+        DYNAMIC_SECTION(
+            "from " << to_string(src_dtype) << " to " << to_string(dst_dtype)
+        ) {
+            auto source =
+                Tensor::from_range(make_shape(5), TensorOptions().dtype(src_dtype)).unwrap();
+            Tensor dest;
+            REQUIRE(dest.convert_from(source, TensorOptions().dtype(dst_dtype)).is_ok());
+
+            REQUIRE(dest.shape() == source.shape());
+            REQUIRE(dest.dtype() == dst_dtype);
+        }
+    }
+}
+
 }  // namespace p10

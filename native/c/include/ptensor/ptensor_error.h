@@ -17,7 +17,8 @@ typedef enum {
     P10_OUT_OF_RANGE, 
     P10_NOT_IMPLEMENTED, 
     P10_OS_ERROR,
-    P10_IO_ERROR
+    P10_IO_ERROR,
+	P10_INFER_ERROR
 } P10ErrorEnum;
 
 PTENSOR_API const char* p10_get_last_error_message();

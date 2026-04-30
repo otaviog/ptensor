@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <ptensor/io/image.hpp>
-#include <ptensor/op/image.hpp>
+#include <ptensor/op/image_layout.hpp>
 #include <ptensor/op/laplacian_pyramid.hpp>
 #include <ptensor/tensor.hpp>
 

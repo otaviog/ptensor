@@ -15,8 +15,7 @@
 
 ## Build Commands
 
-* Linux: `cmake --workflow --preset lin-dev`
-* macOS: `cmake --workflow --preset mac-dev`
+* Linux/MacOs: `cmake --workflow --preset clang/debug` or `cmake --workflow --preset clang/release`
 * Windows: `cmake --workflow --preset win-dev`
 * WebAssembly: `cmake --workflow --preset wasm-build`
 

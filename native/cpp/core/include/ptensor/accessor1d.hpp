@@ -1,5 +1,6 @@
 #pragma once
 
+#include <span>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -28,6 +29,10 @@ class Accessor1D {
         return data_;
     }
 
+    std::span<T> as_span() {
+        assert(stride_ == 1);
+        return std::span<T>(data_, size_);
+    }
   private:
     T* data_;
     int64_t size_;

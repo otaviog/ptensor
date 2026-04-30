@@ -3,7 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <ptensor/io/image.hpp>
-#include <ptensor/op/image.hpp>
+#include <ptensor/op/image_layout.hpp>
 #include <ptensor/op/resize.hpp>
 
 #include "testing.hpp"

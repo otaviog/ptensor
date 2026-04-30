@@ -5,8 +5,8 @@
   ],
   "configurePresets": [
     {
-      "name": "-clang-dev",
-	  "inherits": "base-dev",
+      "name": "hidden/clang/base-dev-config",
+	  "inherits": "hidden/base-dev",
       "hidden": true,
       "generator": "Ninja",
 	  "cacheVariables": {
@@ -15,7 +15,7 @@
     },
     {
       "name": "clang/debug",
-	  "inherits": "-clang-dev",
+	  "inherits": "hidden/clang/base-dev-config",
       "hidden": false,
       "displayName": "Dev debug (clang)",
       "description": "Development DEBUG build with Ninja using clang as compiler",
@@ -26,7 +26,7 @@
     },
     {
 	  "name": "clang/debug-asan",
-      "inherits": "-clang-dev",
+      "inherits": "hidden/clang/base-dev-config",
       "hidden": false,
       "displayName": "Dev debug asan (clang)",
       "description": "Development DEBUG with address sanitizer build with Ninja on clang",
@@ -37,7 +37,7 @@
     },
     {
       "name": "clang/release",
-	  "inherits": "-clang-dev",
+	  "inherits": "hidden/clang/base-dev-config",
       "hidden": false,
       "displayName": "Dev release (clang)",
       "description": "Development RELEASE build with Ninja on clang",

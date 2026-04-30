@@ -11,15 +11,15 @@ constexpr size_t BF_INPUT_CHANNELS = 3;
 constexpr std::array<uint8_t, 3> BF_RGB_MEAN = {104, 117, 113};
 
 namespace {
-P10Result<std::tuple<size_t, size_t, float>>
+    P10Result<std::tuple<size_t, size_t, float>>
     resize(Tensor& input_images, size_t target_size, Tensor& output);
 
-    P10Result<Tensor> create_images_with_padding(
-        Tensor& preprocessed,
+    P10Result<Tensor> alloc_preprocessing_output(
         int64_t num_images,
         size_t target_size,
         size_t width,
-        size_t height
+        size_t height,
+        Tensor& preprocessed
     );
 
     std::tuple<size_t, size_t, size_t, size_t>
@@ -39,30 +39,28 @@ P10Result<float> BfPreprocessing::process(Tensor& images, Tensor& preprocessed) 
 
     const auto num_images = images.shape().as_span()[0];
 
-    auto inner_preprocessed = create_images_with_padding(
-                                  preprocessed,
+    auto inner_preprocessed = alloc_preprocessing_output(
                                   num_images,
                                   target_size_,
                                   resize_width,
-                                  resize_height
+                                  resize_height,
+                                  preprocessed
     )
                                   .unwrap();
-    inner_preprocessed.convert_from(resize_buffer_, TensorOptions(Dtype::Float32));
+    inner_preprocessed.convert_from(resize_buffer_, TensorOptions(Dtype::Float32))
+        .expect("Error while converting from resize_buffer_");
     subtract_rgb_mean(inner_preprocessed);
 
     const auto out_shape = preprocessed.shape().as_span();
-    preprocessed.reshape(make_shape(
-        out_shape[0] / BF_INPUT_CHANNELS,
-        BF_INPUT_CHANNELS,
-        out_shape[1],
-        out_shape[2]
-    ));
+    preprocessed.reshape(
+        make_shape(out_shape[0] / BF_INPUT_CHANNELS, BF_INPUT_CHANNELS, out_shape[1], out_shape[2])
+    );
 
     return Ok(static_cast<float>(resize_ratio));
 }
 
 namespace {
-P10Result<std::tuple<size_t, size_t, float>>
+    P10Result<std::tuple<size_t, size_t, float>>
     resize(Tensor& input_images, size_t target_size, Tensor& output) {
         const auto input_shape = input_images.shape().as_span();
 
@@ -70,16 +68,16 @@ P10Result<std::tuple<size_t, size_t, float>>
         const int64_t input_height = input_shape[2];
         const int64_t input_width = input_shape[3];
 
-        const float original_to_resize_ratio = std::min(
-            std::min(
-                float(target_size) / float(input_width),
-                float(target_size) / float(input_height)
-            ),
+        const float original_to_resize_ratio = std::min({
+            static_cast<float>(target_size) / static_cast<float>(input_width),
+            static_cast<float>(target_size) / static_cast<float>(input_height),
             1.0f
-        );
+        });
 
-        size_t resize_width = size_t(std::round(float(input_width) * original_to_resize_ratio));
-        size_t resize_height = size_t(std::round(float(input_height) * original_to_resize_ratio));
+        const auto resize_width =
+            static_cast<size_t>(std::round(float(input_width) * original_to_resize_ratio));
+        const auto resize_height =
+            static_cast<size_t>(std::round(float(input_height) * original_to_resize_ratio));
 
         Tensor n_by_c_input_images = input_images.as_view();
         n_by_c_input_images.reshape(
@@ -90,27 +88,23 @@ P10Result<std::tuple<size_t, size_t, float>>
         return Ok(std::make_tuple(resize_width, resize_height, original_to_resize_ratio));
     }
 
-    P10Result<Tensor> create_images_with_padding(
-        Tensor& preprocessed,
+    P10Result<Tensor> alloc_preprocessing_output(
         int64_t num_images,
         size_t target_size,
         size_t width,
-        size_t height
+        size_t height,
+        Tensor& preprocessed
     ) {
-        const auto [left, right, bottom, top] = calculate_padding(target_size, width, height);
+        const auto [left, right, top, bottom] = calculate_padding(target_size, width, height);
 
         bool new_allocated = false;
         P10_RETURN_ERR_IF_ERROR(preprocessed.create(
-            make_shape(
-                num_images * BF_INPUT_CHANNELS,
-                width + (right - left),
-                height + (bottom - top)
-            ),
-            Dtype::Int8,
+            make_shape(num_images * BF_INPUT_CHANNELS, height + top + bottom, width + left + right),
+            Dtype::Float32,
             new_allocated
         ));
 
-        if (!new_allocated) {
+        if (new_allocated) {
             preprocessed.fill(0.0);
         }
 
@@ -131,23 +125,26 @@ P10Result<std::tuple<size_t, size_t, float>>
     P10Result<Tensor> slice_image_border(Tensor& image, int left, int right, int top, int bottom) {
         const auto shape = image.shape().as_span();
         const auto num_images = shape[0];
-        const auto view_width = right - left;
-        const auto view_height = bottom - top;
+        const auto height = shape[1];
+        const auto width = shape[2];
 
-        if (left < 0 || right > shape[1] || top < 0 || bottom > shape[2]) {
-            return Err(
-                P10Error::InvalidArgument,
-                "Border slice indices are out of bounds of the image dimensions"
-            );
+        if (left < 0 || right < 0 || top < 0 || bottom < 0) {
+            return Err(P10Error::InvalidArgument, "Border slice values must be non-negative");
         }
 
-        auto accessor = image.as_accessor3d<uint8_t>().unwrap();
-        auto base_ptr = &accessor[0][top][left];
+        if (int64_t(left) + int64_t(right) >= width || int64_t(top) + int64_t(bottom) >= height) {
+            return Err(P10Error::InvalidArgument, "Border slice values exceed image dimensions");
+        }
 
+        const auto view_width = width - int64_t(left) - int64_t(right);
+        const auto view_height = height - int64_t(top) - int64_t(bottom);
+
+        auto accessor = image.as_accessor3d<float>().unwrap();
+        auto* base_ptr = &accessor[0][top][left];
         return Ok<Tensor>(Tensor::from_data(
             base_ptr,
-            make_shape(num_images, int64_t(view_height), int64_t(view_width)),
-            MakeViewOptions<uint8_t>().stride(image.stride())
+            make_shape(num_images, view_height, view_width),
+            MakeViewOptions<float>().stride(image.stride())
         ));
     }
 

@@ -1,7 +1,6 @@
-#include <ptensor/op/image_layout.hpp>
-
 #include <algorithm>
 
+#include <ptensor/op/image_layout.hpp>
 #include <ptensor/tensor.hpp>
 
 namespace p10::op {
@@ -31,7 +30,8 @@ P10Error image_to_tensor(
     const Dtype out_dtype = target_dtype.value_or(Dtype::Float32);
 
     out_tensor.create(
-        make_shape(int64_t(num_channels), int64_t(height), int64_t(width)), out_dtype
+        make_shape(int64_t(num_channels), int64_t(height), int64_t(width)),
+        out_dtype
     );
 
     out_dtype.match(
@@ -62,8 +62,8 @@ P10Error image_to_tensor(
         }
     );
 
-    if (squeeze_opt == ImageToTensorSqueeze::Squeeze) {
-        out_tensor.squeeze();
+    if (squeeze_opt == ImageToTensorSqueeze::Unsqueze) {
+        out_tensor.reshape(make_shape(1, num_channels, height, width));
     }
 
     return P10Error::Ok;
@@ -88,7 +88,8 @@ P10Error image_from_tensor(
     const Dtype out_dtype = target_dtype.value_or(Dtype::Uint8);
 
     out_image_tensor.create(
-        make_shape(int64_t(height), int64_t(width), int64_t(num_channels)), out_dtype
+        make_shape(int64_t(height), int64_t(width), int64_t(num_channels)),
+        out_dtype
     );
 
     tensor.dtype().match(

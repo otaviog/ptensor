@@ -26,5 +26,9 @@ if (WITH_INFER)
     target_link_libraries(unit_tests_all PRIVATE unit_tests_infer)
 endif()
 
+if (WITH_RECOG)
+  target_link_libraries(unit_tests_all PRIVATE unit_tests_recog)
+endif()
+
 catch_discover_tests(unit_tests_all
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

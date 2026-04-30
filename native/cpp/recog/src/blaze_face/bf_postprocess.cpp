@@ -18,10 +18,10 @@ void BfPostprocess::process(
     const auto anchor_decoder = anchors_.decoder();
 
     const auto out_boxes = model_outputs[0].as_accessor3d<const float>().unwrap();
-    const auto out_scores = model_outputs[1].as_accessor2d<const float>().unwrap();
+    const auto out_scores = model_outputs[1].as_accessor3d<const float>().unwrap();
     const auto out_landmarks = model_outputs[2].as_accessor3d<const float>().unwrap();
 
-    assert(size_t(out_boxes.channels()) == detections.size());
+    assert(static_cast<size_t>(out_boxes.channels()) == detections.size());
 
     const float box_scale_x = float(input_width) / preprocess_scale_ratio;
     const float box_scale_y = float(input_height) / preprocess_scale_ratio;
@@ -36,7 +36,7 @@ void BfPostprocess::process(
         const auto landmks = out_landmarks[img_idx];
 
         for (size_t row_idx = 0; row_idx < size_t(boxes.rows()); ++row_idx) {
-            const float conf = scores[row_idx];
+            const float conf = scores[row_idx][1];
             if (conf > conf_threshold_) {
                 const auto& anchor = anchors[row_idx];
                 const Rect2f rect = anchor_decoder.decode_rect(boxes[row_idx].as_span(), anchor)

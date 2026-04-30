@@ -10,7 +10,7 @@ namespace p10 {
 
 class P10Error {
   public:
-    enum Code {
+    enum Code : uint8_t {
         Ok = P10_OK,  // No error
         UnknownError = P10_UNKNOWN_ERROR,  // Unknown error
         AssertionError = P10_ASSERTION_ERROR,  // Assertion error
@@ -43,7 +43,7 @@ class P10Error {
     explicit operator bool() const = delete;
 
     Code code() const {
-        return static_cast<Code>(code_);
+        return code_;
     }
 
     std::string to_string() const;
@@ -58,7 +58,7 @@ class P10Error {
 
     void expect(const std::string& message) const {
         if (is_error()) {
-            detail::panic((message + " - " + to_string()).data());
+            detail::panic(message + " - " + to_string());
         }
     }
 
@@ -68,16 +68,16 @@ class P10Error {
 };
 
 inline P10Error operator<<(P10Error::Code code, std::string_view message) {
-    return P10Error(code, message);
+    return {code, message};
 }
 }  // namespace p10
 
 #define P10_RETURN_IF_ERROR(expr) \
-    if (auto err = (expr); err.is_error()) { \
-        return err; \
-    }
+    if (auto err = (expr); !err.is_error()) { \
+    } else \
+        return err
 
 #define P10_RETURN_ERR_IF_ERROR(expr) \
-    if (auto err = (expr); err.is_error()) { \
-        return Err(err); \
-    }
+    if (auto err = (expr); !err.is_error()) { \
+    } else \
+        return Err(err)

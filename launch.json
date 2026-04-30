@@ -7,7 +7,7 @@
 			"request": "launch",
 			"program": "${workspaceFolder}/build/clang/debug/native/tests/unit_tests_all",
 		  "args": [
-			"[ort]"
+			"[blaze_face]"
 			],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",

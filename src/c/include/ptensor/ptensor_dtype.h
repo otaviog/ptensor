@@ -1,6 +1,8 @@
 #ifndef PTENSOR_DTYPE_H_
 #define PTENSOR_DTYPE_H_
 
+#include <stddef.h>
+
 #include "ptensor_error.h"
 
 #ifdef __cplusplus
@@ -28,6 +30,9 @@ PTENSOR_API P10ErrorEnum p10_dtype_from_string(
     const char* type_str,
     P10DTypeEnum* out_dtype
 );
+
+/// Returns the size in bytes of a single element of the given dtype, or 0 if unknown.
+PTENSOR_API size_t p10_dtype_size_bytes(P10DTypeEnum dtype);
 
 #ifdef __cplusplus
 }

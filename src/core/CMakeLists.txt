@@ -64,11 +64,11 @@ target_include_directories(ptensor
 target_link_libraries(ptensor PRIVATE $<BUILD_INTERFACE:ptensor_simd_>)
 # Add C API headers that are referenced by C++ headers
 install(FILES
-    ${CMAKE_SOURCE_DIR}/native/c/include/ptensor/config.h
-    ${CMAKE_SOURCE_DIR}/native/c/include/ptensor/ptensor_error.h
-    ${CMAKE_SOURCE_DIR}/native/c/include/ptensor/ptensor_dtype.h
-    ${CMAKE_SOURCE_DIR}/native/c/include/ptensor/ptensor_device.h
-    ${CMAKE_SOURCE_DIR}/native/c/include/ptensor/ptensor_int_types.h
+    ${CMAKE_SOURCE_DIR}/src/c/include/ptensor/config.h
+    ${CMAKE_SOURCE_DIR}/src/c/include/ptensor/ptensor_error.h
+    ${CMAKE_SOURCE_DIR}/src/c/include/ptensor/ptensor_dtype.h
+    ${CMAKE_SOURCE_DIR}/src/c/include/ptensor/ptensor_device.h
+    ${CMAKE_SOURCE_DIR}/src/c/include/ptensor/ptensor_int_types.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ptensor)
 
 ptensor_target_options(ptensor "Core")

@@ -9,7 +9,6 @@ target_sources(ptensor_capi
     ${_INCLUDE_DIR}/config.h
     ${_INCLUDE_DIR}/ptensor_error.h
     ${_INCLUDE_DIR}/ptensor_tensor.h
-    ${_INCLUDE_DIR}/tensor_wrapper.hpp
     ${_INCLUDE_DIR}/ptensor_dtype.h
     ${_INCLUDE_DIR}/ptensor_device.h
     ${_INCLUDE_DIR}/ptensor_int_types.h)

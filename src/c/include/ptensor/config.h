@@ -21,10 +21,10 @@
     #define PTENSOR_API
 #endif
 
-const int PTENSOR_VERSION_MAJOR = 1;
-const int PTENSOR_VERSION_MINOR = 0;
-const int PTENSOR_VERSION = ((PTENSOR_VERSION_MAJOR << 16) | PTENSOR_VERSION_MINOR);
-const unsigned long P10_MAX_SHAPE = 8;
+#define PTENSOR_VERSION_MAJOR 1
+#define PTENSOR_VERSION_MINOR 0
+#define PTENSOR_VERSION ((PTENSOR_VERSION_MAJOR << 16) | PTENSOR_VERSION_MINOR)
+#define P10_MAX_SHAPE 8
 
 #ifdef __cplusplus
 #if defined __has_include && __has_include(<Windows.h>)

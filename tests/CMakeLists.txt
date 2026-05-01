@@ -6,7 +6,7 @@ target_sources(unit_tests_all PRIVATE
     $<TARGET_OBJECTS:unit_tests_testing>
     $<TARGET_OBJECTS:unit_tests_simd>)
 
-target_link_libraries(unit_tests_all PRIVATE Catch2::Catch2WithMain ptensor)
+target_link_libraries(unit_tests_all PRIVATE Catch2::Catch2WithMain)
 
 if (WITH_IO)
     target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_io>)

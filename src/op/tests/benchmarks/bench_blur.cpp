@@ -1,3 +1,5 @@
+#include <random>
+
 #include <benchmark/benchmark.h>
 #include <ptensor/op/blur.hpp>
 #include <ptensor/tensor.hpp>
@@ -22,5 +24,13 @@ namespace {
             benchmark::DoNotOptimize(output);
         }
     }
+
+    BENCHMARK(BM_Blur)
+        ->Args({256, 256, 3})
+        ->Args({512, 512, 5})
+        ->Args({1024, 1024, 7})
+        ->Unit(benchmark::kMicrosecond);
 }  // namespace
 }  // namespace p10::op
+
+BENCHMARK_MAIN();

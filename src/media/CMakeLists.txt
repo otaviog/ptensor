@@ -1,7 +1,9 @@
 find_package(FFMPEG REQUIRED)
-find_package(WebP CONFIG REQUIRED)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(x265 REQUIRED IMPORTED_TARGET x265)
+
+# clang's driver already links libc++ implicitly; FFMPEG_LIBRARIES also lists
+# bare `c++`, which produces a duplicate-library link warning on macOS.
+set(_FFMPEG_LIBRARIES ${FFMPEG_LIBRARIES})
+list(TRANSFORM _FFMPEG_LIBRARIES REPLACE "^c\\+\\+$" "")
 
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/media)
 add_library(ptensor_media SHARED)
@@ -65,13 +67,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 # Link all external dependencies as PRIVATE to avoid exporting absolute paths
-# Dependencies will be re-attached in ptensorConfig.cmake for consumers
+# Dependencies will be re-attached in ptensorConfig.cmake for consumers.
+# FFMPEG_LIBRARIES already pulls in webp/webpmux/sharpyuv/x265/c++ via the
+# ffmpeg vcpkg port's transitive deps, so they are not listed explicitly.
 target_link_libraries(ptensor_media
   PUBLIC ptensor
   PRIVATE
-    ${FFMPEG_LIBRARIES}
-    WebP::webp WebP::webpdecoder WebP::webpdemux WebP::libwebpmux
-    PkgConfig::x265
+    ${_FFMPEG_LIBRARIES}
 )
 
 ptensor_target_options(ptensor_media "Media")

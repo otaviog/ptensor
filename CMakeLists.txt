@@ -42,7 +42,11 @@ if (WIN32)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/out/Debug)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/out/Release)
 endif(WIN32)
-add_subdirectory(native)
+
+add_subdirectory(src)
+if (BUILD_TESTS)
+  add_subdirectory(tests)
+ endif (BUILD_TESTS)
 
 if (EMSCRIPTEN)
     add_subdirectory(wasm/cpp)
@@ -66,7 +70,7 @@ write_basic_package_version_file(
 )
 
 configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/ptensorConfig.cmake.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ptensorConfig.cmake.in
     ptensorConfig.cmake
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ptensor
 )

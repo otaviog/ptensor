@@ -1,5 +1,0 @@
-add_subdirectory(cpp)
-add_subdirectory(c)
-if (BUILD_TESTS)
-    add_subdirectory(tests)
-endif()

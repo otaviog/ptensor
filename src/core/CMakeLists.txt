@@ -56,7 +56,7 @@ endif(WIN32)
 target_include_directories(ptensor
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/native/c/include>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/c/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${_INCLUDE_DIR})

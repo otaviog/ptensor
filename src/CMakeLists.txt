@@ -1,6 +1,7 @@
 add_subdirectory(simd)
 add_subdirectory(core)
-
+add_subdirectory(c)
+ 
 set(WITH_IO OFF CACHE BOOL "Build Input/Output library")
 set(WITH_OP OFF CACHE BOOL "Build Operations library")
 set(WITH_MEDIA OFF CACHE BOOL "Build Media library (requires FFMPEG)")

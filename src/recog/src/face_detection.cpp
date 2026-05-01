@@ -5,7 +5,7 @@
 
 namespace p10::recog {
 P10Result<IFaceDetector*>
-IFaceDetector::create(const FaceDetectorModel &model, infer::IInfer* infer_engine) {
+IFaceDetector::create(const FaceDetectorModel& model, infer::IInfer* infer_engine) {
     if (std::holds_alternative<BlazeFaceModel>(model)) {
         const auto& blaze_face_config = std::get<BlazeFaceModel>(model);
         return Ok<IFaceDetector*>(new BlazeFace(
@@ -14,7 +14,7 @@ IFaceDetector::create(const FaceDetectorModel &model, infer::IInfer* infer_engin
             blaze_face_config.ssd_params(),
             blaze_face_config.nms_iou_threshold(),
             blaze_face_config.threshold()
-                                      ));
+        ));
     }
     return Err(P10Error::InvalidArgument << "Unsupported face detection model");
 }

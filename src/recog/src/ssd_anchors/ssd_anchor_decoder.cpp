@@ -3,7 +3,8 @@
 #include <cassert>
 
 namespace p10::recog {
-Rect2f SsdAnchorDecoder::decode_rect(std::span<const float> box, const SsdAnchorRect& anchor) const {
+Rect2f
+SsdAnchorDecoder::decode_rect(std::span<const float> box, const SsdAnchorRect& anchor) const {
     const float cx_delta = box[0];
     const float cy_delta = box[1];
     const float w_delta = box[2];

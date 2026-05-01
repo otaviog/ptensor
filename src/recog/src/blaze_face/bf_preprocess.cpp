@@ -68,11 +68,11 @@ namespace {
         const int64_t input_height = input_shape[2];
         const int64_t input_width = input_shape[3];
 
-        const float original_to_resize_ratio = std::min({
-            static_cast<float>(target_size) / static_cast<float>(input_width),
-            static_cast<float>(target_size) / static_cast<float>(input_height),
-            1.0f
-        });
+        const float original_to_resize_ratio = std::min(
+            {static_cast<float>(target_size) / static_cast<float>(input_width),
+             static_cast<float>(target_size) / static_cast<float>(input_height),
+             1.0f}
+        );
 
         const auto resize_width =
             static_cast<size_t>(std::round(float(input_width) * original_to_resize_ratio));
@@ -83,7 +83,8 @@ namespace {
         n_by_c_input_images.reshape(
             make_shape(num_images * BF_INPUT_CHANNELS, input_height, input_width)
         );
-        P10_RETURN_ERR_IF_ERROR(op::resize(n_by_c_input_images, output, resize_width, resize_height)
+        P10_RETURN_ERR_IF_ERROR(
+            op::resize(n_by_c_input_images, output, resize_width, resize_height)
         );
         return Ok(std::make_tuple(resize_width, resize_height, original_to_resize_ratio));
     }

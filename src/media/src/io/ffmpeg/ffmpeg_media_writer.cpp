@@ -102,7 +102,7 @@ void FfmpegMediaWriter::close() {
 
     flush_video_encoder();
     video_encoder_.reset();
-    
+
     flush_audio_encoder();
     audio_encoder_.reset();
 
@@ -217,13 +217,12 @@ P10Error FfmpegMediaWriter::write_video(const VideoFrame& frame) {
 
     // Encode the frame
     P10_RETURN_IF_ERROR(video_encoder_->encode(frame));
-    
 
     return P10Error::Ok;
 }
 
 P10Error FfmpegMediaWriter::pop_video_packets() {
-// Write all available packets
+    // Write all available packets
     while (video_encoder_->has_packets()) {
         AVPacket* pkt = video_encoder_->pop_encoded_packet();
         if (pkt != nullptr) {

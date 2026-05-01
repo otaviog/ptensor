@@ -1,9 +1,9 @@
 #pragma once
 
-#include <span>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <span>
 
 namespace p10 {
 template<typename T>
@@ -33,6 +33,7 @@ class Accessor1D {
         assert(stride_ == 1);
         return std::span<T>(data_, size_);
     }
+
   private:
     T* data_;
     int64_t size_;

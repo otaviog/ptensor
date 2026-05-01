@@ -12,70 +12,73 @@ namespace p10::infer {
 
 namespace {
 
-std::string get_user_app_dir() {
+    std::string get_user_app_dir() {
 #if defined(_WIN32)
-    const char* appdata = std::getenv("APPDATA");
-    if (appdata) {
-        return std::string(appdata);
-    }
-    return ".";
+        const char* appdata = std::getenv("APPDATA");
+        if (appdata) {
+            return std::string(appdata);
+        }
+        return ".";
 #elif defined(__APPLE__)
-    const char* home = std::getenv("HOME");
-    if (home) {
-        return std::string(home) + "/Library/Application Support";
-    }
-    return ".";
+        const char* home = std::getenv("HOME");
+        if (home) {
+            return std::string(home) + "/Library/Application Support";
+        }
+        return ".";
 #else
-    // XDG_DATA_HOME or ~/.local/share
-    const char* xdg = std::getenv("XDG_DATA_HOME");
-    if (xdg && xdg[0] != '\0') {
-        return std::string(xdg);
-    }
-    const char* home = std::getenv("HOME");
-    if (home) {
-        return std::string(home) + "/.local/share";
-    }
-    return ".";
+        // XDG_DATA_HOME or ~/.local/share
+        const char* xdg = std::getenv("XDG_DATA_HOME");
+        if (xdg && xdg[0] != '\0') {
+            return std::string(xdg);
+        }
+        const char* home = std::getenv("HOME");
+        if (home) {
+            return std::string(home) + "/.local/share";
+        }
+        return ".";
 #endif
-}
-
-size_t write_callback(void* ptr, size_t size, size_t nmemb, void* userdata) {
-    auto* file = static_cast<std::ofstream*>(userdata);
-    const size_t bytes = size * nmemb;
-    file->write(static_cast<const char*>(ptr), static_cast<std::streamsize>(bytes));
-    return bytes;
-}
-
-P10Result<std::string> download_file(const std::string& url,
-                                     const std::filesystem::path& dest_path) {
-    std::ofstream file(dest_path, std::ios::binary);
-    if (!file.is_open()) {
-        return Err(P10Error::IoError << ("Cannot open file for writing: " + dest_path.string()));
     }
 
-    CURL* curl = curl_easy_init();
-    if (!curl) {
-        return Err(P10Error::UnknownError << "Failed to initialize libcurl");
+    size_t write_callback(void* ptr, size_t size, size_t nmemb, void* userdata) {
+        auto* file = static_cast<std::ofstream*>(userdata);
+        const size_t bytes = size * nmemb;
+        file->write(static_cast<const char*>(ptr), static_cast<std::streamsize>(bytes));
+        return bytes;
     }
 
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+    P10Result<std::string>
+    download_file(const std::string& url, const std::filesystem::path& dest_path) {
+        std::ofstream file(dest_path, std::ios::binary);
+        if (!file.is_open()) {
+            return Err(
+                P10Error::IoError << ("Cannot open file for writing: " + dest_path.string())
+            );
+        }
 
-    const CURLcode res = curl_easy_perform(curl);
-    curl_easy_cleanup(curl);
-    file.close();
+        CURL* curl = curl_easy_init();
+        if (!curl) {
+            return Err(P10Error::UnknownError << "Failed to initialize libcurl");
+        }
 
-    if (res != CURLE_OK) {
-        std::filesystem::remove(dest_path);
-        return Err(P10Error::IoError
-                   << ("Download failed for " + url + ": " + curl_easy_strerror(res)));
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+
+        const CURLcode res = curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
+        file.close();
+
+        if (res != CURLE_OK) {
+            std::filesystem::remove(dest_path);
+            return Err(
+                P10Error::IoError << ("Download failed for " + url + ": " + curl_easy_strerror(res))
+            );
+        }
+
+        return Ok(dest_path.string());
     }
-
-    return Ok(dest_path.string());
-}
 
 }  // namespace
 

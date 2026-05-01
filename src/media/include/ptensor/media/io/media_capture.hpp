@@ -30,7 +30,7 @@ class MediaCapture {
     std::optional<int64_t> video_frame_count() const;
 
     std::optional<double> duration() const;
-  
+
   private:
     explicit MediaCapture(std::shared_ptr<Impl> impl) : impl_(std::move(impl)) {}
 

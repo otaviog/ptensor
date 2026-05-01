@@ -10,7 +10,7 @@
 #include <ptensor/tensor.hpp>
 
 #if PTENSOR_HAS_INTRINSICS_H
-#include <immintrin.h>  // AVX2 intrinsics
+    #include <immintrin.h>  // AVX2 intrinsics
 #endif
 
 #include <type_traits>

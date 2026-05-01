@@ -202,11 +202,13 @@ class Tensor {
             return Err(data_res.error());
         }
 
-        return Ok(Iterator<scalar_t> {
-            data_res.unwrap(),
-            shape_.as_span(),
-            stride_.as_span(),
-        });
+        return Ok(
+            Iterator<scalar_t> {
+                data_res.unwrap(),
+                shape_.as_span(),
+                stride_.as_span(),
+            }
+        );
     }
 
     template<typename scalar_t>
@@ -216,11 +218,13 @@ class Tensor {
             return Err(data_res.error());
         }
 
-        return Ok(Iterator<const scalar_t> {
-            data_res.unwrap(),
-            shape_.as_span(),
-            stride_.as_span(),
-        });
+        return Ok(
+            Iterator<const scalar_t> {
+                data_res.unwrap(),
+                shape_.as_span(),
+                stride_.as_span(),
+            }
+        );
     }
 
     template<typename scalar_t>
@@ -295,12 +299,14 @@ class Tensor {
             return Err(data_res.error());
         }
         const auto shape = shape_.as_span();
-        return Ok(Span3D<const T> {
-            data_res.unwrap(),
-            size_t(shape[0]),
-            size_t(shape[1]),
-            size_t(shape[2])
-        });
+        return Ok(
+            Span3D<const T> {
+                data_res.unwrap(),
+                size_t(shape[0]),
+                size_t(shape[1]),
+                size_t(shape[2])
+            }
+        );
     }
 
     template<typename T>
@@ -313,12 +319,14 @@ class Tensor {
         }
 
         const auto shape = shape_.as_span();
-        return Ok(PlanarSpan3D<T> {
-            data_res.unwrap(),
-            size_t(shape[0]),
-            size_t(shape[1]),
-            size_t(shape[2])
-        });
+        return Ok(
+            PlanarSpan3D<T> {
+                data_res.unwrap(),
+                size_t(shape[0]),
+                size_t(shape[1]),
+                size_t(shape[2])
+            }
+        );
     }
 
     template<typename T>
@@ -329,12 +337,14 @@ class Tensor {
             return Err(data_res.error());
         }
         const auto shape = shape_.as_span();
-        return Ok(PlanarSpan3D<const T> {
-            data_res.unwrap(),
-            size_t(shape[0]),
-            size_t(shape[1]),
-            size_t(shape[2])
-        });
+        return Ok(
+            PlanarSpan3D<const T> {
+                data_res.unwrap(),
+                size_t(shape[0]),
+                size_t(shape[1]),
+                size_t(shape[2])
+            }
+        );
     }
 
     template<typename T>
@@ -346,11 +356,13 @@ class Tensor {
             return Err(data_res.error());
         }
 
-        return Ok(Accessor1D<T> {
-            data_res.unwrap(),
-            shape_[0].unwrap(),
-            stride_[0].unwrap(),
-        });
+        return Ok(
+            Accessor1D<T> {
+                data_res.unwrap(),
+                shape_[0].unwrap(),
+                stride_[0].unwrap(),
+            }
+        );
     }
 
     template<typename T>
@@ -362,11 +374,13 @@ class Tensor {
             return Err(data_res.error());
         }
 
-        return Ok(Accessor1D<const T> {
-            data_res.unwrap(),
-            shape_[0].unwrap(),
-            stride_[0].unwrap(),
-        });
+        return Ok(
+            Accessor1D<const T> {
+                data_res.unwrap(),
+                shape_[0].unwrap(),
+                stride_[0].unwrap(),
+            }
+        );
     }
 
     template<typename T>
@@ -381,14 +395,16 @@ class Tensor {
         auto shape = shape_.as_span();
         auto stride = stride_.as_span();
 
-        return Ok(Accessor2D<T> {
-            data_res.unwrap(),
-            std::array<int64_t, 2> {shape[0], shape[1]},
-            std::array<int64_t, 2> {
-                stride[0],
-                stride[1],
+        return Ok(
+            Accessor2D<T> {
+                data_res.unwrap(),
+                std::array<int64_t, 2> {shape[0], shape[1]},
+                std::array<int64_t, 2> {
+                    stride[0],
+                    stride[1],
+                }
             }
-        });
+        );
     }
 
     template<typename T>
@@ -403,14 +419,16 @@ class Tensor {
         auto shape = shape_.as_span();
         auto stride = stride_.as_span();
 
-        return Ok(Accessor2D<const T> {
-            data_res.unwrap(),
-            std::array<int64_t, 2> {shape[0], shape[1]},
-            std::array<int64_t, 2> {
-                stride[0],
-                stride[1],
+        return Ok(
+            Accessor2D<const T> {
+                data_res.unwrap(),
+                std::array<int64_t, 2> {shape[0], shape[1]},
+                std::array<int64_t, 2> {
+                    stride[0],
+                    stride[1],
+                }
             }
-        });
+        );
     }
 
     template<typename T>
@@ -425,15 +443,17 @@ class Tensor {
         auto shape = shape_.as_span();
         auto stride = stride_.as_span();
 
-        return Ok(Accessor3D<T> {
-            data_res.unwrap(),
-            std::array<int64_t, 3> {shape[0], shape[1], shape[2]},
-            std::array<int64_t, 3> {
-                stride[0],
-                stride[1],
-                stride[2],
+        return Ok(
+            Accessor3D<T> {
+                data_res.unwrap(),
+                std::array<int64_t, 3> {shape[0], shape[1], shape[2]},
+                std::array<int64_t, 3> {
+                    stride[0],
+                    stride[1],
+                    stride[2],
+                }
             }
-        });
+        );
     }
 
     template<typename T>
@@ -448,15 +468,17 @@ class Tensor {
         auto shape = shape_.as_span();
         auto stride = stride_.as_span();
 
-        return Ok(Accessor3D<const T> {
-            data_res.unwrap(),
-            std::array<int64_t, 3> {shape[0], shape[1], shape[2]},
-            std::array<int64_t, 3> {
-                stride[0],
-                stride[1],
-                stride[2],
+        return Ok(
+            Accessor3D<const T> {
+                data_res.unwrap(),
+                std::array<int64_t, 3> {shape[0], shape[1], shape[2]},
+                std::array<int64_t, 3> {
+                    stride[0],
+                    stride[1],
+                    stride[2],
+                }
             }
-        });
+        );
     }
 
     auto visit(auto&& visitor) {

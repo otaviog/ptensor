@@ -356,7 +356,9 @@ P10Error Tensor::convert_from(const Tensor& source, const TensorOptions options)
         source.visit([&](const auto source_span) {
             using source_scalar_t = decltype(source_span)::element_type;
             Iterator<const source_scalar_t> src_it(
-                source_span.data(), source.shape().as_span(), source.stride().as_span()
+                source_span.data(),
+                source.shape().as_span(),
+                source.stride().as_span()
             );
             dest_scalar_t* dest_ptr = dest_span.data();
             while (src_it.has_next()) {

@@ -74,6 +74,28 @@ Two binding options are available:
 * `ports/` - vcpkg port files
 * `vcpkg.json` - Local vcpkg manifest
 
+## Test
+
+To run unit test use from the root folder
+
+```bash
+just test
+# Or
+ctest --preset clang/debug # Or other config
+```
+
+To specific test, use:
+
+```bash
+ctest --preset clang/debug --R "<regular expression>"
+```
+
+To run failed only use:
+
+```bash
+ctest --preset clang/debug --rerun-failed
+```
+
 ## Human Language
 
 * English - default

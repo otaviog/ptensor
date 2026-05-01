@@ -185,8 +185,7 @@ P10Error FfmpegAudioEncoder::flush_encoding_fifo() {
     const int codec_frame_size = codec_context_->frame_size > 0 ? codec_context_->frame_size : 1024;
     while (static_cast<int>(encoding_fifo_.num_samples()) >= codec_frame_size) {
         AVFrame* frame_to_encode = nullptr;
-        P10_RETURN_IF_ERROR(encoding_fifo_.pop_samples(codec_frame_size, &frame_to_encode)
-        );
+        P10_RETURN_IF_ERROR(encoding_fifo_.pop_samples(codec_frame_size, &frame_to_encode));
 
         frame_to_encode->pts = audio_pts_;
         audio_pts_ += frame_to_encode->nb_samples;

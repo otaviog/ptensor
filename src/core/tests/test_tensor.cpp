@@ -1452,6 +1452,7 @@ TEST_CASE("core::Tensor::accessor with non-contiguous tensors", "[tensor][access
         REQUIRE(accessor[1][0][0] == original[12]);
     }
 }
+
 // ============================================================================
 // Tensor::create new_allocated flag
 // ============================================================================
@@ -1507,8 +1508,8 @@ TEST_CASE("core::Tensor::create new_allocated flag", "[tensor][create]") {
 
 TEST_CASE("core::Tensor::convert_from converts dtype", "[tensor][convert]") {
     SECTION("float32 to int32") {
-        auto source = Tensor::full(make_shape(2, 3), 7.9, TensorOptions().dtype(Dtype::Float32))
-                          .unwrap();
+        auto source =
+            Tensor::full(make_shape(2, 3), 7.9, TensorOptions().dtype(Dtype::Float32)).unwrap();
         Tensor dest;
         REQUIRE(dest.convert_from(source, TensorOptions().dtype(Dtype::Int32)).is_ok());
 
@@ -1549,9 +1550,7 @@ TEST_CASE("core::Tensor::convert_from converts dtype", "[tensor][convert]") {
     SECTION("preserves values across supported dtypes") {
         auto src_dtype = GENERATE(Dtype::Float32, Dtype::Int32, Dtype::Uint8);
         auto dst_dtype = GENERATE(Dtype::Float32, Dtype::Float64);
-        DYNAMIC_SECTION(
-            "from " << to_string(src_dtype) << " to " << to_string(dst_dtype)
-        ) {
+        DYNAMIC_SECTION("from " << to_string(src_dtype) << " to " << to_string(dst_dtype)) {
             auto source =
                 Tensor::from_range(make_shape(5), TensorOptions().dtype(src_dtype)).unwrap();
             Tensor dest;

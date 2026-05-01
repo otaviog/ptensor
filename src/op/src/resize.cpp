@@ -9,7 +9,7 @@
 #include <ptensor/tensor.hpp>
 
 #if PTENSOR_HAS_INTRINSICS_H
-#include <immintrin.h>  // AVX2 intrinsics
+    #include <immintrin.h>  // AVX2 intrinsics
 #endif
 
 namespace p10::op {

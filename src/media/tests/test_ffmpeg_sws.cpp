@@ -12,45 +12,45 @@ extern "C" {
 namespace p10::media {
 
 namespace {
-// Helper to create and fill an AVFrame with test data
-AVFrame* create_test_avframe(int width, int height, AVPixelFormat format) {
-    AVFrame* frame = av_frame_alloc();
-    frame->width = width;
-    frame->height = height;
-    frame->format = format;
+    // Helper to create and fill an AVFrame with test data
+    AVFrame* create_test_avframe(int width, int height, AVPixelFormat format) {
+        AVFrame* frame = av_frame_alloc();
+        frame->width = width;
+        frame->height = height;
+        frame->format = format;
 
-    int buffer_size = av_image_get_buffer_size(format, width, height, 1);
-    uint8_t* buffer = (uint8_t*)av_malloc(buffer_size);
+        int buffer_size = av_image_get_buffer_size(format, width, height, 1);
+        uint8_t* buffer = (uint8_t*)av_malloc(buffer_size);
 
-    // Fill with test pattern
-    for (int i = 0; i < buffer_size; ++i) {
-        buffer[i] = static_cast<uint8_t>(i % 256);
+        // Fill with test pattern
+        for (int i = 0; i < buffer_size; ++i) {
+            buffer[i] = static_cast<uint8_t>(i % 256);
+        }
+
+        av_image_fill_arrays(frame->data, frame->linesize, buffer, format, width, height, 1);
+
+        return frame;
     }
 
-    av_image_fill_arrays(frame->data, frame->linesize, buffer, format, width, height, 1);
-
-    return frame;
-}
-
-void free_test_avframe(AVFrame* frame) {
-    if (frame) {
-        av_free(frame->data[0]);
-        av_frame_free(&frame);
-    }
-}
-
-VideoFrame create_test_videoframe(int width, int height) {
-    VideoFrame frame;
-    frame.create(width, height, PixelFormat::RGB24).expect("create video frame");
-
-    // Fill with test pattern
-    auto bytes = frame.as_bytes();
-    for (size_t i = 0; i < bytes.size(); ++i) {
-        bytes[i] = static_cast<uint8_t>(i % 256);
+    void free_test_avframe(AVFrame* frame) {
+        if (frame) {
+            av_free(frame->data[0]);
+            av_frame_free(&frame);
+        }
     }
 
-    return frame;
-}
+    VideoFrame create_test_videoframe(int width, int height) {
+        VideoFrame frame;
+        frame.create(width, height, PixelFormat::RGB24).expect("create video frame");
+
+        // Fill with test pattern
+        auto bytes = frame.as_bytes();
+        for (size_t i = 0; i < bytes.size(); ++i) {
+            bytes[i] = static_cast<uint8_t>(i % 256);
+        }
+
+        return frame;
+    }
 
 }  // namespace
 

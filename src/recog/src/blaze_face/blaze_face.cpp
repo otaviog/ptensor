@@ -1,8 +1,8 @@
 #include "blaze_face.hpp"
 
+#include <ptensor/infer/infer.hpp>
 #include <ptensor/op/resize.hpp>
 #include <ptensor/tensor.hpp>
-#include <ptensor/infer/infer.hpp>
 
 namespace p10::recog {
 

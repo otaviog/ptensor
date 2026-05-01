@@ -65,8 +65,7 @@ FfmpegFileMediaCapture::open(const std::string& path) {
             wrap_ffmpeg_error(avcodec_open2(audio_codec_ctx, audio_codec, nullptr))
         );
 
-        audio_decoder =
-            std::make_shared<FfmpegAudioDecoder>(audio_codec_ctx, audio_stream_idx);
+        audio_decoder = std::make_shared<FfmpegAudioDecoder>(audio_codec_ctx, audio_stream_idx);
     }
 
     auto capture = std::shared_ptr<FfmpegFileMediaCapture>(
@@ -210,7 +209,7 @@ void FfmpegFileMediaCapture::decode_audio_packet(const AVPacket*) {
 std::optional<int64_t> FfmpegFileMediaCapture::video_frame_count() const {
     if (video_decoder_ != nullptr) {
         return video_decoder_->video_frame_count();
-    } 
+    }
     return std::nullopt;
 }
 

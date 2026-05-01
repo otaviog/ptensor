@@ -145,7 +145,8 @@ void cnpy::parse_npy_header(
     //fortran order
     loc1 = header.find("fortran_order");
     if (loc1 == std::string::npos)
-        throw std::runtime_error("parse_npy_header: failed to find header keyword: 'fortran_order'"
+        throw std::runtime_error(
+            "parse_npy_header: failed to find header keyword: 'fortran_order'"
         );
     loc1 += 16;
     fortran_order = (header.substr(loc1, 4) == "True" ? true : false);

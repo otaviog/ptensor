@@ -1,9 +1,9 @@
-#include <CLI/CLI.hpp>
 #include <filesystem>
 #include <iostream>
 #include <set>
 #include <string>
 
+#include <CLI/CLI.hpp>
 #include <ptensor/infer/infer.hpp>
 #include <ptensor/infer/infer_config.hpp>
 #include <ptensor/io/image.hpp>
@@ -112,7 +112,8 @@ P10Error run_on_video(IFaceDetector& detector, const std::string& path) {
 
     while (true) {
         auto has_frame = cap.next_frame();
-        if (has_frame.is_error() || !has_frame.unwrap()) break;
+        if (has_frame.is_error() || !has_frame.unwrap())
+            break;
 
         if (auto err = cap.get_video(frame); err.is_error()) {
             std::cerr << "Error reading frame " << frame_idx << ": " << err.to_string() << "\n";
@@ -140,7 +141,7 @@ P10Error run_on_video(IFaceDetector& detector, const std::string& path) {
 }  // namespace
 
 int main(int argc, char** argv) {
-    CLI::App app{"Run face detection on images, directories, or videos"};
+    CLI::App app {"Run face detection on images, directories, or videos"};
     argv = app.ensure_utf8(argv);
 
     std::string input;
@@ -172,7 +173,8 @@ int main(int argc, char** argv) {
 
     if (fs::is_directory(input)) {
         for (const auto& entry : fs::directory_iterator(input)) {
-            if (!entry.is_regular_file() || !is_image(entry.path().string())) continue;
+            if (!entry.is_regular_file() || !is_image(entry.path().string()))
+                continue;
             run_on_image(*detector, entry.path().string());
         }
     } else if (is_video(input)) {

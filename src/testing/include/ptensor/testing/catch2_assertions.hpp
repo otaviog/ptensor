@@ -8,7 +8,7 @@
 namespace p10::testing {
 
 struct ErrorMatcher: Catch::Matchers::MatcherBase<P10Error> {
-    ErrorMatcher(P10Error expected) : expected_(expected) {}
+    explicit ErrorMatcher(P10Error expected) : expected_(expected) {}
 
     template<typename T>
     bool match(const P10Result<T>& actual) const {
@@ -24,8 +24,11 @@ struct ErrorMatcher: Catch::Matchers::MatcherBase<P10Error> {
     }
 
     std::string describe() const override {
-        return "Matches P10Error with code " + std::to_string(expected_.code()) + " but got error "
-            + actual_.to_string();
+        return std::format(
+            "Matches P10Error with code {} but got error {}",
+            std::to_string(expected_.code()),
+            actual_.to_string()
+        );
     }
 
   private:
@@ -34,11 +37,11 @@ struct ErrorMatcher: Catch::Matchers::MatcherBase<P10Error> {
 };
 
 inline ErrorMatcher IsError(const P10Error& expected) {
-    return ErrorMatcher(expected);
+    return ErrorMatcher {expected};
 }
 
 struct IsOkMatcher: Catch::Matchers::MatcherBase<P10Error> {
-    IsOkMatcher() {}
+    IsOkMatcher() = default;
 
     template<typename T>
     bool match(const P10Result<T>& actual) const {
@@ -62,7 +65,7 @@ struct IsOkMatcher: Catch::Matchers::MatcherBase<P10Error> {
 };
 
 inline IsOkMatcher IsOk() {
-    return IsOkMatcher();
+    return {};
 }
 
 }  // namespace p10::testing

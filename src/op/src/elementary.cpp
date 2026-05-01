@@ -10,7 +10,7 @@ P10Error subtract_elements(Tensor& a, double rhs_) {
     if (!a.is_contiguous()) {
         return P10Error::InvalidArgument << "Tensor must be contiguous for subtract_elements";
     }
-    
+
     a.visit([rhs_](auto span) {
         using scalar_t = typename decltype(span)::value_type;
         const auto rhs = static_cast<scalar_t>(rhs_);

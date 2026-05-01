@@ -48,7 +48,9 @@ P10Error image_to_tensor(
 /// * `out_image_tensor` - The output tensor to store the resulting image. Will be
 ///   created with shape [height, width, channels] and dtype target_dtype if specified.
 /// * `target_dtype` - Optional target dtype for the output image tensor. If not specified, the output dtype will be the same as tensor
-P10Error image_from_tensor(const Tensor& tensor, Tensor& out_image_tensor,
-                           std::optional<Dtype> target_dtype = std::nullopt
-    );
+P10Error image_from_tensor(
+    const Tensor& tensor,
+    Tensor& out_image_tensor,
+    std::optional<Dtype> target_dtype = std::nullopt
+);
 }  // namespace p10::op

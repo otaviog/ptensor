@@ -5,28 +5,32 @@
 #include <ptensor/media/io/media_capture.hpp>
 #include <ptensor/media/video_frame.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+
 #include "time/rational.hpp"
 #include "video_parameters.hpp"
 
 namespace p10::media {
 
-TEST_CASE("media::MediaCapture::open_file returns IoError for non-existent file", "[media][capture]") {
+TEST_CASE(
+    "media::MediaCapture::open_file returns IoError for non-existent file",
+    "[media][capture]"
+) {
     REQUIRE_THAT(
         MediaCapture::open_file("non_existent_file.mp4"),
         testing::IsError(P10Error::IoError)
     );
 }
 
-TEST_CASE("media::MediaCapture::open_file returns IoError for unsupported file format", "[media][capture]") {
+TEST_CASE(
+    "media::MediaCapture::open_file returns IoError for unsupported file format",
+    "[media][capture]"
+) {
     const std::string UNSUPPORTED_FILE = "unsupported_file.txt";
     std::fstream outfile(UNSUPPORTED_FILE, std::ios::out);
     outfile << "This is not a valid media file.";
     outfile.close();
 
-    REQUIRE_THAT(
-        MediaCapture::open_file(UNSUPPORTED_FILE),
-        testing::IsError(P10Error::IoError)
-    );
+    REQUIRE_THAT(MediaCapture::open_file(UNSUPPORTED_FILE), testing::IsError(P10Error::IoError));
 
     std::filesystem::remove(UNSUPPORTED_FILE);
 }

@@ -27,17 +27,15 @@ OrtInfer::OrtInfer(const std::string& modelPath, Ort::Env&& env) :
     session_options_() {
     session_options_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
-    session_.reset(
-        new Ort::Session(
-            env_,
+    session_.reset(new Ort::Session(
+        env_,
 #if defined(_MSC_VER)
-            string_to_wstring(model_path_).unwrap().c_str(),
+        string_to_wstring(model_path_).unwrap().c_str(),
 #else
-            model_path_.c_str(),
+        model_path_.c_str(),
 #endif
-            session_options_
-            )
-    );
+        session_options_
+    ));
 
     collect_input_output_names();
 }

@@ -9,13 +9,13 @@ namespace p10::recog {
 class Nms {
   public:
     Nms(float iou_threshold) : iou_threshold_(iou_threshold) {}
-    
+
     void filter_nms(
         std::span<const Rect2f> rects,
         std::span<const float> scores,
-        std::vector<size_t> &selected
+        std::vector<size_t>& selected
     );
-    
+
   private:
     float iou_threshold_;
 };

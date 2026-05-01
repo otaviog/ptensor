@@ -23,11 +23,11 @@ TEST_CASE("io::numpy::save_npz and load_npz with single tensor", "[io][numpy]") 
     std::map<std::string, Tensor> tensors_to_save;
     tensors_to_save["data"] = tensor.clone().unwrap();
     auto save_err = save_npz(filename, tensors_to_save);
-    REQUIRE_THAT(save_err, p10::testing::IsOk());
+    REQUIRE_THAT(save_err, p10::testing::is_ok());
 
     // Load from npz
     auto loaded_result = load_npz(filename);
-    REQUIRE_THAT(loaded_result, testing::IsOk());
+    REQUIRE_THAT(loaded_result, testing::is_ok());
 
     auto loaded_tensors = loaded_result.unwrap();
     REQUIRE(loaded_tensors.size() == 1);
@@ -63,11 +63,11 @@ TEST_CASE("io::numpy::save_npz and load_npz with multiple tensors", "[io][numpy]
     tensors_to_save["forties"] = tensor2.clone().unwrap();
     tensors_to_save["bytes"] = tensor3.clone().unwrap();
     auto save_err = save_npz(filename, tensors_to_save);
-    REQUIRE_THAT(save_err, p10::testing::IsOk());
+    REQUIRE_THAT(save_err, p10::testing::is_ok());
 
     // Load from npz
     auto loaded_result = load_npz(filename);
-    REQUIRE_THAT(loaded_result, testing::IsOk());
+    REQUIRE_THAT(loaded_result, testing::is_ok());
 
     auto loaded_tensors = loaded_result.unwrap();
     REQUIRE(loaded_tensors.size() == 3);
@@ -127,10 +127,10 @@ TEST_CASE("io::numpy::save_npz with different data types", "[io][numpy]") {
     tensors_to_save["uint8"] = std::move(uint8_tensor);
 
     auto save_err = save_npz(filename, tensors_to_save);
-    REQUIRE_THAT(save_err, p10::testing::IsOk());
+    REQUIRE_THAT(save_err, p10::testing::is_ok());
 
     auto loaded_result = load_npz(filename);
-    REQUIRE_THAT(loaded_result, p10::testing::IsOk());
+    REQUIRE_THAT(loaded_result, p10::testing::is_ok());
 
     auto loaded_tensors = loaded_result.unwrap();
     REQUIRE(loaded_tensors.size() == 2);
@@ -168,7 +168,7 @@ TEST_CASE("io::numpy::save_npz creates valid file", "[io][numpy]") {
     tensors_to_save["test"] = std::move(tensor);
 
     auto save_err = save_npz(filename, tensors_to_save);
-    REQUIRE_THAT(save_err, p10::testing::IsOk());
+    REQUIRE_THAT(save_err, p10::testing::is_ok());
 
     // Check file exists
     REQUIRE(std::filesystem::exists(filename));

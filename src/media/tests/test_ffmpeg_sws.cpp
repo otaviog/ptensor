@@ -101,7 +101,7 @@ TEST_CASE("FfmpegSws::transform AVFrame to VideoFrame", "[media][ffmpeg][sws]") 
         AVFrame* src_frame = create_test_avframe(320, 240, AV_PIX_FMT_YUV420P);
         VideoFrame dst_frame;
 
-        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::is_ok());
 
         REQUIRE(dst_frame.width() == 320);
         REQUIRE(dst_frame.height() == 240);
@@ -116,7 +116,7 @@ TEST_CASE("FfmpegSws::transform AVFrame to VideoFrame", "[media][ffmpeg][sws]") 
 
         sws.set_target_size(640, 480);
 
-        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::is_ok());
 
         REQUIRE(dst_frame.width() == 640);
         REQUIRE(dst_frame.height() == 480);
@@ -131,7 +131,7 @@ TEST_CASE("FfmpegSws::transform AVFrame to VideoFrame", "[media][ffmpeg][sws]") 
 
         sws.set_target_size(320, 240);
 
-        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::is_ok());
 
         REQUIRE(dst_frame.width() == 320);
         REQUIRE(dst_frame.height() == 240);
@@ -146,7 +146,7 @@ TEST_CASE("FfmpegSws::transform AVFrame to VideoFrame", "[media][ffmpeg][sws]") 
 
         sws.set_target_size(800, 600);
 
-        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::is_ok());
 
         REQUIRE(dst_frame.width() == 800);
         REQUIRE(dst_frame.height() == 600);
@@ -158,7 +158,7 @@ TEST_CASE("FfmpegSws::transform AVFrame to VideoFrame", "[media][ffmpeg][sws]") 
         AVFrame* src_frame = create_test_avframe(320, 240, AV_PIX_FMT_RGB24);
         VideoFrame dst_frame;
 
-        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::is_ok());
 
         REQUIRE(dst_frame.width() == 320);
         REQUIRE(dst_frame.height() == 240);
@@ -174,7 +174,7 @@ TEST_CASE("FfmpegSws::transform VideoFrame to AVFrame", "[media][ffmpeg][sws]") 
         VideoFrame src_frame = create_test_videoframe(320, 240);
         AVFrame* dst_frame = nullptr;
 
-        REQUIRE_THAT(sws.transform(src_frame, &dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, &dst_frame), testing::is_ok());
 
         REQUIRE(dst_frame != nullptr);
         REQUIRE(dst_frame->width == 320);
@@ -190,7 +190,7 @@ TEST_CASE("FfmpegSws::transform VideoFrame to AVFrame", "[media][ffmpeg][sws]") 
 
         sws.set_target_size(640, 480);
 
-        REQUIRE_THAT(sws.transform(src_frame, &dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, &dst_frame), testing::is_ok());
 
         REQUIRE(dst_frame != nullptr);
         REQUIRE(dst_frame->width == 640);
@@ -205,7 +205,7 @@ TEST_CASE("FfmpegSws::transform VideoFrame to AVFrame", "[media][ffmpeg][sws]") 
 
         sws.set_target_size(320, 240);
 
-        REQUIRE_THAT(sws.transform(src_frame, &dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, &dst_frame), testing::is_ok());
 
         REQUIRE(dst_frame != nullptr);
         REQUIRE(dst_frame->width == 320);
@@ -220,7 +220,7 @@ TEST_CASE("FfmpegSws::transform VideoFrame to AVFrame", "[media][ffmpeg][sws]") 
 
         sws.set_target_pixel_format(AV_PIX_FMT_YUV420P);
 
-        REQUIRE_THAT(sws.transform(src_frame, &dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, &dst_frame), testing::is_ok());
 
         REQUIRE(dst_frame != nullptr);
         REQUIRE(dst_frame->width == 320);
@@ -237,7 +237,7 @@ TEST_CASE("FfmpegSws::transform VideoFrame to AVFrame", "[media][ffmpeg][sws]") 
         sws.set_target_size(640, 480);
         sws.set_target_pixel_format(AV_PIX_FMT_YUV420P);
 
-        REQUIRE_THAT(sws.transform(src_frame, &dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, &dst_frame), testing::is_ok());
 
         REQUIRE(dst_frame != nullptr);
         REQUIRE(dst_frame->width == 640);
@@ -257,7 +257,7 @@ TEST_CASE("FfmpegSws::multiple transforms with context reuse", "[media][ffmpeg][
             AVFrame* src_frame = create_test_avframe(320, 240, AV_PIX_FMT_YUV420P);
             VideoFrame dst_frame;
 
-            REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::IsOk());
+            REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::is_ok());
             REQUIRE(dst_frame.width() == 640);
             REQUIRE(dst_frame.height() == 480);
 
@@ -269,7 +269,7 @@ TEST_CASE("FfmpegSws::multiple transforms with context reuse", "[media][ffmpeg][
         AVFrame* src_frame1 = create_test_avframe(320, 240, AV_PIX_FMT_YUV420P);
         VideoFrame dst_frame1;
 
-        REQUIRE_THAT(sws.transform(src_frame1, dst_frame1), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame1, dst_frame1), testing::is_ok());
         REQUIRE(dst_frame1.width() == 640);
         REQUIRE(dst_frame1.height() == 480);
 
@@ -281,7 +281,7 @@ TEST_CASE("FfmpegSws::multiple transforms with context reuse", "[media][ffmpeg][
         AVFrame* src_frame2 = create_test_avframe(320, 240, AV_PIX_FMT_YUV420P);
         VideoFrame dst_frame2;
 
-        REQUIRE_THAT(sws.transform(src_frame2, dst_frame2), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame2, dst_frame2), testing::is_ok());
         REQUIRE(dst_frame2.width() == 800);
         REQUIRE(dst_frame2.height() == 600);
 
@@ -296,7 +296,7 @@ TEST_CASE("FfmpegSws::edge cases", "[media][ffmpeg][sws]") {
         AVFrame* src_frame = create_test_avframe(16, 16, AV_PIX_FMT_YUV420P);
         VideoFrame dst_frame;
 
-        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::is_ok());
         REQUIRE(dst_frame.width() == 16);
         REQUIRE(dst_frame.height() == 16);
 
@@ -309,7 +309,7 @@ TEST_CASE("FfmpegSws::edge cases", "[media][ffmpeg][sws]") {
 
         sws.set_target_size(3840, 2160);
 
-        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::is_ok());
         REQUIRE(dst_frame.width() == 3840);
         REQUIRE(dst_frame.height() == 2160);
 
@@ -320,7 +320,7 @@ TEST_CASE("FfmpegSws::edge cases", "[media][ffmpeg][sws]") {
         AVFrame* src_frame = create_test_avframe(321, 241, AV_PIX_FMT_YUV420P);
         VideoFrame dst_frame;
 
-        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::IsOk());
+        REQUIRE_THAT(sws.transform(src_frame, dst_frame), testing::is_ok());
         REQUIRE(dst_frame.width() == 321);
         REQUIRE(dst_frame.height() == 241);
 

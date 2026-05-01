@@ -42,23 +42,23 @@ TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
             REQUIRE_THAT(
                 Fft(FftOptions().direction(Fft::Inverse).normalize(Fft::ByN))
                     .transform(frequency, signal),
-                testing::IsOk()
+                testing::is_ok()
             );
             REQUIRE(signal.shape() == make_shape(1, NUM_FFTS, 2));
 
             Tensor recovered_frequency;
             REQUIRE_THAT(
                 Fft(FftOptions().direction(Fft::Forward)).transform(signal, recovered_frequency),
-                testing::IsOk()
+                testing::is_ok()
             );
-            REQUIRE_THAT(testing::compare_tensors(recovered_frequency, frequency), testing::IsOk());
+            REQUIRE_THAT(testing::compare_tensors(recovered_frequency, frequency), testing::is_ok());
         }
 
         SECTION("Should inverse into real and forward FFT correctly") {
             Tensor signal;
             REQUIRE_THAT(
                 Fft(FftOptions().direction(Fft::InverseReal)).transform(frequency, signal),
-                testing::IsOk()
+                testing::is_ok()
             );
             REQUIRE(signal.shape() == make_shape(1, (NUM_FFTS - 1) * 2));
 
@@ -66,10 +66,10 @@ TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
             REQUIRE_THAT(
                 Fft(FftOptions().direction(Fft::ForwardReal).normalize(Fft::ByN))
                     .transform(signal, recovered_frequency),
-                testing::IsOk()
+                testing::is_ok()
             );
 
-            REQUIRE_THAT(testing::compare_tensors(recovered_frequency, frequency), testing::IsOk());
+            REQUIRE_THAT(testing::compare_tensors(recovered_frequency, frequency), testing::is_ok());
         }
     }
 
@@ -91,7 +91,7 @@ TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
             auto signal = large_signals.select_dimension(0, signal_idx).unwrap();
             REQUIRE_THAT(
                 generate_sine_wave(SIGNAL_SIZE, Dtype::Float32, waves[signal_idx], signal),
-                testing::IsOk()
+                testing::is_ok()
             );
         }
 
@@ -100,16 +100,16 @@ TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
             REQUIRE_THAT(
                 Fft(FftOptions().direction(Fft::ForwardReal))
                     .transform(large_signals, frequency_domain),
-                testing::IsOk()
+                testing::is_ok()
             );
 
             Tensor rec_signal;
             REQUIRE_THAT(
                 Fft(FftOptions().direction(Fft::InverseReal).normalize(Fft::ByN))
                     .transform(frequency_domain, rec_signal),
-                testing::IsOk()
+                testing::is_ok()
             );
-            REQUIRE_THAT(testing::compare_tensors(large_signals, rec_signal), testing::IsOk());
+            REQUIRE_THAT(testing::compare_tensors(large_signals, rec_signal), testing::is_ok());
         }
     }
 }

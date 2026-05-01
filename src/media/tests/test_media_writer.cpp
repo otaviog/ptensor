@@ -18,7 +18,7 @@ TEST_CASE("media::MediaWriter::error cases", "[media][writer]") {
     SECTION("Should return error for non-existent parent directory") {
         REQUIRE_THAT(
             MediaWriter::open_file("non_existing_dir/non_existent_file.mp4", MediaParameters()),
-            testing::IsError(P10Error::IoError)
+            testing::is_error(P10Error::IoError)
         );
     }
     SECTION("Should return error for unsupported file format") {
@@ -28,7 +28,7 @@ TEST_CASE("media::MediaWriter::error cases", "[media][writer]") {
         outfile.close();
         REQUIRE_THAT(
             MediaWriter::open_file(unsupported_file, MediaParameters()),
-            testing::IsError(P10Error::IoError)
+            testing::is_error(P10Error::IoError)
         );
         std::filesystem::remove(unsupported_file);
     }
@@ -47,10 +47,10 @@ TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
                                      .expect("should open output file for write");
 
             for (int current_frame = 0; current_frame < total_frames; ++current_frame) {
-                REQUIRE_THAT(capture.next_frame(), testing::IsOk());
+                REQUIRE_THAT(capture.next_frame(), testing::is_ok());
 
                 VideoFrame video_frame;
-                REQUIRE_THAT(capture.get_video(video_frame), testing::IsOk());
+                REQUIRE_THAT(capture.get_video(video_frame), testing::is_ok());
                 writer.write_video(video_frame);
             }
         }
@@ -72,20 +72,20 @@ TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
             int matched_frames = 0;
             for (int current_frame = 0; current_frame < total_frames; ++current_frame) {
                 auto next_in = capture.next_frame();
-                REQUIRE_THAT(next_in, testing::IsOk());
+                REQUIRE_THAT(next_in, testing::is_ok());
                 if (!next_in.unwrap()) {
                     break;
                 }
                 VideoFrame video_frame_in;
-                REQUIRE_THAT(capture.get_video(video_frame_in), testing::IsOk());
+                REQUIRE_THAT(capture.get_video(video_frame_in), testing::is_ok());
 
                 auto next_out = capture_out.next_frame();
-                REQUIRE_THAT(next_out, testing::IsOk());
+                REQUIRE_THAT(next_out, testing::is_ok());
                 if (!next_out.unwrap()) {
                     break;
                 }
                 VideoFrame video_frame_out;
-                REQUIRE_THAT(capture_out.get_video(video_frame_out), testing::IsOk());
+                REQUIRE_THAT(capture_out.get_video(video_frame_out), testing::is_ok());
                 REQUIRE(video_frame_in.width() == video_frame_out.width());
                 REQUIRE(video_frame_in.height() == video_frame_out.height());
                 ++matched_frames;
@@ -115,9 +115,9 @@ TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
                                  .expect("should open output file for write");
 
         for (int current_frame = 0; current_frame < total_frames; ++current_frame) {
-            REQUIRE_THAT(capture.next_frame(), testing::IsOk());
+            REQUIRE_THAT(capture.next_frame(), testing::is_ok());
             VideoFrame video_frame;
-            REQUIRE_THAT(capture.get_video(video_frame), testing::IsOk());
+            REQUIRE_THAT(capture.get_video(video_frame), testing::is_ok());
             writer.write_video(video_frame);
         }
         writer.close();

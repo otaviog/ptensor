@@ -101,8 +101,8 @@ TEST_CASE("Shape empty initialization", "[shape][creation]") {
 // ============================================================================
 
 TEST_CASE("Shape exceeding maximum dimensions", "[shape][validation]") {
-    REQUIRE_THAT(make_shape({1, 2, 3, 4, 5, 6, 7, 8}), testing::IsOk());
-    REQUIRE_THAT(make_shape({1, 2, 3, 4, 5, 6, 7, 8, 9}), testing::IsError(P10Error::OutOfRange));
+    REQUIRE_THAT(make_shape({1, 2, 3, 4, 5, 6, 7, 8}), testing::is_ok());
+    REQUIRE_THAT(make_shape({1, 2, 3, 4, 5, 6, 7, 8, 9}), testing::is_error(P10Error::OutOfRange));
 }
 
 TEST_CASE("Shape with zero dimensions", "[shape][validation]") {
@@ -156,17 +156,17 @@ TEST_CASE("Shape::operator[] accesses dimensions", "[shape][properties]") {
     auto shape = make_shape({2, 3, 4}).unwrap();
 
     SECTION("valid indices") {
-        REQUIRE_THAT(shape[0], testing::IsOk());
-        REQUIRE_THAT(shape[1], testing::IsOk());
-        REQUIRE_THAT(shape[2], testing::IsOk());
+        REQUIRE_THAT(shape[0], testing::is_ok());
+        REQUIRE_THAT(shape[1], testing::is_ok());
+        REQUIRE_THAT(shape[2], testing::is_ok());
         REQUIRE(shape[0].unwrap() == 2);
         REQUIRE(shape[1].unwrap() == 3);
         REQUIRE(shape[2].unwrap() == 4);
     }
 
     SECTION("out of bounds index") {
-        REQUIRE_THAT(shape[3], testing::IsError(P10Error::OutOfRange));
-        REQUIRE_THAT(shape[10], testing::IsError(P10Error::OutOfRange));
+        REQUIRE_THAT(shape[3], testing::is_error(P10Error::OutOfRange));
+        REQUIRE_THAT(shape[10], testing::is_error(P10Error::OutOfRange));
     }
 }
 

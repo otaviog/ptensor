@@ -312,7 +312,7 @@ TEST_CASE("core::Tensor::to_contiguous on already contiguous tensor", "[tensor][
     auto contiguous = tensor.to_contiguous().unwrap();
     REQUIRE(contiguous.is_contiguous());
 
-    REQUIRE_THAT(testing::compare_tensors(tensor, contiguous), testing::IsOk());
+    REQUIRE_THAT(testing::compare_tensors(tensor, contiguous), testing::is_ok());
 }
 
 // ============================================================================
@@ -430,7 +430,7 @@ TEST_CASE("core::Tensor::as_span1d converts to 1D span", "[tensor][span]") {
     SECTION("fails with wrong dtype") {
         REQUIRE_THAT(
             Tensor::full(make_shape(3), 1.0f).unwrap().as_span1d<int32_t>(),
-            testing::IsError(P10Error::InvalidArgument)
+            testing::is_error(P10Error::InvalidArgument)
         );
     }
 
@@ -498,14 +498,14 @@ TEST_CASE("core::Tensor::as_span2d converts to 2D span", "[tensor][span]") {
     SECTION("fails for non-2D tensor") {
         REQUIRE_THAT(
             Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_span2d<float>(),
-            testing::IsError(P10Error::InvalidArgument)
+            testing::is_error(P10Error::InvalidArgument)
         );
     }
 
     SECTION("fails with wrong dtype") {
         REQUIRE_THAT(
             Tensor::zeros(make_shape(2, 3)).unwrap().as_span2d<double>(),
-            testing::IsError(P10Error::InvalidArgument)
+            testing::is_error(P10Error::InvalidArgument)
         );
     }
 }
@@ -576,14 +576,14 @@ TEST_CASE("core::Tensor::as_span3d converts to 3D span", "[tensor][span]") {
     SECTION("fails for non-3D tensor") {
         REQUIRE_THAT(
             Tensor::zeros(make_shape(2, 3)).unwrap().as_span3d<float>(),
-            testing::IsError(P10Error::InvalidArgument)
+            testing::is_error(P10Error::InvalidArgument)
         );
     }
 
     SECTION("fails with wrong dtype") {
         REQUIRE_THAT(
             Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_span3d<int32_t>(),
-            testing::IsError(P10Error::InvalidArgument)
+            testing::is_error(P10Error::InvalidArgument)
         );
     }
 }
@@ -653,14 +653,14 @@ TEST_CASE("core::Tensor::as_planar_span3d converts to planar 3D span", "[tensor]
     SECTION("fails for non-3D tensor") {
         REQUIRE_THAT(
             Tensor::zeros(make_shape(2, 3, 4, 5)).unwrap().as_planar_span3d<float>(),
-            testing::IsError(P10Error::InvalidArgument)
+            testing::is_error(P10Error::InvalidArgument)
         );
     }
 
     SECTION("fails with wrong dtype") {
         REQUIRE_THAT(
             Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_planar_span3d<double>(),
-            testing::IsError(P10Error::InvalidArgument)
+            testing::is_error(P10Error::InvalidArgument)
         );
     }
 }
@@ -813,21 +813,21 @@ TEST_CASE("core::Tensor::select_dimension", "[tensor][select_dimension]") {
     SECTION("Error: invalid dimension index") {
         auto tensor = Tensor::full(make_shape(3, 4, 5), 1.0f).unwrap();
 
-        REQUIRE_THAT(tensor.select_dimension(3, 0), testing::IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(tensor.select_dimension(3, 0), testing::is_error(P10Error::InvalidArgument));
 
-        REQUIRE_THAT(tensor.select_dimension(-1, 0), testing::IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(tensor.select_dimension(-1, 0), testing::is_error(P10Error::InvalidArgument));
     }
 
     SECTION("Error: index out of bounds") {
         auto tensor = Tensor::full(make_shape(3, 4, 5), 1.0f).unwrap();
 
         // Index too large
-        REQUIRE_THAT(tensor.select_dimension(1, 4), testing::IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(tensor.select_dimension(1, 4), testing::is_error(P10Error::InvalidArgument));
 
-        REQUIRE_THAT(tensor.select_dimension(2, 5), testing::IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(tensor.select_dimension(2, 5), testing::is_error(P10Error::InvalidArgument));
 
         // Negative index
-        REQUIRE_THAT(tensor.select_dimension(0, -4), testing::IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(tensor.select_dimension(0, -4), testing::is_error(P10Error::InvalidArgument));
     }
 
     SECTION("Stride preservation") {
@@ -850,15 +850,15 @@ TEST_CASE("core::Tensor::reshape", "[tensor][reshape]") {
         auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
         size_t tensor_size = tensor.size();
         // Reshape to (4, 3, 2)
-        REQUIRE_THAT(tensor.reshape(make_shape(4, 3, 2)), testing::IsOk());
+        REQUIRE_THAT(tensor.reshape(make_shape(4, 3, 2)), testing::is_ok());
         REQUIRE(tensor.shape() == make_shape(4, 3, 2));
         REQUIRE(tensor.size() == tensor_size);
         // Reshape to (6, 4)
-        REQUIRE_THAT(tensor.reshape(make_shape(6, 4)), testing::IsOk());
+        REQUIRE_THAT(tensor.reshape(make_shape(6, 4)), testing::is_ok());
         REQUIRE(tensor.shape() == make_shape(6, 4));
         REQUIRE(tensor.size() == tensor_size);
         // Reshape to (24,)
-        REQUIRE_THAT(tensor.reshape(make_shape(24)), testing::IsOk());
+        REQUIRE_THAT(tensor.reshape(make_shape(24)), testing::is_ok());
         REQUIRE(tensor.shape() == make_shape(24));
         REQUIRE(tensor.size() == tensor_size);
     }
@@ -869,7 +869,7 @@ TEST_CASE("core::Tensor::reshape", "[tensor][reshape]") {
                 .unwrap();
         size_t tensor_size = tensor.size();
         // Reshape to (3, 2)
-        REQUIRE_THAT(tensor.reshape(make_shape(3, 2)), testing::IsOk());
+        REQUIRE_THAT(tensor.reshape(make_shape(3, 2)), testing::is_ok());
         REQUIRE(tensor.shape() == make_shape(3, 2));
         REQUIRE(tensor.size() == tensor_size);
     }
@@ -887,16 +887,16 @@ TEST_CASE("core::Tensor::reshape", "[tensor][reshape]") {
         size_t tensor_size = tensor.size();
 
         // Reshape to (0, 1)
-        REQUIRE_THAT(tensor.reshape(make_shape(0, 1)), testing::IsOk());
+        REQUIRE_THAT(tensor.reshape(make_shape(0, 1)), testing::is_ok());
         REQUIRE(tensor.shape() == make_shape(0, 1));
         REQUIRE(tensor.size() == tensor_size);
         // Invalid reshape
-        REQUIRE_THAT(tensor.reshape(make_shape(1, 1)), testing::IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(tensor.reshape(make_shape(1, 1)), testing::is_error(P10Error::InvalidArgument));
     }
 
     SECTION("Reshape shares data with original tensor") {
         auto tensor = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
-        REQUIRE_THAT(tensor.reshape(make_shape(3, 2)), testing::IsOk());
+        REQUIRE_THAT(tensor.reshape(make_shape(3, 2)), testing::is_ok());
 
         // Modify reshaped tensor
         tensor.as_span1d<float>().unwrap()[0] = 99.0f;
@@ -912,7 +912,7 @@ TEST_CASE("core::Tensor::reshape", "[tensor][reshape]") {
                 .unwrap();
 
         // Attempt to reshape to incompatible shape
-        REQUIRE_THAT(tensor.reshape(make_shape(4, 2)), testing::IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(tensor.reshape(make_shape(4, 2)), testing::is_error(P10Error::InvalidArgument));
     }
 }
 
@@ -963,7 +963,7 @@ TEST_CASE("core::Tensor::transpose", "[tensor][transpose]") {
             auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
             Tensor transposed;
             auto result = tensor.transpose(transposed);
-            REQUIRE_THAT(result, testing::IsError(P10Error::InvalidArgument));
+            REQUIRE_THAT(result, testing::is_error(P10Error::InvalidArgument));
             REQUIRE(transposed.empty());
         }
 
@@ -973,7 +973,7 @@ TEST_CASE("core::Tensor::transpose", "[tensor][transpose]") {
                     .unwrap();
             Tensor transposed;
             auto result = tensor.transpose(transposed);
-            REQUIRE_THAT(result, testing::IsError(P10Error::NotImplemented));
+            REQUIRE_THAT(result, testing::is_error(P10Error::NotImplemented));
             REQUIRE(transposed.empty());
         }
 
@@ -986,7 +986,7 @@ TEST_CASE("core::Tensor::transpose", "[tensor][transpose]") {
 
             Tensor transposed;
             auto result = tensor.transpose(transposed);
-            REQUIRE_THAT(result, testing::IsError(P10Error::NotImplemented));
+            REQUIRE_THAT(result, testing::is_error(P10Error::NotImplemented));
             REQUIRE(transposed.empty());
         }
     }
@@ -1063,14 +1063,14 @@ TEST_CASE("core::Tensor::as_accessor1d converts to 1D accessor", "[tensor][acces
     SECTION("fails with wrong dtype") {
         REQUIRE_THAT(
             Tensor::from_range(make_shape(4), Dtype::Float32).unwrap().as_accessor1d<int32_t>(),
-            testing::IsError(P10Error::InvalidArgument)
+            testing::is_error(P10Error::InvalidArgument)
         );
     }
 
     SECTION("fails for non-1D tensor") {
         REQUIRE_THAT(
             Tensor::zeros(make_shape(2, 3)).unwrap().as_accessor1d<float>(),
-            testing::IsError(P10Error::InvalidArgument)
+            testing::is_error(P10Error::InvalidArgument)
         );
     }
 
@@ -1086,14 +1086,14 @@ TEST_CASE("core::Tensor::as_accessor1d converts to 1D accessor", "[tensor][acces
                 Tensor::from_range(make_shape(4, 2), Dtype::Int32)
                     .unwrap()
                     .as_accessor1d<std::complex<float>>(),
-                testing::IsError(P10Error::InvalidArgument)
+                testing::is_error(P10Error::InvalidArgument)
             );
         }
 
         SECTION("fails for non 2D tensor") {
             REQUIRE_THAT(
                 Tensor::zeros(make_shape(4, 3, 2)).unwrap().as_accessor1d<std::complex<float>>(),
-                testing::IsError(P10Error::InvalidArgument)
+                testing::is_error(P10Error::InvalidArgument)
             );
         }
     }
@@ -1189,14 +1189,14 @@ TEST_CASE("core::Tensor::as_accessor2d converts to 2D accessor", "[tensor][acces
     SECTION("fails with wrong dtype") {
         REQUIRE_THAT(
             Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap().as_accessor2d<double>(),
-            testing::IsError(P10Error::InvalidArgument)
+            testing::is_error(P10Error::InvalidArgument)
         );
     }
 
     SECTION("fails for non-2D tensor") {
         REQUIRE_THAT(
             Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_accessor2d<float>(),
-            testing::IsError(P10Error::InvalidArgument)
+            testing::is_error(P10Error::InvalidArgument)
         );
     }
 
@@ -1214,21 +1214,21 @@ TEST_CASE("core::Tensor::as_accessor2d converts to 2D accessor", "[tensor][acces
                 Tensor::from_range(make_shape(3, 4, 2), Dtype::Int32)
                     .unwrap()
                     .as_accessor2d<std::complex<float>>(),
-                testing::IsError(P10Error::InvalidArgument)
+                testing::is_error(P10Error::InvalidArgument)
             );
         }
 
         SECTION("fails for non-3D tensor (complex requires last dim = 2)") {
             REQUIRE_THAT(
                 Tensor::zeros(make_shape(3, 4)).unwrap().as_accessor2d<std::complex<float>>(),
-                testing::IsError(P10Error::InvalidArgument)
+                testing::is_error(P10Error::InvalidArgument)
             );
         }
 
         SECTION("fails when last dimension is not 2") {
             REQUIRE_THAT(
                 Tensor::zeros(make_shape(3, 4, 3)).unwrap().as_accessor2d<std::complex<float>>(),
-                testing::IsError(P10Error::InvalidArgument)
+                testing::is_error(P10Error::InvalidArgument)
             );
         }
     }
@@ -1342,7 +1342,7 @@ TEST_CASE("core::Tensor::as_accessor3d converts to 3D accessor", "[tensor][acces
             Tensor::from_range(make_shape(2, 2, 2), Dtype::Float32)
                 .unwrap()
                 .as_accessor3d<int32_t>(),
-            testing::IsError(P10Error::InvalidArgument)
+            testing::is_error(P10Error::InvalidArgument)
         );
     }
 
@@ -1350,14 +1350,14 @@ TEST_CASE("core::Tensor::as_accessor3d converts to 3D accessor", "[tensor][acces
         SECTION("2D tensor") {
             REQUIRE_THAT(
                 Tensor::zeros(make_shape(3, 4)).unwrap().as_accessor3d<float>(),
-                testing::IsError(P10Error::InvalidArgument)
+                testing::is_error(P10Error::InvalidArgument)
             );
         }
 
         SECTION("4D tensor") {
             REQUIRE_THAT(
                 Tensor::zeros(make_shape(2, 3, 4, 5)).unwrap().as_accessor3d<float>(),
-                testing::IsError(P10Error::InvalidArgument)
+                testing::is_error(P10Error::InvalidArgument)
             );
         }
     }
@@ -1394,21 +1394,21 @@ TEST_CASE("core::Tensor::as_accessor3d converts to 3D accessor", "[tensor][acces
                 Tensor::from_range(make_shape(2, 3, 4, 2), Dtype::Int32)
                     .unwrap()
                     .as_accessor3d<std::complex<float>>(),
-                testing::IsError(P10Error::InvalidArgument)
+                testing::is_error(P10Error::InvalidArgument)
             );
         }
 
         SECTION("fails for non-4D tensor (complex requires last dim = 2)") {
             REQUIRE_THAT(
                 Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_accessor3d<std::complex<float>>(),
-                testing::IsError(P10Error::InvalidArgument)
+                testing::is_error(P10Error::InvalidArgument)
             );
         }
 
         SECTION("fails when last dimension is not 2") {
             REQUIRE_THAT(
                 Tensor::zeros(make_shape(2, 3, 4, 3)).unwrap().as_accessor3d<std::complex<float>>(),
-                testing::IsError(P10Error::InvalidArgument)
+                testing::is_error(P10Error::InvalidArgument)
             );
         }
     }

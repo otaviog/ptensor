@@ -8,7 +8,7 @@
 namespace p10::testing {
 
 struct ErrorMatcher: Catch::Matchers::MatcherBase<P10Error> {
-    explicit ErrorMatcher(P10Error expected) : expected_(expected) {}
+    explicit ErrorMatcher(P10Error expected) : expected_(std::move(expected)) {}
 
     template<typename T>
     bool match(const P10Result<T>& actual) const {
@@ -36,7 +36,7 @@ struct ErrorMatcher: Catch::Matchers::MatcherBase<P10Error> {
     P10Error expected_;
 };
 
-inline ErrorMatcher IsError(const P10Error& expected) {
+inline ErrorMatcher is_error(const P10Error& expected) {
     return ErrorMatcher {expected};
 }
 
@@ -64,7 +64,7 @@ struct IsOkMatcher: Catch::Matchers::MatcherBase<P10Error> {
     mutable P10Error actual_;
 };
 
-inline IsOkMatcher IsOk() {
+inline IsOkMatcher is_ok() {
     return {};
 }
 

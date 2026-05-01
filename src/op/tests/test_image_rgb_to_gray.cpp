@@ -8,14 +8,14 @@
 
 namespace p10::op {
 using Catch::Approx;
-using p10::testing::IsError;
-using p10::testing::IsOk;
+using p10::testing::is_error;
+using p10::testing::is_ok;
 
 TEST_CASE("RGB to gray: Basic conversion", "[image_rgb_to_gray]") {
     auto rgb = Tensor::zeros(make_shape(10, 10, 3), Dtype::Uint8).unwrap();
     Tensor gray;
 
-    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
     REQUIRE(gray.shape(0).unwrap() == 10);
     REQUIRE(gray.shape(1).unwrap() == 10);
     REQUIRE(gray.dims() == 2);
@@ -36,7 +36,7 @@ TEST_CASE("RGB to gray: Pure red converts correctly", "[image_rgb_to_gray]") {
     }
 
     Tensor gray;
-    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
 
     auto gray_span = gray.as_span2d<uint8_t>().unwrap();
     for (size_t h = 0; h < gray_span.height(); ++h) {
@@ -60,7 +60,7 @@ TEST_CASE("RGB to gray: Pure green converts correctly", "[image_rgb_to_gray]") {
     }
 
     Tensor gray;
-    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
 
     auto gray_span = gray.as_span2d<uint8_t>().unwrap();
     // Expected: 0.72 * 255 = 183.6 H 183
@@ -85,7 +85,7 @@ TEST_CASE("RGB to gray: Pure blue converts correctly", "[image_rgb_to_gray]") {
     }
 
     Tensor gray;
-    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
 
     auto gray_span = gray.as_span2d<uint8_t>().unwrap();
     for (size_t h = 0; h < gray_span.height(); ++h) {
@@ -99,7 +99,7 @@ TEST_CASE("RGB to gray: White converts to white", "[image_rgb_to_gray]") {
     auto rgb = Tensor::full(make_shape(8, 8, 3), 255, Dtype::Uint8).unwrap();
     Tensor gray;
 
-    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
 
     auto gray_span = gray.as_span2d<uint8_t>().unwrap();
     for (size_t h = 0; h < gray_span.height(); ++h) {
@@ -113,7 +113,7 @@ TEST_CASE("RGB to gray: Black converts to black", "[image_rgb_to_gray]") {
     auto rgb = Tensor::zeros(make_shape(8, 8, 3), Dtype::Uint8).unwrap();
     Tensor gray;
 
-    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
 
     auto gray_span = gray.as_span2d<uint8_t>().unwrap();
     for (size_t h = 0; h < gray_span.height(); ++h) {
@@ -134,7 +134,7 @@ TEST_CASE("RGB to gray: Mixed color values", "[image_rgb_to_gray]") {
     pixel[2] = 200;  // B
 
     Tensor gray;
-    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
 
     auto gray_span = gray.as_span2d<uint8_t>().unwrap();
     // Expected: 0.21 * 100 + 0.72 * 150 + 0.07 * 200 = 21 + 108 + 14 = 143
@@ -145,28 +145,28 @@ TEST_CASE("RGB to gray: Different image sizes", "[image_rgb_to_gray]") {
     SECTION("Small image 1x1") {
         auto rgb = Tensor::zeros(make_shape(1, 1, 3), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
         REQUIRE(gray.shape() == make_shape(1, 1));
     }
 
     SECTION("Wide image") {
         auto rgb = Tensor::zeros(make_shape(10, 100, 3), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
         REQUIRE(gray.shape() == make_shape(10, 100));
     }
 
     SECTION("Tall image") {
         auto rgb = Tensor::zeros(make_shape(100, 10, 3), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
         REQUIRE(gray.shape() == make_shape(100, 10));
     }
 
     SECTION("Large square image") {
         auto rgb = Tensor::zeros(make_shape(256, 256, 3), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
         REQUIRE(gray.shape() == make_shape(256, 256));
     }
 }
@@ -200,7 +200,7 @@ TEST_CASE("RGB to gray: Luminosity formula accuracy", "[image_rgb_to_gray]") {
         pixel[2] = test.b;
 
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
 
         auto gray_span = gray.as_span2d<uint8_t>().unwrap();
         float expected = 0.21f * test.r + 0.72f * test.g + 0.07f * test.b;
@@ -212,19 +212,19 @@ TEST_CASE("RGB to gray: Error - Wrong number of dimensions", "[image_rgb_to_gray
     SECTION("2D tensor instead of 3D") {
         auto rgb = Tensor::zeros(make_shape(10, 10), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_error(P10Error::InvalidArgument));
     }
 
     SECTION("4D tensor instead of 3D") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 3, 1), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_error(P10Error::InvalidArgument));
     }
 
     SECTION("1D tensor") {
         auto rgb = Tensor::zeros(make_shape(30), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_error(P10Error::InvalidArgument));
     }
 }
 
@@ -232,19 +232,19 @@ TEST_CASE("RGB to gray: Error - Wrong number of channels", "[image_rgb_to_gray]"
     SECTION("1 channel") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 1), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_error(P10Error::InvalidArgument));
     }
 
     SECTION("4 channels (RGBA)") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 4), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_error(P10Error::InvalidArgument));
     }
 
     SECTION("2 channels") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 2), Dtype::Uint8).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_error(P10Error::InvalidArgument));
     }
 }
 
@@ -252,19 +252,19 @@ TEST_CASE("RGB to gray: Error - Wrong dtype", "[image_rgb_to_gray]") {
     SECTION("Float32 instead of Uint8") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 3), Dtype::Float32).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_error(P10Error::InvalidArgument));
     }
 
     SECTION("Int32 instead of Uint8") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 3), Dtype::Int32).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_error(P10Error::InvalidArgument));
     }
 
     SECTION("Float64 instead of Uint8") {
         auto rgb = Tensor::zeros(make_shape(10, 10, 3), Dtype::Float64).unwrap();
         Tensor gray;
-        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_error(P10Error::InvalidArgument));
     }
 }
 
@@ -282,7 +282,7 @@ TEST_CASE("RGB to gray: Gradient pattern", "[image_rgb_to_gray]") {
     }
 
     Tensor gray;
-    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
     REQUIRE(gray.shape() == make_shape(16, 16));
 
     // Verify some values
@@ -300,11 +300,11 @@ TEST_CASE("RGB to gray: Output tensor reuse", "[image_rgb_to_gray]") {
     auto rgb = Tensor::zeros(make_shape(10, 10, 3), Dtype::Uint8).unwrap();
     Tensor gray;
 
-    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), IsOk());
+    REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
     REQUIRE(gray.shape() == make_shape(10, 10));
 
     auto rgb2 = Tensor::zeros(make_shape(20, 20, 3), Dtype::Uint8).unwrap();
-    REQUIRE_THAT(image_rgb_to_gray(rgb2, gray), IsOk());
+    REQUIRE_THAT(image_rgb_to_gray(rgb2, gray), is_ok());
     REQUIRE(gray.shape() == make_shape(20, 20));
 }
 

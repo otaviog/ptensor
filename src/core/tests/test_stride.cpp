@@ -76,8 +76,8 @@ TEST_CASE("Stride creation from span", "[stride][creation]") {
 // ============================================================================
 
 TEST_CASE("Stride exceeding maximum dimensions", "[stride][validation]") {
-    REQUIRE_THAT(make_stride({1, 2, 3, 4, 5, 6, 7, 8}), testing::IsOk());
-    REQUIRE_THAT(make_stride({1, 2, 3, 4, 5, 6, 7, 8, 9}), testing::IsError(P10Error::OutOfRange));
+    REQUIRE_THAT(make_stride({1, 2, 3, 4, 5, 6, 7, 8}), testing::is_ok());
+    REQUIRE_THAT(make_stride({1, 2, 3, 4, 5, 6, 7, 8, 9}), testing::is_error(P10Error::OutOfRange));
 }
 
 // ============================================================================

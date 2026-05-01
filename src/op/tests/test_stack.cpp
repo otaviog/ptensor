@@ -9,8 +9,8 @@
 
 namespace p10::op {
 using Catch::Approx;
-using p10::testing::IsError;
-using p10::testing::IsOk;
+using p10::testing::is_error;
+using p10::testing::is_ok;
 
 TEST_CASE("op::Stack: Basic stacking along axis 0", "[stack]") {
     auto type = GENERATE(Dtype::Float32, Dtype::Int32, Dtype::Uint8);
@@ -21,7 +21,7 @@ TEST_CASE("op::Stack: Basic stacking along axis 0", "[stack]") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
 
-        REQUIRE_THAT(stack(inputs, 0, output), IsOk());
+        REQUIRE_THAT(stack(inputs, 0, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
         REQUIRE(output.shape(1).unwrap() == 2);
         REQUIRE(output.shape(2).unwrap() == 3);
@@ -54,7 +54,7 @@ TEST_CASE("op::Stack::Stacking along axis 1", "[stack]") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
 
-        REQUIRE_THAT(stack(inputs, 1, output), IsOk());
+        REQUIRE_THAT(stack(inputs, 1, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
         REQUIRE(output.shape(1).unwrap() == 2);
         REQUIRE(output.shape(2).unwrap() == 3);
@@ -69,7 +69,7 @@ TEST_CASE("Stack: Stacking along axis 2", "[stack]") {
     Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
     Tensor output;
 
-    REQUIRE_THAT(stack(inputs, 2, output), IsOk());
+    REQUIRE_THAT(stack(inputs, 2, output), is_ok());
     REQUIRE(output.shape(0).unwrap() == 2);
     REQUIRE(output.shape(1).unwrap() == 3);
     REQUIRE(output.shape(2).unwrap() == 2);
@@ -83,7 +83,7 @@ TEST_CASE("Stack: Negative axis indexing", "[stack]") {
     SECTION("Axis -1 (last axis)") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, -1, output), IsOk());
+        REQUIRE_THAT(stack(inputs, -1, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
         REQUIRE(output.shape(1).unwrap() == 3);
         REQUIRE(output.shape(2).unwrap() == 2);
@@ -92,7 +92,7 @@ TEST_CASE("Stack: Negative axis indexing", "[stack]") {
     SECTION("Axis -2 (second to last)") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, -2, output), IsOk());
+        REQUIRE_THAT(stack(inputs, -2, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
         REQUIRE(output.shape(1).unwrap() == 2);
         REQUIRE(output.shape(2).unwrap() == 3);
@@ -101,7 +101,7 @@ TEST_CASE("Stack: Negative axis indexing", "[stack]") {
     SECTION("Axis -3 (first axis)") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, -3, output), IsOk());
+        REQUIRE_THAT(stack(inputs, -3, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
         REQUIRE(output.shape(1).unwrap() == 2);
         REQUIRE(output.shape(2).unwrap() == 3);
@@ -118,7 +118,7 @@ TEST_CASE("Stack: Multiple tensors", "[stack]") {
         {t1.clone().unwrap(), t2.clone().unwrap(), t3.clone().unwrap(), t4.clone().unwrap()};
     Tensor output;
 
-    REQUIRE_THAT(stack(inputs, 0, output), IsOk());
+    REQUIRE_THAT(stack(inputs, 0, output), is_ok());
     REQUIRE(output.shape(0).unwrap() == 4);
     REQUIRE(output.shape(1).unwrap() == 2);
     REQUIRE(output.shape(2).unwrap() == 3);
@@ -131,7 +131,7 @@ TEST_CASE("Stack: 1D tensors", "[stack]") {
     SECTION("Axis 0") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, 0, output), IsOk());
+        REQUIRE_THAT(stack(inputs, 0, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
         REQUIRE(output.shape(1).unwrap() == 5);
     }
@@ -139,7 +139,7 @@ TEST_CASE("Stack: 1D tensors", "[stack]") {
     SECTION("Axis 1") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, 1, output), IsOk());
+        REQUIRE_THAT(stack(inputs, 1, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 5);
         REQUIRE(output.shape(1).unwrap() == 2);
     }
@@ -152,7 +152,7 @@ TEST_CASE("Stack: 3D tensors", "[stack]") {
     SECTION("Axis 0") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, 0, output), IsOk());
+        REQUIRE_THAT(stack(inputs, 0, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
         REQUIRE(output.shape(1).unwrap() == 2);
         REQUIRE(output.shape(2).unwrap() == 3);
@@ -162,7 +162,7 @@ TEST_CASE("Stack: 3D tensors", "[stack]") {
     SECTION("Axis 1") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, 1, output), IsOk());
+        REQUIRE_THAT(stack(inputs, 1, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
         REQUIRE(output.shape(1).unwrap() == 2);
         REQUIRE(output.shape(2).unwrap() == 3);
@@ -172,7 +172,7 @@ TEST_CASE("Stack: 3D tensors", "[stack]") {
     SECTION("Axis 2") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, 2, output), IsOk());
+        REQUIRE_THAT(stack(inputs, 2, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
         REQUIRE(output.shape(1).unwrap() == 3);
         REQUIRE(output.shape(2).unwrap() == 2);
@@ -182,7 +182,7 @@ TEST_CASE("Stack: 3D tensors", "[stack]") {
     SECTION("Axis 3") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, 3, output), IsOk());
+        REQUIRE_THAT(stack(inputs, 3, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
         REQUIRE(output.shape(1).unwrap() == 3);
         REQUIRE(output.shape(2).unwrap() == 4);
@@ -194,7 +194,7 @@ TEST_CASE("Stack: Error - Empty input", "[stack]") {
     std::vector<Tensor> inputs;
     Tensor output;
 
-    REQUIRE_THAT(stack(inputs, 0, output), IsError(P10Error::InvalidArgument));
+    REQUIRE_THAT(stack(inputs, 0, output), is_error(P10Error::InvalidArgument));
 }
 
 TEST_CASE("Stack: Error - Mismatched shapes", "[stack]") {
@@ -204,7 +204,7 @@ TEST_CASE("Stack: Error - Mismatched shapes", "[stack]") {
     Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
     Tensor output;
 
-    REQUIRE_THAT(stack(inputs, 0, output), IsError(P10Error::InvalidArgument));
+    REQUIRE_THAT(stack(inputs, 0, output), is_error(P10Error::InvalidArgument));
 }
 
 TEST_CASE("Stack: Error - Mismatched dtypes", "[stack]") {
@@ -214,7 +214,7 @@ TEST_CASE("Stack: Error - Mismatched dtypes", "[stack]") {
     Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
     Tensor output;
 
-    REQUIRE_THAT(stack(inputs, 0, output), IsError(P10Error::InvalidArgument));
+    REQUIRE_THAT(stack(inputs, 0, output), is_error(P10Error::InvalidArgument));
 }
 
 TEST_CASE("Stack: Error - Axis out of bounds", "[stack]") {
@@ -224,13 +224,13 @@ TEST_CASE("Stack: Error - Axis out of bounds", "[stack]") {
     SECTION("Positive axis too large") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, 3, output), IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(stack(inputs, 3, output), is_error(P10Error::InvalidArgument));
     }
 
     SECTION("Negative axis too large") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, -4, output), IsError(P10Error::InvalidArgument));
+        REQUIRE_THAT(stack(inputs, -4, output), is_error(P10Error::InvalidArgument));
     }
 }
 
@@ -241,7 +241,7 @@ TEST_CASE("Stack: Data integrity check", "[stack]") {
     Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
     Tensor output;
 
-    REQUIRE_THAT(stack(inputs, 0, output), IsOk());
+    REQUIRE_THAT(stack(inputs, 0, output), is_ok());
 
     auto data = output.as_span1d<float>().unwrap();
 
@@ -271,7 +271,7 @@ TEST_CASE("Stack: Data integrity with different values", "[stack]") {
     SECTION("Stack along axis 0") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
-        REQUIRE_THAT(stack(inputs, 0, output), IsOk());
+        REQUIRE_THAT(stack(inputs, 0, output), is_ok());
         auto out_data = output.as_span1d<float>().unwrap();
 
         for (size_t i = 0; i < 4; ++i) {
@@ -289,7 +289,7 @@ TEST_CASE("Stack: Single tensor", "[stack]") {
     Tensor inputs[] = {t1.clone().unwrap()};
     Tensor output;
 
-    REQUIRE_THAT(stack(inputs, 0, output), IsOk());
+    REQUIRE_THAT(stack(inputs, 0, output), is_ok());
     REQUIRE(output.shape(0).unwrap() == 1);
     REQUIRE(output.shape(1).unwrap() == 2);
     REQUIRE(output.shape(2).unwrap() == 3);
@@ -304,7 +304,7 @@ TEST_CASE("Stack: Different dtypes coverage", "[stack]") {
         Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
 
-        REQUIRE_THAT(stack(inputs, 0, output), IsOk());
+        REQUIRE_THAT(stack(inputs, 0, output), is_ok());
         REQUIRE(output.dtype() == type);
     }
 }

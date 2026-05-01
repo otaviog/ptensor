@@ -13,7 +13,7 @@ TEST_CASE("Testing::Exception", "[testing assertions]") {
 }
 
 TEST_CASE("Testing::IsOk", "[testing assertions]") {
-    REQUIRE_THAT(Ok(4), IsOk());
+    REQUIRE_THAT(Ok(4), is_ok());
 }
 
 TEST_CASE("Testing::compare_tensors", "[testing assertions]") {
@@ -22,7 +22,7 @@ TEST_CASE("Testing::compare_tensors", "[testing assertions]") {
             Tensor::full(make_shape({8, 8}).unwrap(), 123.0).unwrap(),
             Tensor::full(make_shape({8, 8}).unwrap(), 123.0).unwrap()
         ),
-        IsOk()
+        is_ok()
     );
 
     REQUIRE_THAT(
@@ -30,7 +30,7 @@ TEST_CASE("Testing::compare_tensors", "[testing assertions]") {
             Tensor::full(make_shape({8, 7}).unwrap(), 123.0).unwrap(),
             Tensor::full(make_shape({8, 8}).unwrap(), 123.0).unwrap()
         ),
-        IsError(P10Error::AssertionError)
+        is_error(P10Error::AssertionError)
     );
 }
 }  // namespace p10::testing

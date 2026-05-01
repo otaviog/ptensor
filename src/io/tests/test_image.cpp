@@ -23,11 +23,11 @@ TEST_CASE("io::image::save_image and load_image roundtrip", "[io][image]") {
 
     // Save image
     auto save_err = save_image(filename, tensor);
-    REQUIRE_THAT(save_err, p10::testing::IsOk());
+    REQUIRE_THAT(save_err, p10::testing::is_ok());
 
     // Load image
     auto loaded_result = load_image(filename);
-    REQUIRE_THAT(loaded_result, testing::IsOk());
+    REQUIRE_THAT(loaded_result, testing::is_ok());
 
     auto loaded_tensor = loaded_result.unwrap();
     REQUIRE(loaded_tensor.shape() == tensor.shape());
@@ -49,10 +49,10 @@ TEST_CASE("io::image::save_image with grayscale tensor", "[io][image]") {
         Tensor::full(make_shape(16, 16), 128, TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     auto save_err = save_image(filename, tensor);
-    REQUIRE_THAT(save_err, p10::testing::IsOk());
+    REQUIRE_THAT(save_err, p10::testing::is_ok());
 
     auto loaded_result = load_image(filename);
-    REQUIRE_THAT(loaded_result, p10::testing::IsOk());
+    REQUIRE_THAT(loaded_result, p10::testing::is_ok());
 
     auto loaded_tensor = loaded_result.unwrap();
     REQUIRE(loaded_tensor.dims() >= 2);
@@ -71,7 +71,7 @@ TEST_CASE("io::image::save_image with RGBA tensor", "[io][image]") {
         Tensor::zeros(make_shape(10, 10, 4), TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     auto save_err = save_image(filename, tensor);
-    REQUIRE_THAT(save_err, p10::testing::IsOk());
+    REQUIRE_THAT(save_err, p10::testing::is_ok());
 
     REQUIRE(std::filesystem::exists(filename));
 
@@ -91,7 +91,7 @@ TEST_CASE("io::image::save_image creates valid file", "[io][image]") {
         Tensor::full(make_shape(5, 5, 3), 1.0, TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     auto save_err = save_image(filename, tensor);
-    REQUIRE_THAT(save_err, p10::testing::IsOk());
+    REQUIRE_THAT(save_err, p10::testing::is_ok());
 
     REQUIRE(std::filesystem::exists(filename));
 
@@ -106,7 +106,7 @@ TEST_CASE("io::image::save_image with different formats", "[io][image]") {
     SECTION("PNG format") {
         const std::string filename = "test.png";
         auto err = save_image(filename, tensor);
-        REQUIRE_THAT(err, p10::testing::IsOk());
+        REQUIRE_THAT(err, p10::testing::is_ok());
         REQUIRE(std::filesystem::exists(filename));
         std::filesystem::remove(filename);
     }
@@ -114,7 +114,7 @@ TEST_CASE("io::image::save_image with different formats", "[io][image]") {
     SECTION("io::image::JPEG format") {
         const std::string filename = "test.jpg";
         auto err = save_image(filename, tensor);
-        REQUIRE_THAT(err, p10::testing::IsOk());
+        REQUIRE_THAT(err, p10::testing::is_ok());
         REQUIRE(std::filesystem::exists(filename));
         std::filesystem::remove(filename);
     }
@@ -122,7 +122,7 @@ TEST_CASE("io::image::save_image with different formats", "[io][image]") {
     SECTION("io::image::BMP format") {
         const std::string filename = "test.bmp";
         auto err = save_image(filename, tensor);
-        REQUIRE_THAT(err, p10::testing::IsOk());
+        REQUIRE_THAT(err, p10::testing::is_ok());
         REQUIRE(std::filesystem::exists(filename));
         std::filesystem::remove(filename);
     }
@@ -134,10 +134,10 @@ TEST_CASE("io::image::load_image returns correct dtype", "[io][image]") {
     auto tensor = Tensor::zeros(make_shape(6, 6, 3), TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     auto save_err = save_image(filename, tensor);
-    REQUIRE_THAT(save_err, p10::testing::IsOk());
+    REQUIRE_THAT(save_err, p10::testing::is_ok());
 
     auto loaded_result = load_image(filename);
-    REQUIRE_THAT(loaded_result, testing::IsOk());
+    REQUIRE_THAT(loaded_result, testing::is_ok());
 
     auto loaded = loaded_result.unwrap();
     REQUIRE(loaded.dtype() == Dtype::Uint8);

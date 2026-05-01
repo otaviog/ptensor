@@ -17,7 +17,7 @@ TEST_CASE(
 ) {
     REQUIRE_THAT(
         MediaCapture::open_file("non_existent_file.mp4"),
-        testing::IsError(P10Error::IoError)
+        testing::is_error(P10Error::IoError)
     );
 }
 
@@ -30,7 +30,7 @@ TEST_CASE(
     outfile << "This is not a valid media file.";
     outfile.close();
 
-    REQUIRE_THAT(MediaCapture::open_file(UNSUPPORTED_FILE), testing::IsError(P10Error::IoError));
+    REQUIRE_THAT(MediaCapture::open_file(UNSUPPORTED_FILE), testing::is_error(P10Error::IoError));
 
     std::filesystem::remove(UNSUPPORTED_FILE);
 }
@@ -40,10 +40,10 @@ TEST_CASE("media::MediaCapture::reads frames and parameters", "[media][capture]"
     MediaCapture capture = MediaCapture::open_file(VALID_FILE).expect("should open valid file");
 
     SECTION("reads a single video frame") {
-        REQUIRE_THAT(capture.next_frame(), testing::IsOk());
+        REQUIRE_THAT(capture.next_frame(), testing::is_ok());
 
         VideoFrame frame;
-        REQUIRE_THAT(capture.get_video(frame), testing::IsOk());
+        REQUIRE_THAT(capture.get_video(frame), testing::is_ok());
         REQUIRE(frame.width() == 480);
         REQUIRE(frame.height() == 270);
     }

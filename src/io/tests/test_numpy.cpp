@@ -20,7 +20,7 @@ TEST_CASE("io::numpy::save_npz and load_npz with single tensor", "[io][numpy]") 
             .unwrap();
 
     // Save to npz
-    std::map<std::string, Tensor> tensors_to_save;
+    TensorMap tensors_to_save;
     tensors_to_save["data"] = tensor.clone().unwrap();
     auto save_err = save_npz(filename, tensors_to_save);
     REQUIRE_THAT(save_err, p10::testing::is_ok());
@@ -58,7 +58,7 @@ TEST_CASE("io::numpy::save_npz and load_npz with multiple tensors", "[io][numpy]
         Tensor::full(make_shape({10}).unwrap(), 5, TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
     // Save to npz
-    std::map<std::string, Tensor> tensors_to_save;
+    TensorMap tensors_to_save;
     tensors_to_save["ones"] = tensor1.clone().unwrap();
     tensors_to_save["forties"] = tensor2.clone().unwrap();
     tensors_to_save["bytes"] = tensor3.clone().unwrap();
@@ -122,7 +122,7 @@ TEST_CASE("io::numpy::save_npz with different data types", "[io][numpy]") {
     auto uint8_tensor =
         Tensor::full(make_shape({2, 3}).unwrap(), 3, TensorOptions().dtype(Dtype::Uint8)).unwrap();
 
-    std::map<std::string, Tensor> tensors_to_save;
+    TensorMap tensors_to_save;
     tensors_to_save["float32"] = std::move(float32_tensor);
     tensors_to_save["uint8"] = std::move(uint8_tensor);
 
@@ -164,7 +164,7 @@ TEST_CASE("io::numpy::save_npz creates valid file", "[io][numpy]") {
     const std::string filename = "test_file_exists.npz";
 
     auto tensor = Tensor::zeros(make_shape({2, 2}).unwrap()).unwrap();
-    std::map<std::string, Tensor> tensors_to_save;
+    TensorMap tensors_to_save;
     tensors_to_save["test"] = std::move(tensor);
 
     auto save_err = save_npz(filename, tensors_to_save);

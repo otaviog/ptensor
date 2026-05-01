@@ -9,7 +9,6 @@
 #include "ptensor/p10_result.hpp"
 
 namespace p10::io {
-using TensorMap = std::map<std::string, Tensor>;
 
 P10Error save_npz(const std::string& filename, const TensorMap& tensors) {
     std::string mode = "w";
@@ -50,7 +49,7 @@ P10Result<TensorMap> load_npz(const std::string& filename) {
     #pragma warning(pop)
 #endif
 
-        std::map<std::string, Tensor> tensors;
+        TensorMap tensors;
         for (auto& [key, array] : npz) {
             Tensor tensor;
 

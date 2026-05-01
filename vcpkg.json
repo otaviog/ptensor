@@ -12,7 +12,8 @@
 		{
 			"name": "vcpkg-cmake-config",
 			"host": true
-		}
+		},
+		"ng-log"
 	],
 	"features": {
 		"io": {
@@ -55,7 +56,6 @@
 		"infer": {
 			"description": "Inference support",
 			"dependencies": [
-			  "ng-log",
 				"cli11"
 			]
 		}

@@ -1,8 +1,9 @@
 #include "ffmpeg_media_writer.hpp"
 
+#include <ptensor/p10_error.hpp>
+
 #include "ffmpeg_audio_encoder.hpp"
 #include "ffmpeg_wrap_error.hpp"
-#include "ptensor/p10_error.hpp"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -13,6 +14,7 @@ extern "C" {
 
 #include "audio_frame.hpp"
 #include "video_frame.hpp"
+#include "../logging.hpp"
 
 namespace p10::media {
 
@@ -28,7 +30,11 @@ FfmpegMediaWriter::FfmpegMediaWriter(
     audio_encoder_(std::move(audio_encoder)) {}
 
 FfmpegMediaWriter::~FfmpegMediaWriter() {
-    close();
+    try {
+        close();
+    } catch (const std::exception& error) {
+        LOGGER.error(error);
+    }
 }
 
 P10Result<std::shared_ptr<FfmpegMediaWriter>>
@@ -101,10 +107,10 @@ void FfmpegMediaWriter::close() {
     }
 
     flush_video_encoder();
-    video_encoder_.reset();
+    video_encoder_ = nullptr;
 
     flush_audio_encoder();
-    audio_encoder_.reset();
+    audio_encoder_ = nullptr;
 
     // Write trailer
     if (format_context_ != nullptr && header_written_) {

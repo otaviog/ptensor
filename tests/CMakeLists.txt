@@ -1,12 +1,13 @@
 add_executable(unit_tests_all)
 ptensor_target_options(unit_tests_all "Testing")
 
-target_sources(unit_tests_all PRIVATE 
+target_sources(unit_tests_all PRIVATE
     $<TARGET_OBJECTS:unit_tests_core>
     $<TARGET_OBJECTS:unit_tests_testing>
-    $<TARGET_OBJECTS:unit_tests_simd>)
+    $<TARGET_OBJECTS:unit_tests_simd>
+    $<TARGET_OBJECTS:unit_tests_log>)
 
-target_link_libraries(unit_tests_all PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(unit_tests_all PRIVATE Catch2::Catch2WithMain ptensor_log)
 
 if (WITH_IO)
     target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_io>)

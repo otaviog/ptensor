@@ -73,6 +73,7 @@ endif()
 target_link_libraries(ptensor_media
   PUBLIC ptensor
   PRIVATE
+    ptensor_log
     ${_FFMPEG_LIBRARIES}
 )
 

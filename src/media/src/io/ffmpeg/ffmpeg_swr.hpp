@@ -28,6 +28,11 @@ class FfmpegSwr {
         target_sample_format_(target_sample_format),
         target_sample_rate_(target_sample_rate) {}
 
+    FfmpegSwr(const FfmpegSwr&) = delete;
+    FfmpegSwr& operator=(const FfmpegSwr&) = delete;
+    FfmpegSwr(FfmpegSwr&&) = delete;
+    FfmpegSwr& operator=(FfmpegSwr&&) = delete;
+
     ~FfmpegSwr() {
         release();
     }

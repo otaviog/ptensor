@@ -15,35 +15,31 @@
 namespace p10 {
 namespace {
 
-template<typename ScalarT>
-void transpose_generic(
-    int64_t rows,
-    int64_t cols,
-    const ScalarT* src,
-    size_t src_stride,
-    ScalarT* dst,
-    size_t dst_stride
-) {
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            dst[(j * dst_stride) + i] = src[(i * src_stride) + j];
+    template<typename ScalarT>
+    void transpose_generic(
+        int64_t rows,
+        int64_t cols,
+        const ScalarT* src,
+        size_t src_stride,
+        ScalarT* dst,
+        size_t dst_stride
+    ) {
+        for (int i = 0; i < rows; ++i) {
+            for (int j = 0; j < cols; ++j) {
+                dst[(j * dst_stride) + i] = src[(i * src_stride) + j];
+            }
         }
     }
-}
 
-template<typename ScalarT>
-void transpose_8x8_generic(
-    const ScalarT* src,
-    size_t src_stride,
-    ScalarT* dst,
-    size_t dst_stride
-) {
-    for (int i = 0; i < 8; ++i) {
-        for (int j = 0; j < 8; ++j) {
-            dst[(j * dst_stride) + i] = src[(i * src_stride) + j];
+    template<typename ScalarT>
+    void
+    transpose_8x8_generic(const ScalarT* src, size_t src_stride, ScalarT* dst, size_t dst_stride) {
+        for (int i = 0; i < 8; ++i) {
+            for (int j = 0; j < 8; ++j) {
+                dst[(j * dst_stride) + i] = src[(i * src_stride) + j];
+            }
         }
     }
-}
 
 }  // namespace
 
@@ -144,11 +140,11 @@ transpose_avx2_8x8_32(int32_t const* src, size_t src_stride, int32_t* dst, size_
 
 namespace {
 
-template<size_t B>
-constexpr size_t bitwise_modulo(size_t a) {
-    static_assert((B & (B - 1)) == 0, "B must be a power of two");
-    return a & (B - 1);
-}
+    template<size_t B>
+    constexpr size_t bitwise_modulo(size_t a) {
+        static_assert((B & (B - 1)) == 0, "B must be a power of two");
+        return a & (B - 1);
+    }
 
 }  // namespace
 

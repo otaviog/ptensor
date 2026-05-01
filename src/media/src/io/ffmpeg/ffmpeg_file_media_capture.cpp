@@ -108,7 +108,8 @@ P10Result<bool> FfmpegFileMediaCapture::next_frame() {
             return Ok(true);
         }
         return Ok(false);
-    } else if (capture_status == CaptureStatus::EndOfFile) {
+    }
+    if (capture_status == CaptureStatus::EndOfFile) {
         current_frame_ = video_queue_.wait_and_pop();
         if (current_frame_.has_value()) {
             return Ok(true);
@@ -128,9 +129,8 @@ P10Error FfmpegFileMediaCapture::get_video(VideoFrame& frame) {
     if (current_frame_.has_value()) {
         frame = std::move(current_frame_.value());
         return P10Error::Ok;
-    } else {
-        return P10Error::InvalidArgument << "No video frame available, did you call next_frame()?";
     }
+    return P10Error::InvalidArgument << "No video frame available, did you call next_frame()?";
 }
 
 P10Error FfmpegFileMediaCapture::get_audio(AudioFrame& /*frame*/) {
@@ -216,7 +216,7 @@ std::optional<int64_t> FfmpegFileMediaCapture::video_frame_count() const {
 std::optional<double> FfmpegFileMediaCapture::duration() const {
     if (format_ctx_ != nullptr) {
         if (format_ctx_->duration != AV_NOPTS_VALUE) {
-            return format_ctx_->duration / double(AV_TIME_BASE);
+            return format_ctx_->duration / static_cast<double>(AV_TIME_BASE);
         }
     }
     return std::nullopt;

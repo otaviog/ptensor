@@ -63,7 +63,7 @@ struct accumulator_traits<uint8_t> {
     }
 
     static constexpr scalar_type to_scalar(accum_type value) {
-        return scalar_type(value >> 8);  // Divide by 256
+        return static_cast<scalar_type>(value >> 8);  // Divide by 256
     }
 };
 
@@ -77,7 +77,7 @@ struct accumulator_traits<int8_t> {
     }
 
     static constexpr scalar_type to_scalar(accum_type value) {
-        return scalar_type(value >> 8);  // Divide by 256
+        return static_cast<scalar_type>(value >> 8);  // Divide by 256
     }
 };
 
@@ -91,7 +91,7 @@ struct accumulator_traits<uint16_t> {
     }
 
     static constexpr scalar_type to_scalar(accum_type value) {
-        return scalar_type(value >> 16);  // Divide by 65536
+        return static_cast<scalar_type>(value >> 16);  // Divide by 65536
     }
 };
 
@@ -105,7 +105,7 @@ struct accumulator_traits<int16_t> {
     }
 
     static constexpr scalar_type to_scalar(accum_type value) {
-        return scalar_type(value >> 16);  // Divide by 65536
+        return static_cast<scalar_type>(value >> 16);  // Divide by 65536
     }
 };
 
@@ -119,7 +119,7 @@ struct accumulator_traits<uint32_t> {
     }
 
     static constexpr scalar_type to_scalar(accum_type value) {
-        return scalar_type(value >> 32);  // Divide by 2^32
+        return static_cast<scalar_type>(value >> 32);  // Divide by 2^32
     }
 };
 
@@ -133,7 +133,7 @@ struct accumulator_traits<int32_t> {
     }
 
     static constexpr scalar_type to_scalar(accum_type value) {
-        return scalar_type(value >> 32);  // Divide by 2^32
+        return static_cast<scalar_type>(value >> 32);  // Divide by 2^32
     }
 };
 

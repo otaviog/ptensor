@@ -17,6 +17,10 @@ class VideoFrame;
 class FfmpegVideoEncoder {
   public:
     FfmpegVideoEncoder() = default;
+    FfmpegVideoEncoder(const FfmpegVideoEncoder&) = delete;
+    FfmpegVideoEncoder& operator=(const FfmpegVideoEncoder&) = delete;
+    FfmpegVideoEncoder(FfmpegVideoEncoder&&) = delete;
+    FfmpegVideoEncoder& operator=(FfmpegVideoEncoder&&) = delete;
     ~FfmpegVideoEncoder();
 
     P10Error create(const VideoParameters& video_params, AVFormatContext* output_format);

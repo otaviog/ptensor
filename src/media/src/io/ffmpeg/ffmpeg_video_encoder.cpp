@@ -71,8 +71,8 @@ FfmpegVideoEncoder::create(const VideoParameters& video_params, AVFormatContext*
 
     // Quality settings
     video_encoder_context_->bit_rate = video_params.bit_rate();
-    video_encoder_context_->rc_buffer_size = int64_t{4} * 1000 * 1000;
-    video_encoder_context_->rc_max_rate = int64_t{2} * 1000 * 1000;
+    video_encoder_context_->rc_buffer_size = int64_t {4} * 1000 * 1000;
+    video_encoder_context_->rc_max_rate = int64_t {2} * 1000 * 1000;
     video_encoder_context_->rc_min_rate = static_cast<int64_t>(2.5 * 1000.0 * 1000.0);
     video_encoder_context_->gop_size = 12;
     av_opt_set(video_encoder_context_->priv_data, "preset", "medium", 0);

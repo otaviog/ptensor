@@ -19,12 +19,11 @@ class Stride: public detail::TensorExtents {
     static P10Result<Stride> zeros(size_t dims) {
         if (dims < P10_MAX_SHAPE) {
             return Ok(Stride(dims));
-        } else {
-            return Err(
-                P10Error::InvalidArgument,
-                "Number of dimensions exceeds maximum supported shape"
-            );
         }
+        return Err(
+            P10Error::InvalidArgument,
+            "Number of dimensions exceeds maximum supported shape"
+        );
     }
 
     /// Checks if the shape is empty, that is, it has no dimensions.
@@ -37,7 +36,9 @@ class Stride: public detail::TensorExtents {
     }
 
     P10Result<int64_t> byte_stride(Dtype dtype, size_t dim) const {
-        return (*this)[dim].map([dtype](int64_t s) { return s * int64_t(dtype.size_bytes()); });
+        return (*this)[dim].map([dtype](int64_t s) {
+            return s * static_cast<int64_t>(dtype.size_bytes());
+        });
     }
 
   private:

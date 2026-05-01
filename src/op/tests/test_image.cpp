@@ -93,9 +93,7 @@ TEST_CASE("op::image::to tensor and back conversion", "[imageop]") {
 
             for (size_t c = 0; c < 3; c++) {
                 // Allow for ±1 difference due to float conversion rounding
-                REQUIRE(
-                    std::abs(int{original_channel[c]} - int{result_channel[c]}) <= 1
-                );
+                REQUIRE(std::abs(int {original_channel[c]} - int {result_channel[c]}) <= 1);
             }
         }
     }

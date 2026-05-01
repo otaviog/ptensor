@@ -21,6 +21,11 @@ class FfmpegVideoDecoder {
         codec_ctx_(codec_ctx),
         index_(stream_index) {}
 
+    FfmpegVideoDecoder(const FfmpegVideoDecoder&) = delete;
+    FfmpegVideoDecoder& operator=(const FfmpegVideoDecoder&) = delete;
+    FfmpegVideoDecoder(FfmpegVideoDecoder&&) = delete;
+    FfmpegVideoDecoder& operator=(FfmpegVideoDecoder&&) = delete;
+
     ~FfmpegVideoDecoder() {
         avcodec_free_context(&codec_ctx_);
         codec_ctx_ = nullptr;
@@ -41,7 +46,7 @@ class FfmpegVideoDecoder {
         } else {
             double duration_sec = stream_->duration * av_q2d(stream_->time_base);
             double fps = av_q2d(stream_->avg_frame_rate);
-            return (int64_t)(duration_sec * fps);
+            return static_cast<int64_t>(duration_sec * fps);
         }
         return std::nullopt;
     }

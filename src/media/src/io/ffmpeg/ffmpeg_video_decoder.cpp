@@ -31,7 +31,8 @@ FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
         ret = avcodec_receive_frame(codec_ctx_, frame.get());
         if (ret == AVERROR(EAGAIN)) {
             return Ok(DecodeStatus::Again);
-        } else if (ret == AVERROR_EOF) {
+        }
+        if (ret == AVERROR_EOF) {
             return Ok(DecodeStatus::Eof);
         } else if (ret < 0) {
             return Err(wrap_ffmpeg_error(ret));
@@ -50,7 +51,7 @@ FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
 
 VideoParameters FfmpegVideoDecoder::get_video_parameters() const {
     VideoParameters params;
-    auto codec = stream_->codecpar;
+    auto* codec = stream_->codecpar;
     params.width(codec->width)
         .height(codec->height)
         .codec(video_codec_from_avcodec_id(codec->codec_id))

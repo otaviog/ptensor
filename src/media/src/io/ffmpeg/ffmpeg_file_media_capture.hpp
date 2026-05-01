@@ -23,6 +23,11 @@ class FfmpegFileMediaCapture: public MediaCapture::Impl {
   public:
     enum CaptureStatus : int8_t { Reading, Stopped, Error, EndOfFile };
 
+    FfmpegFileMediaCapture(const FfmpegFileMediaCapture&) = delete;
+    FfmpegFileMediaCapture& operator=(const FfmpegFileMediaCapture&) = delete;
+    FfmpegFileMediaCapture(FfmpegFileMediaCapture&&) = delete;
+    FfmpegFileMediaCapture& operator=(FfmpegFileMediaCapture&&) = delete;
+
     ~FfmpegFileMediaCapture() override;
 
     static P10Result<std::shared_ptr<FfmpegFileMediaCapture>> open(const std::string& path);

@@ -6,7 +6,7 @@
 namespace p10 {
 namespace {
 
-    static void BM_Transpose_Small(benchmark::State& state) {
+    void BM_Transpose_Small(benchmark::State& state) {
         const int size = static_cast<int>(state.range(0));
 
         std::mt19937_64 rng(42);
@@ -27,7 +27,7 @@ namespace {
         state.SetBytesProcessed(state.iterations() * elements * sizeof(float));
     }
 
-    static void BM_Transpose_Medium(benchmark::State& state) {
+    void BM_Transpose_Medium(benchmark::State& state) {
         const int size = static_cast<int>(state.range(0));
 
         std::mt19937_64 rng(42);
@@ -47,7 +47,7 @@ namespace {
         state.SetBytesProcessed(state.iterations() * elements * sizeof(float));
     }
 
-    static void BM_Transpose_Large(benchmark::State& state) {
+    void BM_Transpose_Large(benchmark::State& state) {
         const int size = static_cast<int>(state.range(0));
 
         std::mt19937_64 rng(42);
@@ -67,7 +67,7 @@ namespace {
         state.SetBytesProcessed(state.iterations() * elements * sizeof(float));
     }
 
-    static void BM_Transpose_Rectangular(benchmark::State& state) {
+    void BM_Transpose_Rectangular(benchmark::State& state) {
         const int rows = static_cast<int>(state.range(0));
         const int cols = static_cast<int>(state.range(1));
 
@@ -88,7 +88,7 @@ namespace {
         state.SetBytesProcessed(state.iterations() * elements * sizeof(float));
     }
 
-    static void BM_Transpose_Int32(benchmark::State& state) {
+    void BM_Transpose_Int32(benchmark::State& state) {
         const int size = static_cast<int>(state.range(0));
 
         std::mt19937_64 rng(42);

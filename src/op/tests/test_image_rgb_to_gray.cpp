@@ -28,7 +28,7 @@ TEST_CASE("RGB to gray: Pure red converts correctly", "[image_rgb_to_gray]") {
 
     for (size_t h = 0; h < rgb_span.height(); ++h) {
         for (size_t w = 0; w < rgb_span.width(); ++w) {
-            auto pixel = rgb_span.channel(h, w);
+            auto* pixel = rgb_span.channel(h, w);
             pixel[0] = 255;
             pixel[1] = 0;
             pixel[2] = 0;
@@ -52,7 +52,7 @@ TEST_CASE("RGB to gray: Pure green converts correctly", "[image_rgb_to_gray]") {
 
     for (size_t h = 0; h < rgb_span.height(); ++h) {
         for (size_t w = 0; w < rgb_span.width(); ++w) {
-            auto pixel = rgb_span.channel(h, w);
+            auto* pixel = rgb_span.channel(h, w);
             pixel[0] = 0;
             pixel[1] = 255;
             pixel[2] = 0;
@@ -77,7 +77,7 @@ TEST_CASE("RGB to gray: Pure blue converts correctly", "[image_rgb_to_gray]") {
 
     for (size_t h = 0; h < rgb_s.height(); ++h) {
         for (size_t w = 0; w < rgb_s.width(); ++w) {
-            auto pixel = rgb_s.channel(h, w);
+            auto* pixel = rgb_s.channel(h, w);
             pixel[0] = 0;
             pixel[1] = 0;
             pixel[2] = 255;
@@ -128,7 +128,7 @@ TEST_CASE("RGB to gray: Mixed color values", "[image_rgb_to_gray]") {
     auto rgb_span = rgb.as_span3d<uint8_t>().unwrap();
 
     // Set a specific pixel with known RGB values
-    auto pixel = rgb_span.channel(1, 1);
+    auto* pixel = rgb_span.channel(1, 1);
     pixel[0] = 100;  // R
     pixel[1] = 150;  // G
     pixel[2] = 200;  // B
@@ -194,7 +194,7 @@ TEST_CASE("RGB to gray: Luminosity formula accuracy", "[image_rgb_to_gray]") {
     };
 
     for (const auto& test : test_cases) {
-        auto pixel = rgb_span.channel(0, 0);
+        auto* pixel = rgb_span.channel(0, 0);
         pixel[0] = test.r;
         pixel[1] = test.g;
         pixel[2] = test.b;
@@ -274,7 +274,7 @@ TEST_CASE("RGB to gray: Gradient pattern", "[image_rgb_to_gray]") {
 
     for (size_t h = 0; h < rgb_span.height(); ++h) {
         for (size_t w = 0; w < rgb_span.width(); ++w) {
-            auto pixel = rgb_span.channel(h, w);
+            auto* pixel = rgb_span.channel(h, w);
             pixel[0] = static_cast<uint8_t>((h * 255) / 15);  // Vertical gradient
             pixel[1] = static_cast<uint8_t>((w * 255) / 15);  // Horizontal gradient
             pixel[2] = 128;  // Constant

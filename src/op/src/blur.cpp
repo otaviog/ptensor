@@ -198,7 +198,7 @@ P10Result<GaussianBlur> GaussianBlur::create(size_t kernel_size, float sigma) {
 namespace {
     void create_gaussian_kernel_(std::span<float> kernel, float sigma) {
         float sum = 0.0f;
-        int half_size = int(kernel.size() / 2);
+        int half_size = static_cast<int>(kernel.size() / 2);
         for (int i = -half_size; i <= half_size; ++i) {
             kernel[i + half_size] = static_cast<float>(
                 std::exp(-(i * i) / (2 * sigma * sigma))
@@ -229,7 +229,7 @@ P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) {
     P10_RETURN_IF_ERROR(output.create(input.shape(), dtype));
 
     return dtype.match([&](auto type_tag) -> P10Error {
-        using scalar_t = typename decltype(type_tag)::type;
+        using scalar_t = decltype(type_tag)::type;
         using accum_t = accumulator_traits<scalar_t>::accum_type;
 
         if constexpr (!std::is_same_v<accum_t, detail::AccumulatorNotDefined>) {

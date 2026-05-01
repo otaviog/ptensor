@@ -15,6 +15,11 @@ class FfmpegMediaWriter: public MediaWriter::Impl {
     static P10Result<std::shared_ptr<FfmpegMediaWriter>>
     create(const std::string& path, const MediaParameters& params);
 
+    FfmpegMediaWriter(const FfmpegMediaWriter&) = delete;
+    FfmpegMediaWriter& operator=(const FfmpegMediaWriter&) = delete;
+    FfmpegMediaWriter(FfmpegMediaWriter&&) = delete;
+    FfmpegMediaWriter& operator=(FfmpegMediaWriter&&) = delete;
+
     ~FfmpegMediaWriter() override;
 
     void close() override;

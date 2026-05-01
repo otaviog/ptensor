@@ -3,19 +3,19 @@
 namespace p10 {
 
 Blob Blob::allocate(size_t size) {
-    auto memory = new uint8_t[size];
+    auto* memory = new uint8_t[size];
     if (memory == nullptr) {
         throw std::bad_alloc();
     }
     return Blob(static_cast<void*>(memory), Device(Device::Cpu), [](void* data) {
-        delete[] (uint8_t*)data;
+        delete[] static_cast<uint8_t*>(data);
     });
 }
 
-Blob::Blob(Blob&& other) noexcept {
-    data_ = other.data_;
-    dealloc_ = other.dealloc_;
-    device_ = other.device_;
+Blob::Blob(Blob&& other) noexcept :
+    data_(other.data_),
+    dealloc_(other.dealloc_),
+    device_(other.device_) {
     other.data_ = nullptr;
     other.dealloc_ = std::nullopt;
     other.device_ = Device(Device::Cpu);

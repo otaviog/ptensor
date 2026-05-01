@@ -14,12 +14,11 @@ class Shape: public detail::TensorExtents {
     static p10::P10Result<Shape> zeros(size_t dims) {
         if (dims < P10_MAX_SHAPE) {
             return Ok(Shape(dims));
-        } else {
-            return Err(
-                P10Error::InvalidArgument,
-                "Number of dimensions exceeds maximum supported shape"
-            );
         }
+        return Err(
+            P10Error::InvalidArgument,
+            "Number of dimensions exceeds maximum supported shape"
+        );
     }
 
     Shape(const detail::TensorExtents& extents) : TensorExtents(extents) {}
@@ -29,7 +28,7 @@ class Shape: public detail::TensorExtents {
             return 0;
         }
         const auto shape = as_span();
-        return std::accumulate(shape.begin(), shape.end(), int64_t {1}, std::multiplies<int64_t>());
+        return std::accumulate(shape.begin(), shape.end(), int64_t {1}, std::multiplies<>());
     }
 
     /// Checks if the shape is empty, that is, it has no dimensions.

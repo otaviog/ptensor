@@ -5,6 +5,11 @@
 namespace p10::media {
 class MediaWriter::Impl {
   public:
+    Impl() = default;
+    Impl(const Impl&) = delete;
+    Impl& operator=(const Impl&) = delete;
+    Impl(Impl&&) = delete;
+    Impl& operator=(Impl&&) = delete;
     virtual ~Impl() = default;
 
     virtual void close() = 0;

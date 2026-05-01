@@ -4,7 +4,7 @@
 
 namespace p10::op {
 p10::P10Error stack(std::span<const p10::Tensor> inputs, int64_t axis, p10::Tensor& output) {
-    if (inputs.size() == 0) {
+    if (inputs.empty()) {
         return P10Error::InvalidArgument << "No input tensors to stack";
     }
 

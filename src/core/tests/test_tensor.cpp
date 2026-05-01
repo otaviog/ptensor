@@ -113,7 +113,7 @@ TEST_CASE("core::Tensor::empty with various shapes", "[tensor][creation]") {
 
 TEST_CASE("core::Tensor::move constructor transfers ownership", "[tensor][move]") {
     auto original = Tensor::full(make_shape(2, 2), 7.0, Dtype::Int32).unwrap();
-    auto original_data_ptr = original.as_span1d<int32_t>().unwrap().data();
+    auto* original_data_ptr = original.as_span1d<int32_t>().unwrap().data();
 
     Tensor moved(std::move(original));
 
@@ -130,7 +130,7 @@ TEST_CASE("core::Tensor::move constructor transfers ownership", "[tensor][move]"
 
 TEST_CASE("core::Tensor::move assign transfers ownership", "[tensor][move]") {
     auto original = Tensor::full(make_shape(2, 2), 7.0, Dtype::Int32).unwrap();
-    auto original_data_ptr = original.as_span1d<int32_t>().unwrap().data();
+    auto* original_data_ptr = original.as_span1d<int32_t>().unwrap().data();
 
     Tensor moved = std::move(original);
 
@@ -166,7 +166,7 @@ TEST_CASE("core::Tensor::copy_from copies data from another tensor", "[tensor][c
         auto source = Tensor::full(make_shape(2, 3), 8.0, Dtype::Float32).unwrap();
         auto destination =
             Tensor::empty(make_shape(2, 3), TensorOptions().dtype(Dtype::Int32)).unwrap();
-        auto original_ptr = destination.as_bytes().data();
+        auto* original_ptr = destination.as_bytes().data();
 
         REQUIRE(destination.copy_from(source).is_ok());
 
@@ -291,7 +291,7 @@ TEST_CASE("core::Tensor::to_contiguous creates contiguous copy", "[tensor][conti
     // Row 0: 0 2 4
     // Row 1: 1 3 5
     for (auto i = 0; i < tensor.shape().count(); i++) {
-        tensor.as_span1d<float>().unwrap()[i] = float(i);
+        tensor.as_span1d<float>().unwrap()[i] = static_cast<float>(i);
     }
 
     auto contiguous = tensor.to_contiguous().unwrap();
@@ -462,7 +462,7 @@ TEST_CASE("core::Tensor::as_span2d converts to 2D span", "[tensor][span]") {
         // Set values using 2D access
         for (size_t i = 0; i < 3; i++) {
             for (size_t j = 0; j < 4; j++) {
-                span.row(i)[j] = float(i * 4 + j);
+                span.row(i)[j] = static_cast<float>(i * 4 + j);
             }
         }
 
@@ -523,7 +523,7 @@ TEST_CASE("core::Tensor::as_span3d converts to 3D span", "[tensor][span]") {
         for (size_t h = 0; h < 2; h++) {
             for (size_t w = 0; w < 3; w++) {
                 for (size_t c = 0; c < 4; c++) {
-                    span.channel(h, w)[c] = float(h * 12 + w * 4 + c);
+                    span.channel(h, w)[c] = static_cast<float>(h * 12 + w * 4 + c);
                 }
             }
         }
@@ -562,8 +562,8 @@ TEST_CASE("core::Tensor::as_span3d converts to 3D span", "[tensor][span]") {
         auto tensor = Tensor::zeros(make_shape(3, 4, 2)).unwrap();
         auto span = tensor.as_span3d<float>().unwrap();
 
-        auto row0 = span.row(0);
-        auto row1 = span.row(1);
+        auto* row0 = span.row(0);
+        auto* row1 = span.row(1);
 
         // Each row should point to width * channels elements
         row0[0] = 1.0f;
@@ -602,7 +602,7 @@ TEST_CASE("core::Tensor::as_planar_span3d converts to planar 3D span", "[tensor]
             auto plane = span[c];
             for (size_t h = 0; h < 4; h++) {
                 for (size_t w = 0; w < 5; w++) {
-                    plane.row(h)[w] = float(c * 100 + h * 10 + w);
+                    plane.row(h)[w] = static_cast<float>(c * 100 + h * 10 + w);
                 }
             }
         }
@@ -891,7 +891,10 @@ TEST_CASE("core::Tensor::reshape", "[tensor][reshape]") {
         REQUIRE(tensor.shape() == make_shape(0, 1));
         REQUIRE(tensor.size() == tensor_size);
         // Invalid reshape
-        REQUIRE_THAT(tensor.reshape(make_shape(1, 1)), testing::is_error(P10Error::InvalidArgument));
+        REQUIRE_THAT(
+            tensor.reshape(make_shape(1, 1)),
+            testing::is_error(P10Error::InvalidArgument)
+        );
     }
 
     SECTION("Reshape shares data with original tensor") {
@@ -912,36 +915,41 @@ TEST_CASE("core::Tensor::reshape", "[tensor][reshape]") {
                 .unwrap();
 
         // Attempt to reshape to incompatible shape
-        REQUIRE_THAT(tensor.reshape(make_shape(4, 2)), testing::is_error(P10Error::InvalidArgument));
+        REQUIRE_THAT(
+            tensor.reshape(make_shape(4, 2)),
+            testing::is_error(P10Error::InvalidArgument)
+        );
     }
 }
 
-void test_transpose(Dtype type, size_t rows, size_t cols) {
-    auto tensor = Tensor::from_range(make_shape(rows, cols), type).unwrap();
-    Tensor transposed;
-    REQUIRE(tensor.transpose(transposed).is_ok());
+namespace {
+    void test_transpose(Dtype type, size_t rows, size_t cols) {
+        auto tensor = Tensor::from_range(make_shape(rows, cols), type).unwrap();
+        Tensor transposed;
+        REQUIRE(tensor.transpose(transposed).is_ok());
 
-    REQUIRE(transposed.shape() == make_shape(cols, rows));
-    REQUIRE(transposed.stride(0).unwrap() == int64_t(rows));
-    REQUIRE(transposed.stride(1).unwrap() == 1);
+        REQUIRE(transposed.shape() == make_shape(cols, rows));
+        REQUIRE(transposed.stride(0).unwrap() == int64_t(rows));
+        REQUIRE(transposed.stride(1).unwrap() == 1);
 
-    // Verify data correctness
-    tensor.visit([&](const auto& type) {
-        using scalar_t = typename std::decay_t<decltype(type)>::element_type;
-        auto original_data = tensor.as_span1d<scalar_t>().unwrap();
-        auto transposed_data = transposed.as_span1d<scalar_t>().unwrap();
-        for (size_t i = 0; i < rows; i++) {
-            for (size_t j = 0; j < cols; j++) {
-                const scalar_t expected_value = original_data[i * cols + j];
-                const scalar_t actual_value = transposed_data[j * rows + i];
-                if (actual_value != expected_value) {
-                    CAPTURE(i, j, expected_value, actual_value);
+        // Verify data correctness
+        tensor.visit([&](const auto& type) {
+            using scalar_t = std::decay_t<decltype(type)>::element_type;
+            auto original_data = tensor.as_span1d<scalar_t>().unwrap();
+            auto transposed_data = transposed.as_span1d<scalar_t>().unwrap();
+            for (size_t i = 0; i < rows; i++) {
+                for (size_t j = 0; j < cols; j++) {
+                    const scalar_t expected_value = original_data[i * cols + j];
+                    const scalar_t actual_value = transposed_data[j * rows + i];
+                    if (actual_value != expected_value) {
+                        CAPTURE(i, j, expected_value, actual_value);
+                    }
+                    REQUIRE(actual_value == expected_value);
                 }
-                REQUIRE(actual_value == expected_value);
             }
-        }
-    });
-}
+        });
+    }
+}  // namespace
 
 TEST_CASE("core::Tensor::transpose", "[tensor][transpose]") {
     SECTION("2D tensor transpose") {
@@ -1052,7 +1060,7 @@ TEST_CASE("core::Tensor::as_accessor1d converts to 1D accessor", "[tensor][acces
             auto tensor = Tensor::from_range(make_shape(4), TensorOptions().dtype(dtype)).unwrap();
 
             tensor.visit([&](auto&& typed_span) {
-                using T = typename std::decay_t<decltype(typed_span)>::element_type;
+                using T = std::decay_t<decltype(typed_span)>::element_type;
                 auto accessor = tensor.as_accessor1d<T>().unwrap();
                 REQUIRE(accessor.size() == 4);
                 REQUIRE(accessor[2] == T(2));
@@ -1177,7 +1185,7 @@ TEST_CASE("core::Tensor::as_accessor2d converts to 2D accessor", "[tensor][acces
                 Tensor::from_range(make_shape(2, 3), TensorOptions().dtype(dtype)).unwrap();
 
             tensor.visit([&](auto&& typed_span) {
-                using T = typename std::decay_t<decltype(typed_span)>::element_type;
+                using T = std::decay_t<decltype(typed_span)>::element_type;
                 auto accessor = tensor.as_accessor2d<T>().unwrap();
                 REQUIRE(accessor.rows() == 2);
                 REQUIRE(accessor.cols() == 3);
@@ -1327,7 +1335,7 @@ TEST_CASE("core::Tensor::as_accessor3d converts to 3D accessor", "[tensor][acces
                 Tensor::from_range(make_shape(2, 2, 2), TensorOptions().dtype(dtype)).unwrap();
 
             tensor.visit([&](auto&& typed_span) {
-                using T = typename std::decay_t<decltype(typed_span)>::element_type;
+                using T = std::decay_t<decltype(typed_span)>::element_type;
                 auto accessor = tensor.as_accessor3d<T>().unwrap();
                 REQUIRE(accessor.channels() == 2);
                 REQUIRE(accessor.rows() == 2);

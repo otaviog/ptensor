@@ -65,9 +65,10 @@ P10Error FfmpegSwr::transform(const AVFrame* source_frame, AVFrame** output_fram
     AVFrame* target_frame = av_frame_alloc();
     target_frame->sample_rate = target_sample_rate_;
     target_frame->format = target_sample_format_;
-    target_frame->nb_samples =
-        int((source_frame->nb_samples * size_t(target_sample_rate_))
-            / size_t(source_frame->sample_rate));
+    target_frame->nb_samples = static_cast<int>(
+        (source_frame->nb_samples * static_cast<size_t>(target_sample_rate_))
+        / static_cast<size_t>(source_frame->sample_rate)
+    );
     target_frame->ch_layout = target_channel_layout_;
 
     const auto targetBufferSize = av_samples_get_buffer_size(
@@ -83,7 +84,7 @@ P10Error FfmpegSwr::transform(const AVFrame* source_frame, AVFrame** output_fram
             << "Could not get target buffer size: " + std::to_string(targetBufferSize);
     }
 
-    auto* targetBuffer = (uint8_t*)av_malloc(targetBufferSize);
+    auto* targetBuffer = static_cast<uint8_t*>(av_malloc(targetBufferSize));
     auto ret = av_samples_fill_arrays(
         target_frame->data,
         target_frame->linesize,

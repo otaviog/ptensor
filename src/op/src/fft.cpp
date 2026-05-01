@@ -49,7 +49,7 @@ P10Error Fft::transform(const Tensor& input, Tensor& output) const {
     }
 }
 
-P10Error Fft::forward(const Tensor&, Tensor&) const {
+P10Error Fft::forward(const Tensor&, Tensor&) {
     return P10Error::NotImplemented << "Forward complex FFT is not implemented yet";
 }
 
@@ -71,7 +71,10 @@ P10Error Fft::forward_real(const Tensor& signal_in, Tensor& freq_out) const {
 
     freq_out.create(make_shape(num_signals, num_ffts, 2), type);
 
-    pocketfft::shape_t shape_in = {size_t(num_signals), size_t(num_samples)};
+    pocketfft::shape_t shape_in = {
+        static_cast<size_t>(num_signals),
+        static_cast<size_t>(num_samples)
+    };
     return type.match(
         [&](auto) -> P10Error {
             return P10Error::InvalidArgument << "Unsupported tensor dtype for FFT";
@@ -107,7 +110,7 @@ P10Error Fft::forward_real(const Tensor& signal_in, Tensor& freq_out) const {
     );
 }
 
-P10Error Fft::inverse(const Tensor&, Tensor&) const {
+P10Error Fft::inverse(const Tensor&, Tensor&) {
     return P10Error::NotImplemented << "Inverse complex FFT is not implemented yet";
 }
 
@@ -128,7 +131,10 @@ P10Error Fft::inverse_real(const Tensor& freq_in, Tensor& signal_out) const {
         scalar_factor = 1.0 / static_cast<double>(num_samples);
     }
 
-    pocketfft::shape_t shape_out = {size_t(num_signals), size_t(num_samples)};
+    pocketfft::shape_t shape_out = {
+        static_cast<size_t>(num_signals),
+        static_cast<size_t>(num_samples)
+    };
     return type.match(
         [&](auto) -> P10Error {
             return P10Error::InvalidArgument << "Unsupported tensor dtype for FFT";

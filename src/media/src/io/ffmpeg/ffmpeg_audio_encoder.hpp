@@ -19,6 +19,10 @@ class AudioParameters;
 class FfmpegAudioEncoder {
   public:
     FfmpegAudioEncoder() = default;
+    FfmpegAudioEncoder(const FfmpegAudioEncoder&) = delete;
+    FfmpegAudioEncoder& operator=(const FfmpegAudioEncoder&) = delete;
+    FfmpegAudioEncoder(FfmpegAudioEncoder&&) = delete;
+    FfmpegAudioEncoder& operator=(FfmpegAudioEncoder&&) = delete;
     ~FfmpegAudioEncoder();
 
     P10Error create(const AudioParameters& audio_params, AVFormatContext* format_ctx);

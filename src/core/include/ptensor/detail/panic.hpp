@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include <string_view>
 
 #ifdef __cpp_exceptions
@@ -12,7 +14,7 @@
 namespace p10::detail {
 [[noreturn]] inline void panic(const std::string_view& error_message) {
 #ifdef __cpp_exceptions
-    throw std::runtime_error(error_message.data());
+    throw std::runtime_error(std::string(error_message));
 #else
     std::cerr << error_message << std::endl;
     std::abort();

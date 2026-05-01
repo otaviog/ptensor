@@ -33,16 +33,17 @@ struct Dtype {
         using ActualType = std::remove_cv_t<std::remove_reference_t<T>>;
 
         // clang-format off
-        if constexpr (std::is_same_v<ActualType, float>) return Dtype(Float32);
-        else if constexpr (std::is_same_v<ActualType, double>) return Dtype(Float64);
-        else if constexpr (std::is_same_v<ActualType, uint8_t>) return Dtype(Uint8);
-        else if constexpr (std::is_same_v<ActualType, uint16_t>) return Dtype(Uint16);
-        else if constexpr (std::is_same_v<ActualType, uint32_t>) return Dtype(Uint32);
-        else if constexpr (std::is_same_v<ActualType, int8_t>) return Dtype(Int8);
-        else if constexpr (std::is_same_v<ActualType, int16_t>) return Dtype(Int16);
-        else if constexpr (std::is_same_v<ActualType, int32_t>) return Dtype(Int32);
-        else if constexpr (std::is_same_v<ActualType, int64_t>) return Dtype(Int64);
-        else static_assert(!std::is_same_v<ActualType, ActualType>, "Unsupported type for Dtype::from<T>()");
+        if constexpr (std::is_same_v<ActualType, float>) { return Dtype(Float32);
+        } else if constexpr (std::is_same_v<ActualType, double>) { return Dtype(Float64);
+        } else if constexpr (std::is_same_v<ActualType, uint8_t>) { return Dtype(Uint8);
+        } else if constexpr (std::is_same_v<ActualType, uint16_t>) { return Dtype(Uint16);
+        } else if constexpr (std::is_same_v<ActualType, uint32_t>) { return Dtype(Uint32);
+        } else if constexpr (std::is_same_v<ActualType, int8_t>) { return Dtype(Int8);
+        } else if constexpr (std::is_same_v<ActualType, int16_t>) { return Dtype(Int16);
+        } else if constexpr (std::is_same_v<ActualType, int32_t>) { return Dtype(Int32);
+        } else if constexpr (std::is_same_v<ActualType, int64_t>) { return Dtype(Int64);
+        } else { static_assert(!std::is_same_v<ActualType, ActualType>, "Unsupported type for Dtype::from<T>()");
+}
         // clang-format on
     }
 
@@ -113,23 +114,35 @@ struct Dtype {
 
         switch (value) {
             case Uint8:
-                return static_cast<Return>(matcher(std::type_identity<uint8_t> {}));
+                return static_cast<Return>(
+                    std::forward<F>(matcher)(std::type_identity<uint8_t> {})
+                );
             case Uint16:
-                return static_cast<Return>(matcher(std::type_identity<uint16_t> {}));
+                return static_cast<Return>(
+                    std::forward<F>(matcher)(std::type_identity<uint16_t> {})
+                );
             case Uint32:
-                return static_cast<Return>(matcher(std::type_identity<uint32_t> {}));
+                return static_cast<Return>(
+                    std::forward<F>(matcher)(std::type_identity<uint32_t> {})
+                );
             case Int8:
-                return static_cast<Return>(matcher(std::type_identity<int8_t> {}));
+                return static_cast<Return>(std::forward<F>(matcher)(std::type_identity<int8_t> {}));
             case Int16:
-                return static_cast<Return>(matcher(std::type_identity<int16_t> {}));
+                return static_cast<Return>(
+                    std::forward<F>(matcher)(std::type_identity<int16_t> {})
+                );
             case Int32:
-                return static_cast<Return>(matcher(std::type_identity<int32_t> {}));
+                return static_cast<Return>(
+                    std::forward<F>(matcher)(std::type_identity<int32_t> {})
+                );
             case Int64:
-                return static_cast<Return>(matcher(std::type_identity<int64_t> {}));
+                return static_cast<Return>(
+                    std::forward<F>(matcher)(std::type_identity<int64_t> {})
+                );
             case Float32:
-                return static_cast<Return>(matcher(std::type_identity<float> {}));
+                return static_cast<Return>(std::forward<F>(matcher)(std::type_identity<float> {}));
             case Float64:
-                return static_cast<Return>(matcher(std::type_identity<double> {}));
+                return static_cast<Return>(std::forward<F>(matcher)(std::type_identity<double> {}));
             default:
                 detail::panic("Unsupported dtype in Dtype::match()");
         }
@@ -151,23 +164,41 @@ struct Dtype {
 
         switch (value) {
             case Uint8:
-                return static_cast<Return>(int_matcher(std::type_identity<uint8_t> {}));
+                return static_cast<Return>(
+                    std::forward<FI>(int_matcher)(std::type_identity<uint8_t> {})
+                );
             case Uint16:
-                return static_cast<Return>(int_matcher(std::type_identity<uint16_t> {}));
+                return static_cast<Return>(
+                    std::forward<FI>(int_matcher)(std::type_identity<uint16_t> {})
+                );
             case Uint32:
-                return static_cast<Return>(int_matcher(std::type_identity<uint32_t> {}));
+                return static_cast<Return>(
+                    std::forward<FI>(int_matcher)(std::type_identity<uint32_t> {})
+                );
             case Int8:
-                return static_cast<Return>(int_matcher(std::type_identity<int8_t> {}));
+                return static_cast<Return>(
+                    std::forward<FI>(int_matcher)(std::type_identity<int8_t> {})
+                );
             case Int16:
-                return static_cast<Return>(int_matcher(std::type_identity<int16_t> {}));
+                return static_cast<Return>(
+                    std::forward<FI>(int_matcher)(std::type_identity<int16_t> {})
+                );
             case Int32:
-                return static_cast<Return>(int_matcher(std::type_identity<int32_t> {}));
+                return static_cast<Return>(
+                    std::forward<FI>(int_matcher)(std::type_identity<int32_t> {})
+                );
             case Int64:
-                return static_cast<Return>(int_matcher(std::type_identity<int64_t> {}));
+                return static_cast<Return>(
+                    std::forward<FI>(int_matcher)(std::type_identity<int64_t> {})
+                );
             case Float32:
-                return static_cast<Return>(float_matcher(std::type_identity<float> {}));
+                return static_cast<Return>(
+                    std::forward<FF>(float_matcher)(std::type_identity<float> {})
+                );
             case Float64:
-                return static_cast<Return>(float_matcher(std::type_identity<double> {}));
+                return static_cast<Return>(
+                    std::forward<FF>(float_matcher)(std::type_identity<double> {})
+                );
             default:
                 detail::panic("Unsupported dtype in Dtype::match()");
         }
@@ -213,12 +244,14 @@ struct Dtype {
 
     template<typename F, typename T, typename ByteType>
     auto do_type_visit(F&& visitor, std::span<ByteType> data) const {
-        if constexpr (std::is_const<ByteType>::value) {
-            return visitor(
+        if constexpr (std::is_const_v<ByteType>) {
+            return std::forward<F>(visitor)(
                 std::span(reinterpret_cast<const T*>(data.data()), data.size() / sizeof(T))
             );
         } else {
-            return visitor(std::span(reinterpret_cast<T*>(data.data()), data.size() / sizeof(T)));
+            return std::forward<F>(visitor)(
+                std::span(reinterpret_cast<T*>(data.data()), data.size() / sizeof(T))
+            );
         }
     }
 };

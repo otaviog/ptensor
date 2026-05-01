@@ -120,8 +120,11 @@ class Tensor {
     /// Default constructor. Creates an empty tensor.
     Tensor() = default;
 
-    Tensor(Tensor&&);
-    Tensor& operator=(Tensor&&);
+    Tensor(const Tensor&) = delete;
+    Tensor& operator=(const Tensor&) = delete;
+    Tensor(Tensor&&) noexcept;
+    Tensor& operator=(Tensor&&) noexcept;
+    ~Tensor() = default;
 
     /// Checks if the tensor is empty (has zero dimensions or zero elements).
     bool empty() const {
@@ -261,7 +264,13 @@ class Tensor {
             return Err(data_res.error());
         }
         const auto shape = shape_.as_span();
-        return Ok(Span2D<T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1])});
+        return Ok(
+            Span2D<T> {
+                data_res.unwrap(),
+                static_cast<size_t>(shape[0]),
+                static_cast<size_t>(shape[1])
+            }
+        );
     }
 
     template<typename T>
@@ -273,7 +282,13 @@ class Tensor {
             return Err(data_res.error());
         }
         const auto shape = shape_.as_span();
-        return Ok(Span2D<const T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1])});
+        return Ok(
+            Span2D<const T> {
+                data_res.unwrap(),
+                static_cast<size_t>(shape[0]),
+                static_cast<size_t>(shape[1])
+            }
+        );
     }
 
     template<typename T>
@@ -286,7 +301,12 @@ class Tensor {
         }
         const auto shape = shape_.as_span();
         return Ok(
-            Span3D<T> {data_res.unwrap(), size_t(shape[0]), size_t(shape[1]), size_t(shape[2])}
+            Span3D<T> {
+                data_res.unwrap(),
+                static_cast<size_t>(shape[0]),
+                static_cast<size_t>(shape[1]),
+                static_cast<size_t>(shape[2])
+            }
         );
     }
 
@@ -302,9 +322,9 @@ class Tensor {
         return Ok(
             Span3D<const T> {
                 data_res.unwrap(),
-                size_t(shape[0]),
-                size_t(shape[1]),
-                size_t(shape[2])
+                static_cast<size_t>(shape[0]),
+                static_cast<size_t>(shape[1]),
+                static_cast<size_t>(shape[2])
             }
         );
     }
@@ -322,9 +342,9 @@ class Tensor {
         return Ok(
             PlanarSpan3D<T> {
                 data_res.unwrap(),
-                size_t(shape[0]),
-                size_t(shape[1]),
-                size_t(shape[2])
+                static_cast<size_t>(shape[0]),
+                static_cast<size_t>(shape[1]),
+                static_cast<size_t>(shape[2])
             }
         );
     }
@@ -340,9 +360,9 @@ class Tensor {
         return Ok(
             PlanarSpan3D<const T> {
                 data_res.unwrap(),
-                size_t(shape[0]),
-                size_t(shape[1]),
-                size_t(shape[2])
+                static_cast<size_t>(shape[0]),
+                static_cast<size_t>(shape[1]),
+                static_cast<size_t>(shape[2])
             }
         );
     }
@@ -523,7 +543,7 @@ class Tensor {
 
     P10Error copy_from(const Tensor& src);
 
-    P10Error convert_from(const Tensor& dest, const TensorOptions options);
+    P10Error convert_from(const Tensor& source, const TensorOptions options);
 
   private:
     Tensor(Blob&& blob, const Shape& shape, const TensorOptions& options) :

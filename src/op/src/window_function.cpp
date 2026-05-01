@@ -20,7 +20,7 @@ P10Error WindowFunction::transform(const Tensor& input, Tensor& output) {
     P10_RETURN_IF_ERROR(generate_window(input.shape(0).unwrap(), input.dtype()));
 
     return input.dtype().match([&](auto scalar) -> P10Error {
-        using scalar_t = typename decltype(scalar)::type;
+        using scalar_t = decltype(scalar)::type;
 
         auto input_span = input.as_span2d<scalar_t>().unwrap();
         auto output_span = output.as_span2d<scalar_t>().unwrap();
@@ -49,7 +49,7 @@ WindowFunction::transform_borders(const Tensor& input, Tensor& output, size_t bo
     if (input.dims() != 2) {
         return P10Error::InvalidArgument << "Input tensor must be 2D.";
     }
-    if (border_size * 2 > size_t(input.shape(1).unwrap())) {
+    if (border_size * 2 > static_cast<size_t>(input.shape(1).unwrap())) {
         return P10Error::InvalidArgument << "Border size is too large for the input tensor.";
     }
 
@@ -58,7 +58,7 @@ WindowFunction::transform_borders(const Tensor& input, Tensor& output, size_t bo
     P10_RETURN_IF_ERROR(generate_window(border_size * 2, input.dtype()));
 
     return input.dtype().match([&](auto scalar) -> P10Error {
-        using scalar_t = typename decltype(scalar)::type;
+        using scalar_t = decltype(scalar)::type;
 
         auto input_span = input.as_span2d<scalar_t>().unwrap();
         auto output_span = output.as_span2d<scalar_t>().unwrap();
@@ -97,7 +97,7 @@ P10Error WindowFunction::generate_window(size_t size, Dtype type) {
     P10_RETURN_IF_ERROR(window_->create(make_shape(size), type));
 
     window_->visit([&](auto out_span) {
-        using scalar_t = typename decltype(out_span)::value_type;
+        using scalar_t = decltype(out_span)::value_type;
 
         for (size_t n = 0; n < size; ++n) {
             scalar_t value = scalar_t(1.0);

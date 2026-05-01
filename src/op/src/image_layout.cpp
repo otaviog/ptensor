@@ -120,8 +120,7 @@ P10Error image_from_tensor(
                             auto out_ch = out_span.channel(row, col);
                             for (size_t c = 0; c < num_channels; c++) {
                                 const Fin val = in_span[c].row(row)[col] * Fin {255};
-                                out_ch[c] =
-                                    static_cast<Tout>(std::clamp(val, Fin {0}, Fin {255}));
+                                out_ch[c] = static_cast<Tout>(std::clamp(val, Fin {0}, Fin {255}));
                             }
                         }
                     }

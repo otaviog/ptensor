@@ -19,18 +19,19 @@ class Fft {
     enum Direction { Forward = 0, ForwardReal = 1, Inverse = 2, InverseReal = 3 };
 
     Fft(const FftOptions& options);
-    ~Fft();
-
     Fft(const Fft&) = delete;
     Fft& operator=(const Fft&) = delete;
+    Fft(Fft&&) = delete;
+    Fft& operator=(Fft&&) = delete;
+    ~Fft();
 
     P10Error transform(const Tensor& input, Tensor& output) const;
 
   private:
-    P10Error forward(const Tensor& time, Tensor& frequency) const;
+    static P10Error forward(const Tensor& time, Tensor& frequency);
     P10Error forward_real(const Tensor& signal_in, Tensor& freq_out) const;
-    P10Error inverse(const Tensor& input, Tensor& output) const;
-    P10Error inverse_real(const Tensor& frequency, Tensor& time) const;
+    static P10Error inverse(const Tensor& input, Tensor& output);
+    P10Error inverse_real(const Tensor& freq_in, Tensor& signal_out) const;
 
     Direction direction_ = Direction::Forward;
     Normalize normalize_ = Normalize::None;

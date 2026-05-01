@@ -20,7 +20,7 @@ namespace {
         frame->format = format;
 
         int buffer_size = av_image_get_buffer_size(format, width, height, 1);
-        uint8_t* buffer = (uint8_t*)av_malloc(buffer_size);
+        uint8_t* buffer = static_cast<uint8_t*>(av_malloc(buffer_size));
 
         // Fill with test pattern
         for (int i = 0; i < buffer_size; ++i) {

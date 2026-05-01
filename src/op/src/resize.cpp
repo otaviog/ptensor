@@ -34,7 +34,7 @@ namespace {
 
 P10Error resize(const Tensor& input, Tensor& output, size_t new_width, size_t new_height) {
     return input.dtype().match([&](auto type_tag) {
-        using scalar_t = typename decltype(type_tag)::type;
+        using scalar_t = decltype(type_tag)::type;
 
         auto input_accessor_res = input.as_accessor3d<scalar_t>();
         if (input_accessor_res.is_error()) {
@@ -51,8 +51,8 @@ P10Error resize(const Tensor& input, Tensor& output, size_t new_width, size_t ne
             return resize_ref_impl<scalar_t>(
                 input_accessor,
                 output.as_accessor3d<scalar_t>().unwrap(),
-                int64_t(new_width),
-                int64_t(new_height)
+                static_cast<int64_t>(new_width),
+                static_cast<int64_t>(new_height)
             );
         };
 
@@ -89,21 +89,25 @@ namespace {
         const auto height = input.rows();
         const auto width = input.cols();
 
-        const float x_scale = float(width) / float(new_width);
-        const float y_scale = float(height) / float(new_height);
+        const float x_scale = float(width) / static_cast<float>(new_width);
+        const float y_scale = float(height) / static_cast<float>(new_height);
 
         for (int64_t chn = 0; chn < channels; ++chn) {
             auto plane_out = output[chn];
             auto plane_in = input[chn];
 
             for (int64_t row = 0; row < new_height; ++row) {
-                const auto src_y = std::min(int64_t(float(row) * y_scale), height - 1);
+                const auto src_y =
+                    std::min(static_cast<int64_t>(static_cast<float>(row) * y_scale), height - 1);
 
                 auto row_out = plane_out[row];
                 auto row_in = plane_in[src_y];
 
                 for (int64_t col = 0; col < new_width; ++col) {
-                    const auto src_x = std::min(int64_t(float(col) * x_scale), width - 1);
+                    const auto src_x = std::min(
+                        static_cast<int64_t>(static_cast<float>(col) * x_scale),
+                        width - 1
+                    );
 
                     row_out[col] = row_in[src_x];
                 }

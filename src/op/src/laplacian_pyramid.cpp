@@ -55,7 +55,7 @@ void LaplacianPyramid::pyramid_from_gaussian_to_laplacian(std::span<Tensor> outp
     output.back() = gaussian_pyramid_.back().clone().expect("Clone failed");
 }
 
-P10Error LaplacianPyramid::reconstruct(std::span<const Tensor> pyramid, Tensor& output) const {
+P10Error LaplacianPyramid::reconstruct(std::span<const Tensor> pyramid, Tensor& output) {
     if (const auto err = validate_reconstruct_arguments(pyramid); err.is_error()) {
         return err;
     }

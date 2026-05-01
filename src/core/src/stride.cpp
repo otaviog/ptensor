@@ -16,7 +16,7 @@ Stride Stride::from_contiguous_shape(const Shape& shape) {
     auto stride_span = stride.as_span();
     auto shape_span = shape.as_span();
     stride_span[dims - 1] = 1;
-    for (int dim_index = int(dims) - 2; dim_index >= 0; dim_index--) {
+    for (int dim_index = static_cast<int>(dims) - 2; dim_index >= 0; dim_index--) {
         stride_span[dim_index] = shape_span[dim_index + 1] * stride_span[dim_index + 1];
     }
     return stride;

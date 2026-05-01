@@ -16,6 +16,24 @@ class FfmpegAudioDecoder {
         codec_ctx_(codec_ctx),
         index_(stream_index) {}
 
+    FfmpegAudioDecoder(const FfmpegAudioDecoder&) = delete;
+    FfmpegAudioDecoder& operator=(const FfmpegAudioDecoder&) = delete;
+
+    FfmpegAudioDecoder(FfmpegAudioDecoder&& other) noexcept :
+        codec_ctx_(std::exchange(other.codec_ctx_, nullptr)),
+        index_(std::exchange(other.index_, -1)) {}
+
+    FfmpegAudioDecoder& operator=(FfmpegAudioDecoder&& other) noexcept {
+        if (this != &other) {
+            if (codec_ctx_ != nullptr) {
+                avcodec_free_context(&codec_ctx_);
+            }
+            codec_ctx_ = std::exchange(other.codec_ctx_, nullptr);
+            index_ = std::exchange(other.index_, -1);
+        }
+        return *this;
+    }
+
     ~FfmpegAudioDecoder() {
         if (codec_ctx_ != nullptr) {
             avcodec_free_context(&codec_ctx_);
@@ -23,7 +41,7 @@ class FfmpegAudioDecoder {
         }
     }
 
-    P10Error decode_packet(const AVPacket*, AudioFrame&) {
+    static P10Error decode_packet(const AVPacket*, AudioFrame&) {
         return P10Error::NotImplemented;
     }
 

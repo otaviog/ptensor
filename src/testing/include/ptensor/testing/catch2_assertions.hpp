@@ -23,6 +23,7 @@ struct ErrorMatcher: Catch::Matchers::MatcherBase<P10Error> {
         return actual.code() == expected_.code();
     }
 
+  protected:
     std::string describe() const override {
         return std::format(
             "Matches P10Error with code {} but got error {}",
@@ -56,6 +57,7 @@ struct IsOkMatcher: Catch::Matchers::MatcherBase<P10Error> {
         return actual.is_ok();
     }
 
+  protected:
     std::string describe() const override {
         return "Got error. " + actual_.to_string();
     }

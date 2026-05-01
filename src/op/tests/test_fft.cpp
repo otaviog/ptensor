@@ -51,7 +51,10 @@ TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
                 Fft(FftOptions().direction(Fft::Forward)).transform(signal, recovered_frequency),
                 testing::is_ok()
             );
-            REQUIRE_THAT(testing::compare_tensors(recovered_frequency, frequency), testing::is_ok());
+            REQUIRE_THAT(
+                testing::compare_tensors(recovered_frequency, frequency),
+                testing::is_ok()
+            );
         }
 
         SECTION("Should inverse into real and forward FFT correctly") {
@@ -69,7 +72,10 @@ TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
                 testing::is_ok()
             );
 
-            REQUIRE_THAT(testing::compare_tensors(recovered_frequency, frequency), testing::is_ok());
+            REQUIRE_THAT(
+                testing::compare_tensors(recovered_frequency, frequency),
+                testing::is_ok()
+            );
         }
     }
 

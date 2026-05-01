@@ -207,7 +207,8 @@ P10Error FfmpegAudioEncoder::receive_packets() {
 
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
             break;
-        } else if (ret < 0) {
+        }
+        if (ret < 0) {
             return wrap_ffmpeg_error(ret, "Failed to receive packet from audio encoder");
         }
 

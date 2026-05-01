@@ -96,7 +96,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
         std::vector<std::byte> data(16);
 
         auto visitor = [](auto typed_span) {
-            using T = typename decltype(typed_span)::element_type;
+            using T = decltype(typed_span)::element_type;
             for (size_t i = 0; i < typed_span.size(); ++i) {
                 typed_span[i] = static_cast<T>(i + 1);
             }
@@ -134,7 +134,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
         std::vector<std::byte> data(8);
 
         auto counting_visitor = [](auto typed_span) {
-            using T = typename decltype(typed_span)::element_type;
+            using T = decltype(typed_span)::element_type;
             for (size_t i = 0; i < typed_span.size(); ++i) {
                 typed_span[i] = static_cast<T>(i);
             }
@@ -168,7 +168,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
 TEST_CASE("Dtype::match() functionality", "[dtype]") {
     SECTION("Integer matcher") {
         auto int_matcher = [](auto type_id) {
-            using T = typename decltype(type_id)::type;
+            using T = decltype(type_id)::type;
             return sizeof(T);
         };
 
@@ -188,7 +188,7 @@ TEST_CASE("Dtype::match() functionality", "[dtype]") {
         };
 
         auto float_matcher = [](auto type_id) {
-            using T = typename decltype(type_id)::type;
+            using T = decltype(type_id)::type;
             return sizeof(T);
         };
 
@@ -198,16 +198,16 @@ TEST_CASE("Dtype::match() functionality", "[dtype]") {
 }
 
 TEST_CASE("Dtype::to_string() function", "[dtype]") {
-    REQUIRE(to_string(Dtype::Float32).length() > 0);
-    REQUIRE(to_string(Dtype::Float64).length() > 0);
-    REQUIRE(to_string(Dtype::Float16).length() > 0);
-    REQUIRE(to_string(Dtype::Uint8).length() > 0);
-    REQUIRE(to_string(Dtype::Uint16).length() > 0);
-    REQUIRE(to_string(Dtype::Uint32).length() > 0);
-    REQUIRE(to_string(Dtype::Int8).length() > 0);
-    REQUIRE(to_string(Dtype::Int16).length() > 0);
-    REQUIRE(to_string(Dtype::Int32).length() > 0);
-    REQUIRE(to_string(Dtype::Int64).length() > 0);
+    REQUIRE(!to_string(Dtype::Float32).empty());
+    REQUIRE(!to_string(Dtype::Float64).empty());
+    REQUIRE(!to_string(Dtype::Float16).empty());
+    REQUIRE(!to_string(Dtype::Uint8).empty());
+    REQUIRE(!to_string(Dtype::Uint16).empty());
+    REQUIRE(!to_string(Dtype::Uint32).empty());
+    REQUIRE(!to_string(Dtype::Int8).empty());
+    REQUIRE(!to_string(Dtype::Int16).empty());
+    REQUIRE(!to_string(Dtype::Int32).empty());
+    REQUIRE(!to_string(Dtype::Int64).empty());
 }
 
 TEST_CASE("Dtype::edge cases and error conditions", "[dtype]") {

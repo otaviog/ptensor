@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
     #include <intrin.h>
 #endif
 
@@ -10,7 +10,7 @@
 
 namespace p10::simd {
 inline bool is_avx2_supported() {
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
     int cpuInfo[4];
     __cpuid(cpuInfo, 0);
     int nIds = cpuInfo[0];

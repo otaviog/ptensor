@@ -13,10 +13,10 @@ class Iterator {
     Iterator(scalar_t* data, std::span<const int64_t> shape, std::span<const int64_t> stride) :
         data_(data),
         shape_(shape),
-        stride_(stride) {
-        total_elements_ =
-            std::accumulate(shape.begin(), shape.end(), int64_t {1}, std::multiplies<int64_t>());
-    }
+        stride_(stride),
+        total_elements_(
+            std::accumulate(shape.begin(), shape.end(), int64_t {1}, std::multiplies<>())
+        ) {}
 
     bool has_next() const {
         return curr_element_ < total_elements_;
@@ -41,9 +41,8 @@ class Iterator {
             if (coords_[i] + 1 < shape_[i]) {
                 coords_[i]++;
                 break;
-            } else {
-                coords_[i] = 0;
             }
+            coords_[i] = 0;
         }
     }
 

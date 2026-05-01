@@ -13,11 +13,11 @@ class Time {
     Time(Rational base, int64_t stamp) : base_(base), stamp_(stamp) {}
 
     static Time from_seconds(Rational base, double seconds) {
-        return Time {base, int64_t(seconds * base.den()) / base.num()};
+        return Time {base, static_cast<int64_t>(seconds * base.den()) / base.num()};
     }
 
     static Time from(Rational base, std::chrono::milliseconds milli) {
-        return Time {base, int64_t(milli.count()) * base.den() / (base.num() * 1000)};
+        return Time {base, static_cast<int64_t>(milli.count()) * base.den() / (base.num() * 1000)};
     }
 
     int64_t stamp() const {

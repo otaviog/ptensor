@@ -36,7 +36,7 @@ generate_sine_wave(size_t num_samples, Dtype type, const SineWaveParams& params,
         return P10Error::InvalidArgument << "Period results in zero samples.";
     }
     output.visit([&](auto span) {
-        using scalar_t = typename decltype(span)::value_type;
+        using scalar_t = decltype(span)::value_type;
 
         const scalar_t amplitude_val = static_cast<scalar_t>(amplitude);
         const scalar_t phase_val = static_cast<scalar_t>(phase);

@@ -8,7 +8,9 @@
 namespace p10::io {
 
 P10Result<Tensor> load_image(const std::string& path) {
-    int width, height, channels;
+    int width;
+    int height;
+    int channels;
     unsigned char* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
     if (!data) {
         return Err(P10Error::InvalidArgument, "Failed to load image");
@@ -34,21 +36,21 @@ P10Error save_image(const std::string& path, const Tensor& tensor) {
         const auto span = tensor.as_span2d<uint8_t>().unwrap();
         stbi_write_png(
             path.c_str(),
-            int(span.width()),
-            int(span.height()),
+            static_cast<int>(span.width()),
+            static_cast<int>(span.height()),
             1,
             span.row(0),
-            int(span.width())
+            static_cast<int>(span.width())
         );
     } else if (tensor.dims() == 3) {
         auto span = tensor.as_span3d<uint8_t>().unwrap();
         stbi_write_png(
             path.c_str(),
-            int(span.width()),
-            int(span.height()),
-            int(span.channels()),
+            static_cast<int>(span.width()),
+            static_cast<int>(span.height()),
+            static_cast<int>(span.channels()),
             span.data(),
-            int(span.width() * span.channels())
+            static_cast<int>(span.width() * span.channels())
         );
     }
     return P10Error::Ok;

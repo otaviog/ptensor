@@ -24,7 +24,7 @@ namespace detail {
         Compare(const CompareOptions& options) : options(options) {}
 
         bool equal(float a, float b) const {
-            return std::abs(a - b) < float(options.tolerance());
+            return std::abs(a - b) < static_cast<float>(options.tolerance());
         }
 
         bool equal(double a, double b) const {

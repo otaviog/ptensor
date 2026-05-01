@@ -117,7 +117,7 @@ P10Error FfmpegAudioFifo::add_samples(AudioFrame& frame) {
 
     std::array<void*, AV_NUM_DATA_POINTERS> data = {nullptr};
 
-    auto samples_start = frame.samples().as_bytes().data();
+    auto* samples_start = frame.samples().as_bytes().data();
     assert(samples_start != nullptr);
 
     const size_t elem_size = dtype.size_bytes();

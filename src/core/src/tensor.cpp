@@ -77,7 +77,7 @@ P10Result<Tensor> Tensor::from_random(
 
     auto result = result_res.unwrap();
     result.visit([&rng, min, max](auto span) {
-        using SpanType = typename std::decay_t<decltype(span)>::value_type;
+        using SpanType = std::decay_t<decltype(span)>::value_type;
         std::uniform_real_distribution<double> dist(min, max);
         for (size_t i = 0; i < span.size(); ++i) {
             span[i] = static_cast<SpanType>(dist(rng));
@@ -101,7 +101,7 @@ P10Result<Tensor> Tensor::empty(const Shape& shape, const TensorOptions& options
     return Ok(Tensor(std::move(blob), shape, options));
 }
 
-Tensor::Tensor(Tensor&& other) :
+Tensor::Tensor(Tensor&& other) noexcept :
     blob_(std::move(other.blob_)),
     dtype_(other.dtype_),
     shape_(std::move(other.shape_)),
@@ -111,7 +111,7 @@ Tensor::Tensor(Tensor&& other) :
     other.dtype_ = Dtype::Float32;
 }
 
-Tensor& Tensor::operator=(Tensor&& other) {
+Tensor& Tensor::operator=(Tensor&& other) noexcept {
     blob_ = std::move(other.blob_);
     dtype_ = other.dtype_;
     shape_ = std::move(other.shape_);
@@ -214,17 +214,17 @@ void Tensor::squeeze() {
 }
 
 P10Error Tensor::unsqueeze(int64_t dim) {
-    if (dim < 0 || dim > int64_t(dims())) {
+    if (dim < 0 || dim > static_cast<int64_t>(dims())) {
         return P10Error::InvalidArgument << "Cannot unsqueeze at dimension " + std::to_string(dim)
             + ": must be in range [0, " + std::to_string(dims()) + "]";
     }
 
-    auto new_shape_res = Shape::zeros(size_t(dims() + 1));
+    auto new_shape_res = Shape::zeros((dims() + 1));
     if (new_shape_res.is_error()) {
         return new_shape_res.error();
     }
 
-    auto new_stride_res = Stride::zeros(size_t(dims() + 1));
+    auto new_stride_res = Stride::zeros((dims() + 1));
     if (new_stride_res.is_error()) {
         return new_stride_res.error();
     }
@@ -248,17 +248,17 @@ P10Error Tensor::unsqueeze(int64_t dim) {
     } else {
         new_stride_s[0] = stride_s[0];
     }
-    for (size_t i = 1; i <= size_t(dim); ++i) {
+    for (size_t i = 1; i <= static_cast<size_t>(dim); ++i) {
         new_stride_s[i] = stride_s[i - 1];
     }
-    for (size_t i = size_t(dim) + 1; i < new_stride.dims(); ++i) {
+    for (size_t i = static_cast<size_t>(dim) + 1; i < new_stride.dims(); ++i) {
         new_stride_s[i] = stride_s[i - 1];
     }
-    for (size_t i = 0; i < size_t(dim); ++i) {
+    for (size_t i = 0; i < static_cast<size_t>(dim); ++i) {
         new_shape_s[i] = old_shape_s[i];
     }
-    new_shape_s[size_t(dim)] = 1;
-    for (size_t i = size_t(dim); i < dims(); ++i) {
+    new_shape_s[static_cast<size_t>(dim)] = 1;
+    for (size_t i = static_cast<size_t>(dim); i < dims(); ++i) {
         new_shape_s[i + 1] = old_shape_s[i];
     }
 
@@ -268,7 +268,7 @@ P10Error Tensor::unsqueeze(int64_t dim) {
 }
 
 P10Result<Tensor> Tensor::select_dimension(int64_t dim, int64_t index) {
-    if (dim >= int64_t(dims()) || dim < 0) {
+    if (dim >= static_cast<int64_t>(dims()) || dim < 0) {
         return Err(
             P10Error::InvalidArgument << "Cannot select dimension " + std::to_string(dim)
                 + ": must be in range [0, " + std::to_string(dims()) + ")"
@@ -287,10 +287,15 @@ P10Result<Tensor> Tensor::select_dimension(int64_t dim, int64_t index) {
         );
     }
 
-    Shape select_shape(size_t(dims() - 1));
-    copy_one_except(shape_.begin(), shape_.end(), size_t(dim), select_shape.begin());
-    Stride select_stride = Stride::zeros(size_t(dims() - 1)).unwrap();
-    copy_one_except(stride_.begin(), stride_.end(), size_t(dim), select_stride.begin());
+    Shape select_shape((dims() - 1));
+    copy_one_except(shape_.begin(), shape_.end(), static_cast<size_t>(dim), select_shape.begin());
+    Stride select_stride = Stride::zeros((dims() - 1)).unwrap();
+    copy_one_except(
+        stride_.begin(),
+        stride_.end(),
+        static_cast<size_t>(dim),
+        select_stride.begin()
+    );
 
     const auto offset = stride_[dim].unwrap() * index * dtype_.size_bytes();
 
@@ -330,7 +335,7 @@ P10Error Tensor::fill(double value) {
     }
 
     visit([value](auto span) {
-        using scalar_t = typename std::decay_t<decltype(span)>::value_type;
+        using scalar_t = std::decay_t<decltype(span)>::value_type;
         std::fill(span.begin(), span.end(), static_cast<scalar_t>(value));
     });
     return P10Error::Ok;
@@ -388,7 +393,7 @@ namespace {
         if (shape.dims() < 2) {
             return true;
         }
-        for (int i = ((int)shape.dims()) - 2; i >= 0; --i) {
+        for (int i = (static_cast<int>(shape.dims())) - 2; i >= 0; --i) {
             if (stride[i].unwrap() != shape[i + 1].unwrap() * stride[i + 1].unwrap()) {
                 return false;
             }

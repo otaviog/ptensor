@@ -27,7 +27,7 @@ class VideoFrame {
         return image_.create(make_shape(height, width, 3), Dtype::Uint8);
     }
 
-    PixelFormat pixel_format() const {
+    static PixelFormat pixel_format() {
         return PixelFormat::RGB24;
     }
 

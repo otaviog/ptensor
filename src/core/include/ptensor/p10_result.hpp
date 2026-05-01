@@ -38,11 +38,10 @@ class P10Result {
     OkType expect(const std::string& message) {
         if (is_ok()) {
             return unwrap();
-        } else {
-            error().expect(message);
-            // This line should never be reached because err().expect() will panic
-            return unwrap();
         }
+        error().expect(message);
+        // This line should never be reached because err().expect() will panic
+        return unwrap();
     }
 
     const P10Error& error() const {
@@ -56,10 +55,9 @@ class P10Result {
     template<typename Func>
     auto map(Func&& func) -> P10Result<decltype(func(std::declval<OkType>()))> {
         if (is_ok()) {
-            return Ok(func(unwrap()));
-        } else {
-            return Err(error());
+            return Ok(std::forward<Func>(func)(unwrap()));
         }
+        return Err(error());
     }
 
   private:

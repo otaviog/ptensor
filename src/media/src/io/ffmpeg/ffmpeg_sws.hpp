@@ -14,11 +14,15 @@ namespace p10::media {
 class FfmpegSws {
   public:
     FfmpegSws() = default;
+    FfmpegSws(const FfmpegSws&) = delete;
+    FfmpegSws& operator=(const FfmpegSws&) = delete;
+    FfmpegSws(FfmpegSws&&) = delete;
+    FfmpegSws& operator=(FfmpegSws&&) = delete;
     ~FfmpegSws();
 
-    P10Error transform(const AVFrame* frame, VideoFrame& output_frame);
+    P10Error transform(const AVFrame* src, VideoFrame& dst);
 
-    P10Error transform(const VideoFrame& frame, AVFrame** output_frame);
+    P10Error transform(const VideoFrame& src, AVFrame** dst);
 
     std::optional<int> target_width() const {
         return target_width_;

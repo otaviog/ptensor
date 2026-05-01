@@ -11,9 +11,12 @@
 #include <ptensor/tensor.hpp>
 
 namespace p10::io {
-P10Error load_audio(const std::string& path, Tensor& tensor, int64_t& sample_rate, Dtype dtype) {
+// NOLINTNEXTLINE(misc-use-anonymous-namespace) — placing this in an anonymous
+// namespace makes it visible as -Wunused-function until a caller is wired up.
+static P10Error
+load_audio(const std::string& path, Tensor& tensor, int64_t& sample_rate, Dtype dtype) {
     return dtype.match([&path, &sample_rate, &tensor, dtype](auto scalar) -> P10Error {
-        using scalar_t = typename decltype(scalar)::type;
+        using scalar_t = decltype(scalar)::type;
 
         AudioFile<scalar_t> audioFile;
         if (!audioFile.load(path)) {
@@ -41,7 +44,7 @@ P10Error load_audio(const std::string& path, Tensor& tensor, int64_t& sample_rat
 
 P10Error save_audio(const std::string& path, const Tensor& tensor, int64_t sample_rate) {
     return tensor.visit([&path, &sample_rate, &tensor](auto data) -> P10Error {
-        using scalar_t = typename decltype(data)::value_type;
+        using scalar_t = decltype(data)::value_type;
 
         auto span = tensor.as_span2d<scalar_t>();
         if (span.is_error()) {

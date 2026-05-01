@@ -22,10 +22,10 @@ p10::P10Error image_rgb_to_gray(const p10::Tensor& rgb_image, p10::Tensor& gray_
     auto gray_span = gray_image.as_span2d<uint8_t>().unwrap();
 
     for (size_t h = 0; h < static_cast<size_t>(height); ++h) {
-        const auto rgb_row = rgb_span.row(h);
-        auto gray_row = gray_span.row(h);
+        const auto* const rgb_row = rgb_span.row(h);
+        auto* gray_row = gray_span.row(h);
         for (size_t w = 0; w < static_cast<size_t>(width); ++w) {
-            auto rgb_pixel = &rgb_row[w * 3];
+            const auto* rgb_pixel = &rgb_row[w * 3];
             uint8_t r = rgb_pixel[0];
             uint8_t g = rgb_pixel[1];
             uint8_t b = rgb_pixel[2];

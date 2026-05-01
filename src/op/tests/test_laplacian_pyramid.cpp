@@ -35,7 +35,8 @@ TEST_CASE("op: Create laplacian pyramid", "[health]") {
         );
     }
 
-    Tensor reconstructed, reconstructed_image;
+    Tensor reconstructed;
+    Tensor reconstructed_image;
     lp_process.reconstruct(pyramid, reconstructed);
     REQUIRE(reconstructed.shape() == sample_tensor.shape());
 

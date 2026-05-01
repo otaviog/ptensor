@@ -30,7 +30,7 @@ class SineWaveParams {
         return *this;
     }
 
-    SineWaveParams& phaseRadians(double ph) {
+    SineWaveParams& phase_radians(double ph) {
         phase_radians_ = ph;
         return *this;
     }

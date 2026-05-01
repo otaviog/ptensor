@@ -11,10 +11,7 @@
 #include <ptensor/tensor.hpp>
 
 namespace p10::io {
-// NOLINTNEXTLINE(misc-use-anonymous-namespace) — placing this in an anonymous
-// namespace makes it visible as -Wunused-function until a caller is wired up.
-static P10Error
-load_audio(const std::string& path, Tensor& tensor, int64_t& sample_rate, Dtype dtype) {
+P10Error load_audio(const std::string& path, Tensor& tensor, int64_t& sample_rate, Dtype dtype) {
     return dtype.match([&path, &sample_rate, &tensor, dtype](auto scalar) -> P10Error {
         using scalar_t = decltype(scalar)::type;
 
@@ -31,10 +28,10 @@ load_audio(const std::string& path, Tensor& tensor, int64_t& sample_rate, Dtype 
         auto tensor_s = tensor.as_span2d<scalar_t>().unwrap();
 
         for (size_t channel_idx = 0; channel_idx < num_channels; ++channel_idx) {
-            auto channelData = audio_file.samples[channel_idx];
+            auto channel_data = audio_file.samples[channel_idx];
             auto tensor_row = tensor_s.row(channel_idx);
             for (size_t s = 0; s < num_samples; ++s) {
-                tensor_row[s] = channelData[s];
+                tensor_row[s] = channel_data[s];
             }
         }
 
@@ -54,21 +51,21 @@ P10Error save_audio(const std::string& path, const Tensor& tensor, int64_t sampl
         size_t const num_samples = span.unwrap().width();
         size_t const num_channels = span.unwrap().height();
 
-        AudioFile<scalar_t> audioFile;
-        audioFile.setNumChannels(static_cast<int>(num_channels));
-        audioFile.setNumSamplesPerChannel(static_cast<int>(num_samples));
-        audioFile.setSampleRate(static_cast<int>(sample_rate));
+        AudioFile<scalar_t> audio_file;
+        audio_file.setNumChannels(static_cast<int>(num_channels));
+        audio_file.setNumSamplesPerChannel(static_cast<int>(num_samples));
+        audio_file.setSampleRate(static_cast<int>(sample_rate));
 
         for (size_t channel_idx = 0; channel_idx < num_channels; ++channel_idx) {
-            std::vector<scalar_t> channelData(num_samples);
+            std::vector<scalar_t> channel_data(num_samples);
             auto tensor_row = span.unwrap().row(channel_idx);
             for (size_t s = 0; s < num_samples; ++s) {
-                channelData[s] = tensor_row[s];
+                channel_data[s] = tensor_row[s];
             }
-            audioFile.samples[channel_idx] = channelData;
+            audio_file.samples[channel_idx] = channel_data;
         }
 
-        if (!audioFile.save(path)) {
+        if (!audio_file.save(path)) {
             return P10Error::IoError << "Failed to save audio file: " + path;
         }
 

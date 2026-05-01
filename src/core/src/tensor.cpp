@@ -79,7 +79,7 @@ P10Result<Tensor> Tensor::from_random(
     result.visit([&rng, min, max](auto span) {
         using SpanType = std::decay_t<decltype(span)>::value_type;
         std::uniform_real_distribution<double> dist(min, max);
-        for (size_t i = 0; i < span.size(); ++i) {
+        for (auto i = 0; i < span.size(); ++i) {
             span[i] = static_cast<SpanType>(dist(rng));
         }
     });
@@ -241,8 +241,8 @@ P10Error Tensor::unsqueeze(int64_t dim) {
     if (dim == 0) {
         // When inserting at position 0, stride should be the product of all dimensions in the old shape
         int64_t prod = 1;
-        for (size_t i = 0; i < old_shape_s.size(); ++i) {
-            prod *= old_shape_s[i];
+        for (auto old_dim : old_shape_s) {
+            prod *= old_dim;
         }
         new_stride_s[0] = prod;
     } else {
@@ -318,7 +318,7 @@ void Tensor::set_options(const TensorOptions& options) {
 }
 
 P10Error Tensor::reshape(const Shape& new_shape) {
-    Stride new_stride = Stride::from_contiguous_shape(new_shape);
+    Stride const new_stride = Stride::from_contiguous_shape(new_shape);
 
     P10_RETURN_IF_ERROR(check_reshapeability(shape(), new_shape, is_contiguous()));
 

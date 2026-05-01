@@ -80,8 +80,8 @@ TEST_CASE("io::numpy::save_npz and load_npz with multiple tensors", "[io][numpy]
         REQUIRE(loaded.dtype() == tensor1.dtype());
 
         auto data = loaded.as_span1d<float>().unwrap();
-        for (size_t i = 0; i < data.size(); i++) {
-            REQUIRE(data[i] == 1.0f);
+        for (auto value : data) {
+            REQUIRE(value == 1.0f);
         }
     }
 
@@ -92,8 +92,8 @@ TEST_CASE("io::numpy::save_npz and load_npz with multiple tensors", "[io][numpy]
         REQUIRE(loaded.dtype() == tensor2.dtype());
 
         auto data = loaded.as_span1d<float>().unwrap();
-        for (size_t i = 0; i < data.size(); i++) {
-            REQUIRE(data[i] == 42.0f);
+        for (auto value : data) {
+            REQUIRE(value == 42.0f);
         }
     }
 
@@ -104,8 +104,8 @@ TEST_CASE("io::numpy::save_npz and load_npz with multiple tensors", "[io][numpy]
         REQUIRE(loaded.dtype() == tensor3.dtype());
 
         auto data = loaded.as_span1d<uint8_t>().unwrap();
-        for (size_t i = 0; i < data.size(); i++) {
-            REQUIRE(data[i] == static_cast<uint8_t>(5));
+        for (auto value : data) {
+            REQUIRE(value == static_cast<uint8_t>(5));
         }
     }
 
@@ -139,16 +139,16 @@ TEST_CASE("io::numpy::save_npz with different data types", "[io][numpy]") {
     auto& loaded_float32 = loaded_tensors["float32"];
     REQUIRE(loaded_float32.dtype() == Dtype::Float32);
     auto float32_data = loaded_float32.as_span1d<float>().unwrap();
-    for (size_t i = 0; i < float32_data.size(); i++) {
-        REQUIRE(float32_data[i] == Catch::Approx(3.14f));
+    for (auto value : float32_data) {
+        REQUIRE(value == Catch::Approx(3.14f));
     }
 
     // Verify uint8
     auto& loaded_uint8 = loaded_tensors["uint8"];
     REQUIRE(loaded_uint8.dtype() == Dtype::Uint8);
     auto uint8_data = loaded_uint8.as_span1d<uint8_t>().unwrap();
-    for (size_t i = 0; i < uint8_data.size(); i++) {
-        REQUIRE(uint8_data[i] == static_cast<uint8_t>(3));
+    for (auto value : uint8_data) {
+        REQUIRE(value == static_cast<uint8_t>(3));
     }
 
     // Cleanup

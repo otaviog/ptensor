@@ -19,7 +19,7 @@ FfmpegSws::~FfmpegSws() {
 P10Error FfmpegSws::transform(const AVFrame* src, VideoFrame& dst) {
     auto sws_key = get_target_sws_context_key(src);
     SwsContext* sws_ctx = get_sws_context(sws_key);
-    if (!sws_ctx) {
+    if (sws_ctx == nullptr) {
         return P10Error::InvalidOperation << "Failed to get SwsContext";
     }
 
@@ -41,7 +41,7 @@ P10Error FfmpegSws::transform(const VideoFrame& src, AVFrame** dst) {
     auto sws_key = get_target_sws_context_key(src);
 
     SwsContext* sws_ctx = get_sws_context(sws_key);
-    if (!sws_ctx) {
+    if (sws_ctx == nullptr) {
         return P10Error::InvalidOperation << "Failed to get SwsContext";
     }
 
@@ -50,17 +50,17 @@ P10Error FfmpegSws::transform(const VideoFrame& src, AVFrame** dst) {
     dst_frame->height = sws_key.target_height;
     dst_frame->format = target_pixel_format_;
 
-    const auto targetBufferSize = av_image_get_buffer_size(
+    const auto target_buffer_size = av_image_get_buffer_size(
         target_pixel_format_,
         sws_key.target_width,
         sws_key.target_height,
         1
     );
-    auto* targetBuffer = static_cast<uint8_t*>(av_malloc(targetBufferSize));
+    auto const * target_buffer = static_cast<uint8_t*>(av_malloc(target_buffer_size));
     av_image_fill_arrays(
         dst_frame->data,
         dst_frame->linesize,
-        targetBuffer,
+        target_buffer,
         target_pixel_format_,
         sws_key.target_width,
         sws_key.target_height,
@@ -68,6 +68,7 @@ P10Error FfmpegSws::transform(const VideoFrame& src, AVFrame** dst) {
     );
 
     const auto& src_bytes = src.as_bytes();
+
     uint8_t const* src_data[1] = {const_cast<uint8_t*>(src_bytes.data())};
     int src_linesize[1] = {static_cast<int>(src.stride().byte_stride(src.dtype(), 0).unwrap())};
 
@@ -91,7 +92,7 @@ P10Error FfmpegSws::transform(const VideoFrame& src, AVFrame** dst) {
 }
 
 FfmpegSws::TargetSwsContextKey FfmpegSws::get_target_sws_context_key(const VideoFrame& src) const {
-    TargetSwsContextKey key;
+    TargetSwsContextKey key{};
     key.source_width = static_cast<int>(src.width());
     key.source_height = static_cast<int>(src.height());
     key.source_format = AV_PIX_FMT_RGB24;
@@ -101,7 +102,7 @@ FfmpegSws::TargetSwsContextKey FfmpegSws::get_target_sws_context_key(const Video
 }
 
 FfmpegSws::TargetSwsContextKey FfmpegSws::get_target_sws_context_key(const AVFrame* src) const {
-    TargetSwsContextKey key;
+    TargetSwsContextKey key{};
     key.source_width = src->width;
     key.source_height = src->height;
     key.source_format = static_cast<AVPixelFormat>(src->format);

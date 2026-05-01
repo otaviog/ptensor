@@ -392,8 +392,8 @@ TEST_CASE("core::Tensor::as_span1d converts to 1D span", "[tensor][span]") {
         auto span = tensor.as_span1d<float>().unwrap();
 
         REQUIRE(span.size() == 6);
-        for (size_t i = 0; i < span.size(); i++) {
-            REQUIRE(span[i] == Catch::Approx(1.5f));
+        for (auto value : span) {
+            REQUIRE(value == Catch::Approx(1.5f));
         }
     }
 
@@ -411,8 +411,8 @@ TEST_CASE("core::Tensor::as_span1d converts to 1D span", "[tensor][span]") {
         auto span = tensor.as_span1d<int32_t>().unwrap();
 
         REQUIRE(span.size() == 5);
-        for (size_t i = 0; i < span.size(); i++) {
-            REQUIRE(span[i] == 10);
+        for (auto value : span) {
+            REQUIRE(value == 10);
         }
     }
 
@@ -422,8 +422,8 @@ TEST_CASE("core::Tensor::as_span1d converts to 1D span", "[tensor][span]") {
         auto span = tensor.as_span1d<double>().unwrap();
 
         REQUIRE(span.size() == 3);
-        for (size_t i = 0; i < span.size(); i++) {
-            REQUIRE(span[i] == Catch::Approx(3.14));
+        for (auto value : span) {
+            REQUIRE(value == Catch::Approx(3.14));
         }
     }
 
@@ -1524,8 +1524,8 @@ TEST_CASE("core::Tensor::convert_from converts dtype", "[tensor][convert]") {
         REQUIRE(dest.dtype() == Dtype::Int32);
         REQUIRE(dest.shape() == source.shape());
         auto data = dest.as_span1d<int32_t>().unwrap();
-        for (size_t i = 0; i < data.size(); i++) {
-            REQUIRE(data[i] == 7);
+        for (auto value : data) {
+            REQUIRE(value == 7);
         }
     }
 
@@ -1537,8 +1537,8 @@ TEST_CASE("core::Tensor::convert_from converts dtype", "[tensor][convert]") {
 
         REQUIRE(dest.dtype() == Dtype::Float32);
         auto data = dest.as_span1d<float>().unwrap();
-        for (size_t i = 0; i < data.size(); i++) {
-            REQUIRE(data[i] == Catch::Approx(42.0f));
+        for (auto value : data) {
+            REQUIRE(value == Catch::Approx(42.0f));
         }
     }
 
@@ -1550,8 +1550,8 @@ TEST_CASE("core::Tensor::convert_from converts dtype", "[tensor][convert]") {
 
         REQUIRE(dest.dtype() == Dtype::Float64);
         auto data = dest.as_span1d<double>().unwrap();
-        for (size_t i = 0; i < data.size(); i++) {
-            REQUIRE(data[i] == Catch::Approx(255.0));
+        for (auto value : data) {
+            REQUIRE(value == Catch::Approx(255.0));
         }
     }
 

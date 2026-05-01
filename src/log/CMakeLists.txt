@@ -7,7 +7,7 @@ target_sources(ptensor_log INTERFACE FILE_SET public_headers
     TYPE HEADERS
     BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     FILES
-    ${_INCLUDE_DIR}/logging.hpp
+    ${_INCLUDE_DIR}/log.hpp
 )
 
 target_include_directories(ptensor_log INTERFACE

@@ -207,8 +207,8 @@ namespace {
             sum += kernel[i + half_size];
         }
 
-        for (size_t i = 0; i < kernel.size(); ++i) {
-            kernel[i] /= sum;
+        for (auto& value : kernel) {
+            value /= sum;
         }
     }
 

@@ -210,8 +210,8 @@ TEST_CASE("Shape iteration with begin/end", "[shape][iteration]") {
     auto shape = make_shape(2, 3, 4);
 
     std::vector<int64_t> collected;
-    for (auto* it = shape.begin(); it != shape.end(); ++it) {
-        collected.push_back(*it);
+    for (auto dim : shape) {
+        collected.push_back(dim);
     }
 
     REQUIRE(collected.size() == 3);

@@ -150,6 +150,10 @@ P10Error Tensor::transpose(Tensor& other) const {
         return P10Error::NotImplemented << "Transpose is only implemented for CPU tensors";
     }
 
+    if (!is_contiguous()) {
+        return P10Error::NotImplemented << "Transpose is only implemented for contiguous tensors";
+    }
+
     return visit([this, &other](auto type_span) -> P10Error {
         using scalar_t = std::remove_const_t<typename decltype(type_span)::element_type>;
 

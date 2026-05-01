@@ -37,13 +37,13 @@ TEST_CASE("op::image::from tensor", "[imageop]") {
 TEST_CASE("op::image::from tensor with invalid type", "[imageop]") {
     Tensor float_tensor = Tensor::zeros(make_shape(3, 256, 256), Dtype::Uint8).unwrap();
     Tensor image_tensor;
-    REQUIRE_THROWS_AS(image_from_tensor(float_tensor, image_tensor), P10Error);
+    REQUIRE(image_from_tensor(float_tensor, image_tensor) == P10Error::InvalidArgument);
 }
 
 TEST_CASE("op::image::from tensor with invalid shape", "[imageop]") {
     Tensor float_tensor = Tensor::zeros(make_shape(256, 256), Dtype::Float32).unwrap();
     Tensor image_tensor;
-    REQUIRE_THROWS_AS(image_from_tensor(float_tensor, image_tensor), P10Error);
+    REQUIRE(image_from_tensor(float_tensor, image_tensor) == P10Error::InvalidArgument);
 }
 
 TEST_CASE("op::image::to tensor and back conversion", "[imageop]") {
@@ -61,9 +61,13 @@ TEST_CASE("op::image::to tensor and back conversion", "[imageop]") {
         }
     }
 
-    // Convert to tensor
+    // Convert to tensor (normalize to [0,1] so the inverse scaling in
+    // image_from_tensor recovers the original byte values).
     Tensor float_tensor;
-    REQUIRE(image_to_tensor(original_image, float_tensor) == P10Error::Ok);
+    REQUIRE(
+        image_to_tensor(original_image, float_tensor, std::nullopt, ImageToTensorNormalize::Normalize)
+        == P10Error::Ok
+    );
 
     // Convert back to image
     Tensor result_image;

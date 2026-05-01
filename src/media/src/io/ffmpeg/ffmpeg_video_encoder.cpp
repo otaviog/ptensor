@@ -1,6 +1,7 @@
 #include "ffmpeg_video_encoder.hpp"
 
 #include <cstdint>
+#include <thread>
 
 #include "ffmpeg_memory.hpp"
 
@@ -145,7 +146,26 @@ P10Error FfmpegVideoEncoder::flush() {
         return wrap_ffmpeg_error(err, "Failed to send flush frame to video encoder");
     }
 
-    return receive_packets();
+    // Drain until EOF. Async encoders (e.g. VideoToolbox) may briefly return
+    // EAGAIN after the NULL signal while their internal queue catches up; keep
+    // polling until the encoder reports EOF.
+    while (true) {
+        UniqueAvPacket pkt(av_packet_alloc());
+        int ret = avcodec_receive_packet(video_encoder_context_, pkt.get());
+        if (ret == AVERROR_EOF) {
+            break;
+        }
+        if (ret == AVERROR(EAGAIN)) {
+            std::this_thread::yield();
+            continue;
+        }
+        if (ret < 0) {
+            return wrap_ffmpeg_error(ret, "Failed to receive packet from video encoder");
+        }
+        pkt->stream_index = stream_->index;
+        packet_queue_.push(pkt.release());
+    }
+    return P10Error::Ok;
 }
 
 AVPacket* FfmpegVideoEncoder::pop_encoded_packet() {

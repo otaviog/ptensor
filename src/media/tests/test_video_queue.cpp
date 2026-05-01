@@ -47,7 +47,7 @@ TEST_CASE("VideoQueue", "[media][capture]") {
             video_queue.cancel();
             consumer.join();
         }
-        SECTION("pop should cancel with non-empty queue") {
+        SECTION("pop should drain remaining frames after cancel, then return nullopt") {
             constexpr size_t MAX_QUEUE_SIZE = 3;
             VideoQueue video_queue(MAX_QUEUE_SIZE);
 
@@ -57,8 +57,10 @@ TEST_CASE("VideoQueue", "[media][capture]") {
 
             video_queue.cancel();
             std::thread consumer([&video_queue]() {
-                const auto frame_opt = video_queue.wait_and_pop();
-                CHECK(!frame_opt.has_value());
+                const auto drained = video_queue.wait_and_pop();
+                CHECK(drained.has_value());
+                const auto after_drain = video_queue.wait_and_pop();
+                CHECK(!after_drain.has_value());
             });
             consumer.join();
         }

@@ -215,10 +215,8 @@ P10Error FfmpegMediaWriter::write_video(const VideoFrame& frame) {
         return P10Error::InvalidOperation << "No video encoder configured";
     }
 
-    // Encode the frame
     P10_RETURN_IF_ERROR(video_encoder_->encode(frame));
-
-    return P10Error::Ok;
+    return pop_video_packets();
 }
 
 P10Error FfmpegMediaWriter::pop_video_packets() {

@@ -74,6 +74,9 @@ P10Error image_from_tensor(
     Tensor& out_image_tensor,
     std::optional<Dtype> target_dtype
 ) {
+    if (tensor.dtype() != Dtype::Float32 && tensor.dtype() != Dtype::Float64) {
+        return P10Error::InvalidArgument << "Input tensor must be of float type.";
+    }
     if (tensor.shape().dims() != 3) {
         return P10Error::InvalidArgument
             << "Input tensor must have shape [channels, height, width].";

@@ -20,6 +20,9 @@ clang-format:
 clang-tiddy:
     find src -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec clang-tidy {} +
 
+clang-tiddy-fix:
+    find src -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec clang-tidy -fix-errors {} +
+
 test:
     ctest --preset clang/debug
 

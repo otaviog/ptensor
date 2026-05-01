@@ -7,7 +7,7 @@
 namespace p10::op {
 
 TEST_CASE("op::image::to tensor", "[imageop]") {
-    Tensor image_tensor = Tensor::zeros(make_shape(256, 256, 3), Dtype::Uint8).unwrap();
+    const Tensor image_tensor = Tensor::zeros(make_shape(256, 256, 3), Dtype::Uint8).unwrap();
     Tensor float_tensor;
     image_to_tensor(image_tensor, float_tensor);
     REQUIRE(float_tensor.shape() == make_shape(3, 256, 256));
@@ -15,19 +15,19 @@ TEST_CASE("op::image::to tensor", "[imageop]") {
 }
 
 TEST_CASE("op::image::to tensor with invalid type", "[imageop]") {
-    Tensor image_tensor = Tensor::zeros(make_shape(256, 256, 3), Dtype::Float32).unwrap();
+    const Tensor image_tensor = Tensor::zeros(make_shape(256, 256, 3), Dtype::Float32).unwrap();
     Tensor float_tensor;
     REQUIRE(image_to_tensor(image_tensor, float_tensor) == P10Error::InvalidArgument);
 }
 
 TEST_CASE("op::image::to tensor with invalid shape", "[imageop]") {
-    Tensor image_tensor = Tensor::zeros(make_shape(256, 256), Dtype::Uint8).unwrap();
+    const Tensor image_tensor = Tensor::zeros(make_shape(256, 256), Dtype::Uint8).unwrap();
     Tensor float_tensor;
     REQUIRE(image_to_tensor(image_tensor, float_tensor) == P10Error::InvalidArgument);
 }
 
 TEST_CASE("op::image::from tensor", "[imageop]") {
-    Tensor float_tensor = Tensor::zeros(make_shape(3, 256, 256), Dtype::Float32).unwrap();
+    const Tensor float_tensor = Tensor::zeros(make_shape(3, 256, 256), Dtype::Float32).unwrap();
     Tensor image_tensor;
     image_from_tensor(float_tensor, image_tensor);
     REQUIRE(image_tensor.shape() == make_shape(256, 256, 3));
@@ -35,13 +35,13 @@ TEST_CASE("op::image::from tensor", "[imageop]") {
 }
 
 TEST_CASE("op::image::from tensor with invalid type", "[imageop]") {
-    Tensor float_tensor = Tensor::zeros(make_shape(3, 256, 256), Dtype::Uint8).unwrap();
+    const Tensor float_tensor = Tensor::zeros(make_shape(3, 256, 256), Dtype::Uint8).unwrap();
     Tensor image_tensor;
     REQUIRE(image_from_tensor(float_tensor, image_tensor) == P10Error::InvalidArgument);
 }
 
 TEST_CASE("op::image::from tensor with invalid shape", "[imageop]") {
-    Tensor float_tensor = Tensor::zeros(make_shape(256, 256), Dtype::Float32).unwrap();
+    const Tensor float_tensor = Tensor::zeros(make_shape(256, 256), Dtype::Float32).unwrap();
     Tensor image_tensor;
     REQUIRE(image_from_tensor(float_tensor, image_tensor) == P10Error::InvalidArgument);
 }
@@ -54,7 +54,7 @@ TEST_CASE("op::image::to tensor and back conversion", "[imageop]") {
     // Set some test values
     for (size_t row = 0; row < image_span.height(); row++) {
         for (size_t col = 0; col < image_span.width(); col++) {
-            auto channel = image_span.channel(row, col);
+            auto* channel = image_span.channel(row, col);
             channel[0] = static_cast<uint8_t>(row % 256);
             channel[1] = static_cast<uint8_t>(col % 256);
             channel[2] = static_cast<uint8_t>((row + col) % 256);
@@ -88,12 +88,14 @@ TEST_CASE("op::image::to tensor and back conversion", "[imageop]") {
 
     for (size_t row = 0; row < original_span.height(); row++) {
         for (size_t col = 0; col < original_span.width(); col++) {
-            auto original_channel = original_span.channel(row, col);
-            auto result_channel = result_span.channel(row, col);
+            const auto* original_channel = original_span.channel(row, col);
+            const auto* result_channel = result_span.channel(row, col);
 
             for (size_t c = 0; c < 3; c++) {
                 // Allow for ±1 difference due to float conversion rounding
-                REQUIRE(std::abs(int(original_channel[c]) - int(result_channel[c])) <= 1);
+                REQUIRE(
+                    std::abs(int{original_channel[c]} - int{result_channel[c]}) <= 1
+                );
             }
         }
     }
@@ -122,7 +124,7 @@ TEST_CASE("op::image::from tensor value clamping", "[imageop]") {
     // Verify clamping
     for (size_t row = 0; row < image_span.height(); row++) {
         for (size_t col = 0; col < image_span.width(); col++) {
-            auto channel = image_span.channel(row, col);
+            const auto* channel = image_span.channel(row, col);
             REQUIRE(channel[0] == 0);  // -0.5 * 255 clamped to 0
             REQUIRE(channel[1] == 127);  // 0.5 * 255 = 127.5 ≈ 127
             REQUIRE(channel[2] == 255);  // 1.5 * 255 clamped to 255

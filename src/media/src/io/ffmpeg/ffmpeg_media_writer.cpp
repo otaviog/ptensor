@@ -18,12 +18,12 @@ namespace p10::media {
 
 FfmpegMediaWriter::FfmpegMediaWriter(
     AVFormatContext* format_context,
-    const MediaParameters& params,
+    MediaParameters params,
     std::unique_ptr<FfmpegVideoEncoder> video_encoder,
     std::unique_ptr<FfmpegAudioEncoder> audio_encoder
 ) :
     format_context_(format_context),
-    params_(params),
+    params_(std::move(params)),
     video_encoder_(std::move(video_encoder)),
     audio_encoder_(std::move(audio_encoder)) {}
 
@@ -65,7 +65,7 @@ FfmpegMediaWriter::create(const std::string& path, const MediaParameters& params
 #endif
 
     // Open output file
-    if (!(format_ctx->oformat->flags & AVFMT_NOFILE)) {
+    if ((format_ctx->oformat->flags & AVFMT_NOFILE) == 0) {
         error = wrap_ffmpeg_error(avio_open(&format_ctx->pb, path.c_str(), AVIO_FLAG_WRITE));
         if (error.is_error()) {
             avformat_free_context(format_ctx);
@@ -77,7 +77,7 @@ FfmpegMediaWriter::create(const std::string& path, const MediaParameters& params
     // Write header
     error = wrap_ffmpeg_error(avformat_write_header(format_ctx, nullptr));
     if (error.is_error()) {
-        if (!(format_ctx->oformat->flags & AVFMT_NOFILE)) {
+        if ((format_ctx->oformat->flags & AVFMT_NOFILE) == 0) {
             avio_closep(&format_ctx->pb);
         }
         avformat_free_context(format_ctx);
@@ -113,7 +113,7 @@ void FfmpegMediaWriter::close() {
 
     // Close IO
     if (format_context_ != nullptr) {
-        if (!(format_context_->oformat->flags & AVFMT_NOFILE)) {
+        if ((format_context_->oformat->flags & AVFMT_NOFILE) == 0) {
             avio_closep(&format_context_->pb);
         }
         avformat_free_context(format_context_);
@@ -143,7 +143,7 @@ P10Error FfmpegMediaWriter::flush_video_encoder() {
 }
 
 P10Error FfmpegMediaWriter::write_video_packet(AVPacket* packet) {
-    if (!video_encoder_ || !video_encoder_->stream()) {
+    if (!video_encoder_ || video_encoder_->stream() == nullptr) {
         return P10Error::InvalidOperation << "No video stream";
     }
 
@@ -154,7 +154,7 @@ P10Error FfmpegMediaWriter::write_video_packet(AVPacket* packet) {
         video_encoder_->stream()->time_base
     );
 
-    int ret = av_interleaved_write_frame(format_context_, packet);
+    int const ret = av_interleaved_write_frame(format_context_, packet);
     if (ret < 0) {
         return wrap_ffmpeg_error(ret, "Failed to write video packet");
     }
@@ -184,7 +184,7 @@ P10Error FfmpegMediaWriter::flush_audio_encoder() {
 }
 
 P10Error FfmpegMediaWriter::write_audio_packet(AVPacket* packet) {
-    if (!audio_encoder_ || !audio_encoder_->stream()) {
+    if (!audio_encoder_ || audio_encoder_->stream() == nullptr) {
         return P10Error::InvalidOperation << "No audio stream";
     }
 
@@ -194,7 +194,7 @@ P10Error FfmpegMediaWriter::write_audio_packet(AVPacket* packet) {
         audio_encoder_->stream()->time_base
     );
 
-    int ret = av_interleaved_write_frame(format_context_, packet);
+    int const ret = av_interleaved_write_frame(format_context_, packet);
     if (ret < 0) {
         return wrap_ffmpeg_error(ret, "Failed to write audio packet");
     }

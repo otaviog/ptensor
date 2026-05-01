@@ -11,7 +11,7 @@ std::string suffixed(const std::string& filename, const std::string& suffix) {
 }
 
 std::filesystem::path get_output_path() {
-    std::filesystem::path output_path("native/cpp/tests/output");
+    std::filesystem::path output_path("tests/output");
     std::filesystem::create_directories(output_path);
     return output_path;
 }

@@ -13,36 +13,39 @@
 #include "p10_error.hpp"
 
 namespace p10 {
+namespace {
 
-template<typename scalar_t>
+template<typename ScalarT>
 void transpose_generic(
     int64_t rows,
     int64_t cols,
-    const scalar_t* src,
+    const ScalarT* src,
     size_t src_stride,
-    scalar_t* dst,
+    ScalarT* dst,
     size_t dst_stride
 ) {
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            dst[j * dst_stride + i] = src[i * src_stride + j];
+            dst[(j * dst_stride) + i] = src[(i * src_stride) + j];
         }
     }
 }
 
-template<typename scalar_t>
+template<typename ScalarT>
 void transpose_8x8_generic(
-    const scalar_t* src,
+    const ScalarT* src,
     size_t src_stride,
-    scalar_t* dst,
+    ScalarT* dst,
     size_t dst_stride
 ) {
     for (int i = 0; i < 8; ++i) {
         for (int j = 0; j < 8; ++j) {
-            dst[j * dst_stride + i] = src[i * src_stride + j];
+            dst[(j * dst_stride) + i] = src[(i * src_stride) + j];
         }
     }
 }
+
+}  // namespace
 
 #if PTENSOR_HAS_INTRINSICS_H
 PTENSOR_AVX2 void
@@ -139,11 +142,15 @@ transpose_avx2_8x8_32(int32_t const* src, size_t src_stride, int32_t* dst, size_
 }
 #endif  // x86
 
-template<size_t b>
-constexpr inline size_t bitwise_modulo(size_t a) {
-    static_assert((b & (b - 1)) == 0, "b must be a power of two");
-    return a & (b - 1);
+namespace {
+
+template<size_t B>
+constexpr size_t bitwise_modulo(size_t a) {
+    static_assert((B & (B - 1)) == 0, "B must be a power of two");
+    return a & (B - 1);
 }
+
+}  // namespace
 
 P10Error Tensor::transpose(Tensor& other) const {
     if (blob_.device() != Device::Cpu) {
@@ -155,15 +162,15 @@ P10Error Tensor::transpose(Tensor& other) const {
     }
 
     return visit([this, &other](auto type_span) -> P10Error {
-        using scalar_t = std::remove_const_t<typename decltype(type_span)::element_type>;
+        using ScalarT = std::remove_const_t<typename decltype(type_span)::element_type>;
 
-        auto src_span_res = this->as_span2d<const scalar_t>();
+        auto src_span_res = this->as_span2d<const ScalarT>();
         if (src_span_res.is_error()) {
             return src_span_res.error();
         }
         auto src_span = src_span_res.unwrap();
         P10_RETURN_IF_ERROR(other.create(make_shape(src_span.width(), src_span.height()), dtype()));
-        auto dest_span = other.as_span2d<scalar_t>().unwrap();
+        auto dest_span = other.as_span2d<ScalarT>().unwrap();
 
         const size_t rows = src_span.height();
         const size_t cols = src_span.width();
@@ -199,11 +206,11 @@ P10Error Tensor::transpose(Tensor& other) const {
 
                     for (size_t simd_col = block_col; simd_col < block_col + CACHE_BLOCK;
                          simd_col += SIMD_BLOCK) {
-                        const scalar_t* src_block = &src_row[simd_col];
-                        scalar_t* dest_block = &dest_span.row(simd_col)[simd_row];
+                        const ScalarT* src_block = &src_row[simd_col];
+                        ScalarT* dest_block = &dest_span.row(simd_col)[simd_row];
 
 #if PTENSOR_HAS_INTRINSICS_H
-                        if constexpr (sizeof(scalar_t) == sizeof(int32_t)) {
+                        if constexpr (sizeof(ScalarT) == sizeof(int32_t)) {
                             if (avx2_supported) {
                                 transpose_avx2_8x8_32(
                                     reinterpret_cast<const int32_t*>(src_block),

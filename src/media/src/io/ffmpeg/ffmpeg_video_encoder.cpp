@@ -47,7 +47,7 @@ FfmpegVideoEncoder::~FfmpegVideoEncoder() {
 
 P10Error
 FfmpegVideoEncoder::create(const VideoParameters& video_params, AVFormatContext* output_format) {
-    AVCodecID codec_id = codec_id_from_video_parameters(video_params);
+    AVCodecID const codec_id = codec_id_from_video_parameters(video_params);
     if (codec_id == AV_CODEC_ID_NONE) {
         return P10Error::IoError << std::string("Could not find video codec for codec ")
             + video_params.codec().to_string();
@@ -71,9 +71,9 @@ FfmpegVideoEncoder::create(const VideoParameters& video_params, AVFormatContext*
 
     // Quality settings
     video_encoder_context_->bit_rate = video_params.bit_rate();
-    video_encoder_context_->rc_buffer_size = 4 * 1000 * 1000;
-    video_encoder_context_->rc_max_rate = 2 * 1000 * 1000;
-    video_encoder_context_->rc_min_rate = int64_t(2.5 * 1000.0 * 1000.0);
+    video_encoder_context_->rc_buffer_size = int64_t{4} * 1000 * 1000;
+    video_encoder_context_->rc_max_rate = int64_t{2} * 1000 * 1000;
+    video_encoder_context_->rc_min_rate = static_cast<int64_t>(2.5 * 1000.0 * 1000.0);
     video_encoder_context_->gop_size = 12;
     av_opt_set(video_encoder_context_->priv_data, "preset", "medium", 0);
 
@@ -84,14 +84,14 @@ FfmpegVideoEncoder::create(const VideoParameters& video_params, AVFormatContext*
 
     // Time base - use frame rate
     time_base_ = video_params.frame_rate().inverse();
-    video_encoder_context_->time_base = {
-        static_cast<int>(time_base_.num()),
-        static_cast<int>(time_base_.den())
+    video_encoder_context_->time_base = AVRational {
+        .num = static_cast<int>(time_base_.num()),
+        .den = static_cast<int>(time_base_.den()),
     };
     stream_->time_base = video_encoder_context_->time_base;
 
     // Some formats require global headers
-    if (output_format->oformat->flags & AVFMT_GLOBALHEADER) {
+    if ((output_format->oformat->flags & AVFMT_GLOBALHEADER) != 0) {
         video_encoder_context_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
 
@@ -125,11 +125,12 @@ P10Error FfmpegVideoEncoder::encode(const VideoFrame& frame) {
 P10Error FfmpegVideoEncoder::receive_packets() {
     while (true) {
         UniqueAvPacket pkt(av_packet_alloc());
-        int ret = avcodec_receive_packet(video_encoder_context_, pkt.get());
+        const int ret = avcodec_receive_packet(video_encoder_context_, pkt.get());
 
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
             break;
-        } else if (ret < 0) {
+        }
+        if (ret < 0) {
             return wrap_ffmpeg_error(ret, "Failed to receive packet from video encoder");
         }
 
@@ -141,7 +142,7 @@ P10Error FfmpegVideoEncoder::receive_packets() {
 
 P10Error FfmpegVideoEncoder::flush() {
     // Send NULL frame to signal end of stream
-    int err = avcodec_send_frame(video_encoder_context_, nullptr);
+    int const err = avcodec_send_frame(video_encoder_context_, nullptr);
     if (err < 0 && err != AVERROR_EOF) {
         return wrap_ffmpeg_error(err, "Failed to send flush frame to video encoder");
     }
@@ -151,7 +152,7 @@ P10Error FfmpegVideoEncoder::flush() {
     // polling until the encoder reports EOF.
     while (true) {
         UniqueAvPacket pkt(av_packet_alloc());
-        int ret = avcodec_receive_packet(video_encoder_context_, pkt.get());
+        const int ret = avcodec_receive_packet(video_encoder_context_, pkt.get());
         if (ret == AVERROR_EOF) {
             break;
         }

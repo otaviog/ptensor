@@ -22,31 +22,31 @@ TEST_CASE("media::MediaWriter::error cases", "[media][writer]") {
         );
     }
     SECTION("Should return error for unsupported file format") {
-        const std::string UNSUPPORTED_FILE = "unsupported_file.txt";
-        std::fstream outfile(UNSUPPORTED_FILE, std::ios::out);
+        const std::string unsupported_file = "unsupported_file.txt";
+        std::fstream outfile(unsupported_file, std::ios::out);
         outfile << "This is not a valid media file.";
         outfile.close();
         REQUIRE_THAT(
-            MediaWriter::open_file(UNSUPPORTED_FILE, MediaParameters()),
+            MediaWriter::open_file(unsupported_file, MediaParameters()),
             testing::IsError(P10Error::IoError)
         );
-        std::filesystem::remove(UNSUPPORTED_FILE);
+        std::filesystem::remove(unsupported_file);
     }
 }
 
 TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
-    const std::string VALID_FILE = "tests/data/video/file_example_MP4_480_1_5MG.mp4";
-    const std::string OUT_FILE = "tests/output/file_example_MP4_480_1_5MG_out.mp4";
-    const int TOTAL_FRAMES = 100;
+    const std::string valid_file = "tests/data/video/file_example_MP4_480_1_5MG.mp4";
+    const std::string out_file = "tests/output/file_example_MP4_480_1_5MG_out.mp4";
+    const int total_frames = 100;
 
     SECTION("Should transcode a media correctly") {
         SECTION("read and write frames from the media file correctly") {
             MediaCapture capture =
-                MediaCapture::open_file(VALID_FILE).expect("should open valid file");
-            MediaWriter writer = MediaWriter::open_file(OUT_FILE, capture.get_parameters())
+                MediaCapture::open_file(valid_file).expect("should open valid file");
+            MediaWriter writer = MediaWriter::open_file(out_file, capture.get_parameters())
                                      .expect("should open output file for write");
 
-            for (int current_frame = 0; current_frame < TOTAL_FRAMES; ++current_frame) {
+            for (int current_frame = 0; current_frame < total_frames; ++current_frame) {
                 REQUIRE_THAT(capture.next_frame(), testing::IsOk());
 
                 VideoFrame video_frame;
@@ -57,20 +57,20 @@ TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
 
         SECTION("match written media with source") {
             MediaCapture capture =
-                MediaCapture::open_file(VALID_FILE).expect("should open valid file");
+                MediaCapture::open_file(valid_file).expect("should open valid file");
             MediaCapture capture_out =
-                MediaCapture::open_file(OUT_FILE).expect("should open output file");
+                MediaCapture::open_file(out_file).expect("should open output file");
 
-            const auto out_seconds = double(TOTAL_FRAMES)
+            const auto out_seconds = static_cast<double>(total_frames)
                 / capture.get_parameters().video_parameters().frame_rate().to_double();
             REQUIRE(capture_out.duration() == Catch::Approx(out_seconds).margin(0.1));
 
-            REQUIRE(capture_out.video_frame_count() == TOTAL_FRAMES);
+            REQUIRE(capture_out.video_frame_count() == total_frames);
             // The h264 encoder may flush one fewer frame than was fed in
             // (last B-frame consumed by GOP closure); accept up to one
             // missing frame at the tail.
             int matched_frames = 0;
-            for (int current_frame = 0; current_frame < TOTAL_FRAMES; ++current_frame) {
+            for (int current_frame = 0; current_frame < total_frames; ++current_frame) {
                 auto next_in = capture.next_frame();
                 REQUIRE_THAT(next_in, testing::IsOk());
                 if (!next_in.unwrap()) {
@@ -90,16 +90,16 @@ TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
                 REQUIRE(video_frame_in.height() == video_frame_out.height());
                 ++matched_frames;
             }
-            REQUIRE(matched_frames >= TOTAL_FRAMES - 1);
+            REQUIRE(matched_frames >= total_frames - 1);
         }
     }
 
     SECTION("Should handle different parameters") {
-        const Rational NEW_FRAME_RATE(24, 1);
+        const Rational new_frame_rate(24, 1);
 
-        MediaCapture capture = MediaCapture::open_file(VALID_FILE).expect("should open valid file");
+        MediaCapture capture = MediaCapture::open_file(valid_file).expect("should open valid file");
         MediaParameters original_params = capture.get_parameters();
-        REQUIRE(original_params.video_parameters().frame_rate() != NEW_FRAME_RATE);
+        REQUIRE(original_params.video_parameters().frame_rate() != new_frame_rate);
 
         MediaParameters new_params = original_params;
 
@@ -107,14 +107,14 @@ TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
         const int new_height = (original_params.video_parameters().height() / 2) & ~1;
 
         new_params.video_parameters()
-            .frame_rate(NEW_FRAME_RATE)
+            .frame_rate(new_frame_rate)
             .width(new_width)
             .height(new_height);
 
-        MediaWriter writer = MediaWriter::open_file(OUT_FILE, new_params)
+        MediaWriter writer = MediaWriter::open_file(out_file, new_params)
                                  .expect("should open output file for write");
 
-        for (int current_frame = 0; current_frame < TOTAL_FRAMES; ++current_frame) {
+        for (int current_frame = 0; current_frame < total_frames; ++current_frame) {
             REQUIRE_THAT(capture.next_frame(), testing::IsOk());
             VideoFrame video_frame;
             REQUIRE_THAT(capture.get_video(video_frame), testing::IsOk());
@@ -123,13 +123,13 @@ TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
         writer.close();
 
         // check media read with different parameters
-        MediaCapture capture_out =
-            MediaCapture::open_file(OUT_FILE).expect("should open output file");
+        const MediaCapture capture_out =
+            MediaCapture::open_file(out_file).expect("should open output file");
 
-        MediaParameters params = capture_out.get_parameters();
+        const MediaParameters params = capture_out.get_parameters();
         REQUIRE(params.video_parameters().width() == new_width);
         REQUIRE(params.video_parameters().height() == new_height);
-        REQUIRE(params.video_parameters().frame_rate() == NEW_FRAME_RATE);
+        REQUIRE(params.video_parameters().frame_rate() == new_frame_rate);
     }
 }
 }  // namespace p10::media

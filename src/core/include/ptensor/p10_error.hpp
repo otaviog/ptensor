@@ -74,10 +74,12 @@ inline P10Error operator<<(P10Error::Code code, std::string_view message) {
 
 #define P10_RETURN_IF_ERROR(expr) \
     if (auto err = (expr); !err.is_error()) { \
-    } else \
-        return err
+    } else { \
+        return err; \
+    }
 
 #define P10_RETURN_ERR_IF_ERROR(expr) \
     if (auto err = (expr); !err.is_error()) { \
-    } else \
-        return Err(err)
+    } else { \
+        return Err(err); \
+    }

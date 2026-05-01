@@ -6,12 +6,13 @@
 
 namespace p10::op {
 namespace {
-    static void BM_Blur(benchmark::State& state) {
-        const int width = state.range(0);
-        const int height = state.range(1);
-        const int kernel_size = state.range(2);
+    // NOLINTNEXTLINE(readability-identifier-naming) -- BM_ is the Google Benchmark convention.
+    void BM_Blur(benchmark::State& state) {
+        const int width = static_cast<int>(state.range(0));
+        const int height = static_cast<int>(state.range(1));
+        const int kernel_size = static_cast<int>(state.range(2));
 
-        Tensor input =
+        const Tensor input =
             Tensor::from_random(make_shape(height, width), std::mt19937_64(std::random_device {}()))
                 .unwrap();
 
@@ -19,7 +20,7 @@ namespace {
 
         Tensor output;
         output.create_like(input);
-        for (auto _ : state) {
+        for ([[maybe_unused]] auto _ : state) {
             blur_op.transform(input, output);
             benchmark::DoNotOptimize(output);
         }

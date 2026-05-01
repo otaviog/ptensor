@@ -42,7 +42,7 @@ FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
         new_frame.update_time(
             Time {Rational {stream_->time_base.num, stream_->time_base.den}, frame.get()->pts}
         );
-        if (queue.emplace(std::move(new_frame)) == VideoQueue::Cancelled) {
+        if (queue.emplace(std::move(new_frame)) == VideoQueue::EmplaceResult::Cancelled) {
             return Ok(DecodeStatus::Cancelled);
         }
     }

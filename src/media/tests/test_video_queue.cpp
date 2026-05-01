@@ -15,14 +15,15 @@ TEST_CASE("VideoQueue", "[media][capture]") {
             for (int i = 0; i < 5; ++i) {
                 VideoFrame frame;
                 frame.create(640, 480, PixelFormat::RGB24);
-                CHECK(video_queue.emplace(std::move(frame)) == VideoQueue::EmplaceResult::Ok);
+                const auto result = video_queue.emplace(std::move(frame));
+                CHECK(result == VideoQueue::EmplaceResult::Ok);
             }
         });
         std::thread consumer([&video_queue]() {
             for (int i = 0; i < 5; ++i) {
                 auto frame_opt = video_queue.wait_and_pop();
                 CHECK(frame_opt.has_value());
-                VideoFrame frame = std::move(frame_opt.value());
+                const VideoFrame frame = std::move(frame_opt.value());
                 CHECK(frame.width() == 640);
                 CHECK(frame.height() == 480);
             }
@@ -86,7 +87,8 @@ TEST_CASE("VideoQueue", "[media][capture]") {
 
             VideoFrame frame1;
             frame1.create(640, 480, PixelFormat::RGB24);
-            CHECK(video_queue.emplace(std::move(frame1)) == VideoQueue::EmplaceResult::Ok);
+            const auto first_emplace = video_queue.emplace(std::move(frame1));
+            CHECK(first_emplace == VideoQueue::EmplaceResult::Ok);
 
             video_queue.cancel();
             std::thread producer([&video_queue]() {

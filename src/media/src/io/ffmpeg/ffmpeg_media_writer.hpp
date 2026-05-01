@@ -28,7 +28,7 @@ class FfmpegMediaWriter: public MediaWriter::Impl {
   private:
     FfmpegMediaWriter(
         AVFormatContext* format_context,
-        const MediaParameters& params,
+        MediaParameters params,
         std::unique_ptr<FfmpegVideoEncoder> video_encoder,
         std::unique_ptr<FfmpegAudioEncoder> audio_encoder
     );

@@ -30,13 +30,17 @@ P10Error image_to_tensor(
     const Dtype out_dtype = target_dtype.value_or(Dtype::Float32);
 
     out_tensor.create(
-        make_shape(int64_t(num_channels), int64_t(height), int64_t(width)),
+        make_shape(
+            static_cast<int64_t>(num_channels),
+            static_cast<int64_t>(height),
+            static_cast<int64_t>(width)
+        ),
         out_dtype
     );
 
     out_dtype.match(
         [&](auto int_id) {
-            using T = typename decltype(int_id)::type;
+            using T = decltype(int_id)::type;
             auto out_span = out_tensor.as_planar_span3d<T>().unwrap();
             for (size_t row = 0; row < height; row++) {
                 for (size_t col = 0; col < width; col++) {
@@ -48,7 +52,7 @@ P10Error image_to_tensor(
             }
         },
         [&](auto float_id) {
-            using T = typename decltype(float_id)::type;
+            using T = decltype(float_id)::type;
             auto out_span = out_tensor.as_planar_span3d<T>().unwrap();
             const bool do_normalize = normalize_opt == ImageToTensorNormalize::Normalize;
             for (size_t row = 0; row < height; row++) {
@@ -85,54 +89,45 @@ P10Error image_from_tensor(
         return P10Error::InvalidArgument << "Input tensor must be contiguous in memory.";
     }
 
-    const size_t num_channels = size_t(tensor.shape(0).unwrap());
-    const size_t height = size_t(tensor.shape(1).unwrap());
-    const size_t width = size_t(tensor.shape(2).unwrap());
+    const auto num_channels = static_cast<size_t>(tensor.shape(0).unwrap());
+    const auto height = static_cast<size_t>(tensor.shape(1).unwrap());
+    const auto width = static_cast<size_t>(tensor.shape(2).unwrap());
     const Dtype out_dtype = target_dtype.value_or(Dtype::Uint8);
 
     out_image_tensor.create(
-        make_shape(int64_t(height), int64_t(width), int64_t(num_channels)),
+        make_shape(
+            static_cast<int64_t>(height),
+            static_cast<int64_t>(width),
+            static_cast<int64_t>(num_channels)
+        ),
         out_dtype
     );
 
     tensor.dtype().match(
-        [&](auto int_id) {
-            // integer input: cast directly to output type
-            using Tin = typename decltype(int_id)::type;
-            auto in_span = tensor.as_planar_span3d<Tin>().unwrap();
-            out_dtype.match([&](auto out_id) {
-                using Tout = typename decltype(out_id)::type;
-                auto out_span = out_image_tensor.as_span3d<Tout>().unwrap();
-                for (size_t row = 0; row < height; row++) {
-                    for (size_t col = 0; col < width; col++) {
-                        auto out_ch = out_span.channel(row, col);
-                        for (size_t c = 0; c < num_channels; c++) {
-                            out_ch[c] = static_cast<Tout>(in_span[c].row(row)[col]);
-                        }
-                    }
-                }
-            });
-        },
+        // The dtype check above guarantees this branch is never taken; it
+        // exists only to satisfy Dtype::match's signature.
+        [](auto /*int_id*/) {},
         [&](auto float_id) {
-            using Fin = typename decltype(float_id)::type;
+            using Fin = decltype(float_id)::type;
             auto in_span = tensor.as_planar_span3d<Fin>().unwrap();
             out_dtype.match(
                 [&](auto int_out_id) {
                     // float → integer: scale [0,1] to [0,255]
-                    using Tout = typename decltype(int_out_id)::type;
+                    using Tout = decltype(int_out_id)::type;
                     auto out_span = out_image_tensor.as_span3d<Tout>().unwrap();
                     for (size_t row = 0; row < height; row++) {
                         for (size_t col = 0; col < width; col++) {
                             auto out_ch = out_span.channel(row, col);
                             for (size_t c = 0; c < num_channels; c++) {
-                                Fin val = in_span[c].row(row)[col] * Fin(255);
-                                out_ch[c] = static_cast<Tout>(std::clamp(val, Fin(0), Fin(255)));
+                                const Fin val = in_span[c].row(row)[col] * Fin {255};
+                                out_ch[c] =
+                                    static_cast<Tout>(std::clamp(val, Fin {0}, Fin {255}));
                             }
                         }
                     }
                 },
                 [&](auto float_out_id) {
-                    using Tout = typename decltype(float_out_id)::type;
+                    using Tout = decltype(float_out_id)::type;
                     auto out_span = out_image_tensor.as_span3d<Tout>().unwrap();
                     for (size_t row = 0; row < height; row++) {
                         for (size_t col = 0; col < width; col++) {

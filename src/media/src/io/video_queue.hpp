@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <mutex>
 #include <queue>
 
@@ -11,7 +12,7 @@ namespace p10::media {
 
 class VideoQueue {
   public:
-    enum EmplaceResult { Ok, Cancelled };
+    enum class EmplaceResult : std::uint8_t { Ok, Cancelled };
 
     VideoQueue(size_t max_size) : max_size_(max_size) {}
 
@@ -39,7 +40,7 @@ class VideoQueue {
     }
 
     std::optional<VideoFrame> try_pop() {
-        std::unique_lock lock(mutex_);
+        const std::unique_lock lock(mutex_);
         if (queue_.empty()) {
             return std::nullopt;
         }
@@ -55,7 +56,7 @@ class VideoQueue {
     }
 
     bool empty() {
-        std::unique_lock lock(mutex_);
+        const std::unique_lock lock(mutex_);
         return queue_.empty();
     }
 

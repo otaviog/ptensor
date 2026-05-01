@@ -37,7 +37,7 @@ namespace {
                 return Dtype::Float64;
             default:
                 throw std::runtime_error(
-                    "Unsupported sample format: " + std::to_string(sample_fmt)
+                    std::format("Unsupported sample format: {}", std::to_string(sample_fmt))
                 );
         }
     }

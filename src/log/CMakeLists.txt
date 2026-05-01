@@ -1,4 +1,4 @@
-find_package(ng-log CONFIG REQUIRED)
+add_subdirectory(lib/ng-log)
 
 set(_INCLUDE_DIR include/ptensor/log)
 add_library(ptensor_log INTERFACE)

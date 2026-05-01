@@ -19,7 +19,7 @@ namespace {
         frame->height = height;
         frame->format = format;
 
-        int buffer_size = av_image_get_buffer_size(format, width, height, 1);
+        int const buffer_size = av_image_get_buffer_size(format, width, height, 1);
         uint8_t* buffer = static_cast<uint8_t*>(av_malloc(buffer_size));
 
         // Fill with test pattern
@@ -171,7 +171,7 @@ TEST_CASE("FfmpegSws::transform VideoFrame to AVFrame", "[media][ffmpeg][sws]") 
     FfmpegSws sws;
 
     SECTION("transform without scaling") {
-        VideoFrame src_frame = create_test_videoframe(320, 240);
+        VideoFrame const src_frame = create_test_videoframe(320, 240);
         AVFrame* dst_frame = nullptr;
 
         REQUIRE_THAT(sws.transform(src_frame, &dst_frame), testing::is_ok());
@@ -185,7 +185,7 @@ TEST_CASE("FfmpegSws::transform VideoFrame to AVFrame", "[media][ffmpeg][sws]") 
     }
 
     SECTION("transform with upscaling") {
-        VideoFrame src_frame = create_test_videoframe(320, 240);
+        VideoFrame const src_frame = create_test_videoframe(320, 240);
         AVFrame* dst_frame = nullptr;
 
         sws.set_target_size(640, 480);
@@ -200,7 +200,7 @@ TEST_CASE("FfmpegSws::transform VideoFrame to AVFrame", "[media][ffmpeg][sws]") 
     }
 
     SECTION("transform with downscaling") {
-        VideoFrame src_frame = create_test_videoframe(640, 480);
+        VideoFrame const src_frame = create_test_videoframe(640, 480);
         AVFrame* dst_frame = nullptr;
 
         sws.set_target_size(320, 240);
@@ -215,7 +215,7 @@ TEST_CASE("FfmpegSws::transform VideoFrame to AVFrame", "[media][ffmpeg][sws]") 
     }
 
     SECTION("transform with pixel format conversion to YUV420P") {
-        VideoFrame src_frame = create_test_videoframe(320, 240);
+        VideoFrame const src_frame = create_test_videoframe(320, 240);
         AVFrame* dst_frame = nullptr;
 
         sws.set_target_pixel_format(AV_PIX_FMT_YUV420P);
@@ -231,7 +231,7 @@ TEST_CASE("FfmpegSws::transform VideoFrame to AVFrame", "[media][ffmpeg][sws]") 
     }
 
     SECTION("transform with both scaling and format conversion") {
-        VideoFrame src_frame = create_test_videoframe(320, 240);
+        VideoFrame const src_frame = create_test_videoframe(320, 240);
         AVFrame* dst_frame = nullptr;
 
         sws.set_target_size(640, 480);

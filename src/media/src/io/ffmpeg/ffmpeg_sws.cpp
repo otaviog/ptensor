@@ -25,10 +25,10 @@ P10Error FfmpegSws::transform(const AVFrame* src, VideoFrame& dst) {
 
     dst.create(sws_key.target_width, sws_key.target_height, PixelFormat::RGB24);
 
-    uint8_t* dst_data[1] = {dst.as_bytes().data()};
+    uint8_t* dst_data[1] = {dst.as_bytes().data()};  // NOLINT(misc-const-correctness)
     int dst_linesize[1] = {static_cast<int>(dst.stride().byte_stride(dst.dtype(), 0).unwrap())};
 
-    int result =
+    int const result =
         sws_scale(sws_ctx, src->data, src->linesize, 0, src->height, dst_data, dst_linesize);
 
     if (result <= 0) {
@@ -68,10 +68,10 @@ P10Error FfmpegSws::transform(const VideoFrame& src, AVFrame** dst) {
     );
 
     const auto& src_bytes = src.as_bytes();
-    uint8_t* src_data[1] = {const_cast<uint8_t*>(src_bytes.data())};
+    uint8_t const* src_data[1] = {const_cast<uint8_t*>(src_bytes.data())};
     int src_linesize[1] = {static_cast<int>(src.stride().byte_stride(src.dtype(), 0).unwrap())};
 
-    int result = sws_scale(
+    int const result = sws_scale(
         sws_ctx,
         src_data,
         src_linesize,

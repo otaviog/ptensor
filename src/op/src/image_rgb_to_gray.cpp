@@ -26,9 +26,9 @@ p10::P10Error image_rgb_to_gray(const p10::Tensor& rgb_image, p10::Tensor& gray_
         auto* gray_row = gray_span.row(h);
         for (size_t w = 0; w < static_cast<size_t>(width); ++w) {
             const auto* rgb_pixel = &rgb_row[w * 3];
-            uint8_t r = rgb_pixel[0];
-            uint8_t g = rgb_pixel[1];
-            uint8_t b = rgb_pixel[2];
+            uint8_t const r = rgb_pixel[0];
+            uint8_t const g = rgb_pixel[1];
+            uint8_t const b = rgb_pixel[2];
 
             // Convert to grayscale using luminosity method
             gray_row[w] = static_cast<uint8_t>(

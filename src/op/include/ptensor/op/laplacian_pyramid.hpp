@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 
 #include <ptensor/p10_result.hpp>
@@ -49,7 +50,7 @@ class LaplacianPyramid {
     /// # Returns
     ///
     /// An error if decomposition fails, otherwise success.
-    P10Error transform(const Tensor& input, std::span<Tensor> output);
+    P10Error transform(const Tensor& in_tensor, std::span<Tensor> out_laplacian_pyr);
 
     /// Reconstructs a tensor from a Laplacian pyramid.
     ///
@@ -64,12 +65,12 @@ class LaplacianPyramid {
     /// # Returns
     ///
     /// An error if reconstruction fails, otherwise success.
-    P10Error reconstruct(std::span<const Tensor> pyramid, Tensor& output) const;
+    static P10Error reconstruct(std::span<const Tensor> pyramid, Tensor& output);
 
   private:
-    explicit LaplacianPyramid(const GaussianBlur& blur_op) : blur_op_(blur_op) {}
+    explicit LaplacianPyramid(GaussianBlur blur_op) : blur_op_(std::move(blur_op)) {}
 
-    void store_gaussian_pyramid(const Tensor& input, size_t num_levels);
+    void store_gaussian_pyramid(const Tensor& in_tensor, size_t num_levels);
     void pyramid_from_gaussian_to_laplacian(std::span<Tensor> output) const;
 
     GaussianBlur blur_op_;

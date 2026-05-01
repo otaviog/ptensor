@@ -18,7 +18,7 @@ TEST_CASE("op::Stack: Basic stacking along axis 0", "[stack]") {
         auto t1 = Tensor::from_range(make_shape(2, 3), type).unwrap();
         auto t2 = Tensor::from_range(make_shape(2, 3), type).unwrap();
 
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
 
         REQUIRE_THAT(stack(inputs, 0, output), is_ok());
@@ -51,7 +51,7 @@ TEST_CASE("op::Stack::Stacking along axis 1", "[stack]") {
         auto t1 = Tensor::from_range(make_shape(2, 3), type).unwrap();
         auto t2 = Tensor::from_range(make_shape(2, 3), type).unwrap();
 
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
 
         REQUIRE_THAT(stack(inputs, 1, output), is_ok());
@@ -66,7 +66,7 @@ TEST_CASE("Stack: Stacking along axis 2", "[stack]") {
     auto t1 = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
     auto t2 = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
 
-    Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+    Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
     Tensor output;
 
     REQUIRE_THAT(stack(inputs, 2, output), is_ok());
@@ -81,7 +81,7 @@ TEST_CASE("Stack: Negative axis indexing", "[stack]") {
     auto t2 = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
 
     SECTION("Axis -1 (last axis)") {
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
         REQUIRE_THAT(stack(inputs, -1, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
@@ -90,7 +90,7 @@ TEST_CASE("Stack: Negative axis indexing", "[stack]") {
     }
 
     SECTION("Axis -2 (second to last)") {
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
         REQUIRE_THAT(stack(inputs, -2, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
@@ -99,7 +99,7 @@ TEST_CASE("Stack: Negative axis indexing", "[stack]") {
     }
 
     SECTION("Axis -3 (first axis)") {
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
         REQUIRE_THAT(stack(inputs, -3, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
@@ -114,7 +114,7 @@ TEST_CASE("Stack: Multiple tensors", "[stack]") {
     auto t3 = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
     auto t4 = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
 
-    Tensor inputs[] =
+    Tensor const inputs[] =
         {t1.clone().unwrap(), t2.clone().unwrap(), t3.clone().unwrap(), t4.clone().unwrap()};
     Tensor output;
 
@@ -129,7 +129,7 @@ TEST_CASE("Stack: 1D tensors", "[stack]") {
     auto t2 = Tensor::from_range(make_shape(5), Dtype::Float32).unwrap();
 
     SECTION("Axis 0") {
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
         REQUIRE_THAT(stack(inputs, 0, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
@@ -137,7 +137,7 @@ TEST_CASE("Stack: 1D tensors", "[stack]") {
     }
 
     SECTION("Axis 1") {
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
         REQUIRE_THAT(stack(inputs, 1, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 5);
@@ -150,7 +150,7 @@ TEST_CASE("Stack: 3D tensors", "[stack]") {
     auto t2 = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
 
     SECTION("Axis 0") {
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
         REQUIRE_THAT(stack(inputs, 0, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
@@ -160,7 +160,7 @@ TEST_CASE("Stack: 3D tensors", "[stack]") {
     }
 
     SECTION("Axis 1") {
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
         REQUIRE_THAT(stack(inputs, 1, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
@@ -170,7 +170,7 @@ TEST_CASE("Stack: 3D tensors", "[stack]") {
     }
 
     SECTION("Axis 2") {
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
         REQUIRE_THAT(stack(inputs, 2, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
@@ -180,7 +180,7 @@ TEST_CASE("Stack: 3D tensors", "[stack]") {
     }
 
     SECTION("Axis 3") {
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
         REQUIRE_THAT(stack(inputs, 3, output), is_ok());
         REQUIRE(output.shape(0).unwrap() == 2);
@@ -201,7 +201,7 @@ TEST_CASE("Stack: Error - Mismatched shapes", "[stack]") {
     auto t1 = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
     auto t2 = Tensor::from_range(make_shape(2, 4), Dtype::Float32).unwrap();
 
-    Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+    Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
     Tensor output;
 
     REQUIRE_THAT(stack(inputs, 0, output), is_error(P10Error::InvalidArgument));
@@ -211,7 +211,7 @@ TEST_CASE("Stack: Error - Mismatched dtypes", "[stack]") {
     auto t1 = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
     auto t2 = Tensor::from_range(make_shape(2, 3), Dtype::Int32).unwrap();
 
-    Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+    Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
     Tensor output;
 
     REQUIRE_THAT(stack(inputs, 0, output), is_error(P10Error::InvalidArgument));
@@ -222,13 +222,13 @@ TEST_CASE("Stack: Error - Axis out of bounds", "[stack]") {
     auto t2 = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
 
     SECTION("Positive axis too large") {
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
         REQUIRE_THAT(stack(inputs, 3, output), is_error(P10Error::InvalidArgument));
     }
 
     SECTION("Negative axis too large") {
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
         REQUIRE_THAT(stack(inputs, -4, output), is_error(P10Error::InvalidArgument));
     }
@@ -238,7 +238,7 @@ TEST_CASE("Stack: Data integrity check", "[stack]") {
     auto t1 = Tensor::zeros(make_shape(2, 2), Dtype::Float32).unwrap();
     auto t2 = Tensor::full(make_shape(2, 2), 1.0, Dtype::Float32).unwrap();
 
-    Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+    Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
     Tensor output;
 
     REQUIRE_THAT(stack(inputs, 0, output), is_ok());
@@ -269,7 +269,7 @@ TEST_CASE("Stack: Data integrity with different values", "[stack]") {
     }
 
     SECTION("Stack along axis 0") {
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
         REQUIRE_THAT(stack(inputs, 0, output), is_ok());
         auto out_data = output.as_span1d<float>().unwrap();
@@ -286,7 +286,7 @@ TEST_CASE("Stack: Data integrity with different values", "[stack]") {
 TEST_CASE("Stack: Single tensor", "[stack]") {
     auto t1 = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
 
-    Tensor inputs[] = {t1.clone().unwrap()};
+    Tensor const inputs[] = {t1.clone().unwrap()};
     Tensor output;
 
     REQUIRE_THAT(stack(inputs, 0, output), is_ok());
@@ -301,7 +301,7 @@ TEST_CASE("Stack: Different dtypes coverage", "[stack]") {
         auto t1 = Tensor::from_range(make_shape(2, 3), type).unwrap();
         auto t2 = Tensor::from_range(make_shape(2, 3), type).unwrap();
 
-        Tensor inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
+        Tensor const inputs[] = {t1.clone().unwrap(), t2.clone().unwrap()};
         Tensor output;
 
         REQUIRE_THAT(stack(inputs, 0, output), is_ok());

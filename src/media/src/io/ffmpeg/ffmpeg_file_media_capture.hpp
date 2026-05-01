@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <thread>
+#include <utility>
 
 #include "../media_capture.impl.hpp"
 #include "video_frame.hpp"
@@ -57,8 +58,8 @@ class FfmpegFileMediaCapture: public MediaCapture::Impl {
         std::shared_ptr<FfmpegVideoDecoder> video_decoder
     ) :
         format_ctx_(format_ctx),
-        audio_decoder_(audio_decoder),
-        video_decoder_(video_decoder) {}
+        audio_decoder_(std::move(audio_decoder)),
+        video_decoder_(std::move(video_decoder)) {}
 
     void read_packets_loop();
     void read_next_packet();

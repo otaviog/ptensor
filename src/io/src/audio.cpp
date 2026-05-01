@@ -18,20 +18,20 @@ load_audio(const std::string& path, Tensor& tensor, int64_t& sample_rate, Dtype 
     return dtype.match([&path, &sample_rate, &tensor, dtype](auto scalar) -> P10Error {
         using scalar_t = decltype(scalar)::type;
 
-        AudioFile<scalar_t> audioFile;
-        if (!audioFile.load(path)) {
+        AudioFile<scalar_t> audio_file;
+        if (!audio_file.load(path)) {
             return P10Error::IoError << "Failed to load audio file: " + path;
         }
 
-        sample_rate = static_cast<int64_t>(audioFile.getSampleRate());
-        size_t num_channels = audioFile.getNumChannels();
-        size_t num_samples = audioFile.getNumSamplesPerChannel();
+        sample_rate = static_cast<int64_t>(audio_file.getSampleRate());
+        size_t const num_channels = audio_file.getNumChannels();
+        size_t const num_samples = audio_file.getNumSamplesPerChannel();
 
         tensor.create(make_shape(num_samples, num_channels), dtype);
         auto tensor_s = tensor.as_span2d<scalar_t>().unwrap();
 
         for (size_t channel_idx = 0; channel_idx < num_channels; ++channel_idx) {
-            auto channelData = audioFile.samples[channel_idx];
+            auto channelData = audio_file.samples[channel_idx];
             auto tensor_row = tensor_s.row(channel_idx);
             for (size_t s = 0; s < num_samples; ++s) {
                 tensor_row[s] = channelData[s];
@@ -51,8 +51,8 @@ P10Error save_audio(const std::string& path, const Tensor& tensor, int64_t sampl
             return P10Error::InvalidArgument << "Tensor must be 2D for audio saving.";
         }
 
-        size_t num_samples = span.unwrap().width();
-        size_t num_channels = span.unwrap().height();
+        size_t const num_samples = span.unwrap().width();
+        size_t const num_channels = span.unwrap().height();
 
         AudioFile<scalar_t> audioFile;
         audioFile.setNumChannels(static_cast<int>(num_channels));

@@ -8,7 +8,7 @@
 
 namespace p10 {
 
-P10Error P10Error::fromAssert(std::string_view message, std::string_view file, int line) {
+P10Error P10Error::from_assert(std::string_view message, std::string_view file, int line) {
     return P10Error(
         AssertionError,
         std::string(message) + " (" + std::string(file) + ":" + std::to_string(line) + ")"

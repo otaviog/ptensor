@@ -42,6 +42,7 @@ Checks: >
   -misc-include-cleaner,
   -modernize-avoid-c-arrays,
   -modernize-return-braced-init-list,
+  -modernize-use-integer-sign-comparison,
   -modernize-use-nodiscard,
   -modernize-use-trailing-return-type,
   -portability-avoid-pragma-once,
@@ -70,13 +71,13 @@ CheckOptions:
   # --- Naming conventions (matches existing codebase) ---
   # The codebase mixes Rust-style factories (Ok/Err) and STL-style traits and
   # iterators (is_complex, iterator, scalar_t). Where both styles coexist by
-  # design, the case is set to aNy_CaSe rather than enforcing one shape.
+  # design, the case is set to aNy_CasE rather than enforcing one shape.
   - key: readability-identifier-naming.NamespaceCase
     value: lower_case
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
   - key: readability-identifier-naming.StructCase
-    value: aNy_CaSe
+    value: aNy_CasE
   - key: readability-identifier-naming.EnumCase
     value: CamelCase
   - key: readability-identifier-naming.EnumConstantCase
@@ -84,13 +85,13 @@ CheckOptions:
   - key: readability-identifier-naming.ScopedEnumConstantCase
     value: CamelCase
   - key: readability-identifier-naming.TypeAliasCase
-    value: aNy_CaSe
+    value: aNy_CasE
   - key: readability-identifier-naming.TypedefCase
-    value: aNy_CaSe
+    value: aNy_CasE
   - key: readability-identifier-naming.TemplateParameterCase
-    value: aNy_CaSe
+    value: aNy_CasE
   - key: readability-identifier-naming.FunctionCase
-    value: aNy_CaSe
+    value: aNy_CasE
   - key: readability-identifier-naming.MethodCase
     value: lower_case
   - key: readability-identifier-naming.VariableCase

@@ -33,7 +33,8 @@ class Time {
     }
 
     Time into_base(Rational new_base) const {
-        int64_t new_stamp = stamp_ * new_base.den() * base_.num() / (new_base.num() * base_.den());
+        const int64_t new_stamp =
+            stamp_ * new_base.den() * base_.num() / (new_base.num() * base_.den());
         return Time {new_base, new_stamp};
     }
 

@@ -3,6 +3,7 @@
 #include <cstring>
 #include <functional>
 #include <optional>
+#include <utility>
 
 #include <ptensor/config.h>
 
@@ -22,7 +23,7 @@ class Blob {
         std::optional<std::function<void(void*)>> dealloc = std::nullopt
     ) :
         data_ {data},
-        dealloc_ {dealloc},
+        dealloc_ {std::move(dealloc)},
         device_ {device} {}
 
     Blob(const Blob& other) = delete;

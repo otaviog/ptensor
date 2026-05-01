@@ -26,7 +26,7 @@ generate_sine_wave(size_t num_samples, Dtype type, const SineWaveParams& params,
             << "Frequency must be less than or equal to half the sample rate (Nyquist frequency).";
     }
     const double amplitude = params.amplitude();
-    const double phase = params.phaseRadians();
+    const double phase = params.phase_radians();
 
     const size_t period_samples = static_cast<size_t>(
         params.period().has_value() ? params.period().value() * sample_rate

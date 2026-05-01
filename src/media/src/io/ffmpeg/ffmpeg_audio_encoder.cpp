@@ -59,7 +59,7 @@ P10Error
 FfmpegAudioEncoder::create(const AudioParameters& audio_params, AVFormatContext* format_ctx) {
     reset();
 
-    AVCodecID codec_id = codec_id_from_audio_parameters(audio_params.codec());
+    AVCodecID const codec_id = codec_id_from_audio_parameters(audio_params.codec());
     const auto* codec = avcodec_find_encoder(codec_id);
     if (codec == nullptr) {
         return P10Error::IoError << std::string("Could not find audio codec for codec ")
@@ -87,7 +87,10 @@ FfmpegAudioEncoder::create(const AudioParameters& audio_params, AVFormatContext*
     );
 
     // Time base
-    const AVRational time_base {1, static_cast<int>(audio_params.audio_sample_rate_hz())};
+    const AVRational time_base {
+        .num = 1,
+        .den = static_cast<int>(audio_params.audio_sample_rate_hz())
+    };
     stream_->time_base = time_base;
     codec_context_->time_base = time_base;
     codec_context_->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
@@ -116,7 +119,7 @@ void FfmpegAudioEncoder::reset() {
 }
 
 P10Error FfmpegAudioEncoder::encode(const AudioFrame& frame) {
-    AVSampleFormat input_fmt = dtype_to_planar_av_sample_format(frame.samples().dtype());
+    AVSampleFormat const input_fmt = dtype_to_planar_av_sample_format(frame.samples().dtype());
     if (input_fmt == AV_SAMPLE_FMT_NONE) {
         return P10Error::InvalidArgument << "Unsupported audio sample format for encoding";
     }
@@ -144,12 +147,12 @@ P10Error FfmpegAudioEncoder::encode(const AudioFrame& frame) {
 
     // Resample to the codec's target format/rate/channels
     AVFrame* resampled = nullptr;
-    P10Error resample_err = resampler_.transform(source_frame, &resampled);
+    P10Error const resample_err = resampler_.transform(source_frame, &resampled);
     av_frame_free(&source_frame);
     P10_RETURN_IF_ERROR(resample_err);
 
     // Add resampled samples to the encoding FIFO
-    P10Error fifo_err = encoding_fifo_.add_samples(resampled);
+    P10Error const fifo_err = encoding_fifo_.add_samples(resampled);
     av_frame_free(&resampled);
     P10_RETURN_IF_ERROR(fifo_err);
 
@@ -160,8 +163,8 @@ P10Error FfmpegAudioEncoder::flush() {
     // some codecs require have frame_size = 0, which means we can feed any number of samples. In that case, use a reasonable default frame size for flushing.
     const int codec_frame_size = codec_context_->frame_size > 0 ? codec_context_->frame_size : 1024;
     while (!encoding_fifo_.empty()) {
-        int remaining = static_cast<int>(encoding_fifo_.num_samples());
-        int frame_size = std::min(remaining, codec_frame_size);
+        int const remaining = static_cast<int>(encoding_fifo_.num_samples());
+        int const frame_size = std::min(remaining, codec_frame_size);
 
         AVFrame* frame_to_encode = nullptr;
         P10_RETURN_IF_ERROR(encoding_fifo_.pop_samples(frame_size, &frame_to_encode));
@@ -169,7 +172,7 @@ P10Error FfmpegAudioEncoder::flush() {
         frame_to_encode->pts = audio_pts_;
         audio_pts_ += frame_to_encode->nb_samples;
 
-        int ret = avcodec_send_frame(codec_context_, frame_to_encode);
+        int const ret = avcodec_send_frame(codec_context_, frame_to_encode);
         av_frame_free(&frame_to_encode);
         P10_RETURN_IF_ERROR(wrap_ffmpeg_error(ret));
 
@@ -190,7 +193,7 @@ P10Error FfmpegAudioEncoder::flush_encoding_fifo() {
         frame_to_encode->pts = audio_pts_;
         audio_pts_ += frame_to_encode->nb_samples;
 
-        int ret = avcodec_send_frame(codec_context_, frame_to_encode);
+        int const ret = avcodec_send_frame(codec_context_, frame_to_encode);
         av_frame_free(&frame_to_encode);
         P10_RETURN_IF_ERROR(wrap_ffmpeg_error(ret));
 
@@ -203,7 +206,7 @@ P10Error FfmpegAudioEncoder::flush_encoding_fifo() {
 P10Error FfmpegAudioEncoder::receive_packets() {
     while (true) {
         UniqueAvPacket pkt(av_packet_alloc());
-        int ret = avcodec_receive_packet(codec_context_, pkt.get());
+        int const ret = avcodec_receive_packet(codec_context_, pkt.get());
 
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
             break;

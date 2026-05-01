@@ -182,15 +182,19 @@ TEST_CASE("RGB to gray: Luminosity formula accuracy", "[image_rgb_to_gray]") {
         uint8_t expected_gray;
     };
 
-    TestCase test_cases[] = {
-        {128, 128, 128, 128},  // Gray
-        {255, 255, 255, 255},  // White
-        {0, 0, 0, 0},  // Black
-        {50,
-         100,
-         150,
-         91},  // 0.21*50 + 0.72*100 + 0.07*150 = 10.5 + 72 + 10.5 = 93, but check actual
-        {200, 50, 100, 85},  // 0.21*200 + 0.72*50 + 0.07*100 = 42 + 36 + 7 = 85
+    TestCase const test_cases[] = {
+        {.r = 128, .g = 128, .b = 128, .expected_gray = 128},  // Gray
+        {.r = 255, .g = 255, .b = 255, .expected_gray = 255},  // White
+        {.r = 0, .g = 0, .b = 0, .expected_gray = 0},  // Black
+        {.r = 50,
+         .g = 100,
+         .b = 150,
+         .expected_gray =
+             91},  // 0.21*50 + 0.72*100 + 0.07*150 = 10.5 + 72 + 10.5 = 93, but check actual
+        {.r = 200,
+         .g = 50,
+         .b = 100,
+         .expected_gray = 85},  // 0.21*200 + 0.72*50 + 0.07*100 = 42 + 36 + 7 = 85
     };
 
     for (const auto& test : test_cases) {
@@ -203,7 +207,7 @@ TEST_CASE("RGB to gray: Luminosity formula accuracy", "[image_rgb_to_gray]") {
         REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
 
         auto gray_span = gray.as_span2d<uint8_t>().unwrap();
-        float expected = 0.21f * test.r + 0.72f * test.g + 0.07f * test.b;
+        float const expected = 0.21f * test.r + 0.72f * test.g + 0.07f * test.b;
         REQUIRE(gray_span.row(0)[0] == Approx(expected).margin(1));
     }
 }
@@ -288,10 +292,10 @@ TEST_CASE("RGB to gray: Gradient pattern", "[image_rgb_to_gray]") {
     // Verify some values
     auto gray_span = gray.as_span2d<uint8_t>().unwrap();
 
-    float expected_tl = 0.21f * 0 + 0.72f * 0 + 0.07f * 128;
+    float const expected_tl = 0.21f * 0 + 0.72f * 0 + 0.07f * 128;
     REQUIRE(gray_span.row(0)[0] == Approx(expected_tl).margin(1));
 
-    float expected_br = 0.21f * 255 + 0.72f * 255 + 0.07f * 128;
+    float const expected_br = 0.21f * 255 + 0.72f * 255 + 0.07f * 128;
     REQUIRE(gray_span.row(15)[15] == Approx(expected_br).margin(1));
 }
 

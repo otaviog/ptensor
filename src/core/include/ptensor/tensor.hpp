@@ -4,6 +4,7 @@
 #include <functional>
 #include <optional>
 #include <random>
+#include <utility>
 
 #include <type_traits>
 
@@ -237,7 +238,7 @@ class Tensor {
             return Err(data_res.error());
         }
         auto elem_count = size();
-        if constexpr (detail::is_complex_v<std::remove_const_t<scalar_t>>) {
+        if constexpr (detail::IS_COMPLEX_V<std::remove_const_t<scalar_t>>) {
             elem_count /= 2;
         }
         return Ok(std::span<const scalar_t>(blob_.data<scalar_t>(), elem_count));
@@ -250,7 +251,7 @@ class Tensor {
             return Err(data_res.error());
         }
         auto elem_count = size();
-        if constexpr (detail::is_complex_v<std::remove_const_t<scalar_t>>) {
+        if constexpr (detail::IS_COMPLEX_V<std::remove_const_t<scalar_t>>) {
             elem_count /= 2;
         }
         return Ok(std::span<scalar_t> {blob_.data<scalar_t>(), elem_count});
@@ -546,9 +547,9 @@ class Tensor {
     P10Error convert_from(const Tensor& source, const TensorOptions options);
 
   private:
-    Tensor(Blob&& blob, const Shape& shape, const TensorOptions& options) :
+    Tensor(Blob&& blob, Shape shape, const TensorOptions& options) :
         blob_ {std::move(blob)},
-        shape_ {shape} {
+        shape_ {std::move(shape)} {
         set_options(options);
     }
 
@@ -596,7 +597,7 @@ class Tensor {
 
     template<typename T>
     P10Error check_dims_for_accessor1d() const {
-        if constexpr (detail::is_complex_v<std::remove_const_t<T>>) {
+        if constexpr (detail::IS_COMPLEX_V<std::remove_const_t<T>>) {
             if (dims() != 2) {
                 return P10Error::InvalidArgument
                     << "Tensor must have 2 dimensions [N x 2] for complex types";
@@ -611,7 +612,7 @@ class Tensor {
 
     template<typename T>
     P10Error check_dims_for_2d_access() const {
-        if constexpr (detail::is_complex_v<std::remove_const_t<T>>) {
+        if constexpr (detail::IS_COMPLEX_V<std::remove_const_t<T>>) {
             if (dims() != 3) {
                 return P10Error::InvalidArgument
                     << "Tensor must have 3 dimensions [N x T x 2] for complex types";
@@ -626,7 +627,7 @@ class Tensor {
 
     template<typename T>
     P10Error check_dims_for_3d_access() const {
-        if constexpr (detail::is_complex_v<std::remove_const_t<T>>) {
+        if constexpr (detail::IS_COMPLEX_V<std::remove_const_t<T>>) {
             if (dims() != 4) {
                 return P10Error::InvalidArgument
                     << "Tensor must have 4 dimensions [N x H x W x 2] for complex types";

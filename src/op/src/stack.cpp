@@ -73,8 +73,8 @@ p10::P10Error stack(std::span<const p10::Tensor> inputs, int64_t axis, p10::Tens
 
     for (size_t outer = 0; outer < outer_size; ++outer) {
         for (size_t i = 0; i < inputs.size(); ++i) {
-            size_t out_offset = (outer * inputs.size() + i) * inner_size * element_size;
-            size_t in_offset = outer * inner_size * element_size;
+            size_t const out_offset = (outer * inputs.size() + i) * inner_size * element_size;
+            size_t const in_offset = outer * inner_size * element_size;
             std::memcpy(
                 output.as_bytes().data() + out_offset,
                 inputs[i].as_bytes().data() + in_offset,

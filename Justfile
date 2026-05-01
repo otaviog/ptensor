@@ -28,9 +28,6 @@ _clang_tidy_files:
 clang-tidy:
     just _clang_tidy_files | xargs -n 1 -P "$(sysctl -n hw.ncpu 2>/dev/null || nproc)" clang-tidy --quiet -p {{ CLANG_TIDY_BUILD }} {{ CLANG_TIDY_EXTRA }}
 
-clang-tidy-fix:
-    just _clang_tidy_files | xargs -n 1 clang-tidy --quiet -p {{ CLANG_TIDY_BUILD }} {{ CLANG_TIDY_EXTRA }} --fix
-
 test:
     ctest --preset clang/debug
 

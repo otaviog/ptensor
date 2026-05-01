@@ -110,8 +110,8 @@ P10Error FfmpegSwr::transform(const AVFrame* source_frame, AVFrame** output_fram
     }
     SwrContext* swrConvContext = swr_result.unwrap();
 
-    const uint8_t** inData = (const uint8_t**)source_frame->data;
-    int convert_result = swr_convert(
+    const uint8_t* const* inData = (const uint8_t**)source_frame->data;
+    int const convert_result = swr_convert(
         swrConvContext,
         target_frame->data,
         target_frame->nb_samples,

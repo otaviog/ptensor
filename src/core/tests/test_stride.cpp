@@ -13,21 +13,21 @@ namespace p10 {
 
 TEST_CASE("Stride creation from shape", "[stride][creation]") {
     SECTION("Empty shape (0D)") {
-        Shape shape;
-        Stride stride = Stride::from_contiguous_shape(shape);
+        Shape const shape;
+        Stride const stride = Stride::from_contiguous_shape(shape);
         REQUIRE(stride.dims() == 0);
     }
 
     SECTION("1D shape") {
         auto shape = make_shape(5);
-        Stride stride = Stride::from_contiguous_shape(shape);
+        Stride const stride = Stride::from_contiguous_shape(shape);
         REQUIRE(stride.dims() == 1);
         REQUIRE(stride[0].unwrap() == 1);
     }
 
     SECTION("2D shape - row major") {
         auto shape = make_shape(2, 3);
-        Stride stride = Stride::from_contiguous_shape(shape);
+        Stride const stride = Stride::from_contiguous_shape(shape);
         REQUIRE(stride.dims() == 2);
         REQUIRE(stride[0].unwrap() == 3);  // stride along first dim
         REQUIRE(stride[1].unwrap() == 1);  // stride along second dim
@@ -35,7 +35,7 @@ TEST_CASE("Stride creation from shape", "[stride][creation]") {
 
     SECTION("3D shape - row major") {
         auto shape = make_shape(2, 3, 4);
-        Stride stride = Stride::from_contiguous_shape(shape);
+        Stride const stride = Stride::from_contiguous_shape(shape);
         REQUIRE(stride.dims() == 3);
         REQUIRE(stride[0].unwrap() == 12);  // 3 * 4
         REQUIRE(stride[1].unwrap() == 4);
@@ -44,7 +44,7 @@ TEST_CASE("Stride creation from shape", "[stride][creation]") {
 
     SECTION("4D shape - row major") {
         auto shape = make_shape(2, 3, 4, 5);
-        Stride stride = Stride::from_contiguous_shape(shape);
+        Stride const stride = Stride::from_contiguous_shape(shape);
         REQUIRE(stride.dims() == 4);
         REQUIRE(stride[0].unwrap() == 60);  // 3 * 4 * 5
         REQUIRE(stride[1].unwrap() == 20);  // 4 * 5

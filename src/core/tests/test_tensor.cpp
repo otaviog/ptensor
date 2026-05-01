@@ -848,7 +848,7 @@ TEST_CASE("core::Tensor::select_dimension", "[tensor][select_dimension]") {
 TEST_CASE("core::Tensor::reshape", "[tensor][reshape]") {
     SECTION("Valid shapes") {
         auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
-        size_t tensor_size = tensor.size();
+        size_t const tensor_size = tensor.size();
         // Reshape to (4, 3, 2)
         REQUIRE_THAT(tensor.reshape(make_shape(4, 3, 2)), testing::is_ok());
         REQUIRE(tensor.shape() == make_shape(4, 3, 2));
@@ -867,7 +867,7 @@ TEST_CASE("core::Tensor::reshape", "[tensor][reshape]") {
         auto tensor =
             Tensor::full(make_shape(2, 3), 1.0f, TensorOptions().stride(make_stride(1, 2)))
                 .unwrap();
-        size_t tensor_size = tensor.size();
+        size_t const tensor_size = tensor.size();
         // Reshape to (3, 2)
         REQUIRE_THAT(tensor.reshape(make_shape(3, 2)), testing::is_ok());
         REQUIRE(tensor.shape() == make_shape(3, 2));
@@ -884,7 +884,7 @@ TEST_CASE("core::Tensor::reshape", "[tensor][reshape]") {
 
     SECTION("Invalid shapes on empty tensor") {
         auto tensor = Tensor::empty(make_shape(0, 3)).unwrap();
-        size_t tensor_size = tensor.size();
+        size_t const tensor_size = tensor.size();
 
         // Reshape to (0, 1)
         REQUIRE_THAT(tensor.reshape(make_shape(0, 1)), testing::is_ok());

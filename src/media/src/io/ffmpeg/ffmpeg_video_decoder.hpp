@@ -44,8 +44,8 @@ class FfmpegVideoDecoder {
         if (stream_->nb_frames != 0) {
             return stream_->nb_frames;
         } else {
-            double duration_sec = stream_->duration * av_q2d(stream_->time_base);
-            double fps = av_q2d(stream_->avg_frame_rate);
+            double const duration_sec = stream_->duration * av_q2d(stream_->time_base);
+            double const fps = av_q2d(stream_->avg_frame_rate);
             return static_cast<int64_t>(duration_sec * fps);
         }
         return std::nullopt;

@@ -54,7 +54,7 @@ FfmpegFileMediaCapture::open(const std::string& path) {
         av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
     std::shared_ptr<FfmpegAudioDecoder> audio_decoder;
     if (audio_stream_idx >= 0) {
-        AVStream* audio_stream = format_ctx->streams[audio_stream_idx];
+        AVStream const* audio_stream = format_ctx->streams[audio_stream_idx];
         const AVCodec* audio_codec = avcodec_find_decoder(audio_stream->codecpar->codec_id);
 
         AVCodecContext* audio_codec_ctx = avcodec_alloc_context3(audio_codec);
@@ -101,7 +101,7 @@ MediaParameters FfmpegFileMediaCapture::get_parameters() const {
 }
 
 P10Result<bool> FfmpegFileMediaCapture::next_frame() {
-    CaptureStatus capture_status = status_;
+    CaptureStatus const capture_status = status_;
     if (capture_status == CaptureStatus::Reading) {
         current_frame_ = video_queue_.wait_and_pop();
         if (current_frame_.has_value()) {

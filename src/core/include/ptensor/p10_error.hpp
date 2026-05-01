@@ -24,7 +24,7 @@ class P10Error {
         InferError = P10_INFER_ERROR
     };
 
-    static P10Error fromAssert(std::string_view message, std::string_view file, int line);
+    static P10Error from_assert(std::string_view message, std::string_view file, int line);
 
 #ifdef PTENSOR_HAS_WINDOWS_H
     static P10Error from_win32_error(unsigned long error_code);

@@ -31,7 +31,7 @@ class SineWaveParams {
     }
 
     SineWaveParams& phaseRadians(double ph) {
-        phaseRadians_ = ph;
+        phase_radians_ = ph;
         return *this;
     }
 
@@ -52,8 +52,8 @@ class SineWaveParams {
         return amplitude_;
     }
 
-    double phaseRadians() const {
-        return phaseRadians_;
+    double phase_radians() const {
+        return phase_radians_;
     }
 
     std::optional<Seconds> period() const {
@@ -64,7 +64,7 @@ class SineWaveParams {
     Hz sample_rate_ = 44100.0;
     Hz frequency_ = 1.0;
     double amplitude_ = 1.0;
-    double phaseRadians_ = 0.0;
+    double phase_radians_ = 0.0;
     std::optional<Seconds> period_ = std::nullopt;
 };
 

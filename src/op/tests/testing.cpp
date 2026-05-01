@@ -5,8 +5,8 @@
 namespace p10::testing {
 
 std::string suffixed(const std::string& filename, const std::string& suffix) {
-    std::filesystem::path path(filename);
-    std::string stem = path.stem().string();
+    std::filesystem::path const path(filename);
+    std::string const stem = path.stem().string();
     return stem + "-" + suffix + path.extension().string();
 }
 

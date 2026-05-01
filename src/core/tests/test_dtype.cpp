@@ -27,8 +27,8 @@ TEST_CASE("Dtype::construction and enum values", "[dtype]") {
     }
 
     SECTION("Implicit conversion to Code") {
-        Dtype dtype(Dtype::Float64);
-        Dtype::Code value = dtype;
+        Dtype const dtype(Dtype::Float64);
+        Dtype::Code const value = dtype;
         REQUIRE(value == Dtype::Float64);
     }
 }
@@ -102,7 +102,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
             }
         };
 
-        Dtype float32_dtype(Dtype::Float32);
+        Dtype const float32_dtype(Dtype::Float32);
         float32_dtype.visit(visitor, std::span(data));
 
         auto float_span =
@@ -125,7 +125,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
             }
         };
 
-        Dtype uint32_dtype(Dtype::Uint32);
+        Dtype const uint32_dtype(Dtype::Uint32);
         uint32_dtype.visit(visitor, std::span<const std::byte>(data));
         REQUIRE(sum == 100);
     }
@@ -141,7 +141,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
         };
 
         SECTION("Int8") {
-            Dtype dtype(Dtype::Int8);
+            Dtype const dtype(Dtype::Int8);
             dtype.visit(counting_visitor, std::span(data));
             auto int8_span = std::span(reinterpret_cast<int8_t*>(data.data()), 8);
             REQUIRE(int8_span[0] == 0);
@@ -149,7 +149,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
         }
 
         SECTION("Uint16") {
-            Dtype dtype(Dtype::Uint16);
+            Dtype const dtype(Dtype::Uint16);
             dtype.visit(counting_visitor, std::span(data));
             auto uint16_span = std::span(reinterpret_cast<uint16_t*>(data.data()), 4);
             REQUIRE(uint16_span[0] == 0);
@@ -157,7 +157,7 @@ TEST_CASE("Dtype::visit() functionality", "[dtype]") {
         }
 
         SECTION("Float64") {
-            Dtype dtype(Dtype::Float64);
+            Dtype const dtype(Dtype::Float64);
             dtype.visit(counting_visitor, std::span(data));
             auto double_span = std::span(reinterpret_cast<double*>(data.data()), 1);
             REQUIRE(double_span[0] == 0.0);

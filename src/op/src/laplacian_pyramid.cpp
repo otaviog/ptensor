@@ -44,8 +44,8 @@ void LaplacianPyramid::pyramid_from_gaussian_to_laplacian(std::span<Tensor> outp
 
     Tensor upsample_buffer;
     for (size_t level = 0; level < num_levels - 1; ++level) {
-        size_t height = gaussian_pyramid_[level].shape(1).unwrap();
-        size_t width = gaussian_pyramid_[level].shape(2).unwrap();
+        size_t const height = gaussian_pyramid_[level].shape(1).unwrap();
+        size_t const width = gaussian_pyramid_[level].shape(2).unwrap();
 
         resize(gaussian_pyramid_[level + 1], upsample_buffer, width, height)
             .expect("Upsample failed");

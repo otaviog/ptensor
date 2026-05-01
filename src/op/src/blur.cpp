@@ -189,7 +189,7 @@ P10Result<GaussianBlur> GaussianBlur::create(size_t kernel_size, float sigma) {
         );
     }
     KernelStorage kernel_stack_data;
-    std::span<float> kernel {kernel_stack_data.data(), kernel_size};
+    std::span<float> const kernel {kernel_stack_data.data(), kernel_size};
     create_gaussian_kernel_(kernel, sigma);
 
     return Ok(GaussianBlur(kernel_stack_data, kernel_size));
@@ -198,7 +198,7 @@ P10Result<GaussianBlur> GaussianBlur::create(size_t kernel_size, float sigma) {
 namespace {
     void create_gaussian_kernel_(std::span<float> kernel, float sigma) {
         float sum = 0.0f;
-        int half_size = static_cast<int>(kernel.size() / 2);
+        int const half_size = static_cast<int>(kernel.size() / 2);
         for (int i = -half_size; i <= half_size; ++i) {
             kernel[i + half_size] = static_cast<float>(
                 std::exp(-(i * i) / (2 * sigma * sigma))
@@ -247,7 +247,7 @@ P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) {
                 [](float value) { return accumulator_traits<scalar_t>::from_float(value); }
             );
 
-            std::span<const accum_t> kernel_span {kernel.data(), get_kernel().size()};
+            const std::span<const accum_t> kernel_span {kernel.data(), get_kernel().size()};
 
             for (int64_t channel_plane = 0; channel_plane < input_acc.channels(); channel_plane++) {
                 apply_horizontal_kernel<scalar_t, accum_t>(

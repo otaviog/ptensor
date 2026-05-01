@@ -27,7 +27,7 @@ FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
     }
 
     while (true) {
-        UniqueAvFrame frame(av_frame_alloc());
+        UniqueAvFrame const frame(av_frame_alloc());
         ret = avcodec_receive_frame(codec_ctx_, frame.get());
         if (ret == AVERROR(EAGAIN)) {
             return Ok(DecodeStatus::Again);

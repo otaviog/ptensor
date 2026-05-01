@@ -72,9 +72,8 @@ WindowFunction::transform_borders(const Tensor& input, Tensor& output, size_t bo
             const auto in_row = input_span.row(signal_idx);
 
             // Center part
-            std::copy(
-                in_row + border_size,
-                in_row + num_samples - border_size,
+            std::ranges::copy(
+                std::span(in_row + border_size, num_samples - 2 * border_size),
                 out_row + border_size
             );
 

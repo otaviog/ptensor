@@ -18,9 +18,8 @@ P10Result<Tensor> load_image(const std::string& path) {
     Tensor tensor;
     tensor.create(make_shape(height, width, channels), Dtype::Uint8);
     auto tensor_bytes = tensor.as_bytes();
-    std::copy(
-        data,
-        data + tensor_bytes.size(),
+    std::ranges::copy(
+        std::span(data, tensor_bytes.size()),
         reinterpret_cast<unsigned char*>(tensor_bytes.data())
     );
     stbi_image_free(data);

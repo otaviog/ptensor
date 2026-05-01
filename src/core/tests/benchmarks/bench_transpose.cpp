@@ -9,8 +9,8 @@ namespace {
     void BM_Transpose_Small(benchmark::State& state) {
         const int size = static_cast<int>(state.range(0));
 
-        std::mt19937_64 rng(42);
-        Tensor input =
+        std::mt19937_64 const rng(42);
+        Tensor const input =
             Tensor::from_random(make_shape(size, size), rng, TensorOptions().dtype(Dtype::Float32))
                 .unwrap();
         Tensor output;
@@ -30,8 +30,8 @@ namespace {
     void BM_Transpose_Medium(benchmark::State& state) {
         const int size = static_cast<int>(state.range(0));
 
-        std::mt19937_64 rng(42);
-        Tensor input =
+        std::mt19937_64 const rng(42);
+        Tensor const input =
             Tensor::from_random(make_shape(size, size), rng, TensorOptions().dtype(Dtype::Float32))
                 .unwrap();
         Tensor output;
@@ -50,8 +50,8 @@ namespace {
     void BM_Transpose_Large(benchmark::State& state) {
         const int size = static_cast<int>(state.range(0));
 
-        std::mt19937_64 rng(42);
-        Tensor input =
+        std::mt19937_64 const rng(42);
+        Tensor const input =
             Tensor::from_random(make_shape(size, size), rng, TensorOptions().dtype(Dtype::Float32))
                 .unwrap();
         Tensor output;
@@ -71,8 +71,8 @@ namespace {
         const int rows = static_cast<int>(state.range(0));
         const int cols = static_cast<int>(state.range(1));
 
-        std::mt19937_64 rng(42);
-        Tensor input =
+        std::mt19937_64 const rng(42);
+        Tensor const input =
             Tensor::from_random(make_shape(rows, cols), rng, TensorOptions().dtype(Dtype::Float32))
                 .unwrap();
         Tensor output;
@@ -91,8 +91,8 @@ namespace {
     void BM_Transpose_Int32(benchmark::State& state) {
         const int size = static_cast<int>(state.range(0));
 
-        std::mt19937_64 rng(42);
-        Tensor input =
+        std::mt19937_64 const rng(42);
+        Tensor const input =
             Tensor::from_random(make_shape(size, size), rng, TensorOptions().dtype(Dtype::Int32))
                 .unwrap();
         Tensor output;

@@ -16,8 +16,8 @@
 ## Build Commands
 
 * Linux/MacOs: `cmake --workflow --preset clang/debug` or `cmake --workflow --preset clang/release`
-* Windows: `cmake --workflow --preset win-dev`
-* WebAssembly: `cmake --workflow --preset wasm-build`
+* Windows: `cmake --workflow --preset msbuild/install`
+* WebAssembly: `cmake --workflow --preset wasm/build`
 
 If vcpkg is not clone yet, run the following command first:
 
@@ -40,10 +40,10 @@ To build for WebAssembly, you need to have Emscripten SDK installed:
 
 2. Build the project:
    ```shell
-   cmake --workflow --preset wasm-build
+   cmake --workflow --preset wasm/build
    ```
 
-The output will be in `build/wasm-release/` with files:
+The output will be in `build/wasm/release/` with files:
 - `ptensor.js` - JavaScript loader
 - `ptensor.wasm` - WebAssembly binary
 
@@ -52,8 +52,8 @@ The output will be in `build/wasm-release/` with files:
 Two binding options are available:
 
 1. **WebAssembly bindings** (for browsers and Node.js):
-   - Located in `native/bindings/ptensor_bindings.cpp`
-   - TypeScript wrappers in `bindings/typescript/ptensor-wrapper.ts`
+   - Located in `bindings/typescript/backends/wasm/`
+   - TypeScript sources in `bindings/typescript/src/ptensor/`
    - Build with `cmake --workflow --preset wasm-build`
    - Use in browsers and Node.js
 
@@ -65,13 +65,14 @@ Two binding options are available:
 
 ## Project Structure
 
-* `src/` - Python source
+* `src/` - C++ source (modules: `core`, `op`, `simd`, `io`, `media`, `infer`, `recog`, `testing`)
+* `src/c/` - C API
+* `bindings/python/` - Python bindings (sources in `bindings/python/src/ptensor/`)
+* `bindings/typescript/` - TypeScript bindings (FFI + WASM backend in `backends/wasm/`)
 * `cmake/` - CMake presets and modules
-* `native/cpp` - C++ source
-* `native/c` - C API
-* `tests/` - All tests
-* `ports` - vcpkg port files
-* `vpkg.json` - Local vcpkg manifest
+* `tests/` - Test data and outputs (per-module C++ tests live under `src/<module>/tests/`)
+* `ports/` - vcpkg port files
+* `vcpkg.json` - Local vcpkg manifest
 
 ## Human Language
 

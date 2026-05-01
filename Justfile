@@ -1,4 +1,4 @@
-UNIT_TEST := "build/coverage/native/tests/unit_tests_all"
+UNIT_TEST := "build/coverage/tests/unit_tests_all"
 
 _run_coverage:
     cmake --workflow --preset coverage-build
@@ -15,7 +15,10 @@ coverage-html: _run_coverage
     rm edge-ai-coverage.profdata
 
 clang-format:
-    find native -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec clang-format -i {} +
+    find src -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec clang-format -i {} +
+
+clang-tiddy:
+    find src -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec clang-tidy {} +
 
 run-ci:
     act --job linux-check

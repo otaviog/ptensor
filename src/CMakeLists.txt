@@ -1,8 +1,7 @@
 add_subdirectory(simd)
 add_subdirectory(log)
 add_subdirectory(core)
-add_subdirectory(c)
- 
+
 set(WITH_IO OFF CACHE BOOL "Build Input/Output library")
 set(WITH_OP OFF CACHE BOOL "Build Operations library")
 set(WITH_MEDIA OFF CACHE BOOL "Build Media library (requires FFMPEG)")
@@ -33,3 +32,6 @@ endif (WITH_INFER)
 if (WITH_RECOG)
   add_subdirectory(recog)
 endif (WITH_RECOG)
+
+# The C API is built last so optional module bindings can be included.
+add_subdirectory(c)

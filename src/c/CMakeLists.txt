@@ -21,6 +21,22 @@ target_sources(ptensor_capi
     src/update_error_state.hpp
     src/ptensor_dtype.cpp
     )
+
+if (WITH_INFER)
+    target_sources(ptensor_capi
+        PUBLIC
+        FILE_SET public_headers TYPE HEADERS
+        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+        FILES
+        ${_INCLUDE_DIR}/ptensor_infer.h)
+    target_sources(ptensor_capi
+        PRIVATE
+        src/infer_wrapper.hpp
+        src/ptensor_infer.cpp)
+    target_link_libraries(ptensor_capi PRIVATE ptensor_infer)
+    target_compile_definitions(ptensor_capi PRIVATE PTENSOR_WITH_INFER)
+endif()
+
 target_compile_definitions(
     ptensor_capi
     PRIVATE
@@ -35,7 +51,7 @@ target_include_directories(ptensor_capi
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${_INCLUDE_DIR}
 )
-target_link_libraries(ptensor_capi ptensor)
+target_link_libraries(ptensor_capi PUBLIC ptensor)
 
 # Install the target
 install(TARGETS ptensor_capi

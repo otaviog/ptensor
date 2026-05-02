@@ -1,0 +1,11 @@
+add_library(unit_tests_media OBJECT
+    test_media_capture.cpp test_video_queue.cpp test_media_writer.cpp
+    test_ffmpeg_sws.cpp
+)
+target_include_directories(
+    unit_tests_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/ptensor/media
+    ${FFMPEG_INCLUDE_DIRS})
+ptensor_target_options(unit_tests_media Media)
+target_link_libraries(unit_tests_media
+    PUBLIC ptensor ptensor_media ${_FFMPEG_LIBRARIES} PRIVATE Catch2::Catch2 ptensor_testing)

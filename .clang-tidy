@@ -27,6 +27,7 @@ Checks: >
   -cppcoreguidelines-non-private-member-variables-in-classes,
   -cppcoreguidelines-owning-memory,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
   -cppcoreguidelines-pro-bounds-constant-array-index,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-pro-type-reinterpret-cast,
@@ -34,10 +35,14 @@ Checks: >
   -cppcoreguidelines-pro-type-vararg,
   -cppcoreguidelines-narrowing-conversions,
   -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-use-enum-class,
+  -performance-enum-size,
   -misc-no-recursion,
   -misc-non-private-member-variables-in-classes,
   -misc-include-cleaner,
   -modernize-avoid-c-arrays,
+  -modernize-return-braced-init-list,
+  -modernize-use-integer-sign-comparison,
   -modernize-use-nodiscard,
   -modernize-use-trailing-return-type,
   -portability-avoid-pragma-once,
@@ -45,6 +50,7 @@ Checks: >
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
   -readability-magic-numbers,
+  -readability-math-missing-parentheses,
   -readability-named-parameter,
   -readability-redundant-access-specifiers,
   -readability-uppercase-literal-suffix
@@ -53,22 +59,25 @@ Checks: >
 WarningsAsErrors: ''
 
 # Only diagnose project headers; vcpkg / system / generated headers are noise.
-HeaderFilterRegex: '(native|bindings|wasm)/.*\.(h|hpp)$'
+HeaderFilterRegex: '.*/(src|bindings)/.*\.hpp$'
 
 # Skip vendored & build-output trees regardless of HeaderFilterRegex.
-ExcludeHeaderFilterRegex: '(vcpkg|build|_deps|external|third_party)/'
+ExcludeHeaderFilterRegex: '/(vcpkg|vcpkg_installed|build|_deps|external|third_party|\.cache|emsdk)/'
 
 FormatStyle: file
 SystemHeaders: false
 
 CheckOptions:
   # --- Naming conventions (matches existing codebase) ---
+  # The codebase mixes Rust-style factories (Ok/Err) and STL-style traits and
+  # iterators (is_complex, iterator, scalar_t). Where both styles coexist by
+  # design, the case is set to aNy_CasE rather than enforcing one shape.
   - key: readability-identifier-naming.NamespaceCase
     value: lower_case
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
   - key: readability-identifier-naming.StructCase
-    value: CamelCase
+    value: aNy_CasE
   - key: readability-identifier-naming.EnumCase
     value: CamelCase
   - key: readability-identifier-naming.EnumConstantCase
@@ -76,13 +85,13 @@ CheckOptions:
   - key: readability-identifier-naming.ScopedEnumConstantCase
     value: CamelCase
   - key: readability-identifier-naming.TypeAliasCase
-    value: CamelCase
+    value: aNy_CasE
   - key: readability-identifier-naming.TypedefCase
-    value: CamelCase
+    value: aNy_CasE
   - key: readability-identifier-naming.TemplateParameterCase
-    value: CamelCase
+    value: aNy_CasE
   - key: readability-identifier-naming.FunctionCase
-    value: lower_case
+    value: aNy_CasE
   - key: readability-identifier-naming.MethodCase
     value: lower_case
   - key: readability-identifier-naming.VariableCase

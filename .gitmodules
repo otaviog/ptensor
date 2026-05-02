@@ -1,3 +1,6 @@
 [submodule "vcpkg"]
 	path = vcpkg
 	url = https://github.com/microsoft/vcpkg
+[submodule "src/log/lib/ng-log"]
+	path = src/log/lib/ng-log
+	url = https://github.com/ng-log/ng-log.git

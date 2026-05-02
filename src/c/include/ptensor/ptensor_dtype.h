@@ -1,0 +1,41 @@
+#ifndef PTENSOR_DTYPE_H_
+#define PTENSOR_DTYPE_H_
+
+#include <stddef.h>
+
+#include "ptensor_error.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    P10_DTYPE_FLOAT32 = 0,
+    P10_DTYPE_FLOAT64,
+    P10_DTYPE_FLOAT16,
+    P10_DTYPE_UINT8,
+    P10_DTYPE_UINT16,
+    P10_DTYPE_UINT32,
+    P10_DTYPE_INT8,
+    P10_DTYPE_INT16,
+    P10_DTYPE_INT32,
+    P10_DTYPE_INT64,
+} P10DTypeEnum;
+
+#define P10_DTYPE_LAST P10_DTYPE_INT64
+
+PTENSOR_API const char* p10_dtype_to_string(P10DTypeEnum dtype);
+
+PTENSOR_API P10ErrorEnum p10_dtype_from_string(
+    const char* type_str,
+    P10DTypeEnum* out_dtype
+);
+
+/// Returns the size in bytes of a single element of the given dtype, or 0 if unknown.
+PTENSOR_API size_t p10_dtype_size_bytes(P10DTypeEnum dtype);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // PTENSOR_DTYPE_H_

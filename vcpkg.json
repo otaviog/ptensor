@@ -55,7 +55,6 @@
 		"infer": {
 			"description": "Inference support",
 			"dependencies": [
-			  "ng-log",
 				"cli11"
 			]
 		}

@@ -5,10 +5,7 @@
 			"name": "debug/unit-test",
 			"type": "lldb-vscode",
 			"request": "launch",
-			"program": "${workspaceFolder}/build/clang/debug/native/tests/unit_tests_all",
-		  "args": [
-			"[blaze_face]"
-			],
+			"program": "${workspaceFolder}/build/clang/debug/tests/unit_tests_all",
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
 			"environment": [],
@@ -19,7 +16,7 @@
 			"name": "debug/transcoder",
 			"type": "lldb-vscode",
 			"request": "launch",
-			"program": "${workspaceFolder}/build/clang/debug/native/cpp/media/samples/sample_transcoder",
+			"program": "${workspaceFolder}/build/clang/debug/src/media/samples/sample_transcoder",
 			"args": [
 				"${input:videoPath}"
 			],

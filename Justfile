@@ -1,4 +1,4 @@
-UNIT_TEST := "build/coverage/native/tests/unit_tests_all"
+UNIT_TEST := "build/coverage/tests/unit_tests_all"
 
 _run_coverage:
     cmake --workflow --preset coverage-build
@@ -15,7 +15,21 @@ coverage-html: _run_coverage
     rm edge-ai-coverage.profdata
 
 clang-format:
-    find native -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec clang-format -i {} +
+    find src -type f \( -name "*.cpp" -o -name "*.hpp" \) ! -path "*/lib/*" -exec clang-format -i {} +
+
+CLANG_TIDY_BUILD := "build/clang/debug"
+CLANG_TIDY_EXTRA := if os() == "macos" { "--extra-arg=-isysroot" + ` xcrun --show-sdk-path` } else { "" }
+
+# Lint only files that are in the active build (compile_commands.json).
+# Skips modules disabled by the preset (infer/recog) and orphans.
+_clang_tidy_files:
+    @jq -r '.[].file' {{ CLANG_TIDY_BUILD }}/compile_commands.json | grep "/src/" | grep -v "/lib/" | sort -u
+
+clang-tidy:
+    just _clang_tidy_files | xargs -n 1 -P "$(sysctl -n hw.ncpu 2>/dev/null || nproc)" clang-tidy --quiet -p {{ CLANG_TIDY_BUILD }} {{ CLANG_TIDY_EXTRA }}
+
+test:
+    ctest --preset clang/debug
 
 run-ci:
     act --job linux-check

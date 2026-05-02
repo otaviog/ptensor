@@ -39,7 +39,7 @@ FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
         }
 
         VideoFrame new_frame;
-        sws_converter.transform(frame.get(), new_frame);
+        sws_converter_.transform(frame.get(), new_frame);
         new_frame.update_time(
             Time {Rational {stream_->time_base.num, stream_->time_base.den}, frame.get()->pts}
         );

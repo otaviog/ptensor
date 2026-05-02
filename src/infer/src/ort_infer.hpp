@@ -6,7 +6,7 @@ namespace p10::infer {
 class OrtInfer: public IInfer {
   public:
     static P10Result<IInfer*> create(const std::string& onnx_path);
-    P10Error infer(std::span<Tensor> inputTensors, std::span<Tensor> outputTensors) override;
+    P10Error infer(std::span<Tensor> input_tensors, std::span<Tensor> output_tensors) override;
 
     size_t get_input_count() const override {
         return session_->GetInputCount();

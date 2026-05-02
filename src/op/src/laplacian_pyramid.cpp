@@ -69,12 +69,12 @@ P10Error LaplacianPyramid::reconstruct(std::span<const Tensor> pyramid, Tensor& 
     P10_RETURN_IF_ERROR(output.create(pyramid[0].shape(), pyramid[0].dtype()));
     P10_RETURN_IF_ERROR(output.copy_from(pyramid.back()));
     for (int level = num_levels - 2; level >= 0; --level) {
-        const auto Ll = pyramid[level].clone().unwrap();
-        const size_t height = Ll.shape(1).unwrap();
-        const size_t width = Ll.shape(2).unwrap();
+        const auto ll = pyramid[level].clone().unwrap();
+        const size_t height = ll.shape(1).unwrap();
+        const size_t width = ll.shape(2).unwrap();
 
         assert(resize(output, upsample_buffer, width, height).is_ok());
-        assert(add_elemwise(Ll, upsample_buffer, output).is_ok());
+        assert(add_elemwise(ll, upsample_buffer, output).is_ok());
     }
     return P10Error::Ok;
 }

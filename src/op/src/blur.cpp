@@ -21,7 +21,7 @@ namespace p10::op {
 using detail::accumulator_traits;
 
 namespace {
-    void create_gaussian_kernel_(std::span<float> kernel, float sigma);
+    void create_gaussian_kernel(std::span<float> kernel, float sigma);
 
 #if 0
     template<typename scalar_t, typename accum_t>
@@ -190,13 +190,13 @@ P10Result<GaussianBlur> GaussianBlur::create(size_t kernel_size, float sigma) {
     }
     KernelStorage kernel_stack_data;
     std::span<float> const kernel {kernel_stack_data.data(), kernel_size};
-    create_gaussian_kernel_(kernel, sigma);
+    create_gaussian_kernel(kernel, sigma);
 
     return Ok(GaussianBlur(kernel_stack_data, kernel_size));
 }
 
 namespace {
-    void create_gaussian_kernel_(std::span<float> kernel, float sigma) {
+    void create_gaussian_kernel(std::span<float> kernel, float sigma) {
         float sum = 0.0f;
         int const half_size = static_cast<int>(kernel.size() / 2);
         for (int i = -half_size; i <= half_size; ++i) {

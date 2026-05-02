@@ -25,19 +25,19 @@ TEST_CASE(
     "media::MediaCapture::open_file returns IoError for unsupported file format",
     "[media][capture]"
 ) {
-    const std::string UNSUPPORTED_FILE = "unsupported_file.txt";
-    std::fstream outfile(UNSUPPORTED_FILE, std::ios::out);
+    const std::string unsupported_file = "unsupported_file.txt";
+    std::fstream outfile(unsupported_file, std::ios::out);
     outfile << "This is not a valid media file.";
     outfile.close();
 
-    REQUIRE_THAT(MediaCapture::open_file(UNSUPPORTED_FILE), testing::is_error(P10Error::IoError));
+    REQUIRE_THAT(MediaCapture::open_file(unsupported_file), testing::is_error(P10Error::IoError));
 
-    std::filesystem::remove(UNSUPPORTED_FILE);
+    std::filesystem::remove(unsupported_file);
 }
 
 TEST_CASE("media::MediaCapture::reads frames and parameters", "[media][capture]") {
-    const std::string VALID_FILE = "tests/data/video/file_example_MP4_480_1_5MG.mp4";
-    MediaCapture capture = MediaCapture::open_file(VALID_FILE).expect("should open valid file");
+    const std::string valid_file = "tests/data/video/file_example_MP4_480_1_5MG.mp4";
+    MediaCapture capture = MediaCapture::open_file(valid_file).expect("should open valid file");
 
     SECTION("reads a single video frame") {
         REQUIRE_THAT(capture.next_frame(), testing::is_ok());

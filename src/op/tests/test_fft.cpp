@@ -80,13 +80,13 @@ TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
     }
 
     SECTION("Should handle batched and large signals") {
-        const size_t NUM_SIGNALS = 4;
-        const size_t SIGNAL_SIZE = 4096;
-        const Hz SAMPLE_RATE = 48000.0;
-        auto large_signals = Tensor::zeros(make_shape(NUM_SIGNALS, SIGNAL_SIZE)).unwrap();
+        const size_t num_signals = 4;
+        const size_t signal_size = 4096;
+        const Hz sample_rate = 48000.0;
+        auto large_signals = Tensor::zeros(make_shape(num_signals, signal_size)).unwrap();
         SineWaveParams params;
-        params.sample_rate(SAMPLE_RATE).period(0.01);
-        const std::array<SineWaveParams, NUM_SIGNALS> waves = {
+        params.sample_rate(sample_rate).period(0.01);
+        const std::array<SineWaveParams, num_signals> waves = {
             params.frequency(16000.0).amplitude(1.0).phase_radians(std::numbers::pi / 2),
             params.frequency(16500.0).amplitude(0.75).phase_radians(std::numbers::pi / 4),
             params.frequency(17000.0).amplitude(0.50).phase_radians(std::numbers::pi / 6),
@@ -96,7 +96,7 @@ TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
         for (size_t signal_idx = 0; signal_idx < 4; ++signal_idx) {
             auto signal = large_signals.select_dimension(0, signal_idx).unwrap();
             REQUIRE_THAT(
-                generate_sine_wave(SIGNAL_SIZE, Dtype::Float32, waves[signal_idx], signal),
+                generate_sine_wave(signal_size, Dtype::Float32, waves[signal_idx], signal),
                 testing::is_ok()
             );
         }

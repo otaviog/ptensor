@@ -55,7 +55,7 @@ class FfmpegVideoDecoder {
     AVStream* stream_ = nullptr;
     AVCodecContext* codec_ctx_ = nullptr;
     int index_ = -1;
-    FfmpegSws sws_converter;
+    FfmpegSws sws_converter_;
 };
 
 }  // namespace p10::media

@@ -21,8 +21,8 @@ P10Result<IInfer*> OrtInfer::create(const std::string& onnx_path) {
     }
 }
 
-OrtInfer::OrtInfer(const std::string& modelPath, Ort::Env&& env) :
-    model_path_(modelPath),
+OrtInfer::OrtInfer(const std::string& model_path, Ort::Env&& env) :
+    model_path_(model_path),
     env_(std::move(env)),
     session_options_() {
     session_options_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);

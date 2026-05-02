@@ -2,16 +2,13 @@
 
 #include <string>
 #include <ng-log/logging.h>
+
 #include <ptensor/p10_result.hpp>
 
 namespace p10::log {
 
-inline P10Error init() {
-    return P10Error::Ok;
-}
-
 struct ScopedLogger {
-    explicit ScopedLogger(std::string scope) : scope(std::move(scope)) {}
+    explicit ScopedLogger(std::string scope) noexcept : scope(std::move(scope)) {}
 
     void info(const std::string& message) const {
         LOG(INFO) << scope << ": " << message;

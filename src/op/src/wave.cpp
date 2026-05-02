@@ -28,7 +28,7 @@ generate_sine_wave(size_t num_samples, Dtype type, const SineWaveParams& params,
     const double amplitude = params.amplitude();
     const double phase = params.phase_radians();
 
-    const size_t period_samples = static_cast<size_t>(
+    const auto period_samples = static_cast<size_t>(
         params.period().has_value() ? params.period().value() * sample_rate
                                     : (sample_rate / frequency)
     );
@@ -38,14 +38,14 @@ generate_sine_wave(size_t num_samples, Dtype type, const SineWaveParams& params,
     output.visit([&](auto span) {
         using scalar_t = decltype(span)::value_type;
 
-        const scalar_t amplitude_val = static_cast<scalar_t>(amplitude);
-        const scalar_t phase_val = static_cast<scalar_t>(phase);
+        const auto amplitude_val = static_cast<scalar_t>(amplitude);
+        const auto phase_val = static_cast<scalar_t>(phase);
 
-        const scalar_t phase_increment =
+        const auto phase_increment =
             static_cast<scalar_t>(2.0 * std::numbers::pi * frequency / sample_rate);
         for (size_t i = 0; i < span.size(); ++i) {
-            const scalar_t t = static_cast<scalar_t>(i % period_samples);
-            const scalar_t normalized_phase = phase_increment * t;
+            const auto t = static_cast<scalar_t>(i % period_samples);
+            const auto normalized_phase = phase_increment * t;
             span[i] = amplitude_val * std::sin(normalized_phase + phase_val);
         }
     });

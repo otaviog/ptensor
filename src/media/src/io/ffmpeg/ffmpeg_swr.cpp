@@ -1,8 +1,5 @@
 #include "ffmpeg_swr.hpp"
 
-#include <array>
-
-#include "audio_frame.hpp"
 #include "ptensor/p10_error.hpp"
 
 extern "C" {
@@ -11,7 +8,6 @@ extern "C" {
 #include <libswresample/swresample.h>
 }
 
-#include "ffmpeg_memory.hpp"
 #include "ffmpeg_wrap_error.hpp"
 
 namespace p10::media {
@@ -39,7 +35,7 @@ P10Result<SwrContext*> FfmpegSwr::get_swr_context(
 ) {
     if (swr_ != nullptr) {
         SwrContext* result = swr_;
-        return Ok(std::move(result));
+        return Ok(result);
     }
 
     P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(swr_alloc_set_opts2(
@@ -56,7 +52,7 @@ P10Result<SwrContext*> FfmpegSwr::get_swr_context(
 
     P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(swr_init(swr_)));
     SwrContext* result = swr_;
-    return Ok(std::move(result));
+    return Ok(result);
 }
 
 P10Error FfmpegSwr::transform(const AVFrame* source_frame, AVFrame** output_frame) {

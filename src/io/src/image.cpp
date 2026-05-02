@@ -8,9 +8,9 @@
 namespace p10::io {
 
 P10Result<Tensor> load_image(const std::string& path) {
-    int width;
-    int height;
-    int channels;
+    int width = 0;
+    int height = 0;
+    int channels = 0;
     unsigned char* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
     if (!data) {
         return Err(P10Error::InvalidArgument, "Failed to load image");
@@ -19,9 +19,10 @@ P10Result<Tensor> load_image(const std::string& path) {
     tensor.create(make_shape(height, width, channels), Dtype::Uint8);
     auto tensor_bytes = tensor.as_bytes();
     std::ranges::copy(
-        std::span(data, tensor_bytes.size()),
-        reinterpret_cast<unsigned char*>(tensor_bytes.data())
+        std::span(reinterpret_cast<std::byte*>(data), tensor_bytes.size()),
+        tensor_bytes.data()
     );
+
     stbi_image_free(data);
     return Ok<Tensor>(std::move(tensor));
 }

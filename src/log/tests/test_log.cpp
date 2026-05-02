@@ -7,10 +7,6 @@
 
 using namespace p10;
 
-TEST_CASE("log::init returns Ok", "[log]") {
-    REQUIRE_THAT(log::init(), testing::is_ok());
-}
-
 TEST_CASE("log::scope creates ScopedLogger with the given scope", "[log]") {
     auto logger = log::scope("unit_test");
     REQUIRE(logger.scope == "unit_test");

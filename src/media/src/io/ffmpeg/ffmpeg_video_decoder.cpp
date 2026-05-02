@@ -34,7 +34,8 @@ FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
         }
         if (ret == AVERROR_EOF) {
             return Ok(DecodeStatus::Eof);
-        } else if (ret < 0) {
+        }
+        if (ret < 0) {
             return Err(wrap_ffmpeg_error(ret));
         }
 
@@ -50,12 +51,12 @@ FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
 }
 
 VideoParameters FfmpegVideoDecoder::get_video_parameters() const {
-    VideoParameters params;
-    auto* codec = stream_->codecpar;
+    VideoParameters params{};
+    auto const * codec = stream_->codecpar;
     params.width(codec->width)
         .height(codec->height)
         .codec(video_codec_from_avcodec_id(codec->codec_id))
-        .bit_rate(codec->bit_rate);
+        .bit_rate(static_cast<int>(codec->bit_rate));
     if (stream_->r_frame_rate.den != 0) {
         params.frame_rate(Rational {stream_->r_frame_rate.num, stream_->r_frame_rate.den});
     }

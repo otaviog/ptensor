@@ -83,4 +83,3 @@ export function fromOnnx(modelPath: string): InferSession {
   P10Error.check(ffiInt(p10_infer_from_onnx(buf, pathBuf)));
   return new InferSessionImpl(buf);
 }
-

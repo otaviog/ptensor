@@ -23,6 +23,12 @@ export const {
     p10_get_ndim,
     p10_get_data,
     p10_is_empty,
+    // infer
+    p10_infer_from_onnx,
+    p10_infer_destroy,
+    p10_infer_get_input_count,
+    p10_infer_get_output_count,
+    p10_infer_run,
   },
 } = dlopen(libPath, {
   // ------------------------------------------------------------------ //
@@ -169,6 +175,56 @@ export const {
   /** Returns 1 if the tensor has no elements, 0 otherwise. */
   p10_is_empty: {
     args: [FFIType.ptr],  // Ptensor
+    returns: FFIType.int,
+  },
+
+  // ------------------------------------------------------------------ //
+  // Infer
+  // ------------------------------------------------------------------ //
+
+  /** Creates an inference session from an ONNX model file path. Returns P10ErrorEnum. */
+  p10_infer_from_onnx: {
+    args: [
+      FFIType.ptr,     // P10Infer* out
+      FFIType.cstring, // const char* onnx_model_path
+    ],
+    returns: FFIType.int,
+  },
+
+  /** Destroys an inference session. Sets *infer to NULL. Returns P10ErrorEnum. */
+  p10_infer_destroy: {
+    args: [FFIType.ptr],  // P10Infer*
+    returns: FFIType.int,
+  },
+
+  /** Returns the number of input tensors expected by the model. */
+  p10_infer_get_input_count: {
+    args: [FFIType.ptr],  // P10Infer (handle value)
+    returns: FFIType.u64,
+  },
+
+  /** Returns the number of output tensors produced by the model. */
+  p10_infer_get_output_count: {
+    args: [FFIType.ptr],  // P10Infer (handle value)
+    returns: FFIType.u64,
+  },
+
+  /**
+   * Runs inference.
+   *   infer          - session handle value
+   *   input_tensors  - ptr to contiguous array of Ptensor handle values
+   *   num_inputs     - must match p10_infer_get_input_count()
+   *   output_tensors - ptr to contiguous array of Ptensor slots (filled on success)
+   *   num_outputs    - must match p10_infer_get_output_count()
+   */
+  p10_infer_run: {
+    args: [
+      FFIType.ptr, // P10Infer infer
+      FFIType.ptr, // const Ptensor* input_tensors
+      FFIType.u64, // size_t num_inputs
+      FFIType.ptr, // Ptensor* output_tensors
+      FFIType.u64, // size_t num_outputs
+    ],
     returns: FFIType.int,
   },
 });

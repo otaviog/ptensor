@@ -13,6 +13,7 @@ import {
 import { P10Error } from './p10Error.js';
 import { DTypeString, dtypeToNumber, numberToDtype } from './dtype.js';
 import { TypedArrayType, getDtypeFromTypedArray, createTypedArray } from './typedArray.js';
+import { ffiInt, ffiU64, readHandle, newHandleBuf } from './_internal.js';
 
 export type { DTypeString };
 export type { TypedArrayType };
@@ -36,31 +37,9 @@ export interface Tensor {
   delete(): void;
 }
 
-// ------------------------------------------------------------------ //
-// Opaque handle helpers
-//
-// A Ptensor is a void*. It is kept in a BigUint64Array(1) so that:
-//   - p10_from_data writes into it (Ptensor* out)
-//   - p10_destroy can null it out (Ptensor*)
-//   - accessors receive Number(buf[0]) as a raw-pointer int arg
-// ------------------------------------------------------------------ //
-
-function readHandle(buf: BigUint64Array): number {
-  return Number(buf[0]);
-}
-
-function ffiInt(v: unknown): number {
-  return v as number;
-}
-
-function ffiU64(v: unknown): bigint {
-  const n = v as bigint | number;
-  return typeof n === 'bigint' ? n : BigInt(n);
-}
-
 class TensorImpl implements Tensor {
-  private _buf: BigUint64Array; // [0] = opaque Ptensor value
-  private _owner?: object;      // keeps JS data buffer alive for view tensors
+  /** @internal – do not access outside this module or infer.ts */ readonly _buf: BigUint64Array;
+  private _owner?: object;
 
   constructor(buf: BigUint64Array, owner?: object) {
     this._buf = buf;
@@ -129,7 +108,7 @@ export function fromArray(
   const dtype = getDtypeFromTypedArray(data);
   const dtypeNum = dtypeToNumber[dtype];
   const shapeArr = new BigInt64Array(shape.map(BigInt));
-  const buf = new BigUint64Array(1);
+  const buf = newHandleBuf();
 
   let err: number;
   if (strides) {
@@ -153,5 +132,19 @@ export function zeros(shape: number[], dtype: DTypeString = 'float32'): Tensor {
   const size = shape.reduce((a, b) => a * b, 1);
   const data = createTypedArray(dtype, size);
   return fromArray(data, shape);
+}
+
+// ------------------------------------------------------------------ //
+// Internal helpers (used by infer.ts)
+// ------------------------------------------------------------------ //
+
+/** @internal Wraps an existing native Ptensor handle into a Tensor. */
+export function _wrapHandle(buf: BigUint64Array): Tensor {
+  return new TensorImpl(buf);
+}
+
+/** @internal Extracts the raw Ptensor handle value from a Tensor. */
+export function _getRawHandle(t: Tensor): bigint {
+  return (t as TensorImpl)._buf[0];
 }
 

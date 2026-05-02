@@ -564,7 +564,7 @@ class Tensor {
         if (auto err = validate_dtype<T>(); !err.is_ok()) {
             return Err(err);
         }
-        return Ok<T*>(blob_.data<T>());
+        return Ok(blob_.data<T>());
     }
 
     template<typename T>

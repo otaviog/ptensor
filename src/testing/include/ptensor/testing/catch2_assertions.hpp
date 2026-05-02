@@ -18,6 +18,11 @@ struct ErrorMatcher: Catch::Matchers::MatcherBase<P10Error> {
         return match(actual.error());
     }
 
+    template<typename T>
+    bool match(const OkTypeDeduct<T>&) const {
+        return expected_.is_ok();
+    }
+
     bool match(const P10Error& actual) const override {
         actual_ = actual;
         return actual.code() == expected_.code();
@@ -50,6 +55,11 @@ struct IsOkMatcher: Catch::Matchers::MatcherBase<P10Error> {
             return true;
         }
         return match(actual.error());
+    }
+
+    template<typename T>
+    bool match(const OkTypeDeduct<T>&) const {
+        return true;
     }
 
     bool match(const P10Error& actual) const override {

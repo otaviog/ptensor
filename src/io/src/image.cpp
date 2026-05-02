@@ -24,7 +24,7 @@ P10Result<Tensor> load_image(const std::string& path) {
     );
 
     stbi_image_free(data);
-    return Ok<Tensor>(std::move(tensor));
+    return Ok(std::move(tensor));
 }
 
 P10Error save_image(const std::string& path, const Tensor& tensor) {

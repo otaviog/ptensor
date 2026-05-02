@@ -10,8 +10,12 @@ namespace p10 {
 
 template<class OkType>
 class P10Result;
+
 template<typename OkType>
-P10Result<std::remove_cvref_t<OkType>> Ok(OkType&& value);
+struct OkTypeDeduct;
+
+template<typename OkType>
+OkTypeDeduct<std::remove_cvref_t<OkType>> Ok(OkType&& value);
 
 template<class OkType>
 class P10Result {
@@ -74,7 +78,7 @@ class P10Result {
     friend class P10Result;
 
     template<typename T>
-    friend P10Result<std::remove_cvref_t<T>> Ok(T&& value);
+    friend struct OkTypeDeduct;
 
     template<typename T>
     friend P10Result<T> Err(P10Error&& error);
@@ -86,9 +90,22 @@ class P10Result {
     friend P10Result<T> Err(P10Error::Code err_code, const std::u8string_view& message);
 };
 
+/// Helper class that defers the P10Result<T> type until the conversion site, so
+/// `Ok(derived_ptr)` can be returned from a function declared to yield
+/// `P10Result<base_ptr>` without an explicit template argument.
 template<typename OkType>
-P10Result<std::remove_cvref_t<OkType>> Ok(OkType&& value) {
-    return P10Result<std::remove_cvref_t<OkType>> {std::forward<OkType>(value)};
+struct OkTypeDeduct {
+    OkType value;
+
+    template<typename U>
+    operator P10Result<U>() && {
+        return P10Result<U> {static_cast<U>(std::move(value))};
+    }
+};
+
+template<typename OkType>
+OkTypeDeduct<std::remove_cvref_t<OkType>> Ok(OkType&& value) {
+    return {std::forward<OkType>(value)};
 }
 
 /// Helper class for template argument deduction for Err function

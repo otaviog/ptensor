@@ -75,7 +75,7 @@ P10Result<TensorMap> load_npz(const std::string& filename) {
             tensors.try_emplace(key, std::move(tensor));
         }
 
-        return Ok<TensorMap>(std::move(tensors));
+        return Ok(std::move(tensors));
     } catch (const std::exception& e) {
         return Err(P10Error::InvalidArgument, e.what());
     }

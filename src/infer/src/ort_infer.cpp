@@ -15,7 +15,7 @@ namespace p10::infer {
 P10Result<IInfer*> OrtInfer::create(const std::string& onnx_path) {
     try {
         Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "hp3d");
-        return Ok<IInfer*>(new OrtInfer(onnx_path, std::move(env)));
+        return Ok(new OrtInfer(onnx_path, std::move(env)));
     } catch (const Ort::Exception& e) {
         return Err(P10Error::InferError << e.what());
     }
@@ -23,8 +23,7 @@ P10Result<IInfer*> OrtInfer::create(const std::string& onnx_path) {
 
 OrtInfer::OrtInfer(const std::string& model_path, Ort::Env&& env) :
     model_path_(model_path),
-    env_(std::move(env)),
-    session_options_() {
+    env_(std::move(env)) {
     session_options_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
     session_.reset(new Ort::Session(

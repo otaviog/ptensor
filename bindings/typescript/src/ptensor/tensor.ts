@@ -14,28 +14,11 @@ import { P10Error } from './p10Error';
 import { DTypeString, dtypeToNumber, numberToDtype } from './dtype';
 import { TypedArrayType, getDtypeFromTypedArray, createTypedArray } from './typedArray';
 import { ffiInt, ffiU64, readHandle, newHandleBuf } from './_internal';
+import type { Tensor } from './types';
 
 export type { DTypeString };
 export type { TypedArrayType };
-
-export interface Tensor {
-  /** Total number of elements. */
-  getSize(): bigint;
-  /** Total data size in bytes. */
-  getSizeBytes(): bigint;
-  /** Dimension sizes. */
-  getShape(): bigint[];
-  /** Per-element strides. */
-  getStride(): bigint[];
-  /** Number of dimensions. */
-  getNdim(): number;
-  /** Element data type. */
-  getDtype(): DTypeString;
-  /** True when the tensor has no elements. */
-  isEmpty(): boolean;
-  /** Releases the native tensor handle. Must be called when done. */
-  delete(): void;
-}
+export type { Tensor };
 
 class TensorImpl implements Tensor {
   /** @internal – do not access outside this module or infer.ts */ readonly _buf: BigUint64Array;

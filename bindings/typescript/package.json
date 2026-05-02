@@ -9,6 +9,7 @@
     "build": "bun build",
     "clean": "rm -rf build",
     "test": "bun test src/ptensor/__tests__/tensor.test.ts",
+    "test:wasm": "bun test src/ptensor/backends/wasm/__tests__/wasm.test.ts",
     "test:integration": "bun test src/ptensor/__tests__/tensor.integration.test.ts src/ptensor/__tests__/infer.integration.test.ts",
     "test:all": "bun test"
   },

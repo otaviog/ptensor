@@ -13,6 +13,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CROSSCOMPILING_EMULATOR": "node",
+        "BUILD_SHARED_LIBS": "OFF",
         "BUILD_TESTS": "OFF"
       }
     },

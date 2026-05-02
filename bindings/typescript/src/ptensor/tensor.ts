@@ -1,76 +1,157 @@
-import * as ffi from './backends/bun/ffi'
-import { P10Error } from './p10Error';
+import {
+  p10_from_data,
+  p10_from_data_strided,
+  p10_destroy,
+  p10_get_size,
+  p10_get_size_bytes,
+  p10_get_dtype,
+  p10_get_shape,
+  p10_get_stride,
+  p10_get_ndim,
+  p10_is_empty,
+} from './backends/bun/ffi.js';
+import { P10Error } from './p10Error.js';
+import { DTypeString, dtypeToNumber, numberToDtype } from './dtype.js';
+import { TypedArrayType, getDtypeFromTypedArray, createTypedArray } from './typedArray.js';
 
-const MAX_DIMS = 8;
-
-export type Dtype = 'float32' | 'float64' | 'uint8' | 'uint16' | 'uint32' | 'int8' | 'int16' | 'int32' | 'int64';
+export type { DTypeString };
+export type { TypedArrayType };
 
 export interface Tensor {
+  /** Total number of elements. */
   getSize(): bigint;
+  /** Total data size in bytes. */
+  getSizeBytes(): bigint;
+  /** Dimension sizes. */
   getShape(): bigint[];
+  /** Per-element strides. */
   getStride(): bigint[];
-  getDtype(): Dtype;
+  /** Number of dimensions. */
+  getNdim(): number;
+  /** Element data type. */
+  getDtype(): DTypeString;
+  /** True when the tensor has no elements. */
+  isEmpty(): boolean;
+  /** Releases the native tensor handle. Must be called when done. */
   delete(): void;
 }
 
-export type ArrayTypes = Float32Array | Float64Array | Uint8Array | Uint16Array | Int16Array | Int32Array | Uint32Array | BigInt64Array;
+// ------------------------------------------------------------------ //
+// Opaque handle helpers
+//
+// A Ptensor is a void*. It is kept in a BigUint64Array(1) so that:
+//   - p10_from_data writes into it (Ptensor* out)
+//   - p10_destroy can null it out (Ptensor*)
+//   - accessors receive Number(buf[0]) as a raw-pointer int arg
+// ------------------------------------------------------------------ //
 
-const arrayToDtype: Record<string, Dtype> = {
-  Float32Array: 'float32',
-  Float64Array: 'float64',
-  Uint8Array: 'uint8',
-  Uint16Array: 'uint16',
-  Int16Array: 'int16',
-  Int32Array: 'int32',
-  Uint32Array: 'uint32',
-  BigInt64Array: 'int64'
-
+function readHandle(buf: BigUint64Array): number {
+  return Number(buf[0]);
 }
 
-const dtypeToNumber: Record<Dtype, number> = {
-  'float32': 0,
-  'float64': 1,
-  'uint8': 3,
-  'uint16': 4,
-  'uint32': 5,
-  'int8': 6,
-  'int16': 7,
-  'int32': 8,
-  'int64': 9
-};
-
-
-const numberToDtype: Record<number, Dtype> = Object.fromEntries(
-  Object.entries(dtypeToNumber).map(([key, value]) => [value, key]));
-
-export function fromData(data: ArrayTypes, shape: number[]) {
-  let tensor: number = 0;
-
-  ffi.p10_from_data(
-    tensor,
-    dtypeToNumber[arrayToDtype[typeof data]],
-    shape,
-    shape.length,
-    data
-  )
-
-  return {
-    getShape: (): bigint[] => {
-      const array = new BigInt64Array(MAX_DIMS);
-
-      ffi.p10_get_shape(tensor, array, array.length);
-      return Array.from(array);
-    },
-    getDtype: (): Dtype {
-      const dtypeNum = ffi.p10_get_dtype();
-      if (!(dtypeNum in numberToDtype)) {
-        throw new P10Error(`Invalid result from ffi ${dtypeNum}`)
-      }
-      return numberToDtype[dtypeNum];
-    },
-    
-    
-  } as Tensor;
+function ffiInt(v: unknown): number {
+  return v as number;
 }
 
+function ffiU64(v: unknown): bigint {
+  const n = v as bigint | number;
+  return typeof n === 'bigint' ? n : BigInt(n);
+}
+
+class TensorImpl implements Tensor {
+  private _buf: BigUint64Array; // [0] = opaque Ptensor value
+  private _owner?: object;      // keeps JS data buffer alive for view tensors
+
+  constructor(buf: BigUint64Array, owner?: object) {
+    this._buf = buf;
+    this._owner = owner;
+  }
+
+  getSize(): bigint {
+    return ffiU64(p10_get_size(readHandle(this._buf)));
+  }
+
+  getSizeBytes(): bigint {
+    return ffiU64(p10_get_size_bytes(readHandle(this._buf)));
+  }
+
+  getNdim(): number {
+    return Number(ffiU64(p10_get_ndim(readHandle(this._buf))));
+  }
+
+  getShape(): bigint[] {
+    const ndim = this.getNdim();
+    const shapeBuf = new BigInt64Array(ndim);
+    P10Error.check(ffiInt(p10_get_shape(readHandle(this._buf), shapeBuf, ndim)));
+    return Array.from(shapeBuf).map(BigInt);
+  }
+
+  getStride(): bigint[] {
+    const ndim = this.getNdim();
+    const strideBuf = new BigInt64Array(ndim);
+    P10Error.check(ffiInt(p10_get_stride(readHandle(this._buf), strideBuf, ndim)));
+    return Array.from(strideBuf).map(BigInt);
+  }
+
+  getDtype(): DTypeString {
+    const code = ffiInt(p10_get_dtype(readHandle(this._buf)));
+    const dtype = numberToDtype[code];
+    if (!dtype) throw new P10Error(0, `Unknown dtype code: ${code}`);
+    return dtype;
+  }
+
+  isEmpty(): boolean {
+    return ffiInt(p10_is_empty(readHandle(this._buf))) !== 0;
+  }
+
+  delete(): void {
+    if (this._buf[0] !== 0n) {
+      P10Error.check(ffiInt(p10_destroy(this._buf)));
+    }
+    this._owner = undefined;
+  }
+}
+
+// ------------------------------------------------------------------ //
+// Public factory functions
+// ------------------------------------------------------------------ //
+
+/**
+ * Creates a Tensor view over the given TypedArray.
+ * The array must stay in scope for as long as the Tensor is used.
+ * Custom per-element strides (not byte strides) may optionally be supplied.
+ */
+export function fromArray(
+  data: TypedArrayType,
+  shape: number[],
+  strides?: number[]
+): Tensor {
+  const dtype = getDtypeFromTypedArray(data);
+  const dtypeNum = dtypeToNumber[dtype];
+  const shapeArr = new BigInt64Array(shape.map(BigInt));
+  const buf = new BigUint64Array(1);
+
+  let err: number;
+  if (strides) {
+    const stridesArr = new BigInt64Array(strides.map(BigInt));
+    err = ffiInt(
+      p10_from_data_strided(buf, dtypeNum, shapeArr, stridesArr, shape.length, data)
+    );
+  } else {
+    err = ffiInt(p10_from_data(buf, dtypeNum, shapeArr, shape.length, data));
+  }
+
+  P10Error.check(err);
+  return new TensorImpl(buf, data);
+}
+
+/**
+ * Creates a Tensor filled with zeros. The backing TypedArray is owned
+ * by the returned Tensor and kept alive until delete() is called.
+ */
+export function zeros(shape: number[], dtype: DTypeString = 'float32'): Tensor {
+  const size = shape.reduce((a, b) => a * b, 1);
+  const data = createTypedArray(dtype, size);
+  return fromArray(data, shape);
+}
 

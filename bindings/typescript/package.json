@@ -7,7 +7,10 @@
   "types": "./build/ptensor-wrapper.d.ts",
   "scripts": {
     "build": "bun build",
-    "clean": "rm -rf build"
+    "clean": "rm -rf build",
+    "test": "bun test src/ptensor/__tests__/tensor.test.ts",
+    "test:integration": "bun test src/ptensor/__tests__/tensor.integration.test.ts",
+    "test:all": "bun test"
   },
   "keywords": [
     "tensor",
@@ -23,7 +26,8 @@
     "@types/emscripten": "^1.39.13",
     "@types/node": "^20.0.0",
     "tsx": "^4.20.6",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.5"
   },
   "private": true
 }

@@ -1,6 +1,6 @@
 import { dlopen, FFIType, suffix } from "bun:ffi";
 
-const path = `libptensor_capi.${suffix}`;
+const libPath = process.env["PTENSOR_LIB_PATH"] ?? `libptensor_capi.${suffix}`;
 
 export const {
   symbols: {
@@ -24,7 +24,7 @@ export const {
     p10_get_data,
     p10_is_empty,
   },
-} = dlopen(path, {
+} = dlopen(libPath, {
   // ------------------------------------------------------------------ //
   // Error
   // ------------------------------------------------------------------ //

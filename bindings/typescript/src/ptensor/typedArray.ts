@@ -28,6 +28,7 @@ export const createTypedArray = (dtype: DTypeString, size: number): TypedArrayTy
     switch (dtype) {
         case 'float32': return new Float32Array(size);
         case 'float64': return new Float64Array(size);
+        case 'float16': return new Uint16Array(size); // no native float16; stored as bits
         case 'uint8': return new Uint8Array(size);
         case 'uint16': return new Uint16Array(size);
         case 'uint32': return new Uint32Array(size);

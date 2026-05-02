@@ -1,8 +1,3 @@
-import { fromArray, zeros } from './tensor'
-
-
-const p10 = {
-    zeros,
-    fromArray
-}
-export default p10;
+export { fromArray, zeros } from './tensor.js';
+export type { Tensor, DTypeString, TypedArrayType } from './tensor.js';
+export { P10Error, P10ErrorCode } from './p10Error.js';

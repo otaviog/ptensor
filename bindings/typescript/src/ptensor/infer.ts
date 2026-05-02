@@ -4,10 +4,10 @@ import {
   p10_infer_get_input_count,
   p10_infer_get_output_count,
   p10_infer_run,
-} from './backends/bun/ffi.js';
-import { P10Error } from './p10Error.js';
-import { type Tensor, _wrapHandle, _getRawHandle } from './tensor.js';
-import { ffiInt, ffiU64, readHandle, newHandleBuf } from './_internal.js';
+} from './backends/bun/ffi';
+import { P10Error } from './p10Error';
+import { type Tensor, _wrapHandle, _getRawHandle } from './tensor';
+import { ffiInt, ffiU64, readHandle, newHandleBuf } from './_internal';
 
 export type { Tensor };
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
-import { dtypeToNumber, numberToDtype } from '../dtype.js';
-import { getDtypeFromTypedArray, createTypedArray } from '../typedArray.js';
+import { dtypeToNumber, numberToDtype } from '../dtype';
+import { getDtypeFromTypedArray, createTypedArray } from '../typedArray';
 
 // ------------------------------------------------------------------ //
 // dtype.ts

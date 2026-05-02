@@ -1,4 +1,4 @@
-import { p10_get_last_error_message } from './backends/bun/ffi.js';
+import { p10_get_last_error_message } from './backends/bun/ffi';
 
 export const P10ErrorCode = {
   OK: 0,

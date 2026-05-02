@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'bun:test';
-import { fromArray, zeros, type Tensor } from '../tensor.js';
+import { fromArray, zeros, type Tensor } from '../tensor';
 
 // ------------------------------------------------------------------ //
 // These tests require the native libptensor_capi library to be present.

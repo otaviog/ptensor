@@ -207,6 +207,50 @@ PTENSOR_API P10ErrorEnum p10_media_writer_write_audio(
     P10AudioFrame  frame
 );
 
+// ------------------------------------------------------------------ //
+// FFI helpers (for language bindings that cannot pass structs by value)
+// ------------------------------------------------------------------ //
+
+/// Returns the numerator of the video frame rate.
+PTENSOR_API int64_t p10_media_capture_video_frame_rate_num(P10MediaCapture capture);
+/// Returns the denominator of the video frame rate.
+PTENSOR_API int64_t p10_media_capture_video_frame_rate_den(P10MediaCapture capture);
+
+/// Returns base.num of the VideoFrame presentation timestamp.
+PTENSOR_API int64_t p10_video_frame_time_base_num(P10VideoFrame frame);
+/// Returns base.den of the VideoFrame presentation timestamp.
+PTENSOR_API int64_t p10_video_frame_time_base_den(P10VideoFrame frame);
+/// Returns the stamp of the VideoFrame presentation timestamp.
+PTENSOR_API int64_t p10_video_frame_time_stamp(P10VideoFrame frame);
+/// Sets the VideoFrame presentation timestamp from individual fields.
+PTENSOR_API void p10_video_frame_set_time_parts(
+    P10VideoFrame frame, int64_t base_num, int64_t base_den, int64_t stamp
+);
+
+/// Returns base.num of the AudioFrame presentation timestamp.
+PTENSOR_API int64_t p10_audio_frame_time_base_num(P10AudioFrame frame);
+/// Returns base.den of the AudioFrame presentation timestamp.
+PTENSOR_API int64_t p10_audio_frame_time_base_den(P10AudioFrame frame);
+/// Returns the stamp of the AudioFrame presentation timestamp.
+PTENSOR_API int64_t p10_audio_frame_time_stamp(P10AudioFrame frame);
+/// Sets the AudioFrame presentation timestamp from individual fields.
+PTENSOR_API void p10_audio_frame_set_time_parts(
+    P10AudioFrame frame, int64_t base_num, int64_t base_den, int64_t stamp
+);
+
+/// Opens a media file for writing with frame_rate passed as separate num/den fields.
+/// Equivalent to p10_media_writer_open but avoids passing P10Rational by value.
+PTENSOR_API P10ErrorEnum p10_media_writer_open_ffi(
+    P10MediaWriter* writer,
+    const char*     path,
+    int32_t         width,
+    int32_t         height,
+    int64_t         frame_rate_num,
+    int64_t         frame_rate_den,
+    double          audio_sample_rate_hz,
+    size_t          audio_channels
+);
+
 #ifdef __cplusplus
 }
 #endif

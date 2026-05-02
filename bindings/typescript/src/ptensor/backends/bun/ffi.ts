@@ -29,6 +29,48 @@ export const {
     p10_infer_get_input_count,
     p10_infer_get_output_count,
     p10_infer_run,
+    // media — VideoFrame
+    p10_video_frame_create,
+    p10_video_frame_destroy,
+    p10_video_frame_width,
+    p10_video_frame_height,
+    p10_video_frame_channels,
+    p10_video_frame_image,
+    p10_video_frame_time_base_num,
+    p10_video_frame_time_base_den,
+    p10_video_frame_time_stamp,
+    p10_video_frame_set_time_parts,
+    // media — AudioFrame
+    p10_audio_frame_create,
+    p10_audio_frame_destroy,
+    p10_audio_frame_samples_count,
+    p10_audio_frame_channels_count,
+    p10_audio_frame_sample_rate,
+    p10_audio_frame_duration_seconds,
+    p10_audio_frame_samples,
+    p10_audio_frame_time_base_num,
+    p10_audio_frame_time_base_den,
+    p10_audio_frame_time_stamp,
+    p10_audio_frame_set_time_parts,
+    // media — MediaCapture
+    p10_media_capture_open,
+    p10_media_capture_close,
+    p10_media_capture_next_frame,
+    p10_media_capture_get_video,
+    p10_media_capture_get_audio,
+    p10_media_capture_video_width,
+    p10_media_capture_video_height,
+    p10_media_capture_video_frame_rate_num,
+    p10_media_capture_video_frame_rate_den,
+    p10_media_capture_audio_sample_rate,
+    p10_media_capture_audio_channels,
+    p10_media_capture_video_frame_count,
+    p10_media_capture_duration,
+    // media — MediaWriter
+    p10_media_writer_open_ffi,
+    p10_media_writer_close,
+    p10_media_writer_write_video,
+    p10_media_writer_write_audio,
   },
 } = dlopen(libPath, {
   // ------------------------------------------------------------------ //
@@ -225,6 +267,188 @@ export const {
       FFIType.ptr, // Ptensor* output_tensors
       FFIType.u64, // size_t num_outputs
     ],
+    returns: FFIType.int,
+  },
+
+  // ------------------------------------------------------------------ //
+  // Media — VideoFrame
+  // ------------------------------------------------------------------ //
+
+  p10_video_frame_create: {
+    args: [FFIType.ptr, FFIType.u64, FFIType.u64], // P10VideoFrame*, width, height
+    returns: FFIType.int,
+  },
+  p10_video_frame_destroy: {
+    args: [FFIType.ptr], // P10VideoFrame*
+    returns: FFIType.int,
+  },
+  p10_video_frame_width: {
+    args: [FFIType.ptr], // P10VideoFrame
+    returns: FFIType.u64,
+  },
+  p10_video_frame_height: {
+    args: [FFIType.ptr], // P10VideoFrame
+    returns: FFIType.u64,
+  },
+  p10_video_frame_channels: {
+    args: [FFIType.ptr], // P10VideoFrame
+    returns: FFIType.u64,
+  },
+  p10_video_frame_image: {
+    args: [FFIType.ptr, FFIType.ptr], // P10VideoFrame, Ptensor*
+    returns: FFIType.int,
+  },
+  p10_video_frame_time_base_num: {
+    args: [FFIType.ptr],  // P10VideoFrame
+    returns: FFIType.i64,
+  },
+  p10_video_frame_time_base_den: {
+    args: [FFIType.ptr],
+    returns: FFIType.i64,
+  },
+  p10_video_frame_time_stamp: {
+    args: [FFIType.ptr],
+    returns: FFIType.i64,
+  },
+  p10_video_frame_set_time_parts: {
+    args: [FFIType.ptr, FFIType.i64, FFIType.i64, FFIType.i64],
+    returns: FFIType.void,
+  },
+
+  // ------------------------------------------------------------------ //
+  // Media — AudioFrame
+  // ------------------------------------------------------------------ //
+
+  p10_audio_frame_create: {
+    args: [FFIType.ptr, FFIType.ptr, FFIType.u64], // P10AudioFrame*, Ptensor, sample_rate
+    returns: FFIType.int,
+  },
+  p10_audio_frame_destroy: {
+    args: [FFIType.ptr], // P10AudioFrame*
+    returns: FFIType.int,
+  },
+  p10_audio_frame_samples_count: {
+    args: [FFIType.ptr],
+    returns: FFIType.i64,
+  },
+  p10_audio_frame_channels_count: {
+    args: [FFIType.ptr],
+    returns: FFIType.i64,
+  },
+  p10_audio_frame_sample_rate: {
+    args: [FFIType.ptr],
+    returns: FFIType.u64,
+  },
+  p10_audio_frame_duration_seconds: {
+    args: [FFIType.ptr],
+    returns: FFIType.f64,
+  },
+  p10_audio_frame_samples: {
+    args: [FFIType.ptr, FFIType.ptr], // P10AudioFrame, Ptensor*
+    returns: FFIType.int,
+  },
+  p10_audio_frame_time_base_num: {
+    args: [FFIType.ptr],
+    returns: FFIType.i64,
+  },
+  p10_audio_frame_time_base_den: {
+    args: [FFIType.ptr],
+    returns: FFIType.i64,
+  },
+  p10_audio_frame_time_stamp: {
+    args: [FFIType.ptr],
+    returns: FFIType.i64,
+  },
+  p10_audio_frame_set_time_parts: {
+    args: [FFIType.ptr, FFIType.i64, FFIType.i64, FFIType.i64],
+    returns: FFIType.void,
+  },
+
+  // ------------------------------------------------------------------ //
+  // Media — MediaCapture
+  // ------------------------------------------------------------------ //
+
+  p10_media_capture_open: {
+    args: [FFIType.ptr, FFIType.cstring], // P10MediaCapture*, path
+    returns: FFIType.int,
+  },
+  p10_media_capture_close: {
+    args: [FFIType.ptr], // P10MediaCapture*
+    returns: FFIType.int,
+  },
+  p10_media_capture_next_frame: {
+    args: [FFIType.ptr, FFIType.ptr], // P10MediaCapture, int*
+    returns: FFIType.int,
+  },
+  p10_media_capture_get_video: {
+    args: [FFIType.ptr, FFIType.ptr], // P10MediaCapture, P10VideoFrame*
+    returns: FFIType.int,
+  },
+  p10_media_capture_get_audio: {
+    args: [FFIType.ptr, FFIType.ptr], // P10MediaCapture, P10AudioFrame*
+    returns: FFIType.int,
+  },
+  p10_media_capture_video_width: {
+    args: [FFIType.ptr],
+    returns: FFIType.i32,
+  },
+  p10_media_capture_video_height: {
+    args: [FFIType.ptr],
+    returns: FFIType.i32,
+  },
+  p10_media_capture_video_frame_rate_num: {
+    args: [FFIType.ptr],
+    returns: FFIType.i64,
+  },
+  p10_media_capture_video_frame_rate_den: {
+    args: [FFIType.ptr],
+    returns: FFIType.i64,
+  },
+  p10_media_capture_audio_sample_rate: {
+    args: [FFIType.ptr],
+    returns: FFIType.f64,
+  },
+  p10_media_capture_audio_channels: {
+    args: [FFIType.ptr],
+    returns: FFIType.u64,
+  },
+  p10_media_capture_video_frame_count: {
+    args: [FFIType.ptr],
+    returns: FFIType.i64,
+  },
+  p10_media_capture_duration: {
+    args: [FFIType.ptr],
+    returns: FFIType.f64,
+  },
+
+  // ------------------------------------------------------------------ //
+  // Media — MediaWriter
+  // ------------------------------------------------------------------ //
+
+  /** FFI variant: frame_rate passed as separate num/den instead of P10Rational. */
+  p10_media_writer_open_ffi: {
+    args: [
+      FFIType.ptr,     // P10MediaWriter*
+      FFIType.cstring, // const char* path
+      FFIType.i32,     // width
+      FFIType.i32,     // height
+      FFIType.i64,     // frame_rate_num
+      FFIType.i64,     // frame_rate_den
+      FFIType.f64,     // audio_sample_rate_hz
+      FFIType.u64,     // audio_channels
+    ],
+    returns: FFIType.int,
+  },
+  p10_media_writer_close: {
+    args: [FFIType.ptr], // P10MediaWriter*
+    returns: FFIType.int,
+  },
+  p10_media_writer_write_video: {
+    args: [FFIType.ptr, FFIType.ptr], // P10MediaWriter, P10VideoFrame
+    returns: FFIType.int,
+  },
+  p10_media_writer_write_audio: {
+    args: [FFIType.ptr, FFIType.ptr], // P10MediaWriter, P10AudioFrame
     returns: FFIType.int,
   },
 });

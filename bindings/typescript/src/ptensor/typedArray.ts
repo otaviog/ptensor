@@ -1,4 +1,4 @@
-import { DTypeString } from './dtype.js';
+import { DTypeString } from './dtype';
 
 export type TypedArrayType =
     | Float32Array

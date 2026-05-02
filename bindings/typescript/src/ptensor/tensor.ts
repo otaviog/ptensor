@@ -9,11 +9,11 @@ import {
   p10_get_stride,
   p10_get_ndim,
   p10_is_empty,
-} from './backends/bun/ffi.js';
-import { P10Error } from './p10Error.js';
-import { DTypeString, dtypeToNumber, numberToDtype } from './dtype.js';
-import { TypedArrayType, getDtypeFromTypedArray, createTypedArray } from './typedArray.js';
-import { ffiInt, ffiU64, readHandle, newHandleBuf } from './_internal.js';
+} from './backends/bun/ffi';
+import { P10Error } from './p10Error';
+import { DTypeString, dtypeToNumber, numberToDtype } from './dtype';
+import { TypedArrayType, getDtypeFromTypedArray, createTypedArray } from './typedArray';
+import { ffiInt, ffiU64, readHandle, newHandleBuf } from './_internal';
 
 export type { DTypeString };
 export type { TypedArrayType };

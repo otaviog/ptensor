@@ -1,8 +1,8 @@
 import { describe, it, expect, afterEach } from 'bun:test';
 import { resolve } from 'path';
-import { fromOnnx, type InferSession } from '../infer.js';
-import { fromArray, type Tensor } from '../tensor.js';
-import { P10Error } from '../p10Error.js';
+import { fromOnnx, type InferSession } from '../infer';
+import { fromArray, type Tensor } from '../tensor';
+import { P10Error } from '../p10Error';
 
 // MNIST-12: input [1,1,28,28] float32 → output [1,10] float32
 const MNIST_MODEL = resolve(

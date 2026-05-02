@@ -5,6 +5,8 @@
 #include <ptensor/media/io/media_capture.hpp>
 #include <ptensor/media/io/media_writer.hpp>
 #include <ptensor/media/media_parameters.hpp>
+#include <ptensor/media/time/rational.hpp>
+#include <ptensor/media/time/time.hpp>
 #include <ptensor/media/video_frame.hpp>
 #include <ptensor/media/video_parameters.hpp>
 #include <ptensor/tensor.hpp>
@@ -19,11 +21,7 @@ using namespace p10::media;
 // VideoFrame
 // ------------------------------------------------------------------ //
 
-PTENSOR_API P10ErrorEnum p10_video_frame_create(
-    P10VideoFrame* frame,
-    size_t         width,
-    size_t         height
-) {
+PTENSOR_API P10ErrorEnum p10_video_frame_create(P10VideoFrame* frame, size_t width, size_t height) {
     auto* vf = new VideoFrame();
     auto err = vf->create(width, height, PixelFormat::RGB24);
     if (err.is_error()) {
@@ -82,19 +80,14 @@ PTENSOR_API P10ErrorEnum p10_video_frame_image(P10VideoFrame frame, Ptensor* ima
 // AudioFrame
 // ------------------------------------------------------------------ //
 
-PTENSOR_API P10ErrorEnum p10_audio_frame_create(
-    P10AudioFrame* frame,
-    Ptensor        samples,
-    size_t         sample_rate
-) {
+PTENSOR_API P10ErrorEnum
+p10_audio_frame_create(P10AudioFrame* frame, Ptensor samples, size_t sample_rate) {
     const p10::Tensor& src = p10::unwrap_ref_const(samples);
     auto clone_result = src.clone();
     if (clone_result.is_error()) {
         return p10::update_error_state(clone_result.unwrap_err());
     }
-    *frame = wrap_audio_frame(
-        new AudioFrame(std::move(clone_result.unwrap()), sample_rate)
-    );
+    *frame = wrap_audio_frame(new AudioFrame(std::move(clone_result.unwrap()), sample_rate));
     return P10_OK;
 }
 
@@ -148,10 +141,7 @@ PTENSOR_API P10ErrorEnum p10_audio_frame_samples(P10AudioFrame frame, Ptensor* s
 // MediaCapture
 // ------------------------------------------------------------------ //
 
-PTENSOR_API P10ErrorEnum p10_media_capture_open(
-    P10MediaCapture* capture,
-    const char*      path
-) {
+PTENSOR_API P10ErrorEnum p10_media_capture_open(P10MediaCapture* capture, const char* path) {
     auto result = MediaCapture::open_file(path);
     if (result.is_error()) {
         return p10::update_error_state(result.unwrap_err());
@@ -171,10 +161,7 @@ PTENSOR_API P10ErrorEnum p10_media_capture_close(P10MediaCapture* capture) {
     return P10_OK;
 }
 
-PTENSOR_API P10ErrorEnum p10_media_capture_next_frame(
-    P10MediaCapture capture,
-    int*            has_frame
-) {
+PTENSOR_API P10ErrorEnum p10_media_capture_next_frame(P10MediaCapture capture, int* has_frame) {
     auto result = unwrap_capture(capture)->next_frame();
     if (result.is_error()) {
         return p10::update_error_state(result.unwrap_err());
@@ -183,10 +170,8 @@ PTENSOR_API P10ErrorEnum p10_media_capture_next_frame(
     return P10_OK;
 }
 
-PTENSOR_API P10ErrorEnum p10_media_capture_get_video(
-    P10MediaCapture capture,
-    P10VideoFrame*  frame_out
-) {
+PTENSOR_API P10ErrorEnum
+p10_media_capture_get_video(P10MediaCapture capture, P10VideoFrame* frame_out) {
     auto* vf = new VideoFrame();
     auto err = unwrap_capture(capture)->get_video(*vf);
     if (err.is_error()) {
@@ -197,10 +182,8 @@ PTENSOR_API P10ErrorEnum p10_media_capture_get_video(
     return P10_OK;
 }
 
-PTENSOR_API P10ErrorEnum p10_media_capture_get_audio(
-    P10MediaCapture capture,
-    P10AudioFrame*  frame_out
-) {
+PTENSOR_API P10ErrorEnum
+p10_media_capture_get_audio(P10MediaCapture capture, P10AudioFrame* frame_out) {
     auto* af = new AudioFrame();
     auto err = unwrap_capture(capture)->get_audio(*af);
     if (err.is_error()) {
@@ -220,9 +203,7 @@ PTENSOR_API int32_t p10_media_capture_video_height(P10MediaCapture capture) {
 }
 
 PTENSOR_API P10Rational p10_media_capture_video_frame_rate(P10MediaCapture capture) {
-    return to_c(
-        unwrap_capture(capture)->get_parameters().video_parameters().frame_rate()
-    );
+    return to_c(unwrap_capture(capture)->get_parameters().video_parameters().frame_rate());
 }
 
 PTENSOR_API double p10_media_capture_audio_sample_rate(P10MediaCapture capture) {
@@ -249,18 +230,19 @@ PTENSOR_API double p10_media_capture_duration(P10MediaCapture capture) {
 
 PTENSOR_API P10ErrorEnum p10_media_writer_open(
     P10MediaWriter* writer,
-    const char*     path,
-    int32_t         width,
-    int32_t         height,
-    P10Rational     frame_rate,
-    double          audio_sample_rate_hz,
-    size_t          audio_channels
+    const char* path,
+    int32_t width,
+    int32_t height,
+    P10Rational frame_rate,
+    double audio_sample_rate_hz,
+    size_t audio_channels
 ) {
     MediaParameters params;
     params.video_parameters()
         .width(width)
         .height(height)
-        .frame_rate(from_c(frame_rate));
+        .frame_rate(from_c(frame_rate))
+        .codec(VideoCodec {VideoCodec::CodecType::H264});
 
     if (audio_sample_rate_hz > 0.0 && audio_channels > 0) {
         params.audio_parameters()
@@ -287,10 +269,7 @@ PTENSOR_API P10ErrorEnum p10_media_writer_close(P10MediaWriter* writer) {
     return P10_OK;
 }
 
-PTENSOR_API P10ErrorEnum p10_media_writer_write_video(
-    P10MediaWriter writer,
-    P10VideoFrame  frame
-) {
+PTENSOR_API P10ErrorEnum p10_media_writer_write_video(P10MediaWriter writer, P10VideoFrame frame) {
     auto err = unwrap_writer(writer)->write_video(*unwrap_video_frame(frame));
     if (err.is_error()) {
         return p10::update_error_state(err);
@@ -298,13 +277,86 @@ PTENSOR_API P10ErrorEnum p10_media_writer_write_video(
     return P10_OK;
 }
 
-PTENSOR_API P10ErrorEnum p10_media_writer_write_audio(
-    P10MediaWriter writer,
-    P10AudioFrame  frame
-) {
+PTENSOR_API P10ErrorEnum p10_media_writer_write_audio(P10MediaWriter writer, P10AudioFrame frame) {
     auto err = unwrap_writer(writer)->write_audio(*unwrap_audio_frame(frame));
     if (err.is_error()) {
         return p10::update_error_state(err);
     }
     return P10_OK;
+}
+
+// ------------------------------------------------------------------ //
+// FFI helpers
+// ------------------------------------------------------------------ //
+
+PTENSOR_API int64_t p10_media_capture_video_frame_rate_num(P10MediaCapture capture) {
+    return unwrap_capture(capture)->get_parameters().video_parameters().frame_rate().num();
+}
+
+PTENSOR_API int64_t p10_media_capture_video_frame_rate_den(P10MediaCapture capture) {
+    return unwrap_capture(capture)->get_parameters().video_parameters().frame_rate().den();
+}
+
+PTENSOR_API int64_t p10_video_frame_time_base_num(P10VideoFrame frame) {
+    return unwrap_video_frame(frame)->time().base().num();
+}
+
+PTENSOR_API int64_t p10_video_frame_time_base_den(P10VideoFrame frame) {
+    return unwrap_video_frame(frame)->time().base().den();
+}
+
+PTENSOR_API int64_t p10_video_frame_time_stamp(P10VideoFrame frame) {
+    return unwrap_video_frame(frame)->time().stamp();
+}
+
+PTENSOR_API void p10_video_frame_set_time_parts(
+    P10VideoFrame frame,
+    int64_t base_num,
+    int64_t base_den,
+    int64_t stamp
+) {
+    unwrap_video_frame(frame)->update_time(Time {Rational {base_num, base_den}, stamp});
+}
+
+PTENSOR_API int64_t p10_audio_frame_time_base_num(P10AudioFrame frame) {
+    return unwrap_audio_frame(frame)->time().base().num();
+}
+
+PTENSOR_API int64_t p10_audio_frame_time_base_den(P10AudioFrame frame) {
+    return unwrap_audio_frame(frame)->time().base().den();
+}
+
+PTENSOR_API int64_t p10_audio_frame_time_stamp(P10AudioFrame frame) {
+    return unwrap_audio_frame(frame)->time().stamp();
+}
+
+PTENSOR_API void p10_audio_frame_set_time_parts(
+    P10AudioFrame frame,
+    int64_t base_num,
+    int64_t base_den,
+    int64_t stamp
+) {
+    unwrap_audio_frame(frame)->set_time(Time {Rational {base_num, base_den}, stamp});
+}
+
+PTENSOR_API P10ErrorEnum p10_media_writer_open_ffi(
+    P10MediaWriter* writer,
+    const char* path,
+    int32_t width,
+    int32_t height,
+    int64_t frame_rate_num,
+    int64_t frame_rate_den,
+    double audio_sample_rate_hz,
+    size_t audio_channels
+) {
+    P10Rational fr {frame_rate_num, frame_rate_den};
+    return p10_media_writer_open(
+        writer,
+        path,
+        width,
+        height,
+        fr,
+        audio_sample_rate_hz,
+        audio_channels
+    );
 }

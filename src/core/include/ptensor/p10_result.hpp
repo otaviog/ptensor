@@ -1,5 +1,6 @@
 #pragma once
 
+#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -10,7 +11,7 @@ namespace p10 {
 template<class OkType>
 class P10Result;
 template<typename OkType>
-P10Result<OkType> Ok(OkType&& value);
+P10Result<std::remove_cvref_t<OkType>> Ok(OkType&& value);
 
 template<class OkType>
 class P10Result {
@@ -73,7 +74,7 @@ class P10Result {
     friend class P10Result;
 
     template<typename T>
-    friend P10Result<T> Ok(T&& value);
+    friend P10Result<std::remove_cvref_t<T>> Ok(T&& value);
 
     template<typename T>
     friend P10Result<T> Err(P10Error&& error);
@@ -86,8 +87,8 @@ class P10Result {
 };
 
 template<typename OkType>
-P10Result<OkType> Ok(OkType&& value) {
-    return P10Result<OkType> {std::forward<OkType>(value)};
+P10Result<std::remove_cvref_t<OkType>> Ok(OkType&& value) {
+    return P10Result<std::remove_cvref_t<OkType>> {std::forward<OkType>(value)};
 }
 
 /// Helper class for template argument deduction for Err function

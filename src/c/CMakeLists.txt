@@ -37,6 +37,21 @@ if (WITH_INFER)
     target_compile_definitions(ptensor_capi PRIVATE PTENSOR_WITH_INFER)
 endif()
 
+if (WITH_MEDIA)
+    target_sources(ptensor_capi
+        PUBLIC
+        FILE_SET public_headers TYPE HEADERS
+        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+        FILES
+        ${_INCLUDE_DIR}/ptensor_media.h)
+    target_sources(ptensor_capi
+        PRIVATE
+        src/media_wrapper.hpp
+        src/ptensor_media.cpp)
+    target_link_libraries(ptensor_capi PRIVATE ptensor_media)
+    target_compile_definitions(ptensor_capi PRIVATE PTENSOR_WITH_MEDIA)
+endif()
+
 target_compile_definitions(
     ptensor_capi
     PRIVATE

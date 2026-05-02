@@ -224,6 +224,7 @@ Areas where the code is written almost entirely by the LLM, with humans providin
 Areas where LLMs are used for review, suggestions, bug hunting, and test generation, but human judgment drives the actual writing and outcome:
 
 * C++ modules' architectures, code, and API design
+* C-API architecture and core code
 * `p10::op` algorithm development
 * SIMD optimizations (AVX2 kernels in `src/simd/`)
 * Unit test architecture and coverage

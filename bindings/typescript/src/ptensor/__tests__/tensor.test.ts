@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'bun:test';
-import { dtypeToNumber, numberToDtype } from '../dtype.js';
-import { getDtypeFromTypedArray, createTypedArray } from '../typedArray.js';
+import { describe, expect, it } from 'bun:test';
+import { dtypeToNumber, numberToDtype } from '../dtype';
+import { createTypedArray, getDtypeFromTypedArray } from '../typedArray';
 
 // ------------------------------------------------------------------ //
 // dtype.ts
@@ -9,9 +9,16 @@ import { getDtypeFromTypedArray, createTypedArray } from '../typedArray.js';
 describe('dtypeToNumber', () => {
   it('covers all expected dtypes', () => {
     const expected: Record<string, number> = {
-      float32: 0, float64: 1, float16: 2,
-      uint8: 3, uint16: 4, uint32: 5,
-      int8: 6, int16: 7, int32: 8, int64: 9,
+      float32: 0,
+      float64: 1,
+      float16: 2,
+      uint8: 3,
+      uint16: 4,
+      uint32: 5,
+      int8: 6,
+      int16: 7,
+      int32: 8,
+      int64: 9,
     };
     expect(dtypeToNumber).toEqual(expected);
   });
@@ -33,13 +40,13 @@ describe('getDtypeFromTypedArray', () => {
   const cases: [TypedArray, string][] = [
     [new Float32Array(0), 'float32'],
     [new Float64Array(0), 'float64'],
-    [new Uint8Array(0),   'uint8'],
-    [new Uint16Array(0),  'uint16'],
-    [new Uint32Array(0),  'uint32'],
-    [new Int8Array(0),    'int8'],
-    [new Int16Array(0),   'int16'],
-    [new Int32Array(0),   'int32'],
-    [new BigInt64Array(0),'int64'],
+    [new Uint8Array(0), 'uint8'],
+    [new Uint16Array(0), 'uint16'],
+    [new Uint32Array(0), 'uint32'],
+    [new Int8Array(0), 'int8'],
+    [new Int16Array(0), 'int16'],
+    [new Int32Array(0), 'int32'],
+    [new BigInt64Array(0), 'int64'],
   ];
   type TypedArray = (typeof cases)[0][0];
 
@@ -52,16 +59,16 @@ describe('getDtypeFromTypedArray', () => {
 
 describe('createTypedArray', () => {
   const cases = [
-    ['float32', Float32Array,  4],
-    ['float64', Float64Array,  8],
-    ['float16', Uint16Array,   2], // stored as bits
-    ['uint8',   Uint8Array,    1],
-    ['uint16',  Uint16Array,   2],
-    ['uint32',  Uint32Array,   4],
-    ['int8',    Int8Array,     1],
-    ['int16',   Int16Array,    2],
-    ['int32',   Int32Array,    4],
-    ['int64',   BigInt64Array, 8],
+    ['float32', Float32Array, 4],
+    ['float64', Float64Array, 8],
+    ['float16', Uint16Array, 2], // stored as bits
+    ['uint8', Uint8Array, 1],
+    ['uint16', Uint16Array, 2],
+    ['uint32', Uint32Array, 4],
+    ['int8', Int8Array, 1],
+    ['int16', Int16Array, 2],
+    ['int32', Int32Array, 4],
+    ['int64', BigInt64Array, 8],
   ] as const;
 
   for (const [dtype, Ctor, bytes] of cases) {
@@ -77,4 +84,3 @@ describe('createTypedArray', () => {
     expect(() => createTypedArray('bogus' as never, 1)).toThrow();
   });
 });
-

@@ -17,4 +17,4 @@ imgui.ini
 .claude/settings.local.json
 *.profraw
 .vscode/settings.json
-vcpkg/*
+vcpkg/

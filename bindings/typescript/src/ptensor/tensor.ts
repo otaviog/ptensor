@@ -1,45 +1,25 @@
+import { ffiInt, ffiU64, newHandleBuf, readHandle } from './_internal';
 import {
+  p10_destroy,
   p10_from_data,
   p10_from_data_strided,
-  p10_destroy,
+  p10_get_dtype,
+  p10_get_ndim,
+  p10_get_shape,
   p10_get_size,
   p10_get_size_bytes,
-  p10_get_dtype,
-  p10_get_shape,
   p10_get_stride,
-  p10_get_ndim,
   p10_is_empty,
-} from './backends/bun/ffi.js';
-import { P10Error } from './p10Error.js';
-import { DTypeString, dtypeToNumber, numberToDtype } from './dtype.js';
-import { TypedArrayType, getDtypeFromTypedArray, createTypedArray } from './typedArray.js';
-import { ffiInt, ffiU64, readHandle, newHandleBuf } from './_internal.js';
+} from './backends/bun/ffi';
+import { type DTypeString, dtypeToNumber, numberToDtype } from './dtype';
+import { P10Error } from './p10Error';
+import { createTypedArray, getDtypeFromTypedArray, type TypedArrayType } from './typedArray';
+import type { Tensor } from './types';
 
-export type { DTypeString };
-export type { TypedArrayType };
-
-export interface Tensor {
-  /** Total number of elements. */
-  getSize(): bigint;
-  /** Total data size in bytes. */
-  getSizeBytes(): bigint;
-  /** Dimension sizes. */
-  getShape(): bigint[];
-  /** Per-element strides. */
-  getStride(): bigint[];
-  /** Number of dimensions. */
-  getNdim(): number;
-  /** Element data type. */
-  getDtype(): DTypeString;
-  /** True when the tensor has no elements. */
-  isEmpty(): boolean;
-  /** Releases the native tensor handle. Must be called when done. */
-  delete(): void;
-}
+export type { DTypeString, Tensor, TypedArrayType };
 
 class TensorImpl implements Tensor {
   /** @internal – do not access outside this module or infer.ts */ readonly _buf: BigUint64Array;
-  private _owner?: object;
 
   constructor(buf: BigUint64Array, owner?: object) {
     this._buf = buf;
@@ -100,11 +80,7 @@ class TensorImpl implements Tensor {
  * The array must stay in scope for as long as the Tensor is used.
  * Custom per-element strides (not byte strides) may optionally be supplied.
  */
-export function fromArray(
-  data: TypedArrayType,
-  shape: number[],
-  strides?: number[]
-): Tensor {
+export function fromArray(data: TypedArrayType, shape: number[], strides?: number[]): Tensor {
   const dtype = getDtypeFromTypedArray(data);
   const dtypeNum = dtypeToNumber[dtype];
   const shapeArr = new BigInt64Array(shape.map(BigInt));
@@ -113,9 +89,7 @@ export function fromArray(
   let err: number;
   if (strides) {
     const stridesArr = new BigInt64Array(strides.map(BigInt));
-    err = ffiInt(
-      p10_from_data_strided(buf, dtypeNum, shapeArr, stridesArr, shape.length, data)
-    );
+    err = ffiInt(p10_from_data_strided(buf, dtypeNum, shapeArr, stridesArr, shape.length, data));
   } else {
     err = ffiInt(p10_from_data(buf, dtypeNum, shapeArr, shape.length, data));
   }
@@ -147,4 +121,3 @@ export function _wrapHandle(buf: BigUint64Array): Tensor {
 export function _getRawHandle(t: Tensor): bigint {
   return (t as TensorImpl)._buf[0];
 }
-

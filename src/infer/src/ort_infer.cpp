@@ -14,7 +14,7 @@
 namespace p10::infer {
 P10Result<IInfer*> OrtInfer::create(const std::string& onnx_path) {
     try {
-        Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "hp3d");
+        Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "ptensor");
         return Ok(new OrtInfer(onnx_path, std::move(env)));
     } catch (const Ort::Exception& e) {
         return Err(P10Error::InferError << e.what());
@@ -102,7 +102,7 @@ P10Error OrtInfer::infer(std::span<Tensor> input_tensors, std::span<Tensor> outp
             const auto output_shape = type_and_shape_info.GetShape();
             const auto output_data = result_ort_value.GetTensorData<uint8_t>();
 
-            auto err = ort_to_hp3d_dtype(type_and_shape_info.GetElementType());
+            auto err = ort_to_p10_dtype(type_and_shape_info.GetElementType());
             if (!err.is_ok()) {
                 return err.error();
             }

@@ -49,7 +49,7 @@ if (BUILD_TESTS)
  endif (BUILD_TESTS)
 
 if (EMSCRIPTEN)
-    add_subdirectory(wasm/cpp)
+    add_subdirectory(platforms/wasm)
 endif()
 
 # Create and install the config files

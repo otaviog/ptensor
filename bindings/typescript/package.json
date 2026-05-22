@@ -6,7 +6,7 @@
   "main": "./build/ptensor-wrapper.js",
   "types": "./build/ptensor-wrapper.d.ts",
   "scripts": {
-    "build": "bun build",
+    "build": "bun build src/ptensor/index.ts --target bun --outdir dist/",
     "clean": "rm -rf build",
     "test": "bun test src/ptensor/__tests__/tensor.test.ts",
     "test:wasm": "bun test src/ptensor/backends/wasm/__tests__/wasm.test.ts",

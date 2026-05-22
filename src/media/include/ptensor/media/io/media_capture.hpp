@@ -11,11 +11,16 @@ namespace p10::media {
 class VideoFrame;
 class AudioFrame;
 
+constexpr int NO_DEVICE_SELECTED = -1;
+    
 class MediaCapture {
   public:
+    
     class Impl;
 
     static P10Result<MediaCapture> open_file(const std::string& path);
+
+    static P10Result<MediaCapture> open_stream(int audio_device_index = NO_DEVICE_SELECTED, int video_device_index = NO_DEVICE_SELECTED);
 
     void close();
 

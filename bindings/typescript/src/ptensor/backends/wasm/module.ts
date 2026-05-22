@@ -52,11 +52,11 @@ export interface PTensorWasmModule {
 
   /** p10_from_data — writes the new Ptensor handle to *out. Returns P10ErrorEnum. */
   _p10_from_data(
-    out: number,       // Ptensor* (pointer slot on WASM heap)
-    dtype: number,     // P10DTypeEnum
-    shape: number,     // const int64_t* (WASM heap)
-    numDims: number,   // size_t
-    data: number       // void*  (WASM heap)
+    out: number, // Ptensor* (pointer slot on WASM heap)
+    dtype: number, // P10DTypeEnum
+    shape: number, // const int64_t* (WASM heap)
+    numDims: number, // size_t
+    data: number, // void*  (WASM heap)
   ): number;
 
   /** p10_from_data_strided. Returns P10ErrorEnum. */
@@ -64,9 +64,9 @@ export interface PTensorWasmModule {
     out: number,
     dtype: number,
     shape: number,
-    strides: number,   // const int64_t* (WASM heap)
+    strides: number, // const int64_t* (WASM heap)
     numDims: number,
-    data: number
+    data: number,
   ): number;
 
   /** p10_destroy — sets *tensorPtr to NULL and frees the tensor. Returns P10ErrorEnum. */
@@ -92,6 +92,4 @@ export interface PTensorWasmModule {
  * The Emscripten-generated factory function.
  * Import from the generated `ptensor.js` loader and call to instantiate the module.
  */
-export type PTensorModuleFactory = (
-  opts?: Record<string, unknown>
-) => Promise<PTensorWasmModule>;
+export type PTensorModuleFactory = (opts?: Record<string, unknown>) => Promise<PTensorWasmModule>;

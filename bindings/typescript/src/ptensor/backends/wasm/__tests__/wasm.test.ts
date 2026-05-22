@@ -7,11 +7,10 @@
  * without building the C library.
  */
 
-import { describe, it, expect, beforeEach } from 'bun:test';
-import { fromArray, zeros, WasmTensorImpl } from '../tensor';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import { loadWasm } from '../index';
 import type { PTensorWasmModule } from '../module';
-import { dtypeToNumber } from '../../../dtype';
+import { fromArray, type WasmTensorImpl, zeros } from '../tensor';
 
 // ------------------------------------------------------------------ //
 // Minimal mock of the Emscripten runtime
@@ -70,7 +69,9 @@ function createMockModule(): PTensorWasmModule {
   return {
     // ---- Stack helpers ----
     stackSave: () => stackPointer,
-    stackRestore: (sp) => { stackPointer = sp; },
+    stackRestore: (sp) => {
+      stackPointer = sp;
+    },
     stackAlloc: (bytes) => {
       const ptr = stackPointer;
       stackPointer += alignTo8(bytes);
@@ -237,7 +238,9 @@ describe('WASM backend — fromArray', () => {
 describe('WASM backend — zeros', () => {
   let mod: ReturnType<typeof createMockModule>;
 
-  beforeEach(() => { mod = createMockModule(); });
+  beforeEach(() => {
+    mod = createMockModule();
+  });
 
   it("zeros([3]) defaults to 'float32'", () => {
     const t = zeros(mod, [3]);

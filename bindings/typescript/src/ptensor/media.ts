@@ -1,46 +1,46 @@
+import { ffiInt, ffiU64, newHandleBuf, readHandle } from './_internal';
 import {
-  p10_video_frame_create,
-  p10_video_frame_destroy,
-  p10_video_frame_width,
-  p10_video_frame_height,
-  p10_video_frame_channels,
-  p10_video_frame_image,
-  p10_video_frame_time_base_num,
-  p10_video_frame_time_base_den,
-  p10_video_frame_time_stamp,
-  p10_video_frame_set_time_parts,
+  p10_audio_frame_channels_count,
   p10_audio_frame_create,
   p10_audio_frame_destroy,
-  p10_audio_frame_samples_count,
-  p10_audio_frame_channels_count,
-  p10_audio_frame_sample_rate,
   p10_audio_frame_duration_seconds,
+  p10_audio_frame_sample_rate,
   p10_audio_frame_samples,
-  p10_audio_frame_time_base_num,
-  p10_audio_frame_time_base_den,
-  p10_audio_frame_time_stamp,
+  p10_audio_frame_samples_count,
   p10_audio_frame_set_time_parts,
-  p10_media_capture_open,
-  p10_media_capture_close,
-  p10_media_capture_next_frame,
-  p10_media_capture_get_video,
-  p10_media_capture_get_audio,
-  p10_media_capture_video_width,
-  p10_media_capture_video_height,
-  p10_media_capture_video_frame_rate_num,
-  p10_media_capture_video_frame_rate_den,
-  p10_media_capture_audio_sample_rate,
+  p10_audio_frame_time_base_den,
+  p10_audio_frame_time_base_num,
+  p10_audio_frame_time_stamp,
   p10_media_capture_audio_channels,
-  p10_media_capture_video_frame_count,
+  p10_media_capture_audio_sample_rate,
+  p10_media_capture_close,
   p10_media_capture_duration,
-  p10_media_writer_open_ffi,
+  p10_media_capture_get_audio,
+  p10_media_capture_get_video,
+  p10_media_capture_next_frame,
+  p10_media_capture_open,
+  p10_media_capture_video_frame_count,
+  p10_media_capture_video_frame_rate_den,
+  p10_media_capture_video_frame_rate_num,
+  p10_media_capture_video_height,
+  p10_media_capture_video_width,
   p10_media_writer_close,
-  p10_media_writer_write_video,
+  p10_media_writer_open_ffi,
   p10_media_writer_write_audio,
+  p10_media_writer_write_video,
+  p10_video_frame_channels,
+  p10_video_frame_create,
+  p10_video_frame_destroy,
+  p10_video_frame_height,
+  p10_video_frame_image,
+  p10_video_frame_set_time_parts,
+  p10_video_frame_time_base_den,
+  p10_video_frame_time_base_num,
+  p10_video_frame_time_stamp,
+  p10_video_frame_width,
 } from './backends/bun/ffi';
 import { P10Error } from './p10Error';
-import { type Tensor, _wrapHandle, _getRawHandle } from './tensor';
-import { ffiInt, ffiU64, readHandle, newHandleBuf } from './_internal';
+import { _getRawHandle, _wrapHandle, type Tensor } from './tensor';
 
 // ------------------------------------------------------------------ //
 // Value types
@@ -86,11 +86,19 @@ export interface VideoFrame {
 class VideoFrameImpl implements VideoFrame {
   readonly _buf: BigUint64Array;
 
-  constructor(buf: BigUint64Array) { this._buf = buf; }
+  constructor(buf: BigUint64Array) {
+    this._buf = buf;
+  }
 
-  getWidth(): number { return Number(ffiU64(p10_video_frame_width(readHandle(this._buf)))); }
-  getHeight(): number { return Number(ffiU64(p10_video_frame_height(readHandle(this._buf)))); }
-  getChannels(): number { return Number(ffiU64(p10_video_frame_channels(readHandle(this._buf)))); }
+  getWidth(): number {
+    return Number(ffiU64(p10_video_frame_width(readHandle(this._buf))));
+  }
+  getHeight(): number {
+    return Number(ffiU64(p10_video_frame_height(readHandle(this._buf))));
+  }
+  getChannels(): number {
+    return Number(ffiU64(p10_video_frame_channels(readHandle(this._buf))));
+  }
 
   getTime(): MediaTime {
     const h = readHandle(this._buf);
@@ -157,12 +165,22 @@ export interface AudioFrame {
 class AudioFrameImpl implements AudioFrame {
   readonly _buf: BigUint64Array;
 
-  constructor(buf: BigUint64Array) { this._buf = buf; }
+  constructor(buf: BigUint64Array) {
+    this._buf = buf;
+  }
 
-  getSamplesCount(): bigint { return ffiU64(p10_audio_frame_samples_count(readHandle(this._buf))); }
-  getChannelsCount(): bigint { return ffiU64(p10_audio_frame_channels_count(readHandle(this._buf))); }
-  getSampleRate(): number { return Number(ffiU64(p10_audio_frame_sample_rate(readHandle(this._buf)))); }
-  getDurationSeconds(): number { return p10_audio_frame_duration_seconds(readHandle(this._buf)) as number; }
+  getSamplesCount(): bigint {
+    return ffiU64(p10_audio_frame_samples_count(readHandle(this._buf)));
+  }
+  getChannelsCount(): bigint {
+    return ffiU64(p10_audio_frame_channels_count(readHandle(this._buf)));
+  }
+  getSampleRate(): number {
+    return Number(ffiU64(p10_audio_frame_sample_rate(readHandle(this._buf))));
+  }
+  getDurationSeconds(): number {
+    return p10_audio_frame_duration_seconds(readHandle(this._buf)) as number;
+  }
 
   getTime(): MediaTime {
     const h = readHandle(this._buf);
@@ -234,7 +252,9 @@ export interface MediaCapture {
 class MediaCaptureImpl implements MediaCapture {
   private _buf: BigUint64Array;
 
-  constructor(buf: BigUint64Array) { this._buf = buf; }
+  constructor(buf: BigUint64Array) {
+    this._buf = buf;
+  }
 
   nextFrame(): boolean {
     const hasFrame = new Int32Array(1);
@@ -254,8 +274,12 @@ class MediaCaptureImpl implements MediaCapture {
     return new AudioFrameImpl(frameBuf);
   }
 
-  getVideoWidth(): number { return ffiInt(p10_media_capture_video_width(readHandle(this._buf))); }
-  getVideoHeight(): number { return ffiInt(p10_media_capture_video_height(readHandle(this._buf))); }
+  getVideoWidth(): number {
+    return ffiInt(p10_media_capture_video_width(readHandle(this._buf)));
+  }
+  getVideoHeight(): number {
+    return ffiInt(p10_media_capture_video_height(readHandle(this._buf)));
+  }
 
   getVideoFrameRate(): Rational {
     const h = readHandle(this._buf);
@@ -265,10 +289,18 @@ class MediaCaptureImpl implements MediaCapture {
     };
   }
 
-  getAudioSampleRate(): number { return p10_media_capture_audio_sample_rate(readHandle(this._buf)) as number; }
-  getAudioChannels(): number { return Number(ffiU64(p10_media_capture_audio_channels(readHandle(this._buf)))); }
-  getVideoFrameCount(): bigint { return ffiU64(p10_media_capture_video_frame_count(readHandle(this._buf))); }
-  getDuration(): number { return p10_media_capture_duration(readHandle(this._buf)) as number; }
+  getAudioSampleRate(): number {
+    return p10_media_capture_audio_sample_rate(readHandle(this._buf)) as number;
+  }
+  getAudioChannels(): number {
+    return Number(ffiU64(p10_media_capture_audio_channels(readHandle(this._buf))));
+  }
+  getVideoFrameCount(): bigint {
+    return ffiU64(p10_media_capture_video_frame_count(readHandle(this._buf)));
+  }
+  getDuration(): number {
+    return p10_media_capture_duration(readHandle(this._buf)) as number;
+  }
 
   close(): void {
     if (this._buf[0] !== 0n) {
@@ -283,7 +315,7 @@ class MediaCaptureImpl implements MediaCapture {
  */
 export function openCapture(path: string): MediaCapture {
   const buf = newHandleBuf();
-  const pathBuf = Buffer.from(path + '\0');
+  const pathBuf = Buffer.from(`${path}\0`);
   P10Error.check(ffiInt(p10_media_capture_open(buf, pathBuf)));
   return new MediaCaptureImpl(buf);
 }
@@ -304,20 +336,30 @@ export interface MediaWriter {
 class MediaWriterImpl implements MediaWriter {
   private _buf: BigUint64Array;
 
-  constructor(buf: BigUint64Array) { this._buf = buf; }
+  constructor(buf: BigUint64Array) {
+    this._buf = buf;
+  }
 
   writeVideo(frame: VideoFrame): void {
-    P10Error.check(ffiInt(p10_media_writer_write_video(
-      readHandle(this._buf),
-      readHandle((frame as VideoFrameImpl)._buf),
-    )));
+    P10Error.check(
+      ffiInt(
+        p10_media_writer_write_video(
+          readHandle(this._buf),
+          readHandle((frame as VideoFrameImpl)._buf),
+        ),
+      ),
+    );
   }
 
   writeAudio(frame: AudioFrame): void {
-    P10Error.check(ffiInt(p10_media_writer_write_audio(
-      readHandle(this._buf),
-      readHandle((frame as AudioFrameImpl)._buf),
-    )));
+    P10Error.check(
+      ffiInt(
+        p10_media_writer_write_audio(
+          readHandle(this._buf),
+          readHandle((frame as AudioFrameImpl)._buf),
+        ),
+      ),
+    );
   }
 
   close(): void {
@@ -341,16 +383,20 @@ export function openWriter(
   audioChannels: number = 0,
 ): MediaWriter {
   const buf = newHandleBuf();
-  const pathBuf = Buffer.from(path + '\0');
-  P10Error.check(ffiInt(p10_media_writer_open_ffi(
-    buf,
-    pathBuf,
-    width,
-    height,
-    frameRate.num,
-    frameRate.den,
-    audioSampleRate,
-    audioChannels,
-  )));
+  const pathBuf = Buffer.from(`${path}\0`);
+  P10Error.check(
+    ffiInt(
+      p10_media_writer_open_ffi(
+        buf,
+        pathBuf,
+        width,
+        height,
+        frameRate.num,
+        frameRate.den,
+        audioSampleRate,
+        audioChannels,
+      ),
+    ),
+  );
   return new MediaWriterImpl(buf);
 }

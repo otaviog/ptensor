@@ -13,11 +13,11 @@
  * Note: media and infer APIs are not available in the WASM build.
  */
 
-import type { PTensorWasmModule, PTensorModuleFactory } from './module';
+import type { DTypeString, Tensor, TypedArrayType } from '../../types';
+import type { PTensorModuleFactory, PTensorWasmModule } from './module';
 import { fromArray as _fromArray, zeros as _zeros } from './tensor';
-import type { Tensor, DTypeString, TypedArrayType } from '../../types';
 
-export type { Tensor, DTypeString, TypedArrayType };
+export type { DTypeString, Tensor, TypedArrayType };
 
 /** The public API surface exposed after loading the WASM module. */
 export interface PtensorWasmApi {
@@ -57,7 +57,7 @@ export interface PtensorWasmApi {
  * const api = await loadWasm(PTensorModule);
  */
 export async function loadWasm(
-  loaderOrFactory: string | URL | PTensorModuleFactory | PTensorWasmModule
+  loaderOrFactory: string | URL | PTensorModuleFactory | PTensorWasmModule,
 ): Promise<PtensorWasmApi> {
   let mod: PTensorWasmModule;
 
@@ -67,10 +67,7 @@ export async function loadWasm(
     mod = await (loaderOrFactory as PTensorModuleFactory)();
   } else {
     // string or URL — dynamic import the Emscripten JS loader
-    const url =
-      typeof loaderOrFactory === 'string'
-        ? loaderOrFactory
-        : loaderOrFactory.toString();
+    const url = typeof loaderOrFactory === 'string' ? loaderOrFactory : loaderOrFactory.toString();
     const { default: factory } = await import(/* @vite-ignore */ url);
     mod = await (factory as PTensorModuleFactory)();
   }

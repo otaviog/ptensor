@@ -24,5 +24,5 @@ export const dtypeToNumber: Record<DTypeString, number> = {
 };
 
 export const numberToDtype: Record<number, DTypeString> = Object.fromEntries(
-  Object.entries(dtypeToNumber).map(([k, v]) => [v, k])
+  Object.entries(dtypeToNumber).map(([k, v]) => [v, k]),
 ) as Record<number, DTypeString>;

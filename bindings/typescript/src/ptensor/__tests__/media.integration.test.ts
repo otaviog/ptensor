@@ -1,21 +1,20 @@
-import { describe, it, expect, afterEach } from 'bun:test';
-import { resolve } from 'path';
-import { mkdtemp, rm } from 'fs/promises';
-import { tmpdir } from 'os';
-import { join } from 'path';
+import { afterEach, describe, expect, it } from 'bun:test';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import {
-  openCapture,
-  openWriter,
+  type AudioFrame,
   createVideoFrame,
   type MediaCapture,
+  openCapture,
+  openWriter,
   type VideoFrame,
-  type AudioFrame,
 } from '../media';
 import { P10Error } from '../p10Error';
 
 const TEST_VIDEO = resolve(
   import.meta.dir,
-  '../../../../../tests/data/video/file_example_MP4_480_1_5MG.mp4'
+  '../../../../../tests/data/video/file_example_MP4_480_1_5MG.mp4',
 );
 
 describe('media integration (real C library)', () => {
@@ -23,14 +22,23 @@ describe('media integration (real C library)', () => {
   const videoFrames: VideoFrame[] = [];
   const audioFrames: AudioFrame[] = [];
 
-  function trackCapture(c: MediaCapture): MediaCapture { captures.push(c); return c; }
-  function trackVideo(f: VideoFrame):    VideoFrame    { videoFrames.push(f); return f; }
-  function trackAudio(f: AudioFrame):    AudioFrame    { audioFrames.push(f); return f; }
+  function trackCapture(c: MediaCapture): MediaCapture {
+    captures.push(c);
+    return c;
+  }
+  function trackVideo(f: VideoFrame): VideoFrame {
+    videoFrames.push(f);
+    return f;
+  }
+  function trackAudio(f: AudioFrame): AudioFrame {
+    audioFrames.push(f);
+    return f;
+  }
 
   afterEach(() => {
     for (const f of videoFrames.splice(0)) f.delete();
     for (const f of audioFrames.splice(0)) f.delete();
-    for (const c of captures.splice(0))   c.close();
+    for (const c of captures.splice(0)) c.close();
   });
 
   // ---------------------------------------------------------------- //
@@ -177,8 +185,8 @@ describe('media integration (real C library)', () => {
     try {
       const cap = trackCapture(openCapture(TEST_VIDEO));
       const fps = cap.getVideoFrameRate();
-      const w   = cap.getVideoWidth();
-      const h   = cap.getVideoHeight();
+      const w = cap.getVideoWidth();
+      const h = cap.getVideoHeight();
 
       const writer = openWriter(outPath, w, h, fps);
 

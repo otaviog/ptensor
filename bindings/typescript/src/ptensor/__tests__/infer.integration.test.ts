@@ -1,14 +1,11 @@
-import { describe, it, expect, afterEach } from 'bun:test';
-import { resolve } from 'path';
+import { afterEach, describe, expect, it } from 'bun:test';
+import { resolve } from 'node:path';
 import { fromOnnx, type InferSession } from '../infer';
-import { fromArray, type Tensor } from '../tensor';
 import { P10Error } from '../p10Error';
+import { fromArray, type Tensor } from '../tensor';
 
 // MNIST-12: input [1,1,28,28] float32 → output [1,10] float32
-const MNIST_MODEL = resolve(
-  import.meta.dir,
-  '../../../../../src/infer/tests/data/mnist-12.onnx'
-);
+const MNIST_MODEL = resolve(import.meta.dir, '../../../../../src/infer/tests/data/mnist-12.onnx');
 
 describe('InferSession integration (real C library)', () => {
   const sessions: InferSession[] = [];
@@ -24,7 +21,7 @@ describe('InferSession integration (real C library)', () => {
   }
 
   afterEach(() => {
-    for (const t of tensors.splice(0))  t.delete();
+    for (const t of tensors.splice(0)) t.delete();
     for (const s of sessions.splice(0)) s.delete();
   });
 
@@ -70,7 +67,7 @@ describe('InferSession integration (real C library)', () => {
     // MNIST expects [1, 1, 28, 28] float32
     const input = trackTensor(fromArray(new Float32Array(1 * 1 * 28 * 28), [1, 1, 28, 28]));
     const outputs = session.run([input]);
-    outputs.forEach(t => tensors.push(t));
+    for (const t of outputs) tensors.push(t);
 
     expect(outputs).toHaveLength(1);
     const out = outputs[0];
@@ -85,7 +82,9 @@ describe('InferSession integration (real C library)', () => {
     const session = trackSession(fromOnnx(MNIST_MODEL));
     const input = trackTensor(fromArray(new Float32Array(1 * 1 * 28 * 28), [1, 1, 28, 28]));
     const outputs = session.run([input]);
-    expect(() => { for (const t of outputs) t.delete(); }).not.toThrow();
+    expect(() => {
+      for (const t of outputs) t.delete();
+    }).not.toThrow();
     // Don't push to tensors[] since already deleted.
   });
 
@@ -98,11 +97,11 @@ describe('InferSession integration (real C library)', () => {
     const session = trackSession(fromOnnx(MNIST_MODEL));
     const input = trackTensor(fromArray(new Float32Array(1 * 1 * 28 * 28), [1, 1, 28, 28]));
 
-    const first  = session.run([input]);
+    const first = session.run([input]);
     const second = session.run([input]);
 
-    first.forEach(t => tensors.push(t));
-    second.forEach(t => tensors.push(t));
+    for (const t of first) tensors.push(t);
+    for (const t of second) tensors.push(t);
 
     expect(first[0].getShape()).toEqual([1n, 10n]);
     expect(second[0].getShape()).toEqual([1n, 10n]);

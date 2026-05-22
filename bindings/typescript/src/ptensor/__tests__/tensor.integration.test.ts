@@ -1,5 +1,5 @@
-import { describe, it, expect, afterEach } from 'bun:test';
-import { fromArray, zeros, type Tensor } from '../tensor';
+import { afterEach, describe, expect, it } from 'bun:test';
+import { fromArray, type Tensor, zeros } from '../tensor';
 
 // ------------------------------------------------------------------ //
 // These tests require the native libptensor_capi library to be present.
@@ -60,8 +60,8 @@ describe('Tensor integration (real C library)', () => {
 
   it('int8, int16, uint16, uint32: correct dtypes', () => {
     const cases = [
-      [new Int8Array(2),   'int8'],
-      [new Int16Array(2),  'int16'],
+      [new Int8Array(2), 'int8'],
+      [new Int16Array(2), 'int16'],
       [new Uint16Array(2), 'uint16'],
       [new Uint32Array(2), 'uint32'],
     ] as const;

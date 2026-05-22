@@ -1,14 +1,14 @@
-import type { PTensorWasmModule } from './module';
+import { dtypeToNumber, numberToDtype } from '../../dtype';
+import { createTypedArray, getDtypeFromTypedArray } from '../../typedArray';
+import type { DTypeString, Tensor, TypedArrayType } from '../../types';
 import {
-  withPtrOutSlot,
   mallocBuffer,
   mallocI64Array,
   readI64Array,
   readLastErrorMessage,
+  withPtrOutSlot,
 } from './memory';
-import type { Tensor, DTypeString, TypedArrayType } from '../../types';
-import { dtypeToNumber, numberToDtype } from '../../dtype';
-import { getDtypeFromTypedArray, createTypedArray } from '../../typedArray';
+import type { PTensorWasmModule } from './module';
 
 const P10_OK = 0;
 
@@ -115,7 +115,7 @@ export function fromArray(
   mod: PTensorWasmModule,
   data: TypedArrayType,
   shape: number[],
-  strides?: number[]
+  strides?: number[],
 ): Tensor {
   const dtype = getDtypeFromTypedArray(data);
   const dtypeNum = dtypeToNumber[dtype];
@@ -130,14 +130,14 @@ export function fromArray(
       const stridesPtr = mallocI64Array(mod, strides.map(BigInt));
       try {
         [err, handle] = withPtrOutSlot(mod, (slot) =>
-          mod._p10_from_data_strided(slot, dtypeNum, shapePtr, stridesPtr, shape.length, dataPtr)
+          mod._p10_from_data_strided(slot, dtypeNum, shapePtr, stridesPtr, shape.length, dataPtr),
         );
       } finally {
         mod._free(stridesPtr);
       }
     } else {
       [err, handle] = withPtrOutSlot(mod, (slot) =>
-        mod._p10_from_data(slot, dtypeNum, shapePtr, shape.length, dataPtr)
+        mod._p10_from_data(slot, dtypeNum, shapePtr, shape.length, dataPtr),
       );
     }
   } finally {
@@ -160,7 +160,7 @@ export function fromArray(
 export function zeros(
   mod: PTensorWasmModule,
   shape: number[],
-  dtype: DTypeString = 'float32'
+  dtype: DTypeString = 'float32',
 ): Tensor {
   const size = shape.reduce((a, b) => a * b, 1);
   const data = createTypedArray(dtype, size);

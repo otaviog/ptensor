@@ -1,13 +1,13 @@
+import { ffiInt, ffiU64, newHandleBuf, readHandle } from './_internal';
 import {
-  p10_infer_from_onnx,
   p10_infer_destroy,
+  p10_infer_from_onnx,
   p10_infer_get_input_count,
   p10_infer_get_output_count,
   p10_infer_run,
 } from './backends/bun/ffi';
 import { P10Error } from './p10Error';
-import { type Tensor, _wrapHandle, _getRawHandle } from './tensor';
-import { ffiInt, ffiU64, readHandle, newHandleBuf } from './_internal';
+import { _getRawHandle, _wrapHandle, type Tensor } from './tensor';
 
 export type { Tensor };
 
@@ -30,7 +30,9 @@ class InferSessionImpl implements InferSession {
   // [0] = opaque P10Infer handle value
   private _buf: BigUint64Array;
 
-  constructor(buf: BigUint64Array) { this._buf = buf; }
+  constructor(buf: BigUint64Array) {
+    this._buf = buf;
+  }
 
   getInputCount(): number {
     return Number(ffiU64(p10_infer_get_input_count(readHandle(this._buf))));
@@ -41,7 +43,7 @@ class InferSessionImpl implements InferSession {
   }
 
   run(inputs: Tensor[]): Tensor[] {
-    const numIn  = inputs.length;
+    const numIn = inputs.length;
     const numOut = this.getOutputCount();
 
     // Pack input Ptensor handle values into a contiguous BigUint64Array.
@@ -55,7 +57,7 @@ class InferSessionImpl implements InferSession {
     const outputPtrs = new BigUint64Array(numOut);
 
     P10Error.check(
-      ffiInt(p10_infer_run(readHandle(this._buf), inputPtrs, numIn, outputPtrs, numOut))
+      ffiInt(p10_infer_run(readHandle(this._buf), inputPtrs, numIn, outputPtrs, numOut)),
     );
 
     // Wrap each output handle in a Tensor the caller owns.
@@ -79,7 +81,7 @@ class InferSessionImpl implements InferSession {
  */
 export function fromOnnx(modelPath: string): InferSession {
   const buf = newHandleBuf();
-  const pathBuf = Buffer.from(modelPath + '\0');
+  const pathBuf = Buffer.from(`${modelPath}\0`);
   P10Error.check(ffiInt(p10_infer_from_onnx(buf, pathBuf)));
   return new InferSessionImpl(buf);
 }

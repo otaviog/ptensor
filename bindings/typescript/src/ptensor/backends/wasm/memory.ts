@@ -13,7 +13,7 @@ import type { PTensorWasmModule } from './module';
  */
 export function withPtrOutSlot<T>(
   mod: PTensorWasmModule,
-  cb: (slot: number) => T
+  cb: (slot: number) => T,
 ): [cbResult: T, slotValue: number] {
   const sp = mod.stackSave();
   const slot = mod.stackAlloc(4);
@@ -35,10 +35,7 @@ export function withPtrOutSlot<T>(
 export function mallocBuffer(mod: PTensorWasmModule, data: ArrayBufferView): number {
   const ptr = mod._malloc(data.byteLength);
   if (!ptr) throw new Error('WASM _malloc failed (out of memory)');
-  mod.HEAPU8.set(
-    new Uint8Array(data.buffer, data.byteOffset, data.byteLength),
-    ptr
-  );
+  mod.HEAPU8.set(new Uint8Array(data.buffer, data.byteOffset, data.byteLength), ptr);
   return ptr;
 }
 

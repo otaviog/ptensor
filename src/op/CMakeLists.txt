@@ -17,6 +17,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/image_rgb_to_gray.hpp
   ${_INCLUDE_DIR}/wave.hpp
   ${_INCLUDE_DIR}/window_function.hpp
+  ${_INCLUDE_DIR}/statistics.hpp
   )
 
 target_sources(ptensor_op
@@ -43,6 +44,7 @@ target_sources(ptensor_op
     src/image_rgb_to_gray.cpp
     src/wave.cpp
     src/window_function.cpp
+    src/statistics.cpp
 )
 
 target_include_directories(ptensor_op

@@ -3,6 +3,7 @@ add_library(ptensor_recog STATIC)
 
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/face_detection.hpp
+  ${_INCLUDE_DIR}/face_detector.hpp
   ${_INCLUDE_DIR}/geom/point2.hpp
   ${_INCLUDE_DIR}/geom/rect2.hpp
 )
@@ -15,6 +16,7 @@ target_sources(ptensor_recog
   PRIVATE
     # Main detection factory
     src/face_detection.cpp
+    src/face_detector.cpp
     # Common algorithms
     src/nms.hpp src/nms.cpp
     # Ssd anchors

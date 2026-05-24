@@ -1,43 +1,43 @@
 {
   "version": "0.2.0",
   "configurations": [
-		{
-			"name": "debug/unit-test",
-			"type": "lldb-vscode",
-			"request": "launch",
-			"program": "${workspaceFolder}/build/clang/debug/tests/unit_tests_all",
-			"stopAtEntry": false,
-			"cwd": "${workspaceFolder}",
-			"environment": [],
-			"externalConsole": true,
-			"MIMode": "lldb"
-		},
-		{
-			"name": "debug/transcoder",
-			"type": "lldb-vscode",
-			"request": "launch",
-			"program": "${workspaceFolder}/build/clang/debug/src/media/samples/sample_transcoder",
-			"args": [
-				"${input:videoPath}"
-			],
-			"stopAtEntry": false,
-			"cwd": "${workspaceFolder}",
-			"externalConsole": false,
-			"MIMode": "lldb"
-		}
-	],
-	"inputs": [
-		{
-			"id": "testFilter",
-			"type": "promptString",
-			"description": "Test filter pattern (e.g., '[dtype]' or 'Tensor*')",
-			"default": ""
-		},
-		{
-			"id": "videoPath",
-			"type": "promptString",
-			"description": "Path to video file",
-			"default": "${workspaceFolder}/tests/data/video/file_example_MP4_480_1_5MG.mp4"
-		}
-	]
+	{
+	  "name": "all/unit-test",
+	  "type": "lldb-vscode",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/tests/unit_tests_all",
+	  "stopAtEn==try": false,
+	  "cwd": "${workspaceFolder}",
+	  "environment": [],
+	  "externalConsole": true,
+	  "MIMode": "lldb"
+	},
+	{
+	  "name": "media/transcoder",
+	  "type": "lldb-vscode",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/src/media/samples/sample_transcoder",
+	  "args": [
+		"${input:videoPath}"
+	  ],
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "externalConsole": false,
+	  "MIMode": "lldb"
+	},
+	{
+	  "name": "recog/face_detect",
+	  "type": "lldb-vscode",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/src/recog/apps/face_detect/face_detector",
+	  "args": [
+		"tests/data/face_detectors/faces.jpg", "--model", "tests/data/face_detectors/blazefaces-320.onnx"
+	  ],
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "externalConsole": false,
+	  "MIMode": "lldb"
+	}
+	
+  ]
 }

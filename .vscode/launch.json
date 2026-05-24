@@ -10,7 +10,22 @@
 	  "cwd": "${workspaceFolder}",
 	  "environment": [],
 	  "externalConsole": true,
-	  "MIMode": "lldb"
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
+	},
+	{
+	  "name": "all/unit-test (cpptools, natvis)",
+	  "type": "cppdbg",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/tests/unit_tests_all",
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "environment": [],
+	  "externalConsole": false,
+	  "MIMode": "lldb",
+	  "visualizerFile": "${workspaceFolder}/src/core/ptensor.natvis"
 	},
 	{
 	  "name": "media/transcoder",
@@ -23,7 +38,10 @@
 	  "stopAtEntry": false,
 	  "cwd": "${workspaceFolder}",
 	  "externalConsole": false,
-	  "MIMode": "lldb"
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
 	},
 	{
 	  "name": "recog/face_detect",
@@ -36,7 +54,10 @@
 	  "stopAtEntry": false,
 	  "cwd": "${workspaceFolder}",
 	  "externalConsole": false,
-	  "MIMode": "lldb"
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
 	}
 	
   ]

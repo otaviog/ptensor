@@ -1,0 +1,45 @@
+#pragma once
+
+#include <atomic>
+
+#include "gui_app.hpp"
+#include "gui_app_parameters.hpp"
+#include "image_texture.hpp"
+
+struct SDL_Window;
+
+namespace p10::viz {
+struct VulkanContext;
+
+class GuiApp::Impl {
+  public:
+    Impl(GuiApp& parent);
+
+    ~Impl();
+
+    Impl(const Impl&) = delete;
+    Impl& operator=(const Impl&) = delete;
+
+    Impl(const Impl&&) = delete;
+    Impl& operator=(const Impl&&) = delete;
+
+    P10Error start(const GuiAppParameters& params);
+
+    ImageTexture create_texture();
+
+    void quit();
+
+    VulkanContext& get_vulkan_context() {
+        return *vk_;
+    }
+
+    void main_loop();
+
+  private:
+    GuiApp& parent_;
+    GuiAppParameters params_;
+    std::unique_ptr<VulkanContext> vk_;
+    SDL_Window* window_ = nullptr;
+    std::atomic<bool> running_ = std::atomic<bool>(false);
+};
+}  // namespace p10::viz

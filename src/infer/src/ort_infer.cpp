@@ -12,10 +12,12 @@
 #include "ort_conversions.hpp"
 
 namespace p10::infer {
-P10Result<IInfer*> OrtInfer::create(const std::string& onnx_path) {
+P10Result<std::unique_ptr<IInfer>> OrtInfer::create(const std::string& onnx_path) {
     try {
         Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "ptensor");
-        return Ok(new OrtInfer(onnx_path, std::move(env)));
+        return Ok<std::unique_ptr<IInfer>>(
+            std::unique_ptr<IInfer>(new OrtInfer(onnx_path, std::move(env)))
+        );
     } catch (const Ort::Exception& e) {
         return Err(P10Error::InferError << e.what());
     }

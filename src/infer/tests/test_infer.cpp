@@ -29,18 +29,16 @@ TEST_CASE("infer::IInfer::from_onnx", "[infer][ort]") {
 
 TEST_CASE("infer::IInfer::get_input_count and get_output_count", "[infer][ort]") {
     // MNIST-12: one float32 input [1,1,28,28], one float32 output [1,10]
-    std::unique_ptr<IInfer> infer(
-        IInfer::from_onnx(MNIST_MODEL, InferConfig()).expect("Error while loading test onnx")
-    );
+    std::unique_ptr<IInfer> infer =
+        IInfer::from_onnx(MNIST_MODEL, InferConfig()).expect("Error while loading test onnx");
 
     REQUIRE(infer->get_input_count() == 1);
     REQUIRE(infer->get_output_count() == 1);
 }
 
 TEST_CASE("infer::IInfer::infer wrong tensor counts", "[infer][ort]") {
-    std::unique_ptr<IInfer> infer(
-        IInfer::from_onnx(MNIST_MODEL, InferConfig()).expect("Error while loading test onnx")
-    );
+    std::unique_ptr<IInfer> infer =
+        IInfer::from_onnx(MNIST_MODEL, InferConfig()).expect("Error while loading test onnx");
 
     SECTION("too few inputs") {
         std::array<Tensor, 0> inputs = {};
@@ -66,9 +64,8 @@ TEST_CASE("infer::IInfer::infer wrong tensor counts", "[infer][ort]") {
 
 TEST_CASE("infer::IInfer::infer output shape and dtype", "[infer][ort]") {
     // MNIST-12 maps [1,1,28,28] float32 -> [1,10] float32
-    std::unique_ptr<IInfer> infer(
-        IInfer::from_onnx(MNIST_MODEL, InferConfig()).expect("Error while loading test onnx")
-    );
+    std::unique_ptr<IInfer> infer =
+        IInfer::from_onnx(MNIST_MODEL, InferConfig()).expect("Error while loading test onnx");
 
     std::array<Tensor, 1> inputs = {Tensor::zeros(make_shape(1, 1, 28, 28)).unwrap()};
     std::array<Tensor, 1> outputs = {};

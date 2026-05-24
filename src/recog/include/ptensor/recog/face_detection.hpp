@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <span>
 #include <variant>
 #include <vector>
@@ -74,8 +75,8 @@ class BlazeFaceModel {
     SsdAnchorParameters ssd_params_ = {
         {{8, 11}, {14, 19, 26, 38, 64, 149}},  // min_sizes
         {8, 16},  // steps
-        0.1,  // center_variance
-        0.2  // size_variance
+        0.1f,  // center_variance
+        0.2f  // size_variance
     };
     float nms_iou_threshold_ = 0.3f;
     float score_threshold_ = 0.95f;
@@ -91,19 +92,28 @@ class IFaceDetector {
     /// # Arguments
     ///
     /// * config: the face model and its configuration
-    /// * infer_engine: inference engine to use for the face detector
-    static P10Result<IFaceDetector*>
-    create(const FaceDetectorModel& model, infer::IInfer* infer_engine);
+    /// * infer_engine: inference engine to use for the face detector (ownership is transferred)
+    static P10Result<std::unique_ptr<IFaceDetector>>
+    create(const FaceDetectorModel& model, std::unique_ptr<infer::IInfer> infer_engine);
 
-    virtual ~IFaceDetector() {}
+    IFaceDetector() = default;
+    virtual ~IFaceDetector() = default;
 
+    IFaceDetector(const IFaceDetector&) = delete;
+    IFaceDetector& operator=(const IFaceDetector&) = delete;
+    IFaceDetector(IFaceDetector&&) = delete;
+    IFaceDetector& operator=(const IFaceDetector&&) = delete;
+    
     /// Detect faces
     ///
     /// # Arguments
     ///
-    /// * images: images in the [N x C x H x W] format
+    /// * images: Image tensor in the order [N x C x H x W] with uint8 format.
+    /// * out_detections: Span to with size N to put the detections. Returns an error if its size is different from N.
+    ///
+    /// # Returns
+    ///
+    /// * An error if the faces can not be detected.
     virtual P10Error detect(Tensor& images, std::span<FaceDetection> out_detections) = 0;
-
-  private:
 };
 }  // namespace p10::recog

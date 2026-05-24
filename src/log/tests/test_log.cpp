@@ -21,3 +21,12 @@ TEST_CASE("log::ScopedLogger logs through info/error without throwing", "[log]")
     const std::runtime_error error {"boom"};
     REQUIRE_NOTHROW(logger.error(error));
 }
+
+TEST_CASE("log::ScopedLogger info/error/debug accept std::format args", "[log]") {
+    auto logger = log::scope("unit_test");
+
+    REQUIRE_NOTHROW(logger.info("value={}", 42));
+    REQUIRE_NOTHROW(logger.error("oops at {}:{}", "main", 7));
+    REQUIRE_NOTHROW(logger.debug("plain message"));
+    REQUIRE_NOTHROW(logger.debug("{} + {} = {}", 1, 2, 3));
+}

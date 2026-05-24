@@ -56,7 +56,7 @@ P10Error run_on_directory(IFaceDetector& detector, const std::string& path) {
 }
 
 int main(int argc, char** argv) {
-    auto cli = parse_args(argc, argv);
+    const auto cli = parse_args(argc, argv);
 
     auto infer_result = infer::IInfer::from_onnx(cli.model_path, infer::InferConfig());
     if (infer_result.is_error()) {
@@ -83,7 +83,11 @@ int main(int argc, char** argv) {
         err = run_on_image(*detector, cli.input);
     }
 
-    return err.is_error() ? 1 : 0;
+    if (err.is_error()) {
+        std::cerr << err.to_string() << std::endl;
+        return 1;
+    }
+    return 0;
 }
 
 namespace {
@@ -146,7 +150,7 @@ P10Error run_on_image(IFaceDetector& detector, const std::string& path) {
     }
 
     Tensor nchw;
-    p10::op::image_to_tensor(img_result.unwrap(), nchw);
+    p10::op::image_to_tensor(img_result.unwrap(), nchw, op::ImageToTensorOptions().unsqueeze(true));
 
     std::array<FaceDetection, 1> detections;
     P10_RETURN_IF_ERROR(detector.detect(nchw, detections));
@@ -183,7 +187,7 @@ P10Error run_on_video(IFaceDetector& detector, const std::string& path) {
             break;
         }
 
-        op::image_to_tensor(frame.image(), nchw);
+        P10_RETURN_IF_ERROR(op::image_to_tensor(frame.image(), nchw));
         std::array<FaceDetection, 1> detections;
         if (auto err = detector.detect(nchw, detections); err.is_error()) {
             std::cerr << "Detection error on frame " << frame_idx << ": " << err.to_string()
@@ -197,9 +201,10 @@ P10Error run_on_video(IFaceDetector& detector, const std::string& path) {
 }
 
 void print_detections(const std::string& source, std::span<const FaceDetection> dets) {
-    std::cout << "===========" << source << '\n';
+    std::cout << "{\"" << source << "\": [\n";
     for (const auto &det : dets) {
         std::cout << to_string(det) << '\n';
     }
+    std::cout << "]\n}";
 }
 }  // namespace

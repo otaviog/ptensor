@@ -15,7 +15,7 @@ PTENSOR_API P10ErrorEnum p10_infer_from_onnx(P10Infer* infer, const char* onnx_m
     if (result.is_error()) {
         return p10::update_error_state(result.unwrap_err());
     }
-    *infer = p10::infer::wrap_infer(result.unwrap());
+    *infer = p10::infer::wrap_infer(result.unwrap().release());
     return P10_OK;
 }
 

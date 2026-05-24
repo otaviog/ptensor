@@ -39,7 +39,7 @@ target_link_libraries(ptensor_recog
     ptensor_infer
   PRIVATE
     ptensor_op
-    # ng-log::ng-log
+    ptensor_log
   )
 
 if(BUILD_TESTS)

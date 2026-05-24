@@ -3,10 +3,10 @@
   "configurations": [
 	{
 	  "name": "all/unit-test",
-	  "type": "lldb-vscode",
+	  "type": "lldb-dap",
 	  "request": "launch",
 	  "program": "${workspaceFolder}/build/clang/debug/tests/unit_tests_all",
-	  "stopAtEn==try": false,
+	  "stopAtEntry": false,
 	  "cwd": "${workspaceFolder}",
 	  "environment": [],
 	  "externalConsole": true,
@@ -14,7 +14,7 @@
 	},
 	{
 	  "name": "media/transcoder",
-	  "type": "lldb-vscode",
+	  "type": "lldb-dap",
 	  "request": "launch",
 	  "program": "${workspaceFolder}/build/clang/debug/src/media/samples/sample_transcoder",
 	  "args": [
@@ -27,7 +27,7 @@
 	},
 	{
 	  "name": "recog/face_detect",
-	  "type": "lldb-vscode",
+	  "type": "lldb-dap",
 	  "request": "launch",
 	  "program": "${workspaceFolder}/build/clang/debug/src/recog/apps/face_detect/face_detector",
 	  "args": [

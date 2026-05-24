@@ -46,6 +46,7 @@ target_sources(ptensor
     src/tensor_print.cpp
     src/detail/blob.cpp
     src/dtype.cpp
+    src/base64.cpp
 )
 
 if(WIN32)

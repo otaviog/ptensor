@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdint>
 
 #include <catch2/catch_approx.hpp>
@@ -61,6 +62,32 @@ TEST_CASE("Tensor::prints handles truncation", "[tensor][print]") {
 
         REQUIRE(tensor_str == "Tensor(shape=[20], dtype=float32, values=[...])");
     }
+}
+
+TEST_CASE("Tensor::to_json emits parseable JSON", "[tensor][print][json]") {
+    auto tensor = Tensor::from_range(make_shape(2, 3)).expect("Could not create tensor");
+    const std::string json = to_json(tensor);
+
+    // Spot-check the structure rather than the full base64 payload.
+    REQUIRE(json.starts_with(R"({"dtype":"float32","shape":[2, 3],"stride":[3, 1],"blob":")"));
+    REQUIRE(json.ends_with(R"("})"));
+
+    const char* debug_ptr = to_json_debug(tensor);
+    REQUIRE(debug_ptr != nullptr);
+    REQUIRE(std::string(debug_ptr) == json);
+}
+
+TEST_CASE("Tensor stats debug helpers", "[tensor][debug][stats]") {
+    auto tensor = Tensor::from_range(make_shape(2, 3)).expect("Could not create tensor");
+    // Values are 0..5, so min=0, max=5, mean=2.5.
+    REQUIRE(tensor_min_debug(tensor) == Catch::Approx(0.0));
+    REQUIRE(tensor_max_debug(tensor) == Catch::Approx(5.0));
+    REQUIRE(tensor_mean_debug(tensor) == Catch::Approx(2.5));
+
+    Tensor empty;
+    REQUIRE(std::isnan(tensor_min_debug(empty)));
+    REQUIRE(std::isnan(tensor_max_debug(empty)));
+    REQUIRE(std::isnan(tensor_mean_debug(empty)));
 }
 
 TEST_CASE("Tensor::prints handles float precision", "[tensor][print]") {

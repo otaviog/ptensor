@@ -1,8 +1,6 @@
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/infer)
 set(onnxruntime_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/onnxruntime-osx-arm64-1.24.4/lib/cmake/onnxruntime)
 find_package(onnxruntime CONFIG REQUIRED)
-
-find_package(ng-log CONFIG REQUIRED)
 find_package(CURL REQUIRED)
 
 add_library(ptensor_infer STATIC)

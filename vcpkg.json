@@ -15,6 +15,19 @@
 		}
 	],
 	"features": {
+		"tests": {
+			"description": "Build tests (for development)",
+			"dependencies": [
+				"catch2",
+				"benchmark"
+			]
+		},
+		"samples": {
+			"description": "Build samples (for development)",
+			"dependencies": [
+				"cli11"
+			]
+		},
 		"io": {
 			"description": "Enable I/O functionality for image and numpy file support",
 			"dependencies": [
@@ -27,13 +40,6 @@
 			"description": "Enable additional tensor operations",
 			"dependencies": [
 				"pocketfft"
-			]
-		},
-		"tests": {
-			"description": "Build tests (for development)",
-			"dependencies": [
-				"catch2",
-				"benchmark"
 			]
 		},
 		"media": {
@@ -54,8 +60,22 @@
 		},
 		"infer": {
 			"description": "Inference support",
+			"dependencies": []
+		},
+		"viz": {
+			"description": "Enable GUI/visualization support (ImGui + SDL2)",
 			"dependencies": [
-				"cli11"
+				"imgui",
+				{
+					"name": "sdl2",
+					"features": [
+						"vulkan"
+					]
+				},
+				{
+					"name": "vulkan",
+					"platform": "windows | linux"
+				}
 			]
 		}
 	}

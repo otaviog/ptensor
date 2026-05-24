@@ -25,8 +25,16 @@ if(TARGET p10::ptensor_op AND NOT TARGET p10::op)
     add_library(p10::op ALIAS p10::ptensor_op)
 endif()
 
+if (TARGET p10::ptensor_recog AND NOT TARGET p10::recog)
+    add_library(p10::recog ALIAS p10::ptensor_recog)
+endif()
+
 if(TARGET p10::ptensor_media AND NOT TARGET p10::media)
     add_library(p10::media ALIAS p10::ptensor_media)
+endif()
+
+if(TARGET p10::ptensor_viz AND NOT TARGET p10::viz)
+    add_library(p10::viz ALIAS p10::ptensor_viz)
 endif()
 
 check_required_components(ptensor)

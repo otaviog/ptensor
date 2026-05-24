@@ -17,11 +17,15 @@
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
                 "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
-                "VCPKG_MANIFEST_FEATURES": "io;tests;op;media",
+              "VCPKG_MANIFEST_FEATURES": "tests;samples;io;op;infer;recog;media;viz",
                 "WITH_IO": "ON",
                 "WITH_OP": "ON",
+       			"WITH_INFER": "ON",
+                "WITH_RECOG": "ON",
                 "WITH_MEDIA": "ON",
-                "BUILD_TESTS": "ON"
+                "WITH_VIZ": "ON",
+              "BUILD_TESTS": "ON",
+			  "BUILD_SAMPLES": "ON"
             }
         },
         {

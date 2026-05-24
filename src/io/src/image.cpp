@@ -12,7 +12,7 @@ P10Result<Tensor> load_image(const std::string& path) {
     int height = 0;
     int channels = 0;
     unsigned char* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
-    if (!data) {
+    if (data == nullptr) {
         return Err(P10Error::InvalidArgument, "Failed to load image");
     }
     Tensor tensor;

@@ -18,7 +18,10 @@ Skip anything `clang-format` already handles (indentation, spacing, line breaks)
 Focus on:
 
 * **Order in `.cpp` matches the header.** Public methods/functions appear in the same order as declared. Each public method is followed by its private helpers, in the order they're called. Constructors come first.
-* **File-local helpers** live in an anonymous namespace at the top of the `.cpp`, right after the includes, and are *defined* below the public methods.
+  - Make the helpers be declared and defined in the same order that they are used.
+* **File-local helpers** live in an anonymous namespace at the top of the `.cpp`, right after the includes, and are **defined** below the public methods.
+  - Make the helpers be declared and defined in the same order that they are used.
+  - No need to document those
 * **Header hygiene.** Minimal includes; prefer forward declarations. Move complex method/constructor bodies out of the header into the `.cpp`. Trivial accessors/mutators may stay inline in the header.
 
 Don't restructure beyond this — no renames, no API changes, no new abstractions.

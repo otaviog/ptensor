@@ -8,11 +8,12 @@
 #include <ptensor/infer/infer.hpp>
 #include <ptensor/infer/infer_config.hpp>
 #include <ptensor/io/image.hpp>
-#include <ptensor/op/image_layout.hpp>
 #include <ptensor/media/io/media_capture.hpp>
 #include <ptensor/media/video_frame.hpp>
+#include <ptensor/op/image_layout.hpp>
 #include <ptensor/recog/face_detector.hpp>
 #include <ptensor/tensor.hpp>
+
 #include "ptensor/p10_error.hpp"
 
 using namespace p10;
@@ -34,26 +35,12 @@ FaceDetectCli parse_args(int argc, char** argv);
 bool is_image(const std::string& path);
 std::string lowercase_ext(const std::string& path);
 P10Error run_on_image(IFaceDetector& detector, const std::string& path);
+P10Error run_on_directory(IFaceDetector& detector, const std::string& path);
 void print_detections(const std::string& source, std::span<const FaceDetection> dets);
 bool is_video(const std::string& path);
 P10Error run_on_video(IFaceDetector& detector, const std::string& path);
 
 }  // namespace
-
-P10Error run_on_directory(IFaceDetector& detector, const std::string& path) {
-    size_t image_count = 0;
-    for (const auto& entry : fs::directory_iterator(path)) {
-        if (!entry.is_regular_file() || !is_image(entry.path().string())) {
-            continue;
-        }
-        P10_RETURN_IF_ERROR(run_on_image(detector, entry.path().string()));
-        image_count++;
-    }
-    if (image_count == 0) {
-        std::cerr << "Warning: No image files found in directory: " << path << "\n";
-    }
-    return P10Error::Ok;
-}
 
 int main(int argc, char** argv) {
     const auto cli = parse_args(argc, argv);
@@ -71,7 +58,6 @@ int main(int argc, char** argv) {
         return 1;
     }
     std::unique_ptr<IFaceDetector> detector = detector_result.unwrap();
-
 
     P10Error err = P10Error::Ok;
 
@@ -150,12 +136,32 @@ P10Error run_on_image(IFaceDetector& detector, const std::string& path) {
     }
 
     Tensor nchw;
-    p10::op::image_to_tensor(img_result.unwrap(), nchw, op::ImageToTensorOptions().unsqueeze(true));
+
+    op::image_to_tensor(
+        img_result.unwrap(),
+        nchw,
+        op::ImageToTensorOptions().target_dtype(Dtype::Uint8).unsqueeze(true)
+    ).expect("Wrong image format");
 
     std::array<FaceDetection, 1> detections;
     P10_RETURN_IF_ERROR(detector.detect(nchw, detections));
 
     print_detections(std::filesystem::path(path).filename().string(), detections);
+    return P10Error::Ok;
+}
+
+P10Error run_on_directory(IFaceDetector& detector, const std::string& path) {
+    size_t image_count = 0;
+    for (const auto& entry : fs::directory_iterator(path)) {
+        if (!entry.is_regular_file() || !is_image(entry.path().string())) {
+            continue;
+        }
+        P10_RETURN_IF_ERROR(run_on_image(detector, entry.path().string()));
+        image_count++;
+    }
+    if (image_count == 0) {
+        std::cerr << "Warning: No image files found in directory: " << path << "\n";
+    }
     return P10Error::Ok;
 }
 
@@ -202,7 +208,7 @@ P10Error run_on_video(IFaceDetector& detector, const std::string& path) {
 
 void print_detections(const std::string& source, std::span<const FaceDetection> dets) {
     std::cout << "{\"" << source << "\": [\n";
-    for (const auto &det : dets) {
+    for (const auto& det : dets) {
         std::cout << to_string(det) << '\n';
     }
     std::cout << "]\n}";

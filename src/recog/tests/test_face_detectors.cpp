@@ -28,7 +28,7 @@ TEST_CASE("recog::FaceDetection::blaze_face", "[recog][face][blaze_face]") {
 
     std::array<FaceDetection, 1> detections;
     detector->detect(input_tensor, detections).expect("Face detected");
-    REQUIRE(detections[0].faces.size() == 4);
+    REQUIRE(detections[0].faces.size() == 5);
 }
 
 }  // namespace p10::recog

@@ -33,8 +33,7 @@ void BfPostprocess::process(
 
         const auto boxes = out_boxes[img_idx];
         const auto scores = out_scores[img_idx];
-        const auto landmks = out_landmarks[img_idx];
-
+        const auto landmks = out_landmarks[img_idx]; 
         for (size_t row_idx = 0; row_idx < size_t(boxes.rows()); ++row_idx) {
             const float conf = scores[row_idx][1];
             if (conf > conf_threshold_) {
@@ -73,10 +72,10 @@ void BfPostprocess::process(
             auto& face_landmarks = result.landmarks.back();
             face_landmarks.reserve(num_landmark_points);
             for (const auto& pt : landmark_buffer_) {
-                face_landmarks.push_back(Point2i(
+                face_landmarks.emplace_back(
                     int(std::round(pt.x * box_scale_x)),
                     int(std::round(pt.y * box_scale_y))
-                ));
+                );
             }
         }
     }

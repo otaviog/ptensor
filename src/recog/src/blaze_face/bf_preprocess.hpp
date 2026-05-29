@@ -13,6 +13,5 @@ class BfPreprocessing {
   private:
     size_t target_size_;
     Tensor resize_buffer_;
-    Tensor float_buffer_;
 };
 }  // namespace p10::recog

@@ -8,24 +8,15 @@
 
 namespace p10::viz {
 
-/**
- * Manages a GPU texture that can be rendered with ImGui.
- * Uses pimpl pattern to hide backend (Vulkan/Metal) implementation details.
- */
+/// GPU texture for rendering with ImGui. Hides backend (Vulkan/Metal) details.
 class ImageTexture {
   public:
     class Impl;
 
-    /**
-     * Create an uninitialized ImageTexture.
-     * Must be assigned from create_texture() before use.
-     */
+    /// Create an uninitialized ImageTexture.
     ImageTexture();
 
-    /**
-     * Create an ImageTexture associated with a GuiApp.
-     * The GuiApp must remain valid for the lifetime of this ImageTexture.
-     */
+    /// Create an ImageTexture associated with a GuiApp.
     explicit ImageTexture(Impl* impl);
 
     ~ImageTexture();
@@ -36,45 +27,26 @@ class ImageTexture {
     ImageTexture(ImageTexture&&) noexcept;
     ImageTexture& operator=(ImageTexture&&) noexcept;
 
-    /**
-     * Upload a tensor to GPU as a texture.
-     *
-     * Supported tensor formats:
-     * - Shape: [H, W, C] where C is 1 (grayscale), 3 (RGB), or 4 (RGBA)
-     * - Dtype: UInt8, Float32
-     *
-     * For Float32 tensors, values are expected in [0, 1] range and will be
-     * converted to UInt8 internally.
-     */
+    /// Upload a tensor to GPU as a texture (shape [H, W, C], C in {1, 3, 4}, dtype UInt8 or Float32).
     P10Error upload(const Tensor& tensor);
 
-    /**
-     * Get the ImGui texture ID for use with ImGui::Image().
-     * Returns nullptr if no texture has been uploaded.
-     */
+    /// Get the ImGui texture ID for use with ImGui::Image().
     ImTextureID texture_id() const;
 
-    /**
-     * Get the texture width in pixels.
-     */
+    /// Get the texture width in pixels.
     int width() const;
 
-    /**
-     * Get the texture height in pixels.
-     */
+    /// Get the texture height in pixels.
     int height() const;
 
-    /**
-     * Check if a valid texture has been uploaded.
-     */
+    /// Check if a valid texture has been uploaded.
     bool is_valid() const;
 
-    /**
-     * Release GPU resources for this texture.
-     */
+    /// Release GPU resources for this texture.
     void clear();
 
   private:
     std::unique_ptr<Impl> impl_;
 };
+
 }  // namespace p10::viz

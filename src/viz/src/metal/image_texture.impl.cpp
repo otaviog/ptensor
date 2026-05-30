@@ -1,5 +1,7 @@
 #include "image_texture.impl.hpp"
 
+#include <format>
+
 #include <ptensor/tensor.hpp>
 
 // Metal-CPP headers — private implementations are defined in gui_app.impl.cpp.
@@ -11,7 +13,7 @@ namespace p10::viz {
 P10Error ImageTexture::Impl::upload(const Tensor& tensor) {
     if (tensor.dims() != 3) {
         return P10Error::InvalidArgument
-            << ("Tensor must have rank 3 (H, W, C), got rank " + std::to_string(tensor.dims()));
+            << std::format("Tensor must have rank 3 (H, W, C), got rank {}", tensor.dims());
     }
 
     const int64_t height = tensor.shape()[0].unwrap();
@@ -20,15 +22,16 @@ P10Error ImageTexture::Impl::upload(const Tensor& tensor) {
 
     if (channels != 1 && channels != 3 && channels != 4) {
         return P10Error::InvalidArgument
-            << ("Channels must be 1, 3, or 4, got " + std::to_string(channels));
+            << std::format("Channels must be 1, 3, or 4, got {}", channels);
     }
 
     std::vector<uint8_t> rgba_data(static_cast<size_t>(width * height * 4));
 
     if (tensor.dtype() == Dtype::Uint8) {
         auto src_result = tensor.as_span1d<uint8_t>();
-        if (src_result.is_error())
+        if (src_result.is_error()) {
             return src_result.error();
+        }
         auto src = src_result.unwrap();
 
         for (int64_t i = 0; i < height * width; ++i) {
@@ -51,8 +54,9 @@ P10Error ImageTexture::Impl::upload(const Tensor& tensor) {
         }
     } else if (tensor.dtype() == Dtype::Float32) {
         auto src_result = tensor.as_span1d<float>();
-        if (src_result.is_error())
+        if (src_result.is_error()) {
             return src_result.error();
+        }
         auto src = src_result.unwrap();
 
         for (int64_t i = 0; i < height * width; ++i) {
@@ -83,9 +87,8 @@ P10Error ImageTexture::Impl::upload(const Tensor& tensor) {
 
     if (!is_valid() || width_ != new_width || height_ != new_height) {
         return create_texture(new_width, new_height, rgba_data.data());
-    } else {
-        return upload_data(rgba_data.data());
     }
+    return upload_data(rgba_data.data());
 }
 
 P10Error ImageTexture::Impl::create_texture(int width, int height, const void* data) {
@@ -105,7 +108,7 @@ P10Error ImageTexture::Impl::create_texture(int width, int height, const void* d
     MTL::Texture* texture = device->newTexture(desc);
     desc->release();
 
-    if (!texture) {
+    if (texture == nullptr) {
         return P10Error::InvalidOperation << "Failed to create Metal texture";
     }
 
@@ -124,12 +127,12 @@ P10Error ImageTexture::Impl::upload_data(const void* data) {
         static_cast<NS::UInteger>(width_),
         static_cast<NS::UInteger>(height_)
     );
-    texture->replaceRegion(region, 0, data, static_cast<NS::UInteger>(width_ * 4));
+    texture->replaceRegion(region, 0, data, static_cast<NS::UInteger>(width_) * 4);
     return P10Error::Ok;
 }
 
 void ImageTexture::Impl::clear() {
-    if (texture_) {
+    if (texture_ != nullptr) {
         reinterpret_cast<MTL::Texture*>(texture_)->release();
         texture_ = nullptr;
     }

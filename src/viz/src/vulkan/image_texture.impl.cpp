@@ -1,5 +1,7 @@
 #include "image_texture.impl.hpp"
 
+#include <format>
+
 #include <ptensor/tensor.hpp>
 
 #include "imgui_impl_vulkan.h"
@@ -12,7 +14,7 @@ P10Error ImageTexture::Impl::upload(const Tensor& tensor) {
     // Validate tensor shape
     if (tensor.dims() != 3) {
         return P10Error::InvalidArgument
-            << ("Tensor must have rank 3 (H, W, C), got rank " + std::to_string(tensor.dims()));
+            << std::format("Tensor must have rank 3 (H, W, C), got rank {}", tensor.dims());
     }
 
     const int64_t height = tensor.shape()[0].unwrap();
@@ -21,7 +23,7 @@ P10Error ImageTexture::Impl::upload(const Tensor& tensor) {
 
     if (channels != 1 && channels != 3 && channels != 4) {
         return P10Error::InvalidArgument
-            << ("Channels must be 1, 3, or 4, got " + std::to_string(channels));
+            << std::format("Channels must be 1, 3, or 4, got {}", channels);
     }
 
     // Prepare pixel data
@@ -88,11 +90,8 @@ P10Error ImageTexture::Impl::upload(const Tensor& tensor) {
     // Only recreate texture if dimensions changed or texture doesn't exist
     if (!is_valid() || width_ != new_width || height_ != new_height) {
         return create_texture(new_width, new_height, rgba_data.data());
-
-    } else {
-        // Reuse existing texture, just upload new data
-        return upload_data(rgba_data.data(), width_ * height_ * 4);
     }
+    return upload_data(rgba_data.data(), width_ * height_ * 4);
 }
 
 P10Error ImageTexture::Impl::create_texture(int width, int height, const void* data) {

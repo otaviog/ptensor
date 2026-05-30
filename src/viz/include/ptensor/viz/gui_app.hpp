@@ -8,30 +8,40 @@
 #include "image_texture.hpp"
 
 namespace p10::viz {
+
 class GuiAppParameters;
 struct VulkanContext;
 
 class GuiApp;
+
+/// Start a GUI application with the given parameters.
 inline P10Error run_app(GuiApp& app, const GuiAppParameters& params);
 
+/// Base class for ImGui-based applications.
 class GuiApp {
   private:
     class Impl;
 
   public:
+    /// Construct an uninitialized GuiApp.
     GuiApp();
 
+    /// Create a GPU texture for rendering.
     ImageTexture create_texture();
 
+    /// Signal the application to quit.
     void quit();
 
     virtual ~GuiApp();
 
   protected:
+    /// Override to perform initialization when the app starts.
     virtual void on_initialize() {}
 
+    /// Override to render each frame.
     virtual void on_render();
 
+    /// Override to perform cleanup when the app exits.
     virtual void on_cleanup() {}
 
   private:
@@ -46,6 +56,7 @@ class GuiApp {
     std::shared_ptr<Impl> impl_;
 };
 
+/// Start a GUI application with the given parameters.
 inline P10Error run_app(GuiApp& app, const GuiAppParameters& params) {
     auto error = app.start(params);
     if (error.is_error()) {
@@ -56,4 +67,5 @@ inline P10Error run_app(GuiApp& app, const GuiAppParameters& params) {
     app.run();
     return P10Error::Ok;
 }
+
 }  // namespace p10::viz

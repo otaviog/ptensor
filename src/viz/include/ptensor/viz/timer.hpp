@@ -6,9 +6,11 @@
 
 namespace p10::viz {
 
+/// Template timer for measuring elapsed time with pause/resume support.
 template<typename clock = std::chrono::system_clock>
 class Timer {
   public:
+    /// Start or resume the timer.
     void start() {
         if (!start_) {
             start_ = clock::now();
@@ -20,10 +22,12 @@ class Timer {
         }
     }
 
+    /// Pause the timer without resetting it.
     void pause() {
         pause_ = clock::now();
     }
 
+    /// Get the elapsed time since the timer started, excluding paused periods.
     p10::media::Time elapsed(p10::media::Rational base_time) const {
         if (!start_) {
             return p10::media::Time {base_time, 0};
@@ -35,6 +39,7 @@ class Timer {
         return calc_elapsed(base_time, clock::now());
     }
 
+    /// Reset the timer to initial state.
     void reset() {
         start_ = std::nullopt;
         pause_ = std::nullopt;
@@ -55,5 +60,7 @@ class Timer {
     typename clock::duration paused_duration_ {0};
 };
 
+/// SystemClock-based timer alias.
 using SystemTimer = Timer<std::chrono::system_clock>;
+
 }  // namespace p10::viz

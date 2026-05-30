@@ -27,6 +27,7 @@ P10Error initialize_vulkan(VulkanContext& vk, SDL_Window* window, const GuiAppPa
 
     if (SDL_Vulkan_CreateSurface(window, vk.instance, &vk.surface) != 0) {
         result = P10Error::InvalidOperation << "Failed to create Vulkan surface" << SDL_GetError();
+        goto CLEANUP;
     }
     select_physical_device(vk);
     result = create_device(vk);

@@ -14,11 +14,11 @@ namespace {
 
 /// Parsed command-line configuration.
 struct PlayerCli {
-    std::optional<std::string> file; ///< Input media file path; nullopt when opening a device.
-    bool use_device = false;         ///< Open a live device capture instead of a file.
-    int video_index = 0;             ///< Video device index (--device mode only).
-    int audio_index = -1;            ///< Audio device index; -1 means no audio device.
-    bool list_devices = false;       ///< Print available devices and exit.
+    std::optional<std::string> file;  ///< Input media file path; nullopt when opening a device.
+    bool use_device = false;  ///< Open a live device capture instead of a file.
+    int video_index = 0;  ///< Video device index (--device mode only).
+    int audio_index = -1;  ///< Audio device index; -1 means no audio device.
+    bool list_devices = false;  ///< Print available devices and exit.
 };
 
 /// Parse argv into a PlayerCli; exits on invalid args or --help.

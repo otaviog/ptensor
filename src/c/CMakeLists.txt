@@ -66,13 +66,12 @@ target_include_directories(ptensor_capi
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${_INCLUDE_DIR}
 )
-target_link_libraries(ptensor_capi PUBLIC ptensor)
+target_link_libraries(ptensor_capi PUBLIC $<BUILD_INTERFACE:ptensor>)
 
 # Install the target
 install(TARGETS ptensor_capi
     EXPORT ptensorTargets
     LIBRARY DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
-    ARCHIVE DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
     RUNTIME DESTINATION ${PTENSOR_INSTALL_BIN_DIR}
     FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )

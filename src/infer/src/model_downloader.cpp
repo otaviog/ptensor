@@ -4,9 +4,9 @@
 #include <fstream>
 
 #include <curl/curl.h>
-#include <ng-log/logging.h>
 
 #include "ptensor/p10_error.hpp"
+#include <ptensor/log/log.hpp>
 
 namespace p10::infer {
 
@@ -113,11 +113,11 @@ P10Result<std::string> resolve_model_path(const std::string& path) {
     const std::filesystem::path dest = models_dir / filename;
 
     if (std::filesystem::exists(dest)) {
-        LOG(INFO) << "Model already cached: " << dest;
+        log::scope("model_downloader").info("Model already cached: {}", dest.string());
         return Ok(dest.string());  // string() returns a new std::string (rvalue)
     }
 
-    LOG(INFO) << "Downloading model from " << path << " to " << dest;
+    log::scope("model_downloader").info("Downloading model from {} to {}", path, dest.string());
     return download_file(path, dest);
 }
 

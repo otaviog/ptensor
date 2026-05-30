@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <memory>
 
-#include <ng-log/logging.h>
+#include <ptensor/log/log.hpp>
 #if defined(_MSC_VER)
     #include <ptensor/detail/string.hpp>
 #endif
@@ -56,9 +56,10 @@ void OrtInfer::collect_input_output_names() {
         output_names_.emplace_back(std::move(output_name));
     }
 
-    LOG(INFO) << "ONNX model loaded: " << model_path_;
-    LOG(INFO) << "Number of input: " << input_names_cstr_.size();
-    LOG(INFO) << "Number of outputs: " << output_names_cstr_.size();
+    auto logger = p10::log::scope("OrtInfer");
+    logger.info("ONNX model loaded: {}", model_path_);
+    logger.info("Number of input: {}", input_names_cstr_.size());
+    logger.info("Number of outputs: {}", output_names_cstr_.size());
 }
 
 P10Error OrtInfer::infer(std::span<Tensor> input_tensors, std::span<Tensor> output_tensors) {

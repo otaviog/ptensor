@@ -2,10 +2,18 @@
 
 #include <format>
 #include <string>
+#include <string_view>
 #include <utility>
-#include <ng-log/logging.h>
 
 #include <ptensor/p10_result.hpp>
+
+namespace p10::log::detail {
+
+void log_info(std::string_view msg);
+void log_error(std::string_view msg);
+void log_debug(std::string_view msg);
+
+}  // namespace p10::log::detail
 
 namespace p10::log {
 
@@ -14,21 +22,21 @@ struct ScopedLogger {
 
     template <typename... Args>
     void info(std::format_string<Args...> fmt, Args&&... args) const {
-        LOG(INFO) << scope << ": " << std::format(fmt, std::forward<Args>(args)...);
+        detail::log_info(scope + ": " + std::format(fmt, std::forward<Args>(args)...));
     }
 
     template <typename... Args>
     void error(std::format_string<Args...> fmt, Args&&... args) const {
-        LOG(ERROR) << scope << ": " << std::format(fmt, std::forward<Args>(args)...);
+        detail::log_error(scope + ": " + std::format(fmt, std::forward<Args>(args)...));
     }
 
-    void error(const std::exception& exeception) const {
-        LOG(ERROR) << scope << ": Exception throw" << exeception.what();
+    void error(const std::exception& exception) const {
+        detail::log_error(scope + ": Exception thrown: " + exception.what());
     }
 
     template <typename... Args>
     void debug(std::format_string<Args...> fmt, Args&&... args) const {
-        DLOG(INFO) << scope << ": " << std::format(fmt, std::forward<Args>(args)...);
+        detail::log_debug(scope + ": " + std::format(fmt, std::forward<Args>(args)...));
     }
 
     std::string scope;

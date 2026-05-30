@@ -70,12 +70,17 @@ class FaceDetectApp : public p10::viz::GuiApp {
         frame_w_ = static_cast<int>(frame.width());
         frame_h_ = static_cast<int>(frame.height());
         Tensor nchw;
-        if (op::image_to_tensor(frame.image(), nchw).is_error()) {
+        if (op::image_to_tensor(frame.image(), nchw, op::ImageToTensorOptions().target_dtype(Dtype::Uint8).unsqueeze(true)).is_error()) {
             return;
         }
         std::array<FaceDetection, 1> dets;
-        if (detector_.detect(nchw, dets).is_error()) {
+        if (auto err = detector_.detect(nchw, dets); err.is_error()) {
+            std::cerr << err.to_string();
             return;
+        }
+        std::cout << "===============\n";
+        for (const auto &det : dets) {
+            std::cout << p10::recog::to_string(det);
         }
         current_dets_ = dets[0];
     }
@@ -152,7 +157,7 @@ int main(int argc, char** argv) {
     }
 
     if (err.is_error()) {
-        std::cerr << err.to_string() << std::endl;
+        std::cerr << err.to_string() << '\n';
         return 1;
     }
     return 0;

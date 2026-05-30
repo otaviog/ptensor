@@ -55,6 +55,15 @@ class VideoQueue {
         cv_.notify_all();
     }
 
+    void flush() {
+        std::unique_lock lock(mutex_);
+        while (!queue_.empty()) {
+            queue_.pop();
+        }
+        cancel_ = false;
+        cv_.notify_all();
+    }
+
     bool empty() {
         const std::unique_lock lock(mutex_);
         return queue_.empty();

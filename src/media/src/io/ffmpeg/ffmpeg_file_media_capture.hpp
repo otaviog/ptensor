@@ -1,59 +1,24 @@
 #pragma once
 
-#include <atomic>
 #include <cstdint>
 #include <memory>
-#include <thread>
-#include <utility>
 
-#include "../media_capture.impl.hpp"
-#include "video_frame.hpp"
-
-extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-}
-
-#include "../video_queue.hpp"
+#include "ffmpeg_media_capture_engine.hpp"
 
 namespace p10::media {
-class FfmpegVideoDecoder;
-class FfmpegAudioDecoder;
 
-class FfmpegFileMediaCapture: public MediaCapture::Impl {
+/// File-based capture. Reads from a path FFmpeg auto-detects, and reports the
+/// bounded lifecycle (duration and total frame count) that files have but live
+/// devices do not.
+class FfmpegFileMediaCapture: public FfmpegMediaCaptureEngine {
   public:
-    enum CaptureStatus : int8_t { Reading, Stopped, Error, EndOfFile };
-
-    FfmpegFileMediaCapture(const FfmpegFileMediaCapture&) = delete;
-    FfmpegFileMediaCapture& operator=(const FfmpegFileMediaCapture&) = delete;
-    FfmpegFileMediaCapture(FfmpegFileMediaCapture&&) = delete;
-    FfmpegFileMediaCapture& operator=(FfmpegFileMediaCapture&&) = delete;
-
-    ~FfmpegFileMediaCapture() override;
-
     static P10Result<std::shared_ptr<FfmpegFileMediaCapture>> open(const std::string& path);
-
-    static P10Result<std::shared_ptr<FfmpegFileMediaCapture>> open_device(
-        const std::string& url, const std::string& format_name
-    );
-
-    void close() override;
-
-    MediaParameters get_parameters() const override;
-
-    P10Result<bool> next_frame() override;
-
-    P10Error get_video(VideoFrame& frame) override;
-
-    P10Error get_audio(AudioFrame& frame) override;
 
     std::optional<int64_t> video_frame_count() const override;
 
     std::optional<double> duration() const override;
 
-    bool is_open() const {
-        return format_ctx_ != nullptr;
-    }
+    P10Error seek(double seconds) override;
 
   private:
     FfmpegFileMediaCapture(
@@ -61,31 +26,7 @@ class FfmpegFileMediaCapture: public MediaCapture::Impl {
         std::shared_ptr<FfmpegAudioDecoder> audio_decoder,
         std::shared_ptr<FfmpegVideoDecoder> video_decoder
     ) :
-        format_ctx_(format_ctx),
-        audio_decoder_(std::move(audio_decoder)),
-        video_decoder_(std::move(video_decoder)) {}
-
-    static P10Result<std::shared_ptr<FfmpegFileMediaCapture>>
-        open_impl(const std::string& url, const AVInputFormat* fmt);
-
-    void read_packets_loop();
-    void read_next_packet();
-    void decode_video_packet(const AVPacket* pkt);
-    void decode_audio_packet(const AVPacket* pkt);
-    void start_decoding_thread();
-
-    std::atomic<CaptureStatus> status_ = CaptureStatus::Stopped;
-
-    AVFormatContext* format_ctx_ = nullptr;
-
-    std::thread decode_thread_;
-
-    std::shared_ptr<FfmpegAudioDecoder> audio_decoder_;
-    std::shared_ptr<FfmpegVideoDecoder> video_decoder_;
-
-    VideoQueue video_queue_ {30};
-    std::optional<VideoFrame> current_frame_;
-    P10Error last_error_;
+        FfmpegMediaCaptureEngine(format_ctx, std::move(audio_decoder), std::move(video_decoder)) {}
 };
 
 }  // namespace p10::media

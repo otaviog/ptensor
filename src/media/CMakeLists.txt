@@ -14,6 +14,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/time/time.hpp
   ${_INCLUDE_DIR}/time/rational.hpp
   ${_INCLUDE_DIR}/io/media_capture.hpp
+  ${_INCLUDE_DIR}/io/media_device.hpp
   ${_INCLUDE_DIR}/io/media_writer.hpp
   ${_INCLUDE_DIR}/media_parameters.hpp
   ${_INCLUDE_DIR}/audio_parameters.hpp
@@ -28,6 +29,7 @@ target_sources(ptensor_media
   PRIVATE
     # Common
     src/time/time.cpp
+    src/io/media_device.cpp
     src/io/media_capture.cpp
     # Common writer
     src/io/media_writer.impl.hpp
@@ -39,7 +41,10 @@ target_sources(ptensor_media
     src/io/ffmpeg/ffmpeg_sws.hpp src/io/ffmpeg/ffmpeg_sws.cpp
     src/io/ffmpeg/ffmpeg_swr.hpp src/io/ffmpeg/ffmpeg_swr.cpp
     # FFMPEG capture
+    src/io/ffmpeg/ffmpeg_media_capture_engine.hpp src/io/ffmpeg/ffmpeg_media_capture_engine.cpp
     src/io/ffmpeg/ffmpeg_file_media_capture.hpp src/io/ffmpeg/ffmpeg_file_media_capture.cpp
+    src/io/ffmpeg/ffmpeg_device_media_capture.hpp src/io/ffmpeg/ffmpeg_device_media_capture.cpp
+    src/io/ffmpeg/ffmpeg_device_enum.cpp
     src/io/ffmpeg/ffmpeg_video_decoder.hpp src/io/ffmpeg/ffmpeg_video_decoder.cpp
     # FFMPEG writer
     src/io/ffmpeg/ffmpeg_media_writer.hpp src/io/ffmpeg/ffmpeg_media_writer.cpp

@@ -88,10 +88,20 @@ class VideoParameters {
         return *this;
     }
 
+    const std::string& pixel_format() const {
+        return pixel_format_;
+    }
+
+    VideoParameters& pixel_format(std::string pixel_format) {
+        pixel_format_ = std::move(pixel_format);
+        return *this;
+    }
+
   private:
     int width_ = 0;
     int height_ = 0;
-    Rational frame_rate_ = {1, 24};
+    Rational frame_rate_ = {0, 1};  // 0 = unset; device/encoder picks the rate
+    std::string pixel_format_ = "rgb";
     VideoCodec codec_;
     int bit_rate_ = 1000000;
 };

@@ -21,3 +21,4 @@ vcpkg/
 settings.local.json
 .projectile
 Testing
+tests/data/video/*.mp4

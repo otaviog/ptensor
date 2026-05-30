@@ -51,8 +51,8 @@ FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
 }
 
 VideoParameters FfmpegVideoDecoder::get_video_parameters() const {
-    VideoParameters params{};
-    auto const * codec = stream_->codecpar;
+    VideoParameters params {};
+    auto const* codec = stream_->codecpar;
     params.width(codec->width)
         .height(codec->height)
         .codec(video_codec_from_avcodec_id(codec->codec_id))

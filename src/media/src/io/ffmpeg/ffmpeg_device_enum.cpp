@@ -25,91 +25,93 @@ namespace {
     constexpr const char* DEVICE_INPUT_FORMAT = nullptr;
 #endif
 
-struct RawDeviceEntry {
-    std::string name;
-    std::string url;
-    bool has_video = false;
-    bool has_audio = false;
-};
+    struct RawDeviceEntry {
+        std::string name;
+        std::string url;
+        bool has_video = false;
+        bool has_audio = false;
+    };
 
-RawDeviceEntry parse_device_info(const AVDeviceInfo& dev) {
-    RawDeviceEntry entry;
-    if (dev.device_description != nullptr) {
-        entry.name = dev.device_description;
-    } else if (dev.device_name != nullptr) {
-        entry.name = dev.device_name;
-    }
-    entry.url = dev.device_name != nullptr ? dev.device_name : "";
-
-    for (int j = 0; j < dev.nb_media_types; ++j) {
-        if (dev.media_types[j] == AVMEDIA_TYPE_VIDEO) {
-            entry.has_video = true;
-        } else if (dev.media_types[j] == AVMEDIA_TYPE_AUDIO) {
-            entry.has_audio = true;
+    RawDeviceEntry parse_device_info(const AVDeviceInfo& dev) {
+        RawDeviceEntry entry;
+        if (dev.device_description != nullptr) {
+            entry.name = dev.device_description;
+        } else if (dev.device_name != nullptr) {
+            entry.name = dev.device_name;
         }
-    }
-    // When the backend does not report media types, treat as video by default.
-    if (!entry.has_video && !entry.has_audio) {
-        entry.has_video = true;
-    }
+        entry.url = dev.device_name != nullptr ? dev.device_name : "";
 
-    return entry;
-}
+        for (int j = 0; j < dev.nb_media_types; ++j) {
+            if (dev.media_types[j] == AVMEDIA_TYPE_VIDEO) {
+                entry.has_video = true;
+            } else if (dev.media_types[j] == AVMEDIA_TYPE_AUDIO) {
+                entry.has_audio = true;
+            }
+        }
+        // When the backend does not report media types, treat as video by default.
+        if (!entry.has_video && !entry.has_audio) {
+            entry.has_video = true;
+        }
 
-P10Result<const AVInputFormat*> get_input_format() {
-    avdevice_register_all();
-    const AVInputFormat* fmt = av_find_input_format(DEVICE_INPUT_FORMAT);
-    if (fmt == nullptr) {
-        return Err(
-            P10Error::NotImplemented
-            << (std::string("Unknown input format: ") + DEVICE_INPUT_FORMAT)
-        );
-    }
-    return Ok(fmt);
-}
-
-P10Result<std::vector<RawDeviceEntry>> enumerate_raw() {
-    if (DEVICE_INPUT_FORMAT == nullptr) {
-        return Err(P10Error::NotImplemented << "Device enumeration not supported on this platform");
+        return entry;
     }
 
-    auto fmt_result = get_input_format();
-    if (fmt_result.is_error()) {
-        return Err(fmt_result.error());
+    P10Result<const AVInputFormat*> get_input_format() {
+        avdevice_register_all();
+        const AVInputFormat* fmt = av_find_input_format(DEVICE_INPUT_FORMAT);
+        if (fmt == nullptr) {
+            return Err(
+                P10Error::NotImplemented
+                << (std::string("Unknown input format: ") + DEVICE_INPUT_FORMAT)
+            );
+        }
+        return Ok(fmt);
     }
 
-    AVDeviceInfoList* list = nullptr;
-    const int count = avdevice_list_input_sources(fmt_result.unwrap(), nullptr, nullptr, &list);
-    if (count < 0) {
-        // Some backends (notably avfoundation) do not implement programmatic
-        // source listing and return ENOSYS. Surface an empty list rather than
-        // an error so callers can still attempt to open known indices.
-        if (count == AVERROR(ENOSYS)) {
+    P10Result<std::vector<RawDeviceEntry>> enumerate_raw() {
+        if (DEVICE_INPUT_FORMAT == nullptr) {
+            return Err(
+                P10Error::NotImplemented << "Device enumeration not supported on this platform"
+            );
+        }
+
+        auto fmt_result = get_input_format();
+        if (fmt_result.is_error()) {
+            return Err(fmt_result.error());
+        }
+
+        AVDeviceInfoList* list = nullptr;
+        const int count = avdevice_list_input_sources(fmt_result.unwrap(), nullptr, nullptr, &list);
+        if (count < 0) {
+            // Some backends (notably avfoundation) do not implement programmatic
+            // source listing and return ENOSYS. Surface an empty list rather than
+            // an error so callers can still attempt to open known indices.
+            if (count == AVERROR(ENOSYS)) {
+                if (list != nullptr) {
+                    avdevice_free_list_devices(&list);
+                }
+                return Ok(std::vector<RawDeviceEntry> {});
+            }
             if (list != nullptr) {
                 avdevice_free_list_devices(&list);
             }
-            return Ok(std::vector<RawDeviceEntry>{});
+            return Err(wrap_ffmpeg_error(count, "Failed to enumerate input devices"));
         }
+
+        std::vector<RawDeviceEntry> entries;
         if (list != nullptr) {
+            entries.reserve(static_cast<size_t>(list->nb_devices));
+            for (int i = 0; i < list->nb_devices; ++i) {
+                if (list->devices[i] == nullptr) {
+                    continue;
+                }
+                entries.push_back(parse_device_info(*list->devices[i]));
+            }
             avdevice_free_list_devices(&list);
         }
-        return Err(wrap_ffmpeg_error(count, "Failed to enumerate input devices"));
-    }
 
-    std::vector<RawDeviceEntry> entries;
-    if (list != nullptr) {
-        entries.reserve(static_cast<size_t>(list->nb_devices));
-        for (int i = 0; i < list->nb_devices; ++i) {
-            if (list->devices[i] == nullptr) {
-                continue;
-            }
-            entries.push_back(parse_device_info(*list->devices[i]));
-        }
-        avdevice_free_list_devices(&list);
+        return Ok(std::move(entries));
     }
-
-    return Ok(std::move(entries));
-}
 
 }  // namespace
 

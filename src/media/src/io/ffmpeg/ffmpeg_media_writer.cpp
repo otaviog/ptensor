@@ -12,9 +12,9 @@ extern "C" {
 #include <libavutil/time.h>
 }
 
+#include "../logging.hpp"
 #include "audio_frame.hpp"
 #include "video_frame.hpp"
-#include "../logging.hpp"
 
 namespace p10::media {
 

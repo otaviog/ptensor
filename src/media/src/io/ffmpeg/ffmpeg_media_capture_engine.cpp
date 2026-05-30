@@ -102,9 +102,8 @@ MediaParameters FfmpegMediaCaptureEngine::get_parameters() const {
     return params;
 }
 
-P10Result<MediaCapture::NextFrameResult> FfmpegMediaCaptureEngine::next_frame(
-    MediaCapture::WaitMode wait
-) {
+P10Result<MediaCapture::NextFrameResult>
+FfmpegMediaCaptureEngine::next_frame(MediaCapture::WaitMode wait) {
     const CaptureStatus capture_status = status_;
     if (capture_status == CaptureStatus::Reading) {
         if (wait == MediaCapture::WaitMode::Block) {
@@ -138,7 +137,6 @@ P10Error FfmpegMediaCaptureEngine::get_video(VideoFrame& frame) {
 P10Error FfmpegMediaCaptureEngine::get_audio(AudioFrame& /*frame*/) {
     return P10Error::NotImplemented;
 }
-
 
 void FfmpegMediaCaptureEngine::start_decoding_thread() {
     if (status_ == CaptureStatus::Stopped && is_open()) {

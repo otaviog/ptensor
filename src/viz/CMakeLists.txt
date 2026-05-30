@@ -12,11 +12,7 @@ elseif (APPLE)
 endif()
 
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/viz)
-add_library(ptensor_viz SHARED)
-
-set_target_properties(ptensor_viz PROPERTIES
-    WINDOWS_EXPORT_ALL_SYMBOLS ON
-)
+add_library(ptensor_viz STATIC)
 
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/gui_app.hpp
@@ -100,17 +96,8 @@ if (BUILD_SAMPLES)
   add_subdirectory(samples)
 endif()
 
-add_library(p10::viz ALIAS ptensor_viz)
-
 install(TARGETS ptensor_viz
-  EXPORT ptensorTargets
-  LIBRARY DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
-  ARCHIVE DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
-  RUNTIME DESTINATION ${PTENSOR_INSTALL_BIN_DIR}
-  FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    ARCHIVE EXCLUDE_FROM_ALL
+    FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-if (MSVC)
-  install(FILES $<TARGET_PDB_FILE:ptensor_viz> DESTINATION bin
-          CONFIGURATIONS Debug)
-endif()

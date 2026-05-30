@@ -4,6 +4,7 @@ add_library(ptensor_recog STATIC)
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/face_detection.hpp
   ${_INCLUDE_DIR}/face_detector.hpp
+  ${_INCLUDE_DIR}/ssd_anchor_parameters.hpp
   ${_INCLUDE_DIR}/geom/point2.hpp
   ${_INCLUDE_DIR}/geom/rect2.hpp
 )
@@ -41,6 +42,11 @@ target_link_libraries(ptensor_recog
     ptensor_op
     ptensor_log
   )
+
+install(TARGETS ptensor_recog
+    ARCHIVE EXCLUDE_FROM_ALL
+    FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
 if(BUILD_TESTS)
   add_subdirectory(tests)

@@ -79,9 +79,6 @@ if(BUILD_TESTS)
 endif()
 
 #### Installation
-# Create alias for use in build tree and install
-add_library(p10::core ALIAS ptensor)
-
 install(TARGETS ptensor
     ARCHIVE EXCLUDE_FROM_ALL
     FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}

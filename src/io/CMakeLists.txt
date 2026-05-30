@@ -39,14 +39,8 @@ if(BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
-# Create alias for use in build tree and install
-add_library(p10::io ALIAS ptensor_io)
-
 # Install the library and headers
 install(TARGETS ptensor_io
-  EXPORT ptensorTargets
-  LIBRARY DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
-  ARCHIVE DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
-  RUNTIME DESTINATION ${PTENSOR_INSTALL_BIN_DIR}
-  FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    ARCHIVE EXCLUDE_FROM_ALL
+    FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )

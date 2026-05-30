@@ -7,6 +7,7 @@ add_library(ptensor_infer STATIC)
 
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/infer.hpp
+  ${_INCLUDE_DIR}/infer_config.hpp
 )
 
 target_sources(ptensor_infer
@@ -30,8 +31,17 @@ target_link_libraries(ptensor_infer
     ptensor
   PRIVATE
     onnxruntime::onnxruntime
-    ng-log::ng-log
+    ptensor_log
     CURL::libcurl)
+
+install(TARGETS ptensor_infer
+    ARCHIVE EXCLUDE_FROM_ALL
+    FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(FILES $<TARGET_FILE:onnxruntime::onnxruntime>
+    DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
+)
 
 if(BUILD_TESTS)
   add_subdirectory(tests)

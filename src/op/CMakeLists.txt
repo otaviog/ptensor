@@ -1,5 +1,5 @@
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/op)
-add_library(ptensor_op)
+add_library(ptensor_op STATIC)
 
 find_path(POCKETFFT_INCLUDE_DIRS "pocketfft_hdronly.h" REQUIRED)
 
@@ -64,13 +64,7 @@ if(BUILD_TESTS)
 endif()
 
 #### Installation
-# Create alias for use in build tree and install
-add_library(p10::op ALIAS ptensor_op)
-
 install(TARGETS ptensor_op
-    EXPORT ptensorTargets
-    LIBRARY DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
-    ARCHIVE DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
-    RUNTIME DESTINATION ${PTENSOR_INSTALL_BIN_DIR}
+    ARCHIVE EXCLUDE_FROM_ALL
     FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )

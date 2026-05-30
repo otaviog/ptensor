@@ -6,12 +6,7 @@ set(_FFMPEG_LIBRARIES ${FFMPEG_LIBRARIES})
 list(TRANSFORM _FFMPEG_LIBRARIES REPLACE "^c\\+\\+$" "")
 
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/media)
-add_library(ptensor_media SHARED)
-
-# On Windows, automatically export all symbols to generate the import library (.lib)
-set_target_properties(ptensor_media PROPERTIES
-    WINDOWS_EXPORT_ALL_SYMBOLS ON
-)
+add_library(ptensor_media STATIC)
 
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/video_frame.hpp
@@ -61,11 +56,6 @@ target_include_directories(ptensor_media
     $<BUILD_INTERFACE:${FFMPEG_INCLUDE_DIRS}>
 )
 
-# Required when linking static FFmpeg into a shared library (recommended by vcpkg FFmpeg port)
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  target_link_options(ptensor_media PRIVATE -Wl,-Bsymbolic)
-endif()
-
 # Link all external dependencies as PRIVATE to avoid exporting absolute paths
 # Dependencies will be re-attached in ptensorConfig.cmake for consumers.
 # FFMPEG_LIBRARIES already pulls in webp/webpmux/sharpyuv/x265/c++ via the
@@ -84,19 +74,9 @@ if(BUILD_TESTS)
   add_subdirectory(samples)
 endif()
 
-# Create alias for use in build tree and install
-add_library(p10::media ALIAS ptensor_media)
-
 # Install the library and headers
 install(TARGETS ptensor_media
-  EXPORT ptensorTargets
-  LIBRARY DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
-  ARCHIVE DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
-  RUNTIME DESTINATION ${PTENSOR_INSTALL_BIN_DIR}
-  FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    ARCHIVE EXCLUDE_FROM_ALL
+    FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-if (MSVC)
-  install(FILES $<TARGET_PDB_FILE:ptensor_media> DESTINATION bin
-          CONFIGURATIONS Debug)
-endif()

@@ -32,7 +32,7 @@ class MediaCapture {
 
     class Impl;
 
-    MediaCapture() = default;
+    // MediaCapture instances are created by open_file() or open_stream().
 
     /// Open a media file for reading.
     static P10Result<MediaCapture> open_file(const std::string& path);

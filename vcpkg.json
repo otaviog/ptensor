@@ -61,7 +61,9 @@
 		},
 		"infer": {
 			"description": "Inference support",
-			"dependencies": []
+			"dependencies": [
+				"curl"
+			]
 		},
 		"viz": {
 			"description": "Enable GUI/visualization support (ImGui + SDL2)",

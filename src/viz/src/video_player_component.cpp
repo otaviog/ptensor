@@ -83,13 +83,14 @@ void VideoPlayerComponent::button_step() {
 }
 
 void VideoPlayerComponent::button_stop() {
-    ImGui::BeginDisabled(true);
+    ImGui::BeginDisabled(play_state_ == PlayState::Stopped);
     if (ImGui::Button("Stop")) {
         play_state_ = PlayState::Stopped;
         timer_.reset();
         capture_.seek(0.0);
     }
     ImGui::EndDisabled();
+}
 }
 
 void VideoPlayerComponent::image_camera() const {

@@ -106,8 +106,8 @@ class VideoCapability {
     }
 
   private:
-    size_t width_;
-    size_t height_;
+    size_t width_ = 0;
+    size_t height_ = 0;
     Rational min_frame_rate_;
     Rational max_frame_rate_;
     // TODO: include format here?

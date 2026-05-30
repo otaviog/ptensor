@@ -15,7 +15,6 @@ ImageTexture GuiApp::create_texture() {
 }
 
 void GuiApp::quit() {
-    on_cleanup();
     impl_->quit();
 }
 

@@ -210,11 +210,11 @@ P10Error ImageTexture::Impl::upload_data(const void* data, size_t size) {
         return result;
 
     VkMemoryRequirements mem_requirements;
-    vkGetImageMemoryRequirements(context_.device, image_, &mem_requirements);
+    vkGetBufferMemoryRequirements(context_.device, staging_buffer, &mem_requirements);
 
     VkMemoryAllocateInfo alloc_info {};
     alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    alloc_info.allocationSize = size;
+    alloc_info.allocationSize = mem_requirements.size;
     alloc_info.memoryTypeIndex = find_memory_type(
         mem_requirements.memoryTypeBits,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT

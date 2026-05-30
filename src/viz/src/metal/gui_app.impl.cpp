@@ -3,10 +3,9 @@
 #define NS_PRIVATE_IMPLEMENTATION
 #define CA_PRIVATE_IMPLEMENTATION
 #define MTL_PRIVATE_IMPLEMENTATION
-#include <Metal/Metal.hpp>
-
 #include "gui_app.impl.hpp"
 
+#include <Metal/Metal.hpp>
 #include <SDL.h>
 #include <SDL_metal.h>
 
@@ -82,8 +81,7 @@ P10Error GuiApp::Impl::start(const GuiAppParameters& params) {
         return P10Error::InvalidOperation << "Failed to create Metal device";
     }
 
-    metal_->layer =
-        reinterpret_cast<CA::MetalLayer*>(SDL_Metal_GetLayer(metal_->metal_view));
+    metal_->layer = reinterpret_cast<CA::MetalLayer*>(SDL_Metal_GetLayer(metal_->metal_view));
     metal_->layer->setDevice(metal_->device);
     metal_->layer->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
 
@@ -127,8 +125,7 @@ void GuiApp::Impl::main_loop() {
             if (event.type == SDL_QUIT) {
                 running_ = false;
             }
-            if (event.type == SDL_WINDOWEVENT
-                && event.window.event == SDL_WINDOWEVENT_RESIZED) {
+            if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
                 int w, h;
                 SDL_Metal_GetDrawableSize(window_, &w, &h);
                 metal_->layer->setDrawableSize(CGSizeMake(w, h));
@@ -140,10 +137,8 @@ void GuiApp::Impl::main_loop() {
         if (running_) {
             CA::MetalDrawable* drawable = metal_->layer->nextDrawable();
             if (drawable) {
-                MTL::RenderPassDescriptor* rpd =
-                    MTL::RenderPassDescriptor::renderPassDescriptor();
-                MTL::RenderPassColorAttachmentDescriptor* cd =
-                    rpd->colorAttachments()->object(0);
+                MTL::RenderPassDescriptor* rpd = MTL::RenderPassDescriptor::renderPassDescriptor();
+                MTL::RenderPassColorAttachmentDescriptor* cd = rpd->colorAttachments()->object(0);
                 cd->setTexture(drawable->texture());
                 cd->setLoadAction(MTL::LoadActionClear);
                 cd->setClearColor(MTL::ClearColor::Make(0.0, 0.0, 0.0, 1.0));

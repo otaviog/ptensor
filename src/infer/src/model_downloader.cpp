@@ -4,9 +4,9 @@
 #include <fstream>
 
 #include <curl/curl.h>
+#include <ptensor/log/log.hpp>
 
 #include "ptensor/p10_error.hpp"
-#include <ptensor/log/log.hpp>
 
 namespace p10::infer {
 

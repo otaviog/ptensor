@@ -39,7 +39,7 @@ class GuiApp::Impl {
     GuiAppParameters params_;
     std::unique_ptr<MetalContext> metal_;
     SDL_Window* window_ = nullptr;
-    std::atomic<bool> running_{false};
+    std::atomic<bool> running_ {false};
 };
 
 }  // namespace p10::viz

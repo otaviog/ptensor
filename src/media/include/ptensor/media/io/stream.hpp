@@ -7,7 +7,7 @@
 
 namespace p10::media {
 
-struct Device {    
+struct Device {
     std::string name;
     int device_index;
     std::optional<VideoParameters> video_params;
@@ -16,4 +16,4 @@ struct Device {
 
 std::vector<Device> listMediaDevices();
 
-}
+}  // namespace p10::media

@@ -1,8 +1,9 @@
 #pragma once
 
-#include <type_traits>
 #include <utility>
 #include <variant>
+
+#include <type_traits>
 
 #include "p10_error.hpp"
 

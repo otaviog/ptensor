@@ -1,6 +1,5 @@
-#include <ptensor/log/log.hpp>
-
 #include <ng-log/logging.h>
+#include <ptensor/log/log.hpp>
 
 namespace p10::log::detail {
 

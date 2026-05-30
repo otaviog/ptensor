@@ -118,8 +118,12 @@ P10Error ImageTexture::Impl::create_texture(int width, int height, const void* d
 
 P10Error ImageTexture::Impl::upload_data(const void* data) {
     auto* texture = reinterpret_cast<MTL::Texture*>(texture_);
-    MTL::Region region =
-        MTL::Region::Make2D(0, 0, static_cast<NS::UInteger>(width_), static_cast<NS::UInteger>(height_));
+    MTL::Region region = MTL::Region::Make2D(
+        0,
+        0,
+        static_cast<NS::UInteger>(width_),
+        static_cast<NS::UInteger>(height_)
+    );
     texture->replaceRegion(region, 0, data, static_cast<NS::UInteger>(width_ * 4));
     return P10Error::Ok;
 }

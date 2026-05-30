@@ -6,7 +6,6 @@
 #include "geom/point2.hpp"
 #include "geom/rect2.hpp"
 
-
 namespace p10::recog {
 struct FaceDetection {
     std::vector<Rect2i> faces;
@@ -20,6 +19,6 @@ struct FaceDetection {
     }
 };
 
-std::string to_string(const FaceDetection &detection);
+std::string to_string(const FaceDetection& detection);
 
 }  // namespace p10::recog

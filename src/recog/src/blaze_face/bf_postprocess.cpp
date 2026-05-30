@@ -33,7 +33,7 @@ void BfPostprocess::process(
 
         const auto boxes = out_boxes[img_idx];
         const auto scores = out_scores[img_idx];
-        const auto landmks = out_landmarks[img_idx]; 
+        const auto landmks = out_landmarks[img_idx];
         for (size_t row_idx = 0; row_idx < size_t(boxes.rows()); ++row_idx) {
             const float conf = scores[row_idx][1];
             if (conf > conf_threshold_) {

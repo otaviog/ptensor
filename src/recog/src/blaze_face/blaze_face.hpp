@@ -30,10 +30,10 @@ class BlazeFace: public IFaceDetector {
 
     ~BlazeFace() override = default;
 
-    BlazeFace(const BlazeFace &copy) = delete;
-    BlazeFace(const BlazeFace &&move) = delete;
-    BlazeFace& operator=(const BlazeFace &copy) = delete;
-    BlazeFace& operator=(const BlazeFace &&move) = delete;
+    BlazeFace(const BlazeFace& copy) = delete;
+    BlazeFace(const BlazeFace&& move) = delete;
+    BlazeFace& operator=(const BlazeFace& copy) = delete;
+    BlazeFace& operator=(const BlazeFace&& move) = delete;
 
     P10Error detect(Tensor& images, std::span<FaceDetection> out_detections) override;
 

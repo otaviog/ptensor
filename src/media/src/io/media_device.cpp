@@ -6,7 +6,7 @@ namespace p10::media {
 
 VideoParameters VideoDeviceInfo::match_closest(int width, int height, Rational frame_rate) const {
     if (capabilities_.empty()) {
-        return VideoParameters{};
+        return VideoParameters {};
     }
 
     const VideoCapability* best = capabilities_.data();
@@ -22,8 +22,8 @@ VideoParameters VideoDeviceInfo::match_closest(int width, int height, Rational f
 
         double fps_score = 0.0;
         if (fps_target > 0.0 && cap.max_frame_rate().den() > 0) {
-            const double fps_cap = static_cast<double>(cap.max_frame_rate().num())
-                / cap.max_frame_rate().den();
+            const double fps_cap =
+                static_cast<double>(cap.max_frame_rate().num()) / cap.max_frame_rate().den();
             const double df = fps_target - fps_cap;
             fps_score = df * df;
         }
@@ -35,7 +35,7 @@ VideoParameters VideoDeviceInfo::match_closest(int width, int height, Rational f
         }
     }
 
-    return VideoParameters{}
+    return VideoParameters {}
         .width(best->width())
         .height(best->height())
         .frame_rate(best->max_frame_rate());
@@ -43,7 +43,7 @@ VideoParameters VideoDeviceInfo::match_closest(int width, int height, Rational f
 
 AudioParameters AudioDeviceInfo::match_closest(double sample_rate, size_t num_channels) {
     if (capabilities_.empty()) {
-        return AudioParameters{};
+        return AudioParameters {};
     }
 
     const AudioParameters* best = capabilities_.data();

@@ -155,5 +155,4 @@ double tensor_mean_debug(const Tensor& tensor) {
     });
 }
 
-
 }  // namespace p10

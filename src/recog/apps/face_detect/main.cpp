@@ -141,7 +141,8 @@ P10Error run_on_image(IFaceDetector& detector, const std::string& path) {
         img_result.unwrap(),
         nchw,
         op::ImageToTensorOptions().target_dtype(Dtype::Uint8).unsqueeze(true)
-    ).expect("Wrong image format");
+    )
+        .expect("Wrong image format");
 
     std::array<FaceDetection, 1> detections;
     P10_RETURN_IF_ERROR(detector.detect(nchw, detections));

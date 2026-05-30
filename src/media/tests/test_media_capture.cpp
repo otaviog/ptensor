@@ -87,7 +87,10 @@ TEST_CASE("media::MediaCapture::list_audio_devices enumerates without error", "[
     }
 }
 
-TEST_CASE("media::VideoDeviceInfo::match_closest returns default for empty capabilities", "[media][capture]") {
+TEST_CASE(
+    "media::VideoDeviceInfo::match_closest returns default for empty capabilities",
+    "[media][capture]"
+) {
     VideoDeviceInfo info;
     const VideoParameters result = info.match_closest(1920, 1080, {30, 1});
     REQUIRE(result.width() == 0);
@@ -96,16 +99,19 @@ TEST_CASE("media::VideoDeviceInfo::match_closest returns default for empty capab
 
 TEST_CASE("media::VideoDeviceInfo::match_closest selects nearest resolution", "[media][capture]") {
     VideoDeviceInfo info;
-    info.add_capability(VideoCapability{}.width(640).height(480).max_frame_rate({30, 1}));
-    info.add_capability(VideoCapability{}.width(1280).height(720).max_frame_rate({30, 1}));
-    info.add_capability(VideoCapability{}.width(1920).height(1080).max_frame_rate({30, 1}));
+    info.add_capability(VideoCapability {}.width(640).height(480).max_frame_rate({30, 1}));
+    info.add_capability(VideoCapability {}.width(1280).height(720).max_frame_rate({30, 1}));
+    info.add_capability(VideoCapability {}.width(1920).height(1080).max_frame_rate({30, 1}));
 
     const VideoParameters result = info.match_closest(1280, 720, {30, 1});
     REQUIRE(result.width() == 1280);
     REQUIRE(result.height() == 720);
 }
 
-TEST_CASE("media::AudioDeviceInfo::match_closest returns default for empty capabilities", "[media][capture]") {
+TEST_CASE(
+    "media::AudioDeviceInfo::match_closest returns default for empty capabilities",
+    "[media][capture]"
+) {
     AudioDeviceInfo info;
     const AudioParameters result = info.match_closest(44100.0, 2);
     REQUIRE(result.audio_sample_rate_hz() == 0.0);

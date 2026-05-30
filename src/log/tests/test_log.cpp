@@ -1,7 +1,6 @@
 #include <stdexcept>
 
 #include <catch2/catch_test_macros.hpp>
-
 #include <ptensor/log/log.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
 

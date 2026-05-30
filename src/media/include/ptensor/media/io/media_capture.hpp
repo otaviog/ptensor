@@ -17,9 +17,9 @@ class AudioFrame;
 class MediaCapture {
   public:
     enum NextFrameResult {
-        Available, ///< Frame decoded and ready; call get_video()/get_audio().
+        Available,  ///< Frame decoded and ready; call get_video()/get_audio().
         NotReady,  ///< No frame queued yet; only returned in Poll mode.
-        Done       ///< End of file or stream stopped; no more frames.
+        Done  ///< End of file or stream stopped; no more frames.
     };
 
     enum WaitMode {
@@ -52,7 +52,7 @@ class MediaCapture {
     MediaParameters get_parameters() const;
 
     bool is_stream() const;
-    
+
     P10Result<NextFrameResult> next_frame(WaitMode wait = WaitMode::Poll);
 
     P10Error get_video(VideoFrame& frame);

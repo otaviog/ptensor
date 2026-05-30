@@ -1,7 +1,7 @@
 ---
 name: code-tiddy
 description: "Lightweight pass to tidy C++ code: ordering, header hygiene, and Rust-style doc comments on the public API."
-model: haiku
+model: sonnet
 ---
 
 ## Tools to run first

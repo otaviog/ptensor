@@ -11,7 +11,7 @@ class Tensor;
 namespace p10::viz {
 
 struct ImageTextureMetalContext {
-    void* device;         // id<MTLDevice> — not retained here, owned by GuiApp::Impl
+    void* device;  // id<MTLDevice> — not retained here, owned by GuiApp::Impl
     void* command_queue;  // id<MTLCommandQueue> — not retained here, owned by GuiApp::Impl
 };
 

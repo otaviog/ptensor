@@ -2,7 +2,6 @@
 #include <cstdint>
 
 #include <ptensor/tensor.hpp>
-#include <sys/types.h>
 
 #include "ptensor/dtype.hpp"
 #include "ptensor/p10_error.hpp"

@@ -12,45 +12,9 @@ extern "C" {
 namespace p10::media {
 
 namespace {
-    AVFrame* create_test_avframe(int width, int height, AVPixelFormat format) {
-        AVFrame* frame = av_frame_alloc();
-        frame->width = width;
-        frame->height = height;
-        frame->format = format;
-
-        int const buffer_size = av_image_get_buffer_size(format, width, height, 1);
-        uint8_t* buffer = static_cast<uint8_t*>(av_malloc(buffer_size));
-
-        // Fill with test pattern
-        for (int i = 0; i < buffer_size; ++i) {
-            buffer[i] = static_cast<uint8_t>(i % 256);
-        }
-
-        av_image_fill_arrays(frame->data, frame->linesize, buffer, format, width, height, 1);
-
-        return frame;
-    }
-
-    void free_test_avframe(AVFrame* frame) {
-        if (frame) {
-            av_free(frame->data[0]);
-            av_frame_free(&frame);
-        }
-    }
-
-    VideoFrame create_test_videoframe(int width, int height) {
-        VideoFrame frame;
-        frame.create(width, height, PixelFormat::RGB24).expect("create video frame");
-
-        // Fill with test pattern
-        auto bytes = frame.as_bytes();
-        for (size_t i = 0; i < bytes.size(); ++i) {
-            bytes[i] = static_cast<uint8_t>(i % 256);
-        }
-
-        return frame;
-    }
-
+    AVFrame* create_test_avframe(int width, int height, AVPixelFormat format);
+    void free_test_avframe(AVFrame* frame);
+    VideoFrame create_test_videoframe(int width, int height);
 }  // namespace
 
 TEST_CASE("FfmpegSws::target size getters and setters", "[media][ffmpeg][sws]") {
@@ -326,5 +290,46 @@ TEST_CASE("FfmpegSws::edge cases", "[media][ffmpeg][sws]") {
         free_test_avframe(src_frame);
     }
 }
+
+namespace {
+    AVFrame* create_test_avframe(int width, int height, AVPixelFormat format) {
+        AVFrame* frame = av_frame_alloc();
+        frame->width = width;
+        frame->height = height;
+        frame->format = format;
+
+        int const buffer_size = av_image_get_buffer_size(format, width, height, 1);
+        uint8_t* buffer = static_cast<uint8_t*>(av_malloc(buffer_size));
+
+        // Fill with test pattern
+        for (int i = 0; i < buffer_size; ++i) {
+            buffer[i] = static_cast<uint8_t>(i % 256);
+        }
+
+        av_image_fill_arrays(frame->data, frame->linesize, buffer, format, width, height, 1);
+
+        return frame;
+    }
+
+    void free_test_avframe(AVFrame* frame) {
+        if (frame != nullptr) {
+            av_free(frame->data[0]);
+            av_frame_free(&frame);
+        }
+    }
+
+    VideoFrame create_test_videoframe(int width, int height) {
+        VideoFrame frame;
+        frame.create(width, height, PixelFormat::RGB24).expect("create video frame");
+
+        // Fill with test pattern
+        auto bytes = frame.as_bytes();
+        for (size_t i = 0; i < bytes.size(); ++i) {
+            bytes[i] = static_cast<uint8_t>(i % 256);
+        }
+
+        return frame;
+    }
+}  // namespace
 
 }  // namespace p10::media

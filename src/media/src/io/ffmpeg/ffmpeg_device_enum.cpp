@@ -32,6 +32,51 @@ namespace {
         bool has_audio = false;
     };
 
+    RawDeviceEntry parse_device_info(const AVDeviceInfo& dev);
+    P10Result<const AVInputFormat*> get_input_format();
+    P10Result<std::vector<RawDeviceEntry>> enumerate_raw();
+
+}  // namespace
+
+P10Result<std::vector<VideoDeviceInfo>> list_video_devices() {
+    auto raw = enumerate_raw();
+    if (raw.is_error()) {
+        return Err(raw.error());
+    }
+
+    std::vector<VideoDeviceInfo> result;
+    int idx = 0;
+    for (const auto& entry : raw.unwrap()) {
+        if (!entry.has_video) {
+            continue;
+        }
+        VideoDeviceInfo info;
+        info.index(idx++).name(entry.name).url(entry.url);
+        result.push_back(std::move(info));
+    }
+    return Ok(std::move(result));
+}
+
+P10Result<std::vector<AudioDeviceInfo>> list_audio_devices() {
+    auto raw = enumerate_raw();
+    if (raw.is_error()) {
+        return Err(raw.error());
+    }
+
+    std::vector<AudioDeviceInfo> result;
+    int idx = 0;
+    for (const auto& entry : raw.unwrap()) {
+        if (!entry.has_audio) {
+            continue;
+        }
+        AudioDeviceInfo info;
+        info.index(idx++).name(entry.name).url(entry.url);
+        result.push_back(std::move(info));
+    }
+    return Ok(std::move(result));
+}
+
+namespace {
     RawDeviceEntry parse_device_info(const AVDeviceInfo& dev) {
         RawDeviceEntry entry;
         if (dev.device_description != nullptr) {
@@ -112,45 +157,6 @@ namespace {
 
         return Ok(std::move(entries));
     }
-
 }  // namespace
-
-P10Result<std::vector<VideoDeviceInfo>> list_video_devices() {
-    auto raw = enumerate_raw();
-    if (raw.is_error()) {
-        return Err(raw.error());
-    }
-
-    std::vector<VideoDeviceInfo> result;
-    int idx = 0;
-    for (const auto& entry : raw.unwrap()) {
-        if (!entry.has_video) {
-            continue;
-        }
-        VideoDeviceInfo info;
-        info.index(idx++).name(entry.name).url(entry.url);
-        result.push_back(std::move(info));
-    }
-    return Ok(std::move(result));
-}
-
-P10Result<std::vector<AudioDeviceInfo>> list_audio_devices() {
-    auto raw = enumerate_raw();
-    if (raw.is_error()) {
-        return Err(raw.error());
-    }
-
-    std::vector<AudioDeviceInfo> result;
-    int idx = 0;
-    for (const auto& entry : raw.unwrap()) {
-        if (!entry.has_audio) {
-            continue;
-        }
-        AudioDeviceInfo info;
-        info.index(idx++).name(entry.name).url(entry.url);
-        result.push_back(std::move(info));
-    }
-    return Ok(std::move(result));
-}
 
 }  // namespace p10::media

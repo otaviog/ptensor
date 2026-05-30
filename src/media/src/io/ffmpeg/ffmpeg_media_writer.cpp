@@ -55,20 +55,8 @@ FfmpegMediaWriter::create(const std::string& path, const MediaParameters& params
         return Err(error);
     }
 
-    // Audio encoder part
+    // TODO: audio encoder not yet wired up
     std::unique_ptr<FfmpegAudioEncoder> audio_encoder = nullptr;
-
-#if 0
-    // TODO: Add audio encoder support
-    const auto& audio_params = params.audio_parameters();
-    audio_encoder = std::make_unique<FfmpegAudioEncoder>();
-    error = audio_encoder->create(audio_params, format_ctx);
-    if (error.is_error()) {
-        avformat_free_context(format_ctx);
-        format_ctx = nullptr;
-        return Err(error);
-    }
-#endif
 
     // Open output file
     if ((format_ctx->oformat->flags & AVFMT_NOFILE) == 0) {
@@ -148,26 +136,6 @@ P10Error FfmpegMediaWriter::flush_video_encoder() {
     return P10Error::Ok;
 }
 
-P10Error FfmpegMediaWriter::write_video_packet(AVPacket* packet) {
-    if (!video_encoder_ || video_encoder_->stream() == nullptr) {
-        return P10Error::InvalidOperation << "No video stream";
-    }
-
-    // Rescale timestamps to stream time base
-    av_packet_rescale_ts(
-        packet,
-        video_encoder_->codec_context()->time_base,
-        video_encoder_->stream()->time_base
-    );
-
-    int const ret = av_interleaved_write_frame(format_context_, packet);
-    if (ret < 0) {
-        return wrap_ffmpeg_error(ret, "Failed to write video packet");
-    }
-
-    return P10Error::Ok;
-}
-
 P10Error FfmpegMediaWriter::flush_audio_encoder() {
     if (!audio_encoder_) {
         return P10Error::Ok;
@@ -184,6 +152,26 @@ P10Error FfmpegMediaWriter::flush_audio_encoder() {
                 return err;
             }
         }
+    }
+
+    return P10Error::Ok;
+}
+
+P10Error FfmpegMediaWriter::write_video_packet(AVPacket* packet) {
+    if (!video_encoder_ || video_encoder_->stream() == nullptr) {
+        return P10Error::InvalidOperation << "No video stream";
+    }
+
+    // Rescale timestamps to stream time base
+    av_packet_rescale_ts(
+        packet,
+        video_encoder_->codec_context()->time_base,
+        video_encoder_->stream()->time_base
+    );
+
+    int const ret = av_interleaved_write_frame(format_context_, packet);
+    if (ret < 0) {
+        return wrap_ffmpeg_error(ret, "Failed to write video packet");
     }
 
     return P10Error::Ok;
@@ -264,4 +252,5 @@ P10Error FfmpegMediaWriter::write_audio(const AudioFrame& frame) {
 
     return P10Error::Ok;
 }
+
 }  // namespace p10::media

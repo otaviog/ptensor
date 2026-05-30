@@ -8,10 +8,12 @@
 
 namespace p10::media {
 
-void MediaCapture::close() {
-    if (impl_) {
-        impl_->close();
+P10Result<MediaCapture> MediaCapture::open_file(const std::string& path) {
+    auto result = FfmpegFileMediaCapture::open(path);
+    if (result.is_error()) {
+        return Err(result.error());
     }
+    return Ok(MediaCapture(result.unwrap()));
 }
 
 P10Result<std::vector<VideoDeviceInfo>> MediaCapture::list_video_devices() {
@@ -33,12 +35,18 @@ P10Result<MediaCapture> MediaCapture::open_stream(
     return Ok(MediaCapture(result.unwrap()));
 }
 
-P10Result<MediaCapture> MediaCapture::open_file(const std::string& path) {
-    auto result = FfmpegFileMediaCapture::open(path);
-    if (result.is_error()) {
-        return Err(result.error());
+void MediaCapture::close() {
+    if (impl_) {
+        impl_->close();
     }
-    return Ok(MediaCapture(result.unwrap()));
+}
+
+MediaParameters MediaCapture::get_parameters() const {
+    return impl_->get_parameters();
+}
+
+bool MediaCapture::is_stream() const {
+    return dynamic_cast<FfmpegDeviceMediaCapture*>(impl_.get()) != nullptr;
 }
 
 P10Result<MediaCapture::NextFrameResult> MediaCapture::next_frame(WaitMode wait) {
@@ -51,14 +59,6 @@ P10Error MediaCapture::get_video(VideoFrame& frame) {
 
 P10Error MediaCapture::get_audio(AudioFrame& frame) {
     return impl_->get_audio(frame);
-}
-
-MediaParameters MediaCapture::get_parameters() const {
-    return impl_->get_parameters();
-}
-
-bool MediaCapture::is_stream() const {
-    return dynamic_cast<FfmpegDeviceMediaCapture*>(impl_.get()) != nullptr;
 }
 
 std::optional<int64_t> MediaCapture::video_frame_count() const {

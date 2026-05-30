@@ -13,34 +13,7 @@ extern "C" {
 namespace p10::media {
 
 namespace {
-    Dtype av_sample_fmt_to_dtype(AVSampleFormat sample_fmt) {
-        switch (sample_fmt) {
-            case AV_SAMPLE_FMT_U8:
-                return Dtype::Uint8;
-            case AV_SAMPLE_FMT_S16:
-                return Dtype::Int16;
-            case AV_SAMPLE_FMT_S32:
-                return Dtype::Int32;
-            case AV_SAMPLE_FMT_FLT:
-                return Dtype::Float32;
-            case AV_SAMPLE_FMT_DBL:
-                return Dtype::Float64;
-            case AV_SAMPLE_FMT_U8P:
-                return Dtype::Uint8;
-            case AV_SAMPLE_FMT_S16P:
-                return Dtype::Int16;
-            case AV_SAMPLE_FMT_S32P:
-                return Dtype::Int32;
-            case AV_SAMPLE_FMT_FLTP:
-                return Dtype::Float32;
-            case AV_SAMPLE_FMT_DBLP:
-                return Dtype::Float64;
-            default:
-                throw std::runtime_error(
-                    std::format("Unsupported sample format: {}", std::to_string(sample_fmt))
-                );
-        }
-    }
+    Dtype av_sample_fmt_to_dtype(AVSampleFormat sample_fmt);
 }  // namespace
 
 FfmpegAudioFifo::FfmpegAudioFifo() {
@@ -186,5 +159,36 @@ AVAudioFifo* FfmpegAudioFifo::get_fifo() {
     }
     return audio_fifo_;
 }
+
+namespace {
+    Dtype av_sample_fmt_to_dtype(AVSampleFormat sample_fmt) {
+        switch (sample_fmt) {
+            case AV_SAMPLE_FMT_U8:
+                return Dtype::Uint8;
+            case AV_SAMPLE_FMT_S16:
+                return Dtype::Int16;
+            case AV_SAMPLE_FMT_S32:
+                return Dtype::Int32;
+            case AV_SAMPLE_FMT_FLT:
+                return Dtype::Float32;
+            case AV_SAMPLE_FMT_DBL:
+                return Dtype::Float64;
+            case AV_SAMPLE_FMT_U8P:
+                return Dtype::Uint8;
+            case AV_SAMPLE_FMT_S16P:
+                return Dtype::Int16;
+            case AV_SAMPLE_FMT_S32P:
+                return Dtype::Int32;
+            case AV_SAMPLE_FMT_FLTP:
+                return Dtype::Float32;
+            case AV_SAMPLE_FMT_DBLP:
+                return Dtype::Float64;
+            default:
+                throw std::runtime_error(
+                    std::format("Unsupported sample format: {}", std::to_string(sample_fmt))
+                );
+        }
+    }
+}  // namespace
 
 }  // namespace p10::media

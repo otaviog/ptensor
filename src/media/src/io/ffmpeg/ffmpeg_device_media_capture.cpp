@@ -23,56 +23,9 @@ namespace {
     constexpr const char* DEVICE_INPUT_FORMAT = nullptr;
 #endif
 
-    std::string build_device_url(int video_index, int audio_index) {
-#if defined(__APPLE__)
-        // avfoundation URL: "<video>:<audio>", empty string for absent device.
-        std::string video = video_index >= 0 ? std::to_string(video_index) : "";
-        std::string audio = audio_index >= 0 ? std::to_string(audio_index) : "";
-        return video + ":" + audio;
-#elif defined(_WIN32)
-        (void)audio_index;
-        return "video=" + std::to_string(video_index);
-#else
-        (void)audio_index;
-        return video_index >= 0 ? "/dev/video" + std::to_string(video_index) : "/dev/video0";
-#endif
-    }
-
-    void apply_video_options(const VideoParameters& params, AVDictionary** options) {
-        if (params.width() > 0 && params.height() > 0) {
-            const std::string size =
-                std::to_string(params.width()) + "x" + std::to_string(params.height());
-            av_dict_set(options, "video_size", size.c_str(), 0);
-        }
-        if (params.frame_rate().num() > 0) {
-            const std::string rate = std::to_string(params.frame_rate().num()) + "/"
-                + std::to_string(params.frame_rate().den());
-            av_dict_set(options, "framerate", rate.c_str(), 0);
-        } else {
-#if defined(__APPLE__)
-            // avfoundation defaults to 29.97 which most cameras don't support; 30 matches
-            // the ~30fps modes avfoundation typically advertises (e.g. 30.000030fps).
-            av_dict_set(options, "framerate", "30", 0);
-#endif
-        }
-        if (!params.pixel_format().empty() && params.pixel_format() != "rgb") {
-            av_dict_set(options, "pixel_format", params.pixel_format().c_str(), 0);
-        }
-    }
-
-    void apply_audio_options(const AudioParameters& params, AVDictionary** options) {
-        if (params.audio_sample_rate_hz() > 0.0) {
-            av_dict_set(
-                options,
-                "sample_rate",
-                std::to_string(static_cast<int>(params.audio_sample_rate_hz())).c_str(),
-                0
-            );
-        }
-        if (params.audio_channels() > 0) {
-            av_dict_set(options, "channels", std::to_string(params.audio_channels()).c_str(), 0);
-        }
-    }
+    std::string build_device_url(int video_index, int audio_index);
+    void apply_video_options(const VideoParameters& params, AVDictionary** options);
+    void apply_audio_options(const AudioParameters& params, AVDictionary** options);
 
 }  // namespace
 
@@ -127,5 +80,58 @@ P10Result<std::shared_ptr<FfmpegDeviceMediaCapture>> FfmpegDeviceMediaCapture::o
     capture->start_decoding_thread();
     return Ok(std::move(capture));
 }
+
+namespace {
+    std::string build_device_url(int video_index, int audio_index) {
+#if defined(__APPLE__)
+        // avfoundation URL: "<video>:<audio>", empty string for absent device.
+        std::string video = video_index >= 0 ? std::to_string(video_index) : "";
+        std::string audio = audio_index >= 0 ? std::to_string(audio_index) : "";
+        return video + ":" + audio;
+#elif defined(_WIN32)
+        (void)audio_index;
+        return "video=" + std::to_string(video_index);
+#else
+        (void)audio_index;
+        return video_index >= 0 ? "/dev/video" + std::to_string(video_index) : "/dev/video0";
+#endif
+    }
+
+    void apply_video_options(const VideoParameters& params, AVDictionary** options) {
+        if (params.width() > 0 && params.height() > 0) {
+            const std::string size =
+                std::to_string(params.width()) + "x" + std::to_string(params.height());
+            av_dict_set(options, "video_size", size.c_str(), 0);
+        }
+        if (params.frame_rate().num() > 0) {
+            const std::string rate = std::to_string(params.frame_rate().num()) + "/"
+                + std::to_string(params.frame_rate().den());
+            av_dict_set(options, "framerate", rate.c_str(), 0);
+        } else {
+#if defined(__APPLE__)
+            // avfoundation defaults to 29.97 which most cameras don't support; 30 matches
+            // the ~30fps modes avfoundation typically advertises (e.g. 30.000030fps).
+            av_dict_set(options, "framerate", "30", 0);
+#endif
+        }
+        if (!params.pixel_format().empty() && params.pixel_format() != "rgb") {
+            av_dict_set(options, "pixel_format", params.pixel_format().c_str(), 0);
+        }
+    }
+
+    void apply_audio_options(const AudioParameters& params, AVDictionary** options) {
+        if (params.audio_sample_rate_hz() > 0.0) {
+            av_dict_set(
+                options,
+                "sample_rate",
+                std::to_string(static_cast<int>(params.audio_sample_rate_hz())).c_str(),
+                0
+            );
+        }
+        if (params.audio_channels() > 0) {
+            av_dict_set(options, "channels", std::to_string(params.audio_channels()).c_str(), 0);
+        }
+    }
+}  // namespace
 
 }  // namespace p10::media

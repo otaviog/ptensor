@@ -20,62 +20,6 @@ FfmpegMediaCaptureEngine::~FfmpegMediaCaptureEngine() {
     close();
 }
 
-P10Result<FfmpegMediaCaptureEngine::OpenResult> FfmpegMediaCaptureEngine::open_format(
-    const std::string& url,
-    const AVInputFormat* fmt,
-    AVDictionary** options
-) {
-    AVFormatContext* format_ctx = nullptr;
-    const P10Error open_error =
-        wrap_ffmpeg_error(avformat_open_input(&format_ctx, url.c_str(), fmt, options));
-    if (open_error.is_error()) {
-        return Err(open_error);
-    }
-    assert(format_ctx != nullptr);
-    P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(avformat_find_stream_info(format_ctx, nullptr)));
-
-    OpenResult result;
-    result.format_ctx = format_ctx;
-
-    const int video_stream_idx =
-        av_find_best_stream(format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
-    if (video_stream_idx >= 0) {
-        AVStream* video_stream = format_ctx->streams[video_stream_idx];
-        const AVCodec* video_codec = avcodec_find_decoder(video_stream->codecpar->codec_id);
-
-        AVCodecContext* video_codec_ctx = avcodec_alloc_context3(video_codec);
-        P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(
-            avcodec_parameters_to_context(video_codec_ctx, video_stream->codecpar)
-        ));
-        P10_RETURN_ERR_IF_ERROR(
-            wrap_ffmpeg_error(avcodec_open2(video_codec_ctx, video_codec, nullptr))
-        );
-
-        result.video_decoder =
-            std::make_shared<FfmpegVideoDecoder>(video_stream, video_codec_ctx, video_stream_idx);
-    }
-
-    const int audio_stream_idx =
-        av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
-    if (audio_stream_idx >= 0) {
-        AVStream const* audio_stream = format_ctx->streams[audio_stream_idx];
-        const AVCodec* audio_codec = avcodec_find_decoder(audio_stream->codecpar->codec_id);
-
-        AVCodecContext* audio_codec_ctx = avcodec_alloc_context3(audio_codec);
-        P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(
-            avcodec_parameters_to_context(audio_codec_ctx, audio_stream->codecpar)
-        ));
-        P10_RETURN_ERR_IF_ERROR(
-            wrap_ffmpeg_error(avcodec_open2(audio_codec_ctx, audio_codec, nullptr))
-        );
-
-        result.audio_decoder =
-            std::make_shared<FfmpegAudioDecoder>(audio_codec_ctx, audio_stream_idx);
-    }
-
-    return Ok(std::move(result));
-}
-
 void FfmpegMediaCaptureEngine::close() {
     status_ = CaptureStatus::Stopped;
 
@@ -148,6 +92,87 @@ void FfmpegMediaCaptureEngine::start_decoding_thread() {
     }
 }
 
+P10Result<FfmpegMediaCaptureEngine::OpenResult> FfmpegMediaCaptureEngine::open_format(
+    const std::string& url,
+    const AVInputFormat* fmt,
+    AVDictionary** options
+) {
+    AVFormatContext* format_ctx = nullptr;
+    const P10Error open_error =
+        wrap_ffmpeg_error(avformat_open_input(&format_ctx, url.c_str(), fmt, options));
+    if (open_error.is_error()) {
+        return Err(open_error);
+    }
+    assert(format_ctx != nullptr);
+    P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(avformat_find_stream_info(format_ctx, nullptr)));
+
+    OpenResult result;
+    result.format_ctx = format_ctx;
+
+    const int video_stream_idx =
+        av_find_best_stream(format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
+    if (video_stream_idx >= 0) {
+        AVStream* video_stream = format_ctx->streams[video_stream_idx];
+        const AVCodec* video_codec = avcodec_find_decoder(video_stream->codecpar->codec_id);
+
+        AVCodecContext* video_codec_ctx = avcodec_alloc_context3(video_codec);
+        P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(
+            avcodec_parameters_to_context(video_codec_ctx, video_stream->codecpar)
+        ));
+        P10_RETURN_ERR_IF_ERROR(
+            wrap_ffmpeg_error(avcodec_open2(video_codec_ctx, video_codec, nullptr))
+        );
+
+        result.video_decoder =
+            std::make_shared<FfmpegVideoDecoder>(video_stream, video_codec_ctx, video_stream_idx);
+    }
+
+    const int audio_stream_idx =
+        av_find_best_stream(format_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+    if (audio_stream_idx >= 0) {
+        AVStream const* audio_stream = format_ctx->streams[audio_stream_idx];
+        const AVCodec* audio_codec = avcodec_find_decoder(audio_stream->codecpar->codec_id);
+
+        AVCodecContext* audio_codec_ctx = avcodec_alloc_context3(audio_codec);
+        P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(
+            avcodec_parameters_to_context(audio_codec_ctx, audio_stream->codecpar)
+        ));
+        P10_RETURN_ERR_IF_ERROR(
+            wrap_ffmpeg_error(avcodec_open2(audio_codec_ctx, audio_codec, nullptr))
+        );
+
+        result.audio_decoder =
+            std::make_shared<FfmpegAudioDecoder>(audio_codec_ctx, audio_stream_idx);
+    }
+
+    return Ok(std::move(result));
+}
+
+P10Error FfmpegMediaCaptureEngine::seek_to(double seconds) {
+    status_ = CaptureStatus::Stopped;
+    video_queue_.cancel();
+    if (decode_thread_.joinable()) {
+        decode_thread_.join();
+    }
+
+    auto ts = static_cast<int64_t>(seconds * AV_TIME_BASE);
+    const int ret = avformat_seek_file(format_ctx_, -1, INT64_MIN, ts, INT64_MAX, 0);
+    if (ret < 0) {
+        return wrap_ffmpeg_error(ret, "Seek failed");
+    }
+
+    if (video_decoder_ != nullptr) {
+        video_decoder_->flush();
+    }
+    if (audio_decoder_ != nullptr) {
+        audio_decoder_->flush();
+    }
+
+    video_queue_.flush();
+    start_decoding_thread();
+    return P10Error::Ok;
+}
+
 void FfmpegMediaCaptureEngine::read_packets_loop() {
     while (status_ == CaptureStatus::Reading) {
         read_next_packet();
@@ -208,31 +233,6 @@ void FfmpegMediaCaptureEngine::decode_video_packet(const AVPacket* pkt) {
 
 void FfmpegMediaCaptureEngine::decode_audio_packet(const AVPacket*) {
     //AVFrame* frame = audio_decoder_->decode_packet(pkt);
-}
-
-P10Error FfmpegMediaCaptureEngine::seek_to(double seconds) {
-    status_ = CaptureStatus::Stopped;
-    video_queue_.cancel();
-    if (decode_thread_.joinable()) {
-        decode_thread_.join();
-    }
-
-    auto ts = static_cast<int64_t>(seconds * AV_TIME_BASE);
-    const int ret = avformat_seek_file(format_ctx_, -1, INT64_MIN, ts, INT64_MAX, 0);
-    if (ret < 0) {
-        return wrap_ffmpeg_error(ret, "Seek failed");
-    }
-
-    if (video_decoder_ != nullptr) {
-        video_decoder_->flush();
-    }
-    if (audio_decoder_ != nullptr) {
-        audio_decoder_->flush();
-    }
-
-    video_queue_.flush();
-    start_decoding_thread();
-    return P10Error::Ok;
 }
 
 }  // namespace p10::media

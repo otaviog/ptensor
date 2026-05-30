@@ -14,32 +14,7 @@ struct TranscoderCli {
     std::optional<float> start;
 };
 
-TranscoderCli parse_args(int argc, char** argv) {
-    CLI::App app {"Transcode media files to MP4 format"};
-    TranscoderCli cli;
-
-    app.add_option("input", cli.input, "Input media file path")
-        ->required()
-        ->check(CLI::ExistingFile);
-    app.add_option("-o,--output", cli.output, "Output media file path")->default_val("output.mp4");
-    app.add_option("-s,--start", cli.start, "Seek to position (seconds) before transcoding")
-        ->check(CLI::PositiveNumber);
-
-    app.footer(
-        "Examples:\n"
-        "  transcoder input.mov                         Transcode to output.mp4\n"
-        "  transcoder input.mov -o output.mp4           Specify output path\n"
-        "  transcoder input.mov -s 10.5 -o out.mp4     Start from 10.5 seconds"
-    );
-
-    try {
-        app.parse(argc, argv);
-    } catch (const CLI::ParseError& e) {
-        std::exit(app.exit(e));
-    }
-
-    return cli;
-}
+TranscoderCli parse_args(int argc, char** argv);
 
 }  // namespace
 
@@ -73,3 +48,32 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
+namespace {
+TranscoderCli parse_args(int argc, char** argv) {
+    CLI::App app {"Transcode media files to MP4 format"};
+    TranscoderCli cli;
+
+    app.add_option("input", cli.input, "Input media file path")
+        ->required()
+        ->check(CLI::ExistingFile);
+    app.add_option("-o,--output", cli.output, "Output media file path")->default_val("output.mp4");
+    app.add_option("-s,--start", cli.start, "Seek to position (seconds) before transcoding")
+        ->check(CLI::PositiveNumber);
+
+    app.footer(
+        "Examples:\n"
+        "  transcoder input.mov                         Transcode to output.mp4\n"
+        "  transcoder input.mov -o output.mp4           Specify output path\n"
+        "  transcoder input.mov -s 10.5 -o out.mp4     Start from 10.5 seconds"
+    );
+
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::ParseError& e) {
+        std::exit(app.exit(e));
+    }
+
+    return cli;
+}
+}  // namespace

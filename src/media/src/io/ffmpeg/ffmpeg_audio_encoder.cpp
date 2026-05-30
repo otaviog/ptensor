@@ -19,31 +19,8 @@ extern "C" {
 namespace p10::media {
 
 namespace {
-    AVCodecID codec_id_from_audio_parameters(AudioCodec codec) {
-        switch (codec.type()) {
-            case AudioCodec::CodecType::AAC:
-                return AV_CODEC_ID_AAC;
-            default:
-                return AV_CODEC_ID_NONE;
-        }
-    }
-
-    AVSampleFormat dtype_to_planar_av_sample_format(Dtype dtype) {
-        switch (dtype.value) {
-            case Dtype::Uint8:
-                return AV_SAMPLE_FMT_U8P;
-            case Dtype::Int16:
-                return AV_SAMPLE_FMT_S16P;
-            case Dtype::Int32:
-                return AV_SAMPLE_FMT_S32P;
-            case Dtype::Float32:
-                return AV_SAMPLE_FMT_FLTP;
-            case Dtype::Float64:
-                return AV_SAMPLE_FMT_DBLP;
-            default:
-                return AV_SAMPLE_FMT_NONE;
-        }
-    }
+    AVCodecID codec_id_from_audio_parameters(const AudioCodec& codec);
+    AVSampleFormat dtype_to_planar_av_sample_format(Dtype dtype);
 }  // namespace
 
 FfmpegAudioEncoder::~FfmpegAudioEncoder() {
@@ -94,7 +71,7 @@ FfmpegAudioEncoder::create(const AudioParameters& audio_params, AVFormatContext*
     stream_->time_base = time_base;
     codec_context_->time_base = time_base;
     codec_context_->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
-    if (format_ctx->oformat->flags & AVFMT_GLOBALHEADER) {
+    if ((format_ctx->oformat->flags & AVFMT_GLOBALHEADER) != 0) {
         codec_context_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
     P10_RETURN_IF_ERROR(wrap_ffmpeg_error(avcodec_open2(codec_context_, codec, nullptr)));
@@ -136,7 +113,7 @@ P10Error FfmpegAudioEncoder::encode(const AudioFrame& frame) {
     const auto* samples_data = frame.samples().as_bytes().data();
     const size_t elem_size = frame.samples().dtype().size_bytes();
     for (int ch = 0; ch < source_frame->ch_layout.nb_channels; ++ch) {
-        source_frame->data[ch] = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(
+        source_frame->data[ch] = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(  // NOLINT(*-const-cast) — FFmpeg data[] is non-const
             samples_data
             + static_cast<ptrdiff_t>(ch) * static_cast<ptrdiff_t>(frame.samples_count())
                 * static_cast<ptrdiff_t>(elem_size)
@@ -157,6 +134,25 @@ P10Error FfmpegAudioEncoder::encode(const AudioFrame& frame) {
     P10_RETURN_IF_ERROR(fifo_err);
 
     return flush_encoding_fifo();
+}
+
+P10Error FfmpegAudioEncoder::flush_encoding_fifo() {
+    const int codec_frame_size = codec_context_->frame_size > 0 ? codec_context_->frame_size : 1024;
+    while (static_cast<int>(encoding_fifo_.num_samples()) >= codec_frame_size) {
+        AVFrame* frame_to_encode = nullptr;
+        P10_RETURN_IF_ERROR(encoding_fifo_.pop_samples(codec_frame_size, &frame_to_encode));
+
+        frame_to_encode->pts = audio_pts_;
+        audio_pts_ += frame_to_encode->nb_samples;
+
+        int const ret = avcodec_send_frame(codec_context_, frame_to_encode);
+        av_frame_free(&frame_to_encode);
+        P10_RETURN_IF_ERROR(wrap_ffmpeg_error(ret));
+
+        P10_RETURN_IF_ERROR(receive_packets());
+    }
+
+    return P10Error::Ok;
 }
 
 P10Error FfmpegAudioEncoder::flush() {
@@ -184,25 +180,6 @@ P10Error FfmpegAudioEncoder::flush() {
     return receive_packets();
 }
 
-P10Error FfmpegAudioEncoder::flush_encoding_fifo() {
-    const int codec_frame_size = codec_context_->frame_size > 0 ? codec_context_->frame_size : 1024;
-    while (static_cast<int>(encoding_fifo_.num_samples()) >= codec_frame_size) {
-        AVFrame* frame_to_encode = nullptr;
-        P10_RETURN_IF_ERROR(encoding_fifo_.pop_samples(codec_frame_size, &frame_to_encode));
-
-        frame_to_encode->pts = audio_pts_;
-        audio_pts_ += frame_to_encode->nb_samples;
-
-        int const ret = avcodec_send_frame(codec_context_, frame_to_encode);
-        av_frame_free(&frame_to_encode);
-        P10_RETURN_IF_ERROR(wrap_ffmpeg_error(ret));
-
-        P10_RETURN_IF_ERROR(receive_packets());
-    }
-
-    return P10Error::Ok;
-}
-
 P10Error FfmpegAudioEncoder::receive_packets() {
     while (true) {
         UniqueAvPacket pkt(av_packet_alloc());
@@ -220,5 +197,33 @@ P10Error FfmpegAudioEncoder::receive_packets() {
     }
     return P10Error::Ok;
 }
+
+namespace {
+    AVCodecID codec_id_from_audio_parameters(const AudioCodec& codec) {
+        switch (codec.type()) {
+            case AudioCodec::CodecType::AAC:
+                return AV_CODEC_ID_AAC;
+            default:
+                return AV_CODEC_ID_NONE;
+        }
+    }
+
+    AVSampleFormat dtype_to_planar_av_sample_format(Dtype dtype) {
+        switch (dtype.value) {
+            case Dtype::Uint8:
+                return AV_SAMPLE_FMT_U8P;
+            case Dtype::Int16:
+                return AV_SAMPLE_FMT_S16P;
+            case Dtype::Int32:
+                return AV_SAMPLE_FMT_S32P;
+            case Dtype::Float32:
+                return AV_SAMPLE_FMT_FLTP;
+            case Dtype::Float64:
+                return AV_SAMPLE_FMT_DBLP;
+            default:
+                return AV_SAMPLE_FMT_NONE;
+        }
+    }
+}  // namespace
 
 }  // namespace p10::media

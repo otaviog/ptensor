@@ -16,18 +16,6 @@
 	  ]
 	},
 	{
-	  "name": "all/unit-test (cpptools, natvis)",
-	  "type": "cppdbg",
-	  "request": "launch",
-	  "program": "${workspaceFolder}/build/clang/debug/tests/unit_tests_all",
-	  "stopAtEntry": false,
-	  "cwd": "${workspaceFolder}",
-	  "environment": [],
-	  "externalConsole": false,
-	  "MIMode": "lldb",
-	  "visualizerFile": "${workspaceFolder}/src/core/ptensor.natvis"
-	},
-	{
 	  "name": "media/transcoder",
 	  "type": "lldb-dap",
 	  "request": "launch",

@@ -10,7 +10,9 @@ on:
 jobs:
   linux-check:
     name: C++ Tests (Linux)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted]
+    container:
+      image: ubuntu:latest
 
     steps:
       - name: Checkout code
@@ -29,7 +31,6 @@ jobs:
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
           sudo update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/bin/clang-scan-deps-20 100
-          
 
           sh ./vcpkg/bootstrap-vcpkg.sh
 

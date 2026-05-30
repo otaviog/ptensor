@@ -81,6 +81,22 @@
 	  "initCommands": [
 		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
 	  ]
+	},
+	{
+	  "name": "recog/face_detect/video/gui",
+	  "type": "lldb-dap",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/src/recog/apps/face_detect/face_detector",
+	  "args": [
+		"${input:videoPath}", "--model", "tests/data/face_detectors/blazefaces-320.onnx", "--gui"
+	  ],
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "externalConsole": false,
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
 	}
   ],
   "inputs": [

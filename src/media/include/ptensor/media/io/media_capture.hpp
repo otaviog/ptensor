@@ -14,14 +14,17 @@ namespace p10::media {
 class VideoFrame;
 class AudioFrame;
 
+/// Media capture from files or live devices.
 class MediaCapture {
   public:
+    /// Result of next_frame() operation.
     enum NextFrameResult {
         Available,  ///< Frame decoded and ready; call get_video()/get_audio().
         NotReady,  ///< No frame queued yet; only returned in Poll mode.
         Done  ///< End of file or stream stopped; no more frames.
     };
 
+    /// Waiting behavior for next_frame().
     enum WaitMode {
         Poll,  ///< Non-blocking: returns NotReady immediately if queue is empty.
         Block  ///< Blocking: waits until a frame is available; never returns NotReady.
@@ -31,6 +34,7 @@ class MediaCapture {
 
     MediaCapture() = default;
 
+    /// Open a media file for reading.
     static P10Result<MediaCapture> open_file(const std::string& path);
 
     /// Enumerate the video capture devices available on this platform.
@@ -47,24 +51,31 @@ class MediaCapture {
         std::optional<std::pair<int, AudioParameters>> audio = std::nullopt
     );
 
+    /// Close the media capture.
     void close();
 
+    /// Get current media parameters.
     MediaParameters get_parameters() const;
 
+    /// Check if this is a live stream (not a file).
     bool is_stream() const;
 
+    /// Retrieve the next frame.
     P10Result<NextFrameResult> next_frame(WaitMode wait = WaitMode::Poll);
 
+    /// Get the most recently decoded video frame.
     P10Error get_video(VideoFrame& frame);
 
+    /// Get the most recently decoded audio frame.
     P10Error get_audio(AudioFrame& frame);
 
+    /// Get total video frame count (if known).
     std::optional<int64_t> video_frame_count() const;
 
+    /// Get total duration in seconds (if known).
     std::optional<double> duration() const;
 
-    /// Seek to `seconds` from the start of the stream. Only supported for
-    /// file-based captures; returns NotImplemented for live device captures.
+    /// Seek to position in seconds from the start. File captures only.
     P10Error seek(double seconds);
 
   private:

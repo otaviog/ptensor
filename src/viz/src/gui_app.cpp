@@ -10,12 +10,13 @@ GuiApp::GuiApp() : impl_(new GuiApp::Impl(*this)) {}
 
 GuiApp::~GuiApp() = default;
 
-P10Error GuiApp::start(const GuiAppParameters& params) {
-    return impl_->start(params);
+ImageTexture GuiApp::create_texture() {
+    return impl_->create_texture();
 }
 
-void GuiApp::run() {
-    impl_->main_loop();
+void GuiApp::quit() {
+    on_cleanup();
+    impl_->quit();
 }
 
 void GuiApp::on_render() {
@@ -42,29 +43,42 @@ void GuiApp::on_render() {
 
     // Generate samples and plot them
     float samples[100];
-    for (int n = 0; n < 100; n++)
+    for (int n = 0; n < 100; n++) {
         samples[n] = sinf(n * 0.2f + float(ImGui::GetTime()) * 1.5f);
+    }
     ImGui::PlotLines("Samples", samples, 100);
 
     // Display contents in a scrolling region
     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Important Stuff");
     ImGui::BeginChild("Scrolling");
-    for (int n = 0; n < 50; n++)
+    for (int n = 0; n < 50; n++) {
         ImGui::Text("%04d: Some text", n);
+    }
     ImGui::EndChild();
     ImGui::End();
 }
 
-ImageTexture GuiApp::create_texture() {
-    return impl_->create_texture();
-}
-
-void GuiApp::quit() {
-    on_cleanup();
-    impl_->quit();
+P10Error GuiApp::start(const GuiAppParameters& params) {
+    return impl_->start(params);
 }
 
 ImGuiContext* GuiApp::get_current_context() {
     return ImGui::GetCurrentContext();
 }
+
+void GuiApp::run() {
+    impl_->main_loop();
+}
+
+P10Error run_app(GuiApp& app, const GuiAppParameters& params) {
+    auto error = app.start(params);
+    if (error.is_error()) {
+        return error;
+    }
+
+    ImGui::SetCurrentContext(GuiApp::get_current_context());
+    app.run();
+    return P10Error::Ok;
+}
+
 }  // namespace p10::viz

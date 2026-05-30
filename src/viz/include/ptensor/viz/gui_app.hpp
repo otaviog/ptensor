@@ -14,8 +14,7 @@ struct VulkanContext;
 
 class GuiApp;
 
-/// Start a GUI application with the given parameters.
-inline P10Error run_app(GuiApp& app, const GuiAppParameters& params);
+P10Error run_app(GuiApp& app, const GuiAppParameters& params);
 
 /// Base class for ImGui-based applications.
 class GuiApp {
@@ -26,13 +25,13 @@ class GuiApp {
     /// Construct an uninitialized GuiApp.
     GuiApp();
 
+    virtual ~GuiApp();
+
     /// Create a GPU texture for rendering.
     ImageTexture create_texture();
 
     /// Signal the application to quit.
     void quit();
-
-    virtual ~GuiApp();
 
   protected:
     /// Override to perform initialization when the app starts.
@@ -45,7 +44,7 @@ class GuiApp {
     virtual void on_cleanup() {}
 
   private:
-    friend inline P10Error run_app(GuiApp& app, const GuiAppParameters& params);
+    friend P10Error run_app(GuiApp& app, const GuiAppParameters& params);
 
     P10Error start(const GuiAppParameters& params);
 
@@ -55,17 +54,5 @@ class GuiApp {
 
     std::shared_ptr<Impl> impl_;
 };
-
-/// Start a GUI application with the given parameters.
-inline P10Error run_app(GuiApp& app, const GuiAppParameters& params) {
-    auto error = app.start(params);
-    if (error.is_error()) {
-        return error;
-    }
-
-    ImGui::SetCurrentContext(GuiApp::get_current_context());
-    app.run();
-    return P10Error::Ok;
-}
 
 }  // namespace p10::viz

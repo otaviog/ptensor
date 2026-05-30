@@ -23,12 +23,18 @@ struct MetalContext {
     int width = 0;
     int height = 0;
 
+    MetalContext() = default;
+    MetalContext(const MetalContext&) = delete;
+    MetalContext& operator=(const MetalContext&) = delete;
+    MetalContext(MetalContext&&) = delete;
+    MetalContext& operator=(MetalContext&&) = delete;
+
     ~MetalContext() {
-        if (command_queue) {
+        if (command_queue != nullptr) {
             command_queue->release();
             command_queue = nullptr;
         }
-        if (device) {
+        if (device != nullptr) {
             device->release();
             device = nullptr;
         }
@@ -58,23 +64,23 @@ P10Error GuiApp::Impl::start(const GuiAppParameters& params) {
         params.height(),
         SDL_WINDOW_METAL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
     );
-    if (!window_) {
+    if (window_ == nullptr) {
         SDL_Quit();
         return P10Error::InvalidOperation
             << ("SDL_CreateWindow Error: " + std::string(SDL_GetError()));
     }
 
-    metal_.reset(new MetalContext());
+    metal_ = std::make_unique<MetalContext>();
 
     metal_->metal_view = SDL_Metal_CreateView(window_);
-    if (!metal_->metal_view) {
+    if (metal_->metal_view == nullptr) {
         SDL_DestroyWindow(window_);
         SDL_Quit();
         return P10Error::InvalidOperation << "Failed to create SDL Metal view";
     }
 
     metal_->device = MTL::CreateSystemDefaultDevice();
-    if (!metal_->device) {
+    if (metal_->device == nullptr) {
         SDL_Metal_DestroyView(metal_->metal_view);
         SDL_DestroyWindow(window_);
         SDL_Quit();
@@ -85,14 +91,15 @@ P10Error GuiApp::Impl::start(const GuiAppParameters& params) {
     metal_->layer->setDevice(metal_->device);
     metal_->layer->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
 
-    int drawable_w, drawable_h;
+    int drawable_w = 0;
+    int drawable_h = 0;
     SDL_Metal_GetDrawableSize(window_, &drawable_w, &drawable_h);
     metal_->layer->setDrawableSize(CGSizeMake(drawable_w, drawable_h));
     metal_->width = drawable_w;
     metal_->height = drawable_h;
 
     metal_->command_queue = metal_->device->newCommandQueue();
-    if (!metal_->command_queue) {
+    if (metal_->command_queue == nullptr) {
         SDL_Metal_DestroyView(metal_->metal_view);
         SDL_DestroyWindow(window_);
         SDL_Quit();
@@ -114,19 +121,47 @@ P10Error GuiApp::Impl::start(const GuiAppParameters& params) {
     return P10Error::Ok;
 }
 
+ImageTexture GuiApp::Impl::create_texture() {
+    ImageTextureMetalContext ctx {};
+    ctx.device = metal_->device;
+    ctx.command_queue = metal_->command_queue;
+    return ImageTexture(new ImageTexture::Impl(ctx));
+}
+
+void GuiApp::Impl::quit() {
+    running_ = false;
+    parent_.on_cleanup();
+    ImGui_ImplMetal_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+    if (metal_) {
+        if (metal_->metal_view != nullptr) {
+            SDL_Metal_DestroyView(metal_->metal_view);
+            metal_->metal_view = nullptr;
+        }
+        metal_.reset();
+    }
+    if (window_ != nullptr) {
+        SDL_DestroyWindow(window_);
+        window_ = nullptr;
+    }
+    SDL_Quit();
+}
+
 void GuiApp::Impl::main_loop() {
     running_ = true;
     while (running_) {
         NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
 
         SDL_Event event;
-        while (SDL_PollEvent(&event)) {
+        while (SDL_PollEvent(&event) != 0) {
             ImGui_ImplSDL2_ProcessEvent(&event);
             if (event.type == SDL_QUIT) {
                 running_ = false;
             }
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                int w, h;
+                int w = 0;
+                int h = 0;
                 SDL_Metal_GetDrawableSize(window_, &w, &h);
                 metal_->layer->setDrawableSize(CGSizeMake(w, h));
                 metal_->width = w;
@@ -136,7 +171,7 @@ void GuiApp::Impl::main_loop() {
 
         if (running_) {
             CA::MetalDrawable* drawable = metal_->layer->nextDrawable();
-            if (drawable) {
+            if (drawable != nullptr) {
                 MTL::RenderPassDescriptor* rpd = MTL::RenderPassDescriptor::renderPassDescriptor();
                 MTL::RenderPassColorAttachmentDescriptor* cd = rpd->colorAttachments()->object(0);
                 cd->setTexture(drawable->texture());
@@ -163,33 +198,6 @@ void GuiApp::Impl::main_loop() {
 
         pool->release();
     }
-}
-
-ImageTexture GuiApp::Impl::create_texture() {
-    ImageTextureMetalContext ctx;
-    ctx.device = metal_->device;
-    ctx.command_queue = metal_->command_queue;
-    return ImageTexture(new ImageTexture::Impl(ctx));
-}
-
-void GuiApp::Impl::quit() {
-    running_ = false;
-    parent_.on_cleanup();
-    ImGui_ImplMetal_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
-    if (metal_) {
-        if (metal_->metal_view) {
-            SDL_Metal_DestroyView(metal_->metal_view);
-            metal_->metal_view = nullptr;
-        }
-        metal_.reset();
-    }
-    if (window_) {
-        SDL_DestroyWindow(window_);
-        window_ = nullptr;
-    }
-    SDL_Quit();
 }
 
 }  // namespace p10::viz

@@ -12,7 +12,6 @@ extern "C" {
 namespace p10::media {
 
 namespace {
-    // Helper to create and fill an AVFrame with test data
     AVFrame* create_test_avframe(int width, int height, AVPixelFormat format) {
         AVFrame* frame = av_frame_alloc();
         frame->width = width;

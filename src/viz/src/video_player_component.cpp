@@ -41,6 +41,22 @@ void VideoPlayerComponent::on_render() {
     ImGui::End();
 }
 
+void VideoPlayerComponent::on_new_frame(p10::media::VideoFrame& frame) const {
+    for (const auto& callback : new_frame_callback_) {
+        callback(frame);
+    }
+}
+
+void VideoPlayerComponent::on_render_hook(
+    ImDrawList* draw_list,
+    ImVec2 image_pos,
+    ImVec2 image_size
+) const {
+    for (const auto& hook : render_hook_callback_) {
+        hook(draw_list, image_pos, image_size);
+    }
+}
+
 void VideoPlayerComponent::button_play() {
     ImGui::BeginDisabled(play_state_ == PlayState::Playing);
     if (ImGui::Button("Play")) {
@@ -163,19 +179,4 @@ void VideoPlayerComponent::sync_next_frame() {
     }
 }
 
-void VideoPlayerComponent::on_new_frame(p10::media::VideoFrame& frame) const {
-    for (const auto& callback : new_frame_callback_) {
-        callback(frame);
-    }
-}
-
-void VideoPlayerComponent::on_render_hook(
-    ImDrawList* draw_list,
-    ImVec2 image_pos,
-    ImVec2 image_size
-) const {
-    for (const auto& hook : render_hook_callback_) {
-        hook(draw_list, image_pos, image_size);
-    }
-}
 }  // namespace p10::viz

@@ -1,10 +1,12 @@
 #include <filesystem>
+#include <format>
 #include <iostream>
 #include <memory>
 #include <set>
 #include <string>
 
 #include <CLI/CLI.hpp>
+#include <imgui.h>
 #include <ptensor/infer/infer.hpp>
 #include <ptensor/infer/infer_config.hpp>
 #include <ptensor/io/image.hpp>
@@ -13,6 +15,9 @@
 #include <ptensor/op/image_layout.hpp>
 #include <ptensor/recog/face_detector.hpp>
 #include <ptensor/tensor.hpp>
+#include <ptensor/viz/gui_app.hpp>
+#include <ptensor/viz/gui_app_parameters.hpp>
+#include <ptensor/viz/video_player_component.hpp>
 
 #include "ptensor/p10_error.hpp"
 
@@ -29,6 +34,7 @@ const std::set<std::string> VIDEO_EXTS = {".mp4", ".avi", ".mov", ".mkv", ".webm
 struct FaceDetectCli {
     std::string input;
     std::string model_path;
+    bool gui = false;
 };
 
 FaceDetectCli parse_args(int argc, char** argv);
@@ -39,6 +45,76 @@ P10Error run_on_directory(IFaceDetector& detector, const std::string& path);
 void print_detections(const std::string& source, std::span<const FaceDetection> dets);
 bool is_video(const std::string& path);
 P10Error run_on_video(IFaceDetector& detector, const std::string& path);
+P10Error run_on_video_gui(IFaceDetector& detector, const std::string& path);
+
+class FaceDetectApp : public p10::viz::GuiApp {
+  public:
+    FaceDetectApp(MediaCapture capture, IFaceDetector& detector, std::string title) :
+        player_(std::move(capture), *this), detector_(detector), title_(std::move(title)) {}
+
+  protected:
+    void on_initialize() override {
+        player_.on_initialize();
+        player_.add_new_frame_callback([this](VideoFrame& frame) { on_new_frame(frame); });
+        player_.add_render_hook_callback([this](ImDrawList* dl, ImVec2 pos, ImVec2 size) {
+            on_render_hook(dl, pos, size);
+        });
+    }
+
+    void on_render() override {
+        player_.on_render();
+    }
+
+  private:
+    void on_new_frame(VideoFrame& frame) {
+        frame_w_ = static_cast<int>(frame.width());
+        frame_h_ = static_cast<int>(frame.height());
+        Tensor nchw;
+        if (op::image_to_tensor(frame.image(), nchw).is_error()) {
+            return;
+        }
+        std::array<FaceDetection, 1> dets;
+        if (detector_.detect(nchw, dets).is_error()) {
+            return;
+        }
+        current_dets_ = dets[0];
+    }
+
+    void on_render_hook(ImDrawList* draw_list, ImVec2 image_pos, ImVec2 image_size) {
+        if (frame_w_ == 0 || frame_h_ == 0) {
+            return;
+        }
+        auto to_screen = [&](int px, int py) -> ImVec2 {
+            return {
+                image_pos.x + (px / static_cast<float>(frame_w_)) * image_size.x,
+                image_pos.y + (py / static_cast<float>(frame_h_)) * image_size.y,
+            };
+        };
+        for (size_t i = 0; i < current_dets_.faces.size(); ++i) {
+            const auto& rect = current_dets_.faces[i];
+            const float conf = current_dets_.confidences[i];
+            const ImVec2 tl = to_screen(rect.min.x, rect.min.y);
+            const ImVec2 br = to_screen(rect.max.x, rect.max.y);
+            draw_list->AddRect(tl, br, IM_COL32(0, 255, 0, 255), 0.0f, 0, 2.0f);
+            const std::string label = std::format("{:.2f}", conf);
+            draw_list->AddText({tl.x + 2, tl.y + 2}, IM_COL32(0, 255, 0, 255), label.c_str());
+            if (i < current_dets_.landmarks.size()) {
+                for (const auto& pt : current_dets_.landmarks[i]) {
+                    draw_list->AddCircleFilled(
+                        to_screen(pt.x, pt.y), 3.0f, IM_COL32(255, 80, 80, 255)
+                    );
+                }
+            }
+        }
+    }
+
+    p10::viz::VideoPlayerComponent player_;
+    IFaceDetector& detector_;
+    std::string title_;
+    FaceDetection current_dets_;
+    int frame_w_ = 0;
+    int frame_h_ = 0;
+};
 
 }  // namespace
 
@@ -61,7 +137,13 @@ int main(int argc, char** argv) {
 
     P10Error err = P10Error::Ok;
 
-    if (fs::is_directory(cli.input)) {
+    if (cli.gui) {
+        if (!is_video(cli.input)) {
+            std::cerr << "Error: --gui is only supported for video input\n";
+            return 1;
+        }
+        err = run_on_video_gui(*detector, cli.input);
+    } else if (fs::is_directory(cli.input)) {
         err = run_on_directory(*detector, cli.input);
     } else if (is_video(cli.input)) {
         err = run_on_video(*detector, cli.input);
@@ -98,11 +180,13 @@ FaceDetectCli parse_args(int argc, char** argv) {
         ->check(CLI::ExistingPath);
 
     app.add_option("-m,--model", cli.model_path, "Path or URL to BlazeFace ONNX model")->required();
+    app.add_flag("--gui", cli.gui, "Open a GUI window showing detections overlaid on the video");
 
     app.footer(
         "Examples:\n"
         "  face_detect input.jpg -m model.onnx\n"
         "  face_detect video.mp4 --model model.onnx\n"
+        "  face_detect video.mp4 --model model.onnx --gui\n"
         "  face_detect ./images/ -m model.onnx"
     );
 
@@ -214,4 +298,18 @@ void print_detections(const std::string& source, std::span<const FaceDetection> 
     }
     std::cout << "]\n}";
 }
+
+P10Error run_on_video_gui(IFaceDetector& detector, const std::string& path) {
+    auto cap_result = MediaCapture::open_file(path);
+    if (cap_result.is_error()) {
+        std::cerr << "Error opening video " << path << ": " << cap_result.error().to_string()
+                  << "\n";
+        return cap_result.unwrap_err();
+    }
+    const std::string title = std::filesystem::path(path).filename().string();
+    FaceDetectApp app(cap_result.unwrap(), detector, title);
+    const auto params = p10::viz::GuiAppParameters().title("face_detect — " + title);
+    return run_app(app, params);
+}
+
 }  // namespace

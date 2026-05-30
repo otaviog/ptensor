@@ -84,6 +84,26 @@ P10Error GuiApp::Impl::start(const GuiAppParameters& params) {
     return P10Error::Ok;
 }
 
+ImageTexture GuiApp::Impl::create_texture() {
+    ImageTextureVkContext context;
+    context.command_pool = vk_->command_pool;
+    context.device = vk_->device;
+    context.physical_device = vk_->physical_device;
+    context.queue = vk_->queue;
+    return ImageTexture(new ImageTexture::Impl(context));
+}
+
+void GuiApp::Impl::quit() {
+    running_ = false;
+    parent_.on_cleanup();
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+    cleanup_vulkan(*vk_);
+    SDL_DestroyWindow(window_);
+    SDL_Quit();
+}
+
 void GuiApp::Impl::main_loop() {
     running_ = true;
     while (running_) {
@@ -161,25 +181,5 @@ void GuiApp::Impl::main_loop() {
 
         vkQueuePresentKHR(vk_->queue, &present_info);
     }
-}
-
-ImageTexture GuiApp::Impl::create_texture() {
-    ImageTextureVkContext context;
-    context.command_pool = vk_->command_pool;
-    context.device = vk_->device;
-    context.physical_device = vk_->physical_device;
-    context.queue = vk_->queue;
-    return ImageTexture(new ImageTexture::Impl(context));
-}
-
-void GuiApp::Impl::quit() {
-    running_ = false;
-    parent_.on_cleanup();
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
-    cleanup_vulkan(*vk_);
-    SDL_DestroyWindow(window_);
-    SDL_Quit();
 }
 }  // namespace p10::viz

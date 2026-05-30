@@ -94,6 +94,35 @@ P10Error ImageTexture::Impl::upload(const Tensor& tensor) {
     return upload_data(rgba_data.data(), width_ * height_ * 4);
 }
 
+void ImageTexture::Impl::clear() {
+    if (!is_valid())
+        return;
+
+    if (descriptor_set_) {
+        ImGui_ImplVulkan_RemoveTexture(descriptor_set_);
+        descriptor_set_ = VK_NULL_HANDLE;
+    }
+    if (sampler_) {
+        vkDestroySampler(context_.device, sampler_, nullptr);
+        sampler_ = VK_NULL_HANDLE;
+    }
+    if (image_view_) {
+        vkDestroyImageView(context_.device, image_view_, nullptr);
+        image_view_ = VK_NULL_HANDLE;
+    }
+    if (image_) {
+        vkDestroyImage(context_.device, image_, nullptr);
+        image_ = VK_NULL_HANDLE;
+    }
+    if (memory_) {
+        vkFreeMemory(context_.device, memory_, nullptr);
+        memory_ = VK_NULL_HANDLE;
+    }
+
+    width_ = 0;
+    height_ = 0;
+}
+
 P10Error ImageTexture::Impl::create_texture(int width, int height, const void* data) {
     // Clear existing texture
     clear();
@@ -373,32 +402,4 @@ ImageTexture::Impl::find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags
     return 0;
 }
 
-void ImageTexture::Impl::clear() {
-    if (!is_valid())
-        return;
-
-    if (descriptor_set_) {
-        ImGui_ImplVulkan_RemoveTexture(descriptor_set_);
-        descriptor_set_ = VK_NULL_HANDLE;
-    }
-    if (sampler_) {
-        vkDestroySampler(context_.device, sampler_, nullptr);
-        sampler_ = VK_NULL_HANDLE;
-    }
-    if (image_view_) {
-        vkDestroyImageView(context_.device, image_view_, nullptr);
-        image_view_ = VK_NULL_HANDLE;
-    }
-    if (image_) {
-        vkDestroyImage(context_.device, image_, nullptr);
-        image_ = VK_NULL_HANDLE;
-    }
-    if (memory_) {
-        vkFreeMemory(context_.device, memory_, nullptr);
-        memory_ = VK_NULL_HANDLE;
-    }
-
-    width_ = 0;
-    height_ = 0;
-}
 }  // namespace p10::viz

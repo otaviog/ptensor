@@ -11,9 +11,11 @@
 namespace p10::media {
 
 namespace detail {
+    /// Base class for device information.
     template<typename BaseClass>
     class DeviceInfo {
       public:
+        /// Device index.
         int index() const {
             return index_;
         }
@@ -28,16 +30,19 @@ namespace detail {
             return url_;
         }
 
+        /// Set device index.
         BaseClass& index(int index) {
             index_ = index;
             return static_cast<BaseClass&>(*this);
         }
 
+        /// Set device name.
         BaseClass& name(std::string name) {
             name_ = std::move(name);
             return static_cast<BaseClass&>(*this);
         }
 
+        /// Set device URL.
         BaseClass& url(std::string url) {
             url_ = std::move(url);
             return static_cast<BaseClass&>(*this);
@@ -53,39 +58,48 @@ namespace detail {
     };
 }  // namespace detail
 
+/// Video device capability (resolution and frame rate).
 class VideoCapability {
   public:
+    /// Get width in pixels.
     int width() const {
         return width_;
     }
 
+    /// Get height in pixels.
     int height() const {
         return height_;
     }
 
+    /// Get minimum frame rate.
     Rational min_frame_rate() const {
         return min_frame_rate_;
     }
 
+    /// Get maximum frame rate.
     Rational max_frame_rate() const {
         return max_frame_rate_;
     }
 
+    /// Set width in pixels.
     VideoCapability& width(int width) {
         width_ = width;
         return *this;
     }
 
+    /// Set height in pixels.
     VideoCapability& height(int height) {
         height_ = height;
         return *this;
     }
 
+    /// Set minimum frame rate.
     VideoCapability& min_frame_rate(const Rational& frame_rate) {
         min_frame_rate_ = frame_rate;
         return *this;
     }
 
+    /// Set maximum frame rate.
     VideoCapability& max_frame_rate(const Rational& frame_rate) {
         max_frame_rate_ = frame_rate;
         return *this;
@@ -99,35 +113,44 @@ class VideoCapability {
     // TODO: include format here?
 };
 
+/// Video device information and capabilities.
 class VideoDeviceInfo: public detail::DeviceInfo<VideoDeviceInfo> {
   public:
+    /// Get list of supported capabilities.
     const std::vector<VideoCapability>& capabilities() const {
         return capabilities_;
     }
 
+    /// Add a supported capability.
     VideoDeviceInfo& add_capability(const VideoCapability& capability) {
         capabilities_.push_back(capability);
         return *this;
     }
 
+    /// Get closest matching parameters for given dimensions and frame rate.
     VideoParameters match_closest(int width, int height, Rational frame_rate) const;
 
   private:
     std::vector<VideoCapability> capabilities_;
 };
 
+/// Audio device information and capabilities.
 class AudioDeviceInfo: public detail::DeviceInfo<AudioDeviceInfo> {
   public:
+    /// Get list of supported capabilities.
     const std::vector<AudioParameters>& capabilities() const {
         return capabilities_;
     }
 
+    /// Add a supported capability.
     AudioDeviceInfo& add_capability(const AudioParameters& capability) {
         capabilities_.push_back(capability);
         return *this;
     }
 
+    /// Wildcard constant for any sample rate.
     static constexpr double SAMPLE_RATE_ANY = 0.0;
+    /// Wildcard constant for any number of channels.
     static constexpr size_t NUMBER_OF_CHANNELS_ANY = 0;
     /// Find the closest audio configuration to that device supports.
     ///    If both parameters are ANY, then return the default.

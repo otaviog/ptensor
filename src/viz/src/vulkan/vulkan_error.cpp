@@ -1,6 +1,21 @@
 #include "vulkan_error.hpp"
 
+#include <string>
+
 namespace p10::viz {
+
+namespace {
+    std::string vk_result_to_string(VkResult result);
+}  // namespace
+
+P10Error wrap_vk_result(VkResult err) {
+    if (err == VK_SUCCESS) {
+        return P10Error::Ok;
+    }
+
+    return P10Error::InvalidOperation << "Vulkan Error type " + vk_result_to_string(err);
+}
+
 namespace {
     std::string vk_result_to_string(VkResult result) {
         switch (result) {
@@ -47,11 +62,4 @@ namespace {
     }
 }  // namespace
 
-P10Error wrap_vk_result(VkResult err) {
-    if (err == VK_SUCCESS) {
-        return P10Error::Ok;
-    }
-
-    return P10Error::InvalidOperation << "Vulkan Error type " + vk_result_to_string(err);
-}
 }  // namespace p10::viz

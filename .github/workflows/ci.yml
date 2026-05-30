@@ -21,7 +21,7 @@ jobs:
           apt-get install -y ninja-build cmake git
           apt-get install -y clang-20 clang-tools-20
           apt-get install -y autoconf autoconf-archive automake libtool
-          apt-get install libx11-dev libxext-dev libwayland-dev wayland-protocols libxkbcommon-dev
+          apt-get install -y libx11-dev libxext-dev libwayland-dev wayland-protocols libxkbcommon-dev
 
           update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
           update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100

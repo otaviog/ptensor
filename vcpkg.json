@@ -53,7 +53,8 @@
 						"x265",
 						"swscale",
 						"swresample",
-						"avcodec"
+						"avcodec",
+						"avdevice"
 					]
 				}
 			]

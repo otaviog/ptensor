@@ -33,6 +33,10 @@ class FfmpegFileMediaCapture: public MediaCapture::Impl {
 
     static P10Result<std::shared_ptr<FfmpegFileMediaCapture>> open(const std::string& path);
 
+    static P10Result<std::shared_ptr<FfmpegFileMediaCapture>> open_device(
+        const std::string& url, const std::string& format_name
+    );
+
     void close() override;
 
     MediaParameters get_parameters() const override;
@@ -60,6 +64,9 @@ class FfmpegFileMediaCapture: public MediaCapture::Impl {
         format_ctx_(format_ctx),
         audio_decoder_(std::move(audio_decoder)),
         video_decoder_(std::move(video_decoder)) {}
+
+    static P10Result<std::shared_ptr<FfmpegFileMediaCapture>>
+        open_impl(const std::string& url, const AVInputFormat* fmt);
 
     void read_packets_loop();
     void read_next_packet();

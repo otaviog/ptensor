@@ -12,6 +12,7 @@
 
 extern "C" {
 #include <libavcodec/packet.h>
+#include <libavdevice/avdevice.h>
 #include <libavformat/avformat.h>
 }
 
@@ -22,10 +23,10 @@ FfmpegFileMediaCapture::~FfmpegFileMediaCapture() {
 }
 
 P10Result<std::shared_ptr<FfmpegFileMediaCapture>>
-FfmpegFileMediaCapture::open(const std::string& path) {
+FfmpegFileMediaCapture::open_impl(const std::string& url, const AVInputFormat* fmt) {
     AVFormatContext* format_ctx = nullptr;
     P10_RETURN_ERR_IF_ERROR(
-        wrap_ffmpeg_error(avformat_open_input(&format_ctx, path.c_str(), nullptr, nullptr))
+        wrap_ffmpeg_error(avformat_open_input(&format_ctx, url.c_str(), fmt, nullptr))
     );
     assert(format_ctx != nullptr);
     P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(avformat_find_stream_info(format_ctx, nullptr)));
@@ -74,6 +75,21 @@ FfmpegFileMediaCapture::open(const std::string& path) {
 
     capture->start_decoding_thread();
     return Ok(std::move(capture));
+}
+
+P10Result<std::shared_ptr<FfmpegFileMediaCapture>>
+FfmpegFileMediaCapture::open(const std::string& path) {
+    return open_impl(path, nullptr);
+}
+
+P10Result<std::shared_ptr<FfmpegFileMediaCapture>>
+FfmpegFileMediaCapture::open_device(const std::string& url, const std::string& format_name) {
+    avdevice_register_all();
+    const AVInputFormat* fmt = av_find_input_format(format_name.c_str());
+    if (fmt == nullptr) {
+        return Err(P10Error::NotImplemented << ("Unknown input format: " + format_name));
+    }
+    return open_impl(url, fmt);
 }
 
 void FfmpegFileMediaCapture::close() {

@@ -2,10 +2,11 @@
 
 #include <format>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include <ptensor/p10_result.hpp>
+
+#include <string_view>
 
 namespace p10::log::detail {
 
@@ -20,21 +21,32 @@ namespace p10::log {
 struct ScopedLogger {
     explicit ScopedLogger(std::string scope) noexcept : scope(std::move(scope)) {}
 
-    template <typename... Args>
+    template<typename... Args>
     void info(std::format_string<Args...> fmt, Args&&... args) const {
         detail::log_info(scope + ": " + std::format(fmt, std::forward<Args>(args)...));
     }
 
-    template <typename... Args>
+    template<typename... Args>
     void error(std::format_string<Args...> fmt, Args&&... args) const {
         detail::log_error(scope + ": " + std::format(fmt, std::forward<Args>(args)...));
     }
 
     void error(const std::exception& exception) const {
-        detail::log_error(scope + ": Exception thrown: " + exception.what());
+        error("Exception thrown: {}", exception.what());
     }
 
-    template <typename... Args>
+    void error(const P10Error& err) const {
+        error("{}", err.to_string());
+    }
+
+    template<typename T>
+    void error(const P10Result<T>& res) const {
+        if (res.is_error()) {
+            error(res.error());
+        }
+    }
+
+    template<typename... Args>
     void debug(std::format_string<Args...> fmt, Args&&... args) const {
         detail::log_debug(scope + ": " + std::format(fmt, std::forward<Args>(args)...));
     }

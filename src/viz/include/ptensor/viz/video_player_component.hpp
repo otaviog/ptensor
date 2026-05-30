@@ -16,7 +16,7 @@ class VideoPlayerComponent {
 
     using RenderHookCallback = std::function<void(ImDrawList*, ImVec2, ImVec2)>;
 
-    enum class PlayState { Playing, Paused, Stopped, Step };
+    enum class PlayState { Playing, Paused, Stopped, Step, Streaming };
 
     VideoPlayerComponent(media::MediaCapture capture, GuiApp& app);
 
@@ -24,21 +24,35 @@ class VideoPlayerComponent {
 
     void on_render();
 
-    void add_new_frame_callback(NewFrameCallback callback) {
+    void add_new_frame_callback(const NewFrameCallback& callback) {
         new_frame_callback_.push_back(callback);
     }
 
-    void add_render_hook_callback(RenderHookCallback callback) {
+    void add_render_hook_callback(const RenderHookCallback& callback) {
         render_hook_callback_.push_back(callback);
     }
 
   protected:
-    void on_new_frame(p10::media::VideoFrame& frame);
+    void on_new_frame(p10::media::VideoFrame& frame) const;
 
-    void on_render_hook(ImDrawList* draw_list, ImVec2 image_pos, ImVec2 image_size);
+    void on_render_hook(ImDrawList* draw_list, ImVec2 image_pos, ImVec2 image_size) const;
 
   private:
+    void button_play();
+
+    void button_pause();
+
+    void button_step();
+
+    void button_stop();
+
+    void image_camera() const;
+
     void update_next_frame();
+
+    void capture_next_frame();
+
+    void sync_next_frame();
 
     GuiApp& app_;
 

@@ -81,6 +81,7 @@ target_link_libraries(ptensor_viz
     ptensor_media
     imgui::imgui
   PRIVATE
+    ptensor_log
     $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     ${_BACKEND_LIBS}

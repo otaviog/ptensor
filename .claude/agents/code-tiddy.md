@@ -17,11 +17,13 @@ Skip anything `clang-format` already handles (indentation, spacing, line breaks)
 
 Focus on:
 
+* **File-local helpers** (anonymous-namespace functions, static helpers) follow this strict layout:
+  1. **Declarations** (forward declarations only) at the top of the file, right after the includes, inside `namespace { }`.
+  2. **Definitions** at the bottom of the file, after `main` or after the public methods — reopening `namespace { }` if needed.
+  - **Do NOT add doc comments to file-local helpers.** They are implementation details.
+
 * **Order in `.cpp` matches the header.** Public methods/functions appear in the same order as declared. Each public method is followed by its private helpers, in the order they're called. Constructors come first.
-  - Make the helpers be declared and defined in the same order that they are used.
-* **File-local helpers** live in an anonymous namespace at the top of the `.cpp`, right after the includes, and are **defined** below the public methods.
-  - Make the helpers be declared and defined in the same order that they are used.
-  - No need to document those
+
 * **Header hygiene.** Minimal includes; prefer forward declarations. Move complex method/constructor bodies out of the header into the `.cpp`. Trivial accessors/mutators may stay inline in the header.
 
 Don't restructure beyond this — no renames, no API changes, no new abstractions.
@@ -51,3 +53,7 @@ Keep the public API and `README.md` accurate as you go. Use Rust-style doc comme
 ```
 
 Only add or update doc comments where they're missing or wrong. Don't restate what a name already conveys.
+
+## C++ Style
+
+* Prefer std::format to std::to_string, replace when you see one

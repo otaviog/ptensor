@@ -1,17 +1,21 @@
 UNIT_TEST := "build/coverage/tests/unit_tests_all"
 
+# On macOS, LLVM tools are accessed via xcrun. On Linux, use the versioned binaries.
+LLVM_PROFDATA := if os() == "macos" { "xcrun llvm-profdata" } else { "llvm-profdata-20" }
+LLVM_COV := if os() == "macos" { "xcrun llvm-cov" } else { "llvm-cov-20" }
+
 _run_coverage:
     cmake --workflow --preset coverage-build
     - {{ UNIT_TEST }}
-    xcrun llvm-profdata merge -sparse default.profraw -o ptensor-coverage.profdata
+    {{ LLVM_PROFDATA }} merge -sparse default.profraw -o ptensor-coverage.profdata
     rm default.profraw
 
 coverage: _run_coverage
-    xcrun llvm-cov export -object {{ UNIT_TEST }} -instr-profile=ptensor-coverage.profdata -format=lcov > lcov.info
+    {{ LLVM_COV }} export -object {{ UNIT_TEST }} -instr-profile=ptensor-coverage.profdata -format=lcov > lcov.info
     rm ptensor-coverage.profdata
 
 coverage-html: _run_coverage
-    xcrun llvm-cov show --ignore-filename-regex=.*/build/.* -format=html -output-dir=build/coverage/coverage-html -instr-profile=ptensor-coverage.profdata --object {{ UNIT_TEST }}
+    {{ LLVM_COV }} show --ignore-filename-regex=.*/build/.* -format=html -output-dir=build/coverage/coverage-html -instr-profile=ptensor-coverage.profdata --object {{ UNIT_TEST }}
     rm ptensor-coverage.profdata
 
 clang-format:

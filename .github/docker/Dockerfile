@@ -3,7 +3,7 @@ FROM ubuntu:latest
 # System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ninja-build cmake git curl zip unzip tar pkg-config linux-libc-dev nasm \
-    clang-20 clang-tools-20 \
+    clang-20 clang-tools-20 libclang-rt-20-dev llvm-20 \
     autoconf autoconf-archive automake libtool \
     libx11-dev libxext-dev libwayland-dev wayland-protocols libxkbcommon-dev \
     python3 python3-venv ca-certificates just \

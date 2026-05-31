@@ -7,34 +7,30 @@ on:
     branches: [main, dev]
   workflow_dispatch:
 
+env:
+  VCPKG_DEFAULT_BINARY_CACHE: /workspace/vcpkg-cache
+
 jobs:
   linux-check:
     name: Quality checks
     runs-on: [self-hosted]
     container:
-      image: ubuntu:latest
+      image: ghcr.io/${{ github.repository }}/ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - name: Install dev
-        run: |
-          apt-get update
-          apt-get install -y ninja-build cmake git curl zip pkg-config linux-libc-dev nasm
-          apt-get install -y clang-20 clang-tools-20
-          apt-get install -y autoconf autoconf-archive automake libtool
-          apt-get install -y libx11-dev libxext-dev libwayland-dev wayland-protocols libxkbcommon-dev
-
-          update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
-          update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
-          update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/bin/clang-scan-deps-20 100
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      - name: Prepare vcpkg cache
+        run: mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
+
       - name: Bootstrap vcpkg
-        run: |
-          sh ./vcpkg/bootstrap-vcpkg.sh
+        run: sh ./vcpkg/bootstrap-vcpkg.sh
 
       #########
       # Build and test steps

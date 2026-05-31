@@ -3,12 +3,11 @@
 #include <cstdint>
 
 #include <p10_internal/simd/compiler.hpp>
+#include <p10_internal/simd/cpuid.hpp>
 
 #ifdef PTENSOR_HAS_INTRINSICS_H
-    #include <intrinsics.h>
+    #include <immintrin.h>
 #endif
-
-#include <p10_internal/simd/cpuid.hpp>
 
 #include "p10_error.hpp"
 

@@ -71,8 +71,11 @@
 				"imgui",
 				{
 					"name": "sdl2",
+					"default-features": false,
 					"features": [
-						"vulkan"
+						"vulkan",
+						"x11",
+						"wayland"
 					]
 				},
 				{

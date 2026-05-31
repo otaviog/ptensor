@@ -68,6 +68,15 @@ target_include_directories(ptensor_capi
 )
 target_link_libraries(ptensor_capi PUBLIC $<BUILD_INTERFACE:ptensor>)
 
+# FFmpeg's NASM assembly isn't compiled with -fPIC. A version script hides FFmpeg's
+# internal symbols (making them LOCAL), which lets the linker resolve PC32 relocations
+# within the same shared object boundary.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_options(ptensor_capi PRIVATE
+        "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/ptensor_capi.version"
+    )
+endif()
+
 # Install the target
 install(TARGETS ptensor_capi
     EXPORT ptensorTargets

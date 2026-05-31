@@ -1,0 +1,7 @@
+{
+  global:
+    p10_*;
+    ptensor_*;
+  local:
+    *;
+};

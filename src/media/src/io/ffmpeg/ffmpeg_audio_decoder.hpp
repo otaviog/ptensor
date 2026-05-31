@@ -45,6 +45,12 @@ class FfmpegAudioDecoder {
         return P10Error::NotImplemented;
     }
 
+    void flush() {
+        if (codec_ctx_ != nullptr) {
+            avcodec_flush_buffers(codec_ctx_);
+        }
+    }
+
     int index() const {
         return index_;
     }

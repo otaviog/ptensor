@@ -5,6 +5,10 @@
 #include "face_detection.hpp"
 #include "ssd_anchor_parameters.hpp"
 
+namespace p10 {
+class Tensor;
+}
+
 namespace p10::recog {
 
 class BfPostprocess {

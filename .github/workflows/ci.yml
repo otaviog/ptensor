@@ -7,10 +7,18 @@ on:
     branches: [main, dev]
   workflow_dispatch:
 
+env:
+  VCPKG_DEFAULT_BINARY_CACHE: /workspace/vcpkg-cache
+
 jobs:
   linux-check:
-    name: C++ Tests (Linux)
-    runs-on: ubuntu-latest
+    name: Quality checks
+    runs-on: [self-hosted]
+    container:
+      image: ghcr.io/${{ github.repository }}/ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -18,30 +26,21 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build cmake
-          sudo apt-get install -y clang-20 clang-tools-20
-          sudo apt-get install -y autoconf autoconf-archive automake libtool python3.13-venv
-          sudo apt-get install libx11-dev libxext-dev libwayland-dev wayland-protocols libxkbcommon-dev
+      - name: Prepare vcpkg cache
+        run: mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
 
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
-          sudo update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/bin/clang-scan-deps-20 100
-          
-
-          sh ./vcpkg/bootstrap-vcpkg.sh
+      - name: Bootstrap vcpkg
+        run: sh ./vcpkg/bootstrap-vcpkg.sh
 
       #########
       # Build and test steps
       - name: Build debug
         run: |
-          cmake --workflow --preset lin-dev
+          cmake --workflow --preset clang/debug/install
 
       - name: Build release
         run: |
-          cmake --workflow --preset lin-release
+          cmake --workflow --preset clang/release/install
 
       #########
       # Code coverage steps

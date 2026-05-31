@@ -1,28 +1,39 @@
-add_subdirectory(lib/ng-log)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+add_subdirectory(lib/ng-log EXCLUDE_FROM_ALL)
 
 set(_INCLUDE_DIR include/ptensor/log)
-add_library(ptensor_log INTERFACE)
+add_library(ptensor_log STATIC)
 
-target_sources(ptensor_log INTERFACE FILE_SET public_headers
-    TYPE HEADERS
-    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
-    FILES
-    ${_INCLUDE_DIR}/log.hpp
+target_sources(ptensor_log
+    PRIVATE
+        src/log.cpp
+        # Embed ng-log objects directly — no exported link dependency
+        $<TARGET_OBJECTS:ng-log_internal>
+    PUBLIC FILE_SET public_headers
+        TYPE HEADERS
+        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+        FILES
+            ${_INCLUDE_DIR}/log.hpp
 )
 
-target_include_directories(ptensor_log INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+target_include_directories(ptensor_log
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE
+        $<TARGET_PROPERTY:ng-log_internal,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-target_link_libraries(ptensor_log INTERFACE ptensor ng-log::ng-log)
+target_compile_definitions(ptensor_log PRIVATE
+    $<TARGET_PROPERTY:ng-log_internal,INTERFACE_COMPILE_DEFINITIONS>
+)
+
+target_link_libraries(ptensor_log PUBLIC ptensor)
 
 set_target_properties(ptensor_log PROPERTIES FOLDER "Log")
 
-add_library(p10::log ALIAS ptensor_log)
-
 install(TARGETS ptensor_log
-    EXPORT ptensorTargets
+    ARCHIVE EXCLUDE_FROM_ALL
     FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 

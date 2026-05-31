@@ -1,4 +1,6 @@
 #pragma once
+#include <format>
+#include <string>
 
 namespace p10::recog {
 template<typename T>
@@ -16,4 +18,9 @@ struct Point2 {
 
 using Point2i = Point2<int>;
 using Point2f = Point2<float>;
+
+template<typename T>
+std::string to_string(const Point2<T>& point) {
+    return std::format("{{ x: {}, y: {} }}", point.x, point.y);
+}
 }  // namespace p10::recog

@@ -6,7 +6,7 @@
 #include "ptensor/p10_error.hpp"
 
 namespace p10::infer {
-P10Result<IInfer*>
+P10Result<std::unique_ptr<IInfer>>
 IInfer::from_onnx(const std::string& onnx_model_path, const InferConfig& config) {
     auto local_path_result = resolve_model_path(onnx_model_path);
     if (local_path_result.is_error()) {

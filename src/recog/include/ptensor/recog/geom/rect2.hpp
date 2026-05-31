@@ -1,5 +1,7 @@
 #pragma once
 #include <algorithm>
+#include <format>
+#include <string>
 
 #include "point2.hpp"
 
@@ -43,4 +45,10 @@ struct Rect2 {
 
 using Rect2i = Rect2<int>;
 using Rect2f = Rect2<float>;
+
+template<typename T>
+std::string to_string(const Rect2<T>& rect) {
+    return std::format("{{ min: {}, max: {} }}", to_string(rect.min), to_string(rect.max));
+}
+
 }  // namespace p10::recog

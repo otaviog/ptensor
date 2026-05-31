@@ -12,49 +12,6 @@ extern "C" {
 
 namespace p10::media {
 
-void FfmpegSwr::reset(
-    AVChannelLayout target_channel_layout,
-    AVSampleFormat target_sample_format,
-    int target_sample_rate
-) {
-    release();
-    target_channel_layout_ = target_channel_layout;
-    target_sample_format_ = target_sample_format;
-    target_sample_rate_ = target_sample_rate;
-}
-
-void FfmpegSwr::release() {
-    swr_free(&swr_);
-    swr_ = nullptr;
-}
-
-P10Result<SwrContext*> FfmpegSwr::get_swr_context(
-    AVChannelLayout source_channel_layout,
-    AVSampleFormat source_sample_format,
-    int source_sample_rate
-) {
-    if (swr_ != nullptr) {
-        SwrContext* result = swr_;
-        return Ok(result);
-    }
-
-    P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(swr_alloc_set_opts2(
-        &swr_,
-        &target_channel_layout_,
-        target_sample_format_,
-        target_sample_rate_,
-        &source_channel_layout,
-        source_sample_format,
-        source_sample_rate,
-        0,
-        nullptr
-    )));
-
-    P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(swr_init(swr_)));
-    SwrContext* result = swr_;
-    return Ok(result);
-}
-
 P10Error FfmpegSwr::transform(const AVFrame* source_frame, AVFrame** output_frame) {
     *output_frame = nullptr;
 
@@ -106,7 +63,7 @@ P10Error FfmpegSwr::transform(const AVFrame* source_frame, AVFrame** output_fram
     }
     SwrContext* swr_conv_context = swr_result.unwrap();
 
-    const uint8_t* const* in_data = (const uint8_t**)source_frame->data;
+    const uint8_t* const* in_data = reinterpret_cast<const uint8_t* const*>(source_frame->data);
     int const convert_result = swr_convert(
         swr_conv_context,
         target_frame->data,
@@ -121,6 +78,49 @@ P10Error FfmpegSwr::transform(const AVFrame* source_frame, AVFrame** output_fram
 
     *output_frame = target_frame;
     return P10Error::Ok;
+}
+
+void FfmpegSwr::reset(
+    AVChannelLayout target_channel_layout,
+    AVSampleFormat target_sample_format,
+    int target_sample_rate
+) {
+    release();
+    target_channel_layout_ = target_channel_layout;
+    target_sample_format_ = target_sample_format;
+    target_sample_rate_ = target_sample_rate;
+}
+
+void FfmpegSwr::release() {
+    swr_free(&swr_);
+    swr_ = nullptr;
+}
+
+P10Result<SwrContext*> FfmpegSwr::get_swr_context(
+    AVChannelLayout source_channel_layout,
+    AVSampleFormat source_sample_format,
+    int source_sample_rate
+) {
+    if (swr_ != nullptr) {
+        SwrContext* result = swr_;
+        return Ok(result);
+    }
+
+    P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(swr_alloc_set_opts2(
+        &swr_,
+        &target_channel_layout_,
+        target_sample_format_,
+        target_sample_rate_,
+        &source_channel_layout,
+        source_sample_format,
+        source_sample_rate,
+        0,
+        nullptr
+    )));
+
+    P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(swr_init(swr_)));
+    SwrContext* result = swr_;
+    return Ok(result);
 }
 
 }  // namespace p10::media

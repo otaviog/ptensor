@@ -56,7 +56,7 @@ P10Error FfmpegSws::transform(const VideoFrame& src, AVFrame** dst) {
         sws_key.target_height,
         1
     );
-    auto const * target_buffer = static_cast<uint8_t*>(av_malloc(target_buffer_size));
+    auto const* target_buffer = static_cast<uint8_t*>(av_malloc(target_buffer_size));
     av_image_fill_arrays(
         dst_frame->data,
         dst_frame->linesize,
@@ -92,7 +92,7 @@ P10Error FfmpegSws::transform(const VideoFrame& src, AVFrame** dst) {
 }
 
 FfmpegSws::TargetSwsContextKey FfmpegSws::get_target_sws_context_key(const VideoFrame& src) const {
-    TargetSwsContextKey key{};
+    TargetSwsContextKey key {};
     key.source_width = static_cast<int>(src.width());
     key.source_height = static_cast<int>(src.height());
     key.source_format = AV_PIX_FMT_RGB24;
@@ -102,7 +102,7 @@ FfmpegSws::TargetSwsContextKey FfmpegSws::get_target_sws_context_key(const Video
 }
 
 FfmpegSws::TargetSwsContextKey FfmpegSws::get_target_sws_context_key(const AVFrame* src) const {
-    TargetSwsContextKey key{};
+    TargetSwsContextKey key {};
     key.source_width = src->width;
     key.source_height = src->height;
     key.source_format = static_cast<AVPixelFormat>(src->format);

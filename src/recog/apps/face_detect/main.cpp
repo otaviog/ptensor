@@ -1,25 +1,212 @@
 #include <filesystem>
+#include <format>
 #include <iostream>
+#include <memory>
 #include <set>
 #include <string>
 
 #include <CLI/CLI.hpp>
+#include <imgui.h>
 #include <ptensor/infer/infer.hpp>
 #include <ptensor/infer/infer_config.hpp>
 #include <ptensor/io/image.hpp>
 #include <ptensor/media/io/media_capture.hpp>
 #include <ptensor/media/video_frame.hpp>
-#include <ptensor/recog/face_detection.hpp>
+#include <ptensor/op/image_layout.hpp>
+#include <ptensor/recog/face_detector.hpp>
 #include <ptensor/tensor.hpp>
+#include <ptensor/viz/gui_app.hpp>
+#include <ptensor/viz/gui_app_parameters.hpp>
+#include <ptensor/viz/video_player_component.hpp>
+
+#include "ptensor/p10_error.hpp"
 
 using namespace p10;
 using namespace p10::recog;
 using namespace p10::media;
+namespace fs = std::filesystem;
 
 namespace {
 
 const std::set<std::string> IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"};
 const std::set<std::string> VIDEO_EXTS = {".mp4", ".avi", ".mov", ".mkv", ".webm"};
+
+struct FaceDetectCli {
+    std::string input;
+    std::string model_path;
+    bool gui = false;
+};
+
+FaceDetectCli parse_args(int argc, char** argv);
+bool is_image(const std::string& path);
+std::string lowercase_ext(const std::string& path);
+P10Error run_on_image(IFaceDetector& detector, const std::string& path);
+P10Error run_on_directory(IFaceDetector& detector, const std::string& path);
+void print_detections(const std::string& source, std::span<const FaceDetection> dets);
+bool is_video(const std::string& path);
+P10Error run_on_video(IFaceDetector& detector, const std::string& path);
+P10Error run_on_video_gui(IFaceDetector& detector, const std::string& path);
+
+class FaceDetectApp : public p10::viz::GuiApp {
+  public:
+    FaceDetectApp(MediaCapture capture, IFaceDetector& detector, std::string title) :
+        player_(std::move(capture), *this), detector_(detector), title_(std::move(title)) {}
+
+  protected:
+    void on_initialize() override {
+        player_.on_initialize();
+        player_.add_new_frame_callback([this](VideoFrame& frame) { on_new_frame(frame); });
+        player_.add_render_hook_callback([this](ImDrawList* dl, ImVec2 pos, ImVec2 size) {
+            on_render_hook(dl, pos, size);
+        });
+    }
+
+    void on_render() override {
+        player_.on_render();
+    }
+
+  private:
+    void on_new_frame(VideoFrame& frame) {
+        frame_w_ = static_cast<int>(frame.width());
+        frame_h_ = static_cast<int>(frame.height());
+        Tensor nchw;
+        if (op::image_to_tensor(frame.image(), nchw, op::ImageToTensorOptions().target_dtype(Dtype::Uint8).unsqueeze(true)).is_error()) {
+            return;
+        }
+        std::array<FaceDetection, 1> dets;
+        if (auto err = detector_.detect(nchw, dets); err.is_error()) {
+            std::cerr << err.to_string();
+            return;
+        }
+        std::cout << "===============\n";
+        for (const auto &det : dets) {
+            std::cout << p10::recog::to_string(det);
+        }
+        current_dets_ = dets[0];
+    }
+
+    void on_render_hook(ImDrawList* draw_list, ImVec2 image_pos, ImVec2 image_size) {
+        if (frame_w_ == 0 || frame_h_ == 0) {
+            return;
+        }
+        auto to_screen = [&](int px, int py) -> ImVec2 {
+            return {
+                image_pos.x + (px / static_cast<float>(frame_w_)) * image_size.x,
+                image_pos.y + (py / static_cast<float>(frame_h_)) * image_size.y,
+            };
+        };
+        for (size_t i = 0; i < current_dets_.faces.size(); ++i) {
+            const auto& rect = current_dets_.faces[i];
+            const float conf = current_dets_.confidences[i];
+            const ImVec2 tl = to_screen(rect.min.x, rect.min.y);
+            const ImVec2 br = to_screen(rect.max.x, rect.max.y);
+            draw_list->AddRect(tl, br, IM_COL32(0, 255, 0, 255), 0.0f, 0, 2.0f);
+            const std::string label = std::format("{:.2f}", conf);
+            draw_list->AddText({tl.x + 2, tl.y + 2}, IM_COL32(0, 255, 0, 255), label.c_str());
+            if (i < current_dets_.landmarks.size()) {
+                for (const auto& pt : current_dets_.landmarks[i]) {
+                    draw_list->AddCircleFilled(
+                        to_screen(pt.x, pt.y), 3.0f, IM_COL32(255, 80, 80, 255)
+                    );
+                }
+            }
+        }
+    }
+
+    p10::viz::VideoPlayerComponent player_;
+    IFaceDetector& detector_;
+    std::string title_;
+    FaceDetection current_dets_;
+    int frame_w_ = 0;
+    int frame_h_ = 0;
+};
+
+}  // namespace
+
+int main(int argc, char** argv) {
+    const auto cli = parse_args(argc, argv);
+
+    auto infer_result = infer::IInfer::from_onnx(cli.model_path, infer::InferConfig());
+    if (infer_result.is_error()) {
+        std::cerr << "Error: Failed to load model: " << infer_result.error().to_string() << "\n";
+        return 1;
+    }
+
+    auto detector_result = IFaceDetector::create(BlazeFaceModel(), infer_result.unwrap());
+    if (detector_result.is_error()) {
+        std::cerr << "Error: Failed to create face detector: "
+                  << detector_result.error().to_string() << "\n";
+        return 1;
+    }
+    std::unique_ptr<IFaceDetector> detector = detector_result.unwrap();
+
+    P10Error err = P10Error::Ok;
+
+    if (cli.gui) {
+        if (!is_video(cli.input)) {
+            std::cerr << "Error: --gui is only supported for video input\n";
+            return 1;
+        }
+        err = run_on_video_gui(*detector, cli.input);
+    } else if (fs::is_directory(cli.input)) {
+        err = run_on_directory(*detector, cli.input);
+    } else if (is_video(cli.input)) {
+        err = run_on_video(*detector, cli.input);
+    } else {
+        err = run_on_image(*detector, cli.input);
+    }
+
+    if (err.is_error()) {
+        std::cerr << err.to_string() << '\n';
+        return 1;
+    }
+    return 0;
+}
+
+namespace {
+
+FaceDetectCli parse_args(int argc, char** argv) {
+    CLI::App app {
+        "Run face detection on images, directories, or videos\n\n"
+        "Processes images, videos, or directories containing images and outputs "
+        "detected face bounding boxes with confidence scores and landmarks."
+    };
+    argv = app.ensure_utf8(argv);
+
+    FaceDetectCli cli;
+
+    app.add_option(
+           "input",
+           cli.input,
+           "Input path: image file (.jpg, .png, .bmp, etc.), "
+           "video file (.mp4, .avi, .mov, etc.), or directory of images"
+    )
+        ->required()
+        ->check(CLI::ExistingPath);
+
+    app.add_option("-m,--model", cli.model_path, "Path or URL to BlazeFace ONNX model")->required();
+    app.add_flag("--gui", cli.gui, "Open a GUI window showing detections overlaid on the video");
+
+    app.footer(
+        "Examples:\n"
+        "  face_detect input.jpg -m model.onnx\n"
+        "  face_detect video.mp4 --model model.onnx\n"
+        "  face_detect video.mp4 --model model.onnx --gui\n"
+        "  face_detect ./images/ -m model.onnx"
+    );
+
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::ParseError& e) {
+        std::exit(app.exit(e));
+    }
+
+    return cli;
+}
+
+bool is_image(const std::string& path) {
+    return IMAGE_EXTS.contains(lowercase_ext(path));
+}
 
 std::string lowercase_ext(const std::string& path) {
     std::string ext = std::filesystem::path(path).extension().string();
@@ -27,53 +214,6 @@ std::string lowercase_ext(const std::string& path) {
         c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     }
     return ext;
-}
-
-bool is_video(const std::string& path) {
-    return VIDEO_EXTS.count(lowercase_ext(path)) > 0;
-}
-
-bool is_image(const std::string& path) {
-    return IMAGE_EXTS.count(lowercase_ext(path)) > 0;
-}
-
-// Converts a [H, W, C] uint8 tensor to a [1, C, H, W] uint8 tensor.
-P10Result<Tensor> hwc_to_nchw(const Tensor& hwc) {
-    const auto src = hwc.as_span3d<uint8_t>().unwrap();
-    const size_t H = src.height(), W = src.width(), C = src.channels();
-
-    Tensor nchw;
-    nchw.create(make_shape(1, int64_t(C), int64_t(H), int64_t(W)), Dtype::Uint8);
-
-    auto* dst = reinterpret_cast<uint8_t*>(nchw.as_bytes().data());
-    for (size_t c = 0; c < C; c++) {
-        for (size_t h = 0; h < H; h++) {
-            for (size_t w = 0; w < W; w++) {
-                dst[c * H * W + h * W + w] = src.channel(h, w)[c];
-            }
-        }
-    }
-    return Ok<Tensor>(std::move(nchw));
-}
-
-void print_detections(const std::string& source, const FaceDetection& det) {
-    for (size_t i = 0; i < det.faces.size(); i++) {
-        const auto& rect = det.faces[i];
-        const int x = rect.min.x;
-        const int y = rect.min.y;
-        const int w = rect.max.x - rect.min.x;
-        const int h = rect.max.y - rect.min.y;
-        const float conf = det.confidences[i];
-
-        std::cout << source << " " << x << " " << y << " " << w << " " << h << " " << conf;
-
-        if (i < det.landmarks.size()) {
-            for (const auto& pt : det.landmarks[i]) {
-                std::cout << " " << pt.x << " " << pt.y;
-            }
-        }
-        std::cout << "\n";
-    }
 }
 
 P10Error run_on_image(IFaceDetector& detector, const std::string& path) {
@@ -84,17 +224,39 @@ P10Error run_on_image(IFaceDetector& detector, const std::string& path) {
         return img_result.unwrap_err();
     }
 
-    auto nchw_result = hwc_to_nchw(img_result.unwrap());
-    if (nchw_result.is_error()) {
-        return nchw_result.unwrap_err();
-    }
-    Tensor nchw = nchw_result.unwrap();
+    Tensor nchw;
+
+    op::image_to_tensor(
+        img_result.unwrap(),
+        nchw,
+        op::ImageToTensorOptions().target_dtype(Dtype::Uint8).unsqueeze(true)
+    )
+        .expect("Wrong image format");
 
     std::array<FaceDetection, 1> detections;
     P10_RETURN_IF_ERROR(detector.detect(nchw, detections));
 
-    print_detections(std::filesystem::path(path).filename().string(), detections[0]);
+    print_detections(std::filesystem::path(path).filename().string(), detections);
     return P10Error::Ok;
+}
+
+P10Error run_on_directory(IFaceDetector& detector, const std::string& path) {
+    size_t image_count = 0;
+    for (const auto& entry : fs::directory_iterator(path)) {
+        if (!entry.is_regular_file() || !is_image(entry.path().string())) {
+            continue;
+        }
+        P10_RETURN_IF_ERROR(run_on_image(detector, entry.path().string()));
+        image_count++;
+    }
+    if (image_count == 0) {
+        std::cerr << "Warning: No image files found in directory: " << path << "\n";
+    }
+    return P10Error::Ok;
+}
+
+bool is_video(const std::string& path) {
+    return VIDEO_EXTS.contains(lowercase_ext(path));
 }
 
 P10Error run_on_video(IFaceDetector& detector, const std::string& path) {
@@ -110,80 +272,49 @@ P10Error run_on_video(IFaceDetector& detector, const std::string& path) {
     VideoFrame frame;
     int64_t frame_idx = 0;
 
+    Tensor nchw;
     while (true) {
-        auto has_frame = cap.next_frame();
-        if (has_frame.is_error() || !has_frame.unwrap())
+        if (auto has_frame = cap.next_frame(); has_frame.is_error() || !has_frame.unwrap()) {
             break;
+        }
 
         if (auto err = cap.get_video(frame); err.is_error()) {
             std::cerr << "Error reading frame " << frame_idx << ": " << err.to_string() << "\n";
             break;
         }
 
-        auto nchw_result = hwc_to_nchw(frame.image());
-        if (nchw_result.is_error()) {
-            return nchw_result.unwrap_err();
-        }
-        Tensor nchw = nchw_result.unwrap();
-
+        P10_RETURN_IF_ERROR(op::image_to_tensor(frame.image(), nchw));
         std::array<FaceDetection, 1> detections;
         if (auto err = detector.detect(nchw, detections); err.is_error()) {
             std::cerr << "Detection error on frame " << frame_idx << ": " << err.to_string()
                       << "\n";
         } else {
-            print_detections(video_name + ":" + std::to_string(frame_idx), detections[0]);
+            print_detections(std::format("{}:{}", video_name, frame_idx), detections);
         }
         frame_idx++;
     }
     return P10Error::Ok;
 }
 
-}  // namespace
-
-int main(int argc, char** argv) {
-    CLI::App app {"Run face detection on images, directories, or videos"};
-    argv = app.ensure_utf8(argv);
-
-    std::string input;
-    app.add_option("input", input, "Image file, image directory, or video file")->required();
-
-    std::string model_path;
-    app.add_option("--model", model_path, "ONNX model path or URL (BlazeFace)")->required();
-
-    CLI11_PARSE(app, argc, argv);
-
-    auto infer_result = infer::IInfer::from_onnx(model_path, infer::InferConfig());
-    if (infer_result.is_error()) {
-        std::cerr << "Failed to load model: " << infer_result.error().to_string() << "\n";
-        return 1;
+void print_detections(const std::string& source, std::span<const FaceDetection> dets) {
+    std::cout << "{\"" << source << "\": [\n";
+    for (const auto& det : dets) {
+        std::cout << to_string(det) << '\n';
     }
-    infer::IInfer* infer_engine = infer_result.unwrap();
-
-    auto detector_result = IFaceDetector::create(BlazeFaceModel(), infer_engine);
-    if (detector_result.is_error()) {
-        std::cerr << "Failed to create face detector: " << detector_result.error().to_string()
-                  << "\n";
-        delete infer_engine;
-        return 1;
-    }
-    IFaceDetector* detector = detector_result.unwrap();
-
-    namespace fs = std::filesystem;
-    P10Error err = P10Error::Ok;
-
-    if (fs::is_directory(input)) {
-        for (const auto& entry : fs::directory_iterator(input)) {
-            if (!entry.is_regular_file() || !is_image(entry.path().string()))
-                continue;
-            run_on_image(*detector, entry.path().string());
-        }
-    } else if (is_video(input)) {
-        err = run_on_video(*detector, input);
-    } else {
-        err = run_on_image(*detector, input);
-    }
-
-    delete detector;
-    delete infer_engine;
-    return err.is_error() ? 1 : 0;
+    std::cout << "]\n}";
 }
+
+P10Error run_on_video_gui(IFaceDetector& detector, const std::string& path) {
+    auto cap_result = MediaCapture::open_file(path);
+    if (cap_result.is_error()) {
+        std::cerr << "Error opening video " << path << ": " << cap_result.error().to_string()
+                  << "\n";
+        return cap_result.unwrap_err();
+    }
+    const std::string title = std::filesystem::path(path).filename().string();
+    FaceDetectApp app(cap_result.unwrap(), detector, title);
+    const auto params = p10::viz::GuiAppParameters().title("face_detect — " + title);
+    return run_app(app, params);
+}
+
+}  // namespace

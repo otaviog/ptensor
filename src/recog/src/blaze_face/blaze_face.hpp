@@ -7,7 +7,7 @@
 
 #include "bf_postprocess.hpp"
 #include "bf_preprocess.hpp"
-#include "face_detection.hpp"
+#include "face_detector.hpp"
 
 namespace p10::infer {
 class IInfer;
@@ -18,17 +18,22 @@ namespace p10::recog {
 class BlazeFace: public IFaceDetector {
   public:
     BlazeFace(
-        infer::IInfer* infer,
+        std::unique_ptr<infer::IInfer> infer,
         size_t target_size,
         const SsdAnchorParameters& anchor_params,
         float nms_iou_threshold,
         float threshold
     ) :
-        infer_(infer),
+        infer_(std::move(infer)),
         pre_process_(target_size),
         post_process_(anchor_params, nms_iou_threshold, threshold) {}
 
-    ~BlazeFace() = default;
+    ~BlazeFace() override = default;
+
+    BlazeFace(const BlazeFace& copy) = delete;
+    BlazeFace(const BlazeFace&& move) = delete;
+    BlazeFace& operator=(const BlazeFace& copy) = delete;
+    BlazeFace& operator=(const BlazeFace&& move) = delete;
 
     P10Error detect(Tensor& images, std::span<FaceDetection> out_detections) override;
 

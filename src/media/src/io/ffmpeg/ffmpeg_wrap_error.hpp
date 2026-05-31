@@ -11,7 +11,7 @@ inline P10Error wrap_ffmpeg_error(int ffmpeg_error_code, const std::string& cont
         return P10Error::Ok;
     }
 
-    std::array<char, AV_ERROR_MAX_STRING_SIZE> error_buffer{};
+    std::array<char, AV_ERROR_MAX_STRING_SIZE> error_buffer {};
     av_strerror(ffmpeg_error_code, error_buffer.data(), error_buffer.size());
 
     std::string full_message = context_message;

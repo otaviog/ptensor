@@ -1,5 +1,5 @@
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor)
-add_library(ptensor)
+add_library(ptensor STATIC)
 
 ##
 # Public Headers
@@ -46,6 +46,7 @@ target_sources(ptensor
     src/tensor_print.cpp
     src/detail/blob.cpp
     src/dtype.cpp
+    src/base64.cpp
 )
 
 if(WIN32)
@@ -78,13 +79,7 @@ if(BUILD_TESTS)
 endif()
 
 #### Installation
-# Create alias for use in build tree and install
-add_library(p10::core ALIAS ptensor)
-
 install(TARGETS ptensor
-    EXPORT ptensorTargets
-    LIBRARY DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
-    ARCHIVE DESTINATION ${PTENSOR_INSTALL_LIB_DIR}
-    RUNTIME DESTINATION ${PTENSOR_INSTALL_BIN_DIR}
+    ARCHIVE EXCLUDE_FROM_ALL
     FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )

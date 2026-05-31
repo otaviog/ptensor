@@ -21,17 +21,9 @@ extern "C" {
 #include "video_parameters.hpp"
 
 namespace p10::media {
+
 namespace {
-
-    AVCodecID codec_id_from_video_parameters(const VideoParameters& video_params) {
-        switch (video_params.codec().type()) {
-            case VideoCodec::CodecType::H264:
-                return AV_CODEC_ID_H264;
-            default:
-                return AV_CODEC_ID_NONE;
-        }
-    }
-
+    AVCodecID codec_id_from_video_parameters(const VideoParameters& video_params);
 }  // namespace
 
 FfmpegVideoEncoder::~FfmpegVideoEncoder() {
@@ -122,24 +114,6 @@ P10Error FfmpegVideoEncoder::encode(const VideoFrame& frame) {
     return receive_packets();
 }
 
-P10Error FfmpegVideoEncoder::receive_packets() {
-    while (true) {
-        UniqueAvPacket pkt(av_packet_alloc());
-        const int ret = avcodec_receive_packet(video_encoder_context_, pkt.get());
-
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-            break;
-        }
-        if (ret < 0) {
-            return wrap_ffmpeg_error(ret, "Failed to receive packet from video encoder");
-        }
-
-        pkt->stream_index = stream_->index;
-        packet_queue_.push(pkt.release());
-    }
-    return P10Error::Ok;
-}
-
 P10Error FfmpegVideoEncoder::flush() {
     // Send NULL frame to signal end of stream
     int const err = avcodec_send_frame(video_encoder_context_, nullptr);
@@ -169,6 +143,24 @@ P10Error FfmpegVideoEncoder::flush() {
     return P10Error::Ok;
 }
 
+P10Error FfmpegVideoEncoder::receive_packets() {
+    while (true) {
+        UniqueAvPacket pkt(av_packet_alloc());
+        const int ret = avcodec_receive_packet(video_encoder_context_, pkt.get());
+
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+            break;
+        }
+        if (ret < 0) {
+            return wrap_ffmpeg_error(ret, "Failed to receive packet from video encoder");
+        }
+
+        pkt->stream_index = stream_->index;
+        packet_queue_.push(pkt.release());
+    }
+    return P10Error::Ok;
+}
+
 AVPacket* FfmpegVideoEncoder::pop_encoded_packet() {
     if (packet_queue_.empty()) {
         return nullptr;
@@ -177,5 +169,16 @@ AVPacket* FfmpegVideoEncoder::pop_encoded_packet() {
     packet_queue_.pop();
     return pkt;
 }
+
+namespace {
+    AVCodecID codec_id_from_video_parameters(const VideoParameters& video_params) {
+        switch (video_params.codec().type()) {
+            case VideoCodec::CodecType::H264:
+                return AV_CODEC_ID_H264;
+            default:
+                return AV_CODEC_ID_NONE;
+        }
+    }
+}  // namespace
 
 }  // namespace p10::media

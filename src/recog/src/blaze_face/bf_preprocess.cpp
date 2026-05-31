@@ -8,26 +8,21 @@
 
 namespace p10::recog {
 constexpr size_t BF_INPUT_CHANNELS = 3;
-constexpr std::array<uint8_t, 3> BF_RGB_MEAN = {104, 117, 113};
+// Channel means in BGR order: subtracted from the model's channel 0 (B),
+// channel 1 (G), channel 2 (R) respectively. The original RFB / BlazeFace
+// training pipeline uses OpenCV's BGR layout, so input RGB pixels must be
+// swapped before subtracting.
+constexpr std::array<float, 3> BF_BGR_MEAN = {104.0f, 117.0f, 123.0f};
 
 namespace {
     P10Result<std::tuple<size_t, size_t, float>>
     resize(Tensor& input_images, size_t target_size, Tensor& output);
 
-    P10Result<Tensor> alloc_preprocessing_output(
-        int64_t num_images,
-        size_t target_size,
-        size_t width,
-        size_t height,
-        Tensor& preprocessed
-    );
-
     std::tuple<size_t, size_t, size_t, size_t>
     calculate_padding(size_t target_size, size_t width, size_t height);
 
-    P10Result<Tensor> slice_image_border(Tensor& image, int left, int right, int top, int bottom);
-
-    void subtract_rgb_mean(Tensor& images);
+    void
+    convert_rgb_to_bgr_mean_into_padded(const Tensor& src, Tensor& dst, size_t top, size_t left);
 }  // namespace
 
 P10Result<float> BfPreprocessing::process(Tensor& images, Tensor& preprocessed) {
@@ -38,18 +33,22 @@ P10Result<float> BfPreprocessing::process(Tensor& images, Tensor& preprocessed) 
     const auto [resize_width, resize_height, resize_ratio] = resize_result.unwrap();
 
     const auto num_images = images.shape().as_span()[0];
+    const auto [left, right, top, bottom] =
+        calculate_padding(target_size_, resize_width, resize_height);
+    const auto padded_h = resize_height + top + bottom;
+    const auto padded_w = resize_width + left + right;
 
-    auto inner_preprocessed = alloc_preprocessing_output(
-                                  num_images,
-                                  target_size_,
-                                  resize_width,
-                                  resize_height,
-                                  preprocessed
-    )
-                                  .unwrap();
-    inner_preprocessed.convert_from(resize_buffer_, TensorOptions(Dtype::Float32))
-        .expect("Error while converting from resize_buffer_");
-    subtract_rgb_mean(inner_preprocessed);
+    bool new_allocated = false;
+    preprocessed.create(
+        make_shape(num_images * int64_t(BF_INPUT_CHANNELS), int64_t(padded_h), int64_t(padded_w)),
+        Dtype::Float32,
+        new_allocated
+    );
+    if (new_allocated) {
+        preprocessed.fill(0.0f);
+    }
+
+    convert_rgb_to_bgr_mean_into_padded(resize_buffer_, preprocessed, top, left);
 
     const auto out_shape = preprocessed.shape().as_span();
     preprocessed.reshape(
@@ -89,29 +88,6 @@ namespace {
         return Ok(std::make_tuple(resize_width, resize_height, original_to_resize_ratio));
     }
 
-    P10Result<Tensor> alloc_preprocessing_output(
-        int64_t num_images,
-        size_t target_size,
-        size_t width,
-        size_t height,
-        Tensor& preprocessed
-    ) {
-        const auto [left, right, top, bottom] = calculate_padding(target_size, width, height);
-
-        bool new_allocated = false;
-        P10_RETURN_ERR_IF_ERROR(preprocessed.create(
-            make_shape(num_images * BF_INPUT_CHANNELS, height + top + bottom, width + left + right),
-            Dtype::Float32,
-            new_allocated
-        ));
-
-        if (new_allocated) {
-            preprocessed.fill(0.0);
-        }
-
-        return slice_image_border(preprocessed, left, right, top, bottom);
-    }
-
     std::tuple<size_t, size_t, size_t, size_t>
     calculate_padding(size_t target_size, size_t width, size_t height) {
         const float x_pad = float((target_size - width) % 16) * 0.5f;
@@ -123,42 +99,35 @@ namespace {
         return std::make_tuple(left, right, top, bottom);
     }
 
-    P10Result<Tensor> slice_image_border(Tensor& image, int left, int right, int top, int bottom) {
-        const auto shape = image.shape().as_span();
-        const auto num_images = shape[0];
-        const auto height = shape[1];
-        const auto width = shape[2];
+    /// Converts the resized RGB uint8 planes into the padded float BGR-mean
+    /// output, writing directly at the correct strided positions.
+    void
+    convert_rgb_to_bgr_mean_into_padded(const Tensor& src, Tensor& dst, size_t top, size_t left) {
+        const auto src_acc = src.as_accessor3d<const uint8_t>().unwrap();
+        auto dst_acc = dst.as_accessor3d<float>().unwrap();
 
-        if (left < 0 || right < 0 || top < 0 || bottom < 0) {
-            return Err(P10Error::InvalidArgument, "Border slice values must be non-negative");
-        }
+        // src shape: [N*3, resize_h, resize_w] (planar RGB per image)
+        // dst shape: [N*3, padded_h, padded_w]
+        // For each group of 3 planes (R, G, B), write BGR-mean into dst
+        // at the offset (top, left).
+        for (size_t ch_idx = 0; ch_idx + 2 < src_acc.channels(); ch_idx += 3) {
+            const auto src_r = src_acc[ch_idx + 0];
+            const auto src_g = src_acc[ch_idx + 1];
+            const auto src_b = src_acc[ch_idx + 2];
 
-        if (int64_t(left) + int64_t(right) >= width || int64_t(top) + int64_t(bottom) >= height) {
-            return Err(P10Error::InvalidArgument, "Border slice values exceed image dimensions");
-        }
+            auto dst_0 = dst_acc[ch_idx + 0];  // output B-mean plane
+            auto dst_1 = dst_acc[ch_idx + 1];  // output G-mean plane
+            auto dst_2 = dst_acc[ch_idx + 2];  // output R-mean plane
 
-        const auto view_width = width - int64_t(left) - int64_t(right);
-        const auto view_height = height - int64_t(top) - int64_t(bottom);
+            for (size_t row = 0; row < src_r.rows(); ++row) {
+                auto dst_row_0 = dst_0[top + row].as_span();
+                auto dst_row_1 = dst_1[top + row].as_span();
+                auto dst_row_2 = dst_2[top + row].as_span();
 
-        auto accessor = image.as_accessor3d<float>().unwrap();
-        auto* base_ptr = &accessor[0][top][left];
-        return Ok<Tensor>(Tensor::from_data(
-            base_ptr,
-            make_shape(num_images, view_height, view_width),
-            MakeViewOptions<float>().stride(image.stride())
-        ));
-    }
-
-    void subtract_rgb_mean(Tensor& images) {
-        auto acc = images.as_accessor3d<float>().unwrap();
-        for (size_t channel_idx = 0; channel_idx < acc.channels(); channel_idx += 3) {
-            for (size_t k = 0; k < BF_RGB_MEAN.size(); ++k) {
-                auto channel = acc[channel_idx + k];
-                for (size_t row_idx = 0; row_idx < channel.rows(); ++row_idx) {
-                    auto row = channel[row_idx].as_span();
-                    std::transform(row.begin(), row.end(), row.begin(), [=](const auto value) {
-                        return value - BF_RGB_MEAN[k];
-                    });
+                for (size_t col = 0; col < src_r.cols(); ++col) {
+                    dst_row_0[left + col] = float(src_b[row][col]) - BF_BGR_MEAN[0];
+                    dst_row_1[left + col] = float(src_g[row][col]) - BF_BGR_MEAN[1];
+                    dst_row_2[left + col] = float(src_r[row][col]) - BF_BGR_MEAN[2];
                 }
             }
         }

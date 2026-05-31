@@ -15,6 +15,19 @@
 		}
 	],
 	"features": {
+		"tests": {
+			"description": "Build tests (for development)",
+			"dependencies": [
+				"catch2",
+				"benchmark"
+			]
+		},
+		"samples": {
+			"description": "Build samples (for development)",
+			"dependencies": [
+				"cli11"
+			]
+		},
 		"io": {
 			"description": "Enable I/O functionality for image and numpy file support",
 			"dependencies": [
@@ -29,13 +42,6 @@
 				"pocketfft"
 			]
 		},
-		"tests": {
-			"description": "Build tests (for development)",
-			"dependencies": [
-				"catch2",
-				"benchmark"
-			]
-		},
 		"media": {
 			"description": "Enable FFmpeg support for media processing",
 			"dependencies": [
@@ -47,7 +53,8 @@
 						"x265",
 						"swscale",
 						"swresample",
-						"avcodec"
+						"avcodec",
+						"avdevice"
 					]
 				}
 			]
@@ -55,7 +62,23 @@
 		"infer": {
 			"description": "Inference support",
 			"dependencies": [
-				"cli11"
+				"curl"
+			]
+		},
+		"viz": {
+			"description": "Enable GUI/visualization support (ImGui + SDL2)",
+			"dependencies": [
+				"imgui",
+				{
+					"name": "sdl2",
+					"features": [
+						"vulkan"
+					]
+				},
+				{
+					"name": "vulkan",
+					"platform": "windows | linux"
+				}
 			]
 		}
 	}

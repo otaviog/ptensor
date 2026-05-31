@@ -22,7 +22,7 @@ class MediaCapture::Impl {
 
     virtual MediaParameters get_parameters() const = 0;
 
-    virtual P10Result<bool> next_frame() = 0;
+    virtual P10Result<MediaCapture::NextFrameResult> next_frame(MediaCapture::WaitMode wait) = 0;
 
     virtual std::optional<int64_t> video_frame_count() const = 0;
 
@@ -31,5 +31,9 @@ class MediaCapture::Impl {
     virtual P10Error get_audio(AudioFrame& frame) = 0;
 
     virtual std::optional<double> duration() const = 0;
+
+    virtual P10Error seek(double /*seconds*/) {
+        return P10Error::NotImplemented << "Seek not supported for this capture source";
+    }
 };
 }  // namespace p10::media

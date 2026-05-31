@@ -35,4 +35,25 @@ class TensorStringOptions {
 };
 
 std::string to_string(const Tensor& tensor, const TensorStringOptions& options = {});
+
+std::string to_json(const Tensor& tensor);
+
+/// Encodes `tensor` as JSON into a per-thread static buffer and returns a
+/// pointer to its contents. The static buffer keeps the string alive past the
+/// debugger's `evaluate` call so the result string can be read directly from
+/// the response (no `readMemory` needed for typical sizes).
+const char* to_json_debug(const Tensor& tensor);
+
+/// Returns the minimum value of `tensor` cast to double. Empty tensors return
+/// NaN. Designed as a hook for debugger visualizers (e.g. natvis intrinsics).
+double tensor_min_debug(const Tensor& tensor);
+
+/// Returns the maximum value of `tensor` cast to double. Empty tensors return
+/// NaN. Designed as a hook for debugger visualizers.
+double tensor_max_debug(const Tensor& tensor);
+
+/// Returns the arithmetic mean of `tensor` cast to double. Empty tensors
+/// return NaN. Designed as a hook for debugger visualizers.
+double tensor_mean_debug(const Tensor& tensor);
+
 }  // namespace p10

@@ -1,5 +1,6 @@
 add_library(unit_tests_recog OBJECT
     test_face_detectors.cpp
+    test_face_detection_to_string.cpp
 )
 target_include_directories(
     unit_tests_recog PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src

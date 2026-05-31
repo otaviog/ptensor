@@ -5,13 +5,8 @@
 
 namespace p10::op {
 
-P10Error image_to_tensor(
-    const Tensor& image,
-    Tensor& out_tensor,
-    std::optional<Dtype> target_dtype,
-    ImageToTensorNormalize normalize_opt,
-    ImageToTensorSqueeze squeeze_opt
-) {
+P10Error
+image_to_tensor(const Tensor& image, Tensor& out_tensor, const ImageToTensorOptions& options) {
     if (image.dtype() != Dtype::Uint8) {
         return P10Error::InvalidArgument << "Input tensor must be of type UINT8.";
     }
@@ -27,7 +22,8 @@ P10Error image_to_tensor(
     const size_t num_channels = image_span.channels();
     const size_t height = image_span.height();
     const size_t width = image_span.width();
-    const Dtype out_dtype = target_dtype.value_or(Dtype::Float32);
+    const Dtype out_dtype = options.target_dtype().value_or(Dtype::Float32);
+    const bool do_normalize = options.normalize();
 
     out_tensor.create(
         make_shape(
@@ -54,7 +50,6 @@ P10Error image_to_tensor(
         [&](auto float_id) {
             using T = decltype(float_id)::type;
             auto out_span = out_tensor.as_planar_span3d<T>().unwrap();
-            const bool do_normalize = normalize_opt == ImageToTensorNormalize::Normalize;
             for (size_t row = 0; row < height; row++) {
                 for (size_t col = 0; col < width; col++) {
                     const auto& ch = image_span.channel(row, col);
@@ -66,8 +61,13 @@ P10Error image_to_tensor(
         }
     );
 
-    if (squeeze_opt == ImageToTensorSqueeze::Unsqueze) {
-        out_tensor.reshape(make_shape(1, num_channels, height, width));
+    if (options.unsqueeze()) {
+        out_tensor.reshape(make_shape(
+            int64_t {1},
+            static_cast<int64_t>(num_channels),
+            static_cast<int64_t>(height),
+            static_cast<int64_t>(width)
+        ));
     }
 
     return P10Error::Ok;
@@ -81,17 +81,23 @@ P10Error image_from_tensor(
     if (tensor.dtype() != Dtype::Float32 && tensor.dtype() != Dtype::Float64) {
         return P10Error::InvalidArgument << "Input tensor must be of float type.";
     }
-    if (tensor.shape().dims() != 3) {
+    const size_t dims = tensor.shape().dims();
+    if (dims != 3 && dims != 4) {
         return P10Error::InvalidArgument
-            << "Input tensor must have shape [channels, height, width].";
+            << "Input tensor must have shape [C, H, W] or [1, C, H, W].";
+    }
+    if (dims == 4 && tensor.shape(0).unwrap() != 1) {
+        return P10Error::InvalidArgument
+            << "4D input must have a leading batch dimension of size 1.";
     }
     if (!tensor.is_contiguous()) {
         return P10Error::InvalidArgument << "Input tensor must be contiguous in memory.";
     }
 
-    const auto num_channels = static_cast<size_t>(tensor.shape(0).unwrap());
-    const auto height = static_cast<size_t>(tensor.shape(1).unwrap());
-    const auto width = static_cast<size_t>(tensor.shape(2).unwrap());
+    const size_t base = (dims == 4) ? 1 : 0;
+    const auto num_channels = static_cast<size_t>(tensor.shape(base).unwrap());
+    const auto height = static_cast<size_t>(tensor.shape(base + 1).unwrap());
+    const auto width = static_cast<size_t>(tensor.shape(base + 2).unwrap());
     const Dtype out_dtype = target_dtype.value_or(Dtype::Uint8);
 
     out_image_tensor.create(
@@ -109,17 +115,20 @@ P10Error image_from_tensor(
         [](auto /*int_id*/) {},
         [&](auto float_id) {
             using Fin = decltype(float_id)::type;
-            auto in_span = tensor.as_planar_span3d<Fin>().unwrap();
+            // Input is contiguous and either [C, H, W] or [1, C, H, W] — both
+            // share the same planar memory layout.
+            const auto* in_data = reinterpret_cast<const Fin*>(tensor.as_bytes().data());
+            const size_t plane_size = height * width;
             out_dtype.match(
                 [&](auto int_out_id) {
-                    // float → integer: scale [0,1] to [0,255]
                     using Tout = decltype(int_out_id)::type;
                     auto out_span = out_image_tensor.as_span3d<Tout>().unwrap();
                     for (size_t row = 0; row < height; row++) {
                         for (size_t col = 0; col < width; col++) {
                             auto out_ch = out_span.channel(row, col);
                             for (size_t c = 0; c < num_channels; c++) {
-                                const Fin val = in_span[c].row(row)[col] * Fin {255};
+                                const Fin val =
+                                    in_data[(c * plane_size) + (row * width) + col] * Fin {255};
                                 out_ch[c] = static_cast<Tout>(std::clamp(val, Fin {0}, Fin {255}));
                             }
                         }
@@ -132,7 +141,9 @@ P10Error image_from_tensor(
                         for (size_t col = 0; col < width; col++) {
                             auto out_ch = out_span.channel(row, col);
                             for (size_t c = 0; c < num_channels; c++) {
-                                out_ch[c] = static_cast<Tout>(in_span[c].row(row)[col]);
+                                out_ch[c] = static_cast<Tout>(
+                                    in_data[(c * plane_size) + (row * width) + col]
+                                );
                             }
                         }
                     }

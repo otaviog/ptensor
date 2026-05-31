@@ -3,6 +3,8 @@ add_library(ptensor_recog STATIC)
 
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/face_detection.hpp
+  ${_INCLUDE_DIR}/face_detector.hpp
+  ${_INCLUDE_DIR}/ssd_anchor_parameters.hpp
   ${_INCLUDE_DIR}/geom/point2.hpp
   ${_INCLUDE_DIR}/geom/rect2.hpp
 )
@@ -15,6 +17,7 @@ target_sources(ptensor_recog
   PRIVATE
     # Main detection factory
     src/face_detection.cpp
+    src/face_detector.cpp
     # Common algorithms
     src/nms.hpp src/nms.cpp
     # Ssd anchors
@@ -37,8 +40,13 @@ target_link_libraries(ptensor_recog
     ptensor_infer
   PRIVATE
     ptensor_op
-    # ng-log::ng-log
+    ptensor_log
   )
+
+install(TARGETS ptensor_recog
+    ARCHIVE EXCLUDE_FROM_ALL
+    FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
 if(BUILD_TESTS)
   add_subdirectory(tests)

@@ -44,6 +44,18 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "coverage",
+      "inherits": "hidden/clang/base-dev-config",
+      "hidden": false,
+      "displayName": "Coverage (clang)",
+      "description": "Debug build with clang source-based coverage instrumentation",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fprofile-instr-generate -fcoverage-mapping -O0",
+        "CMAKE_EXE_LINKER_FLAGS": "-fprofile-instr-generate"
+      }
     }
   ],
   "buildPresets": [
@@ -68,6 +80,10 @@
       "targets": [
         "install"
       ]
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage"
     }
   ],
   "testPresets": [
@@ -132,6 +148,19 @@
         {
           "type": "build",
           "name": "clang/release/install"
+        }
+      ]
+    },
+    {
+      "name": "coverage-build",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "coverage"
+        },
+        {
+          "type": "build",
+          "name": "coverage"
         }
       ]
     }

@@ -65,12 +65,7 @@ TEST_CASE("op::image::to tensor and back conversion", "[imageop]") {
     // image_from_tensor recovers the original byte values).
     Tensor float_tensor;
     REQUIRE(
-        image_to_tensor(
-            original_image,
-            float_tensor,
-            std::nullopt,
-            ImageToTensorNormalize::Normalize
-        )
+        image_to_tensor(original_image, float_tensor, ImageToTensorOptions().normalize(true))
         == P10Error::Ok
     );
 

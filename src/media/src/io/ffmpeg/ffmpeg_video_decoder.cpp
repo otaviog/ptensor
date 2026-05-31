@@ -9,14 +9,7 @@
 namespace p10::media {
 
 namespace {
-    VideoCodec video_codec_from_avcodec_id(AVCodecID codec_id) {
-        switch (codec_id) {
-            case AV_CODEC_ID_H264:
-                return VideoCodec::H264;
-            default:
-                return VideoCodec(avcodec_get_name(codec_id));
-        }
-    }
+    VideoCodec video_codec_from_avcodec_id(AVCodecID codec_id);
 }  // namespace
 
 P10Result<FfmpegVideoDecoder::DecodeStatus>
@@ -51,8 +44,8 @@ FfmpegVideoDecoder::decode_packet(const AVPacket* pkt, VideoQueue& queue) {
 }
 
 VideoParameters FfmpegVideoDecoder::get_video_parameters() const {
-    VideoParameters params{};
-    auto const * codec = stream_->codecpar;
+    VideoParameters params {};
+    auto const* codec = stream_->codecpar;
     params.width(codec->width)
         .height(codec->height)
         .codec(video_codec_from_avcodec_id(codec->codec_id))
@@ -63,4 +56,16 @@ VideoParameters FfmpegVideoDecoder::get_video_parameters() const {
 
     return params;
 }
+
+namespace {
+    VideoCodec video_codec_from_avcodec_id(AVCodecID codec_id) {
+        switch (codec_id) {
+            case AV_CODEC_ID_H264:
+                return VideoCodec::H264;
+            default:
+                return VideoCodec(avcodec_get_name(codec_id));
+        }
+    }
+}  // namespace
+
 }  // namespace p10::media

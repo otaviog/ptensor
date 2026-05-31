@@ -1,0 +1,110 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+	/// Unit tests
+	{
+	  "name": "all/unit-test",
+	  "type": "lldb-dap",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/tests/unit_tests_all",
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "environment": [],
+	  "externalConsole": true,
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
+	},
+	/// media
+	{
+	  "name": "media/transcoder",
+	  "type": "lldb-dap",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/src/media/samples/sample_transcoder",
+	  "args": [
+		"${input:videoPath}"
+	  ],
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "externalConsole": false,
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
+	},
+	{
+	  "name": "media/player/file",
+	  "type": "lldb-dap",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/src/media/samples/sample_media_player",
+	  "args": [
+		"${input:videoPath}"
+	  ],
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "externalConsole": false,
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
+	},
+	{
+	  "name": "media/player/device",
+	  "type": "lldb-dap",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/src/media/samples/sample_media_player",
+	  "args": [
+		"--device", "--video", "0"
+	  ],
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "externalConsole": false,
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
+	},
+	/// recog
+	{
+	  "name": "recog/face_detect",
+	  "type": "lldb-dap",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/src/recog/apps/face_detect/face_detector",
+	  "args": [
+		"tests/data/face_detectors/faces.jpg", "--model", "tests/data/face_detectors/blazefaces-320.onnx"
+	  ],
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "externalConsole": false,
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
+	},
+	{
+	  "name": "recog/face_detect/video/gui",
+	  "type": "lldb-dap",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/src/recog/apps/face_detect/face_detector",
+	  "args": [
+		"${input:videoPath}", "--model", "tests/data/face_detectors/blazefaces-320.onnx", "--gui"
+	  ],
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "externalConsole": false,
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
+	}
+  ],
+  "inputs": [
+	{
+		"id": "videoPath",
+		"type": "promptString",
+		"description": "Enter video file path",
+		"default": "${workspaceFolder}/tests/data/video/head-pose-face-detection-male.mp4"
+	}
+  ]
+}

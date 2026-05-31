@@ -31,5 +31,9 @@ if (WITH_RECOG)
   target_link_libraries(unit_tests_all PRIVATE unit_tests_recog)
 endif()
 
+if (WITH_VIZ)
+    target_link_libraries(unit_tests_all PRIVATE unit_tests_viz)
+endif()
+
 catch_discover_tests(unit_tests_all
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

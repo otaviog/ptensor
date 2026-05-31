@@ -11,46 +11,94 @@ class Tensor;
 
 namespace p10::op {
 
-enum class ImageToTensorSqueeze { Squeeze, Unsqueze };
+/// Options for `image_to_tensor`.
+class ImageToTensorOptions {
+  public:
+    /// Target dtype of the output tensor. If unset, defaults to `Dtype::Float32`.
+    std::optional<Dtype> target_dtype() const {
+        return target_type_;
+    }
 
-enum class ImageToTensorNormalize { Normalize, KeepValues };
+    ImageToTensorOptions& target_dtype(std::optional<Dtype> dtype) {
+        target_type_ = dtype;
+        return *this;
+    }
 
-/// Convert an image tensor to a float tensor suitable for model input.
-/// The input image tensor must have dtype UINT8 and shape [height, width, channels].
-/// The output float tensor will have shape [channels, height, width] and dtype keep unchanged or converted to target_dtype if specified.
+    /// When converting between uint8 and a floating-point dtype, rescale values
+    /// into the target range:
+    ///
+    /// * uint8 -> float: `x / 255`
+    /// * float -> uint8: `round(x * 255)`
+    ///
+    /// Has no effect when source and target dtype are both integer.
+    bool normalize() const {
+        return normalize_;
+    }
+
+    ImageToTensorOptions& normalize(bool normalize) {
+        normalize_ = normalize;
+        return *this;
+    }
+
+    /// If true, prepend a batch dimension of size 1 to the output shape:
+    /// `[C, H, W]` becomes `[1, C, H, W]`.
+    bool unsqueeze() const {
+        return unsqueeze_;
+    }
+
+    ImageToTensorOptions& unsqueeze(bool unsqueeze) {
+        unsqueeze_ = unsqueeze;
+        return *this;
+    }
+
+  private:
+    std::optional<Dtype> target_type_ = std::nullopt;
+    bool normalize_ = false;
+    bool unsqueeze_ = false;
+};
+
+/// Convert an image tensor `[H, W, C]` (uint8) to a planar tensor `[C, H, W]`,
+/// or `[1, C, H, W]` when `options.unsqueeze()` is true.
 ///
 /// # Arguments
 ///
-/// * `image` - The input image tensor to convert. Must have shape [height, width, channels].
-/// * `out_tensor` - The output tensor to store the resulting tensor with shape [channels, height, width] and dtype target_dtype if specified.
-/// * `target_dtype` - Optional target dtype for the output tensor. If not specified, the output dtype will be the same as the input.
-/// * `normalize_opt` - Whether to normalize pixel values to [0, 1] by dividing by 255. Only applies to float output dtypes. Default is KeepValues.
-/// * `squeeze_opt` - Whether to squeeze the output tensor to remove dimensions of size 1. Default is Squeeze.
+/// * `image` - Input image tensor. Must be uint8, 3D `[height, width, channels]`,
+///             and contiguous in memory.
+/// * `out_tensor` - Output planar tensor. Overwritten on success.
+/// * `options` - Conversion options. See `ImageToTensorOptions`.
 ///
 /// # Returns
 ///
-///
+/// * `P10Error::Ok` on success.
+/// * `P10Error::InvalidArgument` if `image` is not uint8, not 3D, or not contiguous.
 P10Error image_to_tensor(
     const Tensor& image,
     Tensor& out_tensor,
-    std::optional<Dtype> target_dtype = std::nullopt,
-    ImageToTensorNormalize normalize_opt = ImageToTensorNormalize::KeepValues,
-    ImageToTensorSqueeze squeeze_opt = ImageToTensorSqueeze::Squeeze
+    const ImageToTensorOptions& options = ImageToTensorOptions()
 );
 
-/// Convert a tensor back to an image tensor.
-/// The input tensor must have shape [channels, height, width].
-/// The output image tensor will have shape [height, width, channels], and converted to target_dtype if specified.
+/// Convert a planar floating-point tensor `[C, H, W]` or `[1, C, H, W]` to an
+/// image tensor `[H, W, C]`.
+///
+/// When the target dtype is integer, values are scaled by 255 and clamped to
+/// `[0, 255]`. When the target dtype is floating, values are copied as-is.
 ///
 /// # Arguments
 ///
-/// * `tensor` - The input tensor to convert. Must have shape [channels, height, width].
-/// * `out_image_tensor` - The output tensor to store the resulting image. Will be
-///   created with shape [height, width, channels] and dtype target_dtype if specified.
-/// * `target_dtype` - Optional target dtype for the output image tensor. If not specified, the output dtype will be the same as tensor
+/// * `tensor` - Input planar tensor. Must be float32 or float64, contiguous,
+///              and have shape `[C, H, W]` or `[1, C, H, W]`.
+/// * `out_image_tensor` - Output image tensor. Overwritten on success.
+/// * `target_dtype` - Output dtype. Defaults to `Dtype::Uint8` if unset.
+///
+/// # Returns
+///
+/// * `P10Error::Ok` on success.
+/// * `P10Error::InvalidArgument` if `tensor` is not floating-point, not 3D/4D,
+///   not contiguous, or has a 4D shape whose leading dim is not 1.
 P10Error image_from_tensor(
     const Tensor& tensor,
     Tensor& out_image_tensor,
     std::optional<Dtype> target_dtype = std::nullopt
 );
+
 }  // namespace p10::op

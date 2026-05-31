@@ -1,8 +1,13 @@
 #include "tensor_print.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <iomanip>
+#include <limits>
+#include <sstream>
 
+#include "base64.hpp"
+#include "dtype.hpp"
 #include "tensor.hpp"
 
 namespace p10 {
@@ -85,6 +90,69 @@ std::string to_string(const Tensor& tensor, const TensorStringOptions& options) 
     });
     result << ')';
     return result.str();
+}
+
+std::string to_json(const Tensor& tensor) {
+    return std::format(
+        R"({{"dtype":"{}","shape":{},"stride":{},"blob":"{}"}})",
+        to_string(tensor.dtype()),
+        to_string(tensor.shape()),
+        to_string(tensor.stride()),
+        to_base64(tensor.as_bytes())
+    );
+}
+
+namespace {
+    thread_local std::string g_json_debug_buffer;
+}  // namespace
+
+const char* to_json_debug(const Tensor& tensor) {
+    g_json_debug_buffer = to_json(tensor);
+    return g_json_debug_buffer.c_str();
+}
+
+namespace {
+
+    template<typename Reduce>
+    double reduce_to_double(const Tensor& tensor, Reduce&& reduce) {
+        if (tensor.empty() || tensor.size() == 0) {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+        return tensor.visit([&](auto span) -> double {
+            return std::forward<Reduce>(reduce)(span);
+        });
+    }
+
+}  // namespace
+
+double tensor_min_debug(const Tensor& tensor) {
+    return reduce_to_double(tensor, [](auto span) {
+        auto acc = static_cast<double>(span[0]);
+        for (size_t i = 1; i < span.size(); ++i) {
+            acc = std::min(acc, static_cast<double>(span[i]));
+        }
+        return acc;
+    });
+}
+
+double tensor_max_debug(const Tensor& tensor) {
+    return reduce_to_double(tensor, [](auto span) {
+        auto acc = static_cast<double>(span[0]);
+        for (size_t i = 1; i < span.size(); ++i) {
+            acc = std::max(acc, static_cast<double>(span[i]));
+        }
+        return acc;
+    });
+}
+
+double tensor_mean_debug(const Tensor& tensor) {
+    return reduce_to_double(tensor, [](auto span) {
+        double sum = 0.0;
+        for (size_t i = 0; i < span.size(); ++i) {
+            sum += static_cast<double>(span[i]);
+        }
+        return sum / static_cast<double>(span.size());
+    });
 }
 
 }  // namespace p10

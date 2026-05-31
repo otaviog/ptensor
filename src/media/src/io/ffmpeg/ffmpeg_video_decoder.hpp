@@ -34,6 +34,12 @@ class FfmpegVideoDecoder {
 
     P10Result<DecodeStatus> decode_packet(const AVPacket* pkt, VideoQueue& queue);
 
+    void flush() {
+        if (codec_ctx_ != nullptr) {
+            avcodec_flush_buffers(codec_ctx_);
+        }
+    }
+
     int index() const {
         return index_;
     }
@@ -43,12 +49,10 @@ class FfmpegVideoDecoder {
     std::optional<int64_t> video_frame_count() const {
         if (stream_->nb_frames != 0) {
             return stream_->nb_frames;
-        } else {
-            double const duration_sec = stream_->duration * av_q2d(stream_->time_base);
-            double const fps = av_q2d(stream_->avg_frame_rate);
-            return static_cast<int64_t>(duration_sec * fps);
         }
-        return std::nullopt;
+        const double duration_sec = stream_->duration * av_q2d(stream_->time_base);
+        const double fps = av_q2d(stream_->avg_frame_rate);
+        return static_cast<int64_t>(duration_sec * fps);
     }
 
   private:

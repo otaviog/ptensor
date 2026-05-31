@@ -51,7 +51,7 @@ class FfmpegAudioFifo {
     AVAudioFifo* get_fifo();
 
     AVAudioFifo* audio_fifo_ = nullptr;
-    AVChannelLayout channel_layout_;
+    AVChannelLayout channel_layout_ = {};
     AVSampleFormat sample_format_ = AV_SAMPLE_FMT_NONE;
     int sample_rate_ = 0;
 };

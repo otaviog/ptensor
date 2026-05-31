@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     perl \
     make \
     libdbus-1-dev \
+    libltdl-dev \
     && update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100 \
     && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100 \
     && update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/bin/clang-scan-deps-20 100 \

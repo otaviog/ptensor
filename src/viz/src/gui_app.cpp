@@ -6,7 +6,7 @@
 
 namespace p10::viz {
 
-GuiApp::GuiApp() : impl_(new GuiApp::Impl(*this)) {}
+GuiApp::GuiApp() : impl_(std::make_unique<GuiApp::Impl>(*this)) {}
 
 GuiApp::~GuiApp() = default;
 

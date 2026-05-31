@@ -27,6 +27,11 @@ class GuiApp {
 
     virtual ~GuiApp();
 
+    GuiApp(const GuiApp&) = delete;
+    GuiApp& operator=(const GuiApp&) = delete;
+    GuiApp(GuiApp&&) = delete;
+    GuiApp& operator=(GuiApp&&) = delete;
+
     /// Create a GPU texture for rendering.
     ImageTexture create_texture();
 
@@ -52,7 +57,7 @@ class GuiApp {
 
     void run();
 
-    std::shared_ptr<Impl> impl_;
+    std::unique_ptr<Impl> impl_;
 };
 
 }  // namespace p10::viz

@@ -1,4 +1,4 @@
-﻿#include "video_player_component.hpp"
+#include "video_player_component.hpp"
 
 #include <iostream>
 
@@ -9,9 +9,11 @@ namespace p10::viz {
 
 VideoPlayerComponent::VideoPlayerComponent(p10::media::MediaCapture capture, GuiApp& app) :
     app_(app),
-
     capture_(std::move(capture)),
-    video_frame_rate_(capture_.get_parameters().video_parameters().frame_rate().inverse()) {
+    video_frame_rate_([&] {
+        const auto fr = capture_.get_parameters().video_parameters().frame_rate();
+        return fr.num() > 0 ? fr.inverse() : media::Rational {1, 30};
+    }()) {
     if (capture_.is_stream()) {
         play_state_ = PlayState::Streaming;
     }
@@ -90,7 +92,6 @@ void VideoPlayerComponent::button_stop() {
         capture_.seek(0.0);
     }
     ImGui::EndDisabled();
-}
 }
 
 void VideoPlayerComponent::image_camera() const {

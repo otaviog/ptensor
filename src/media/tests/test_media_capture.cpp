@@ -117,4 +117,60 @@ TEST_CASE(
     REQUIRE(result.audio_sample_rate_hz() == 0.0);
 }
 
+TEST_CASE(
+    "media::VideoDeviceInfo::match_closest picks closest when no exact match",
+    "[media][capture]"
+) {
+    VideoDeviceInfo info;
+    info.add_capability(VideoCapability {}.width(640).height(480).max_frame_rate({30, 1}));
+    info.add_capability(VideoCapability {}.width(1920).height(1080).max_frame_rate({30, 1}));
+
+    // 800x600 is closer to 640x480 than to 1920x1080 in Euclidean distance
+    const VideoParameters result = info.match_closest(800, 600, {30, 1});
+    REQUIRE(result.width() == 640);
+    REQUIRE(result.height() == 480);
+}
+
+TEST_CASE("media::MediaCapture::WaitMode::Block never returns NotReady", "[media][capture]") {
+    const std::string valid_file = "tests/data/video/file_example_MP4_480_1_5MG.mp4";
+    MediaCapture capture = MediaCapture::open_file(valid_file).expect("should open valid file");
+
+    for (int i = 0; i < 5; ++i) {
+        const auto result =
+            capture.next_frame(MediaCapture::WaitMode::Block).expect("next_frame failed");
+        if (result == MediaCapture::Done) {
+            break;
+        }
+        REQUIRE(result != MediaCapture::NotReady);
+    }
+}
+
+TEST_CASE("media::MediaCapture::seek rewinds to beginning", "[media][capture]") {
+    const std::string valid_file = "tests/data/video/file_example_MP4_480_1_5MG.mp4";
+    MediaCapture capture = MediaCapture::open_file(valid_file).expect("should open valid file");
+
+    // Advance several frames
+    for (int i = 0; i < 10; ++i) {
+        const auto result =
+            capture.next_frame(MediaCapture::WaitMode::Block).expect("next_frame failed");
+        if (result == MediaCapture::Done) {
+            break;
+        }
+    }
+    VideoFrame frame_before;
+    REQUIRE_THAT(capture.get_video(frame_before), testing::is_ok());
+    const double ts_before = frame_before.time().to_seconds();
+
+    // Seek to start
+    REQUIRE_THAT(capture.seek(0.0), testing::is_ok());
+
+    // First frame after seek must be earlier than frame_before
+    const auto result =
+        capture.next_frame(MediaCapture::WaitMode::Block).expect("next_frame after seek failed");
+    REQUIRE(result == MediaCapture::Available);
+    VideoFrame frame_after;
+    REQUIRE_THAT(capture.get_video(frame_after), testing::is_ok());
+    REQUIRE(frame_after.time().to_seconds() < ts_before);
+}
+
 }  // namespace p10::media

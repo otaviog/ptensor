@@ -56,8 +56,8 @@ class FaceDetectApp : public p10::viz::GuiApp {
     void on_initialize() override {
         player_.on_initialize();
         player_.add_new_frame_callback([this](VideoFrame& frame) { on_new_frame(frame); });
-        player_.add_render_hook_callback([this](ImDrawList* dl, ImVec2 pos, ImVec2 size) {
-            on_render_hook(dl, pos, size);
+        player_.add_render_hook_callback([this](ImDrawList* dl, auto to_screen) {
+            on_render_hook(dl, to_screen);
         });
     }
 
@@ -85,16 +85,7 @@ class FaceDetectApp : public p10::viz::GuiApp {
         current_dets_ = dets[0];
     }
 
-    void on_render_hook(ImDrawList* draw_list, ImVec2 image_pos, ImVec2 image_size) {
-        if (frame_w_ == 0 || frame_h_ == 0) {
-            return;
-        }
-        auto to_screen = [&](int px, int py) -> ImVec2 {
-            return {
-                image_pos.x + (px / static_cast<float>(frame_w_)) * image_size.x,
-                image_pos.y + (py / static_cast<float>(frame_h_)) * image_size.y,
-            };
-        };
+    void on_render_hook(ImDrawList* draw_list, viz::ToComponentSpace to_screen) {
         for (size_t i = 0; i < current_dets_.faces.size(); ++i) {
             const auto& rect = current_dets_.faces[i];
             const float conf = current_dets_.confidences[i];

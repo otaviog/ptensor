@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include <imgui.h>
 #include <ptensor/media/io/media_capture.hpp>
 #include <ptensor/media/video_frame.hpp>
 
@@ -10,6 +11,19 @@
 #include "timer.hpp"
 
 namespace p10::viz {
+
+struct ToComponentSpace {
+    ImVec2 pos;
+    ImVec2 component_size;
+    ImVec2 frame_size;
+
+    ImVec2 operator()(int x, int y) const {
+        return {
+            pos.x + (x / frame_size.x) * component_size.x,
+                pos.y + (y / frame_size.y) * component_size.y,
+        };
+    }
+};
 
 /// Playback state for video player.
 enum class PlayState { Playing, Paused, Stopped, Step, Streaming };
@@ -21,7 +35,7 @@ class VideoPlayerComponent {
     using NewFrameCallback = std::function<void(p10::media::VideoFrame& frame)>;
 
     /// Callback for custom rendering over the video image.
-    using RenderHookCallback = std::function<void(ImDrawList*, ImVec2, ImVec2)>;
+    using RenderHookCallback = std::function<void(ImDrawList*, ToComponentSpace)>;
 
     /// Construct a video player component.
     VideoPlayerComponent(media::MediaCapture capture, GuiApp& app);

@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <imgui.h>
+
 #include "logging.hpp"
 #include "ptensor/media/io/media_capture.hpp"
 
@@ -54,8 +56,12 @@ void VideoPlayerComponent::on_render_hook(
     ImVec2 image_pos,
     ImVec2 image_size
 ) const {
+    const auto video_width = static_cast<float>(video_texture_.width());
+    const auto video_height = static_cast<float>(video_texture_.height());
+    const auto to_screen =
+        ToComponentSpace {image_pos, image_size, ImVec2 {video_width, video_height}};
     for (const auto& hook : render_hook_callback_) {
-        hook(draw_list, image_pos, image_size);
+        hook(draw_list, to_screen);
     }
 }
 
@@ -95,13 +101,9 @@ void VideoPlayerComponent::button_stop() {
 }
 
 void VideoPlayerComponent::image_camera() const {
-    ImGui::Image(
-        video_texture_.texture_id(),
-        ImVec2(
-            static_cast<float>(video_texture_.width()),
-            static_cast<float>(video_texture_.height())
-        )
-    );
+    const auto video_width = static_cast<float>(video_texture_.width());
+    const auto video_height = static_cast<float>(video_texture_.height());
+    ImGui::Image(video_texture_.texture_id(), ImVec2(video_width, video_height));
     on_render_hook(ImGui::GetWindowDrawList(), ImGui::GetItemRectMin(), ImGui::GetItemRectSize());
 }
 

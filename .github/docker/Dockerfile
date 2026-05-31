@@ -21,3 +21,4 @@ RUN update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/
 RUN ln -sf /usr/bin/ninja /usr/local/bin/ninja
 RUN rm -rf /var/lib/apt/lists/*
 RUN curl -fsSL https://bun.com/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"

@@ -3,16 +3,16 @@ UNIT_TEST := "build/coverage/tests/unit_tests_all"
 _run_coverage:
     cmake --workflow --preset coverage-build
     - {{ UNIT_TEST }}
-    xcrun llvm-profdata merge -sparse default.profraw -o edge-ai-coverage.profdata
+    xcrun llvm-profdata merge -sparse default.profraw -o ptensor-coverage.profdata
     rm default.profraw
 
 coverage: _run_coverage
-    xcrun llvm-cov export -object {{ UNIT_TEST }} -instr-profile=edge-ai-coverage.profdata -format=lcov > lcov.info
-    rm edge-ai-coverage.profdata
+    xcrun llvm-cov export -object {{ UNIT_TEST }} -instr-profile=ptensor-coverage.profdata -format=lcov > lcov.info
+    rm ptensor-coverage.profdata
 
 coverage-html: _run_coverage
-    xcrun llvm-cov show --ignore-filename-regex=.*/build/.* -format=html -output-dir=build/coverage/coverage-html -instr-profile=edge-ai-coverage.profdata --object {{ UNIT_TEST }}
-    rm edge-ai-coverage.profdata
+    xcrun llvm-cov show --ignore-filename-regex=.*/build/.* -format=html -output-dir=build/coverage/coverage-html -instr-profile=ptensor-coverage.profdata --object {{ UNIT_TEST }}
+    rm ptensor-coverage.profdata
 
 clang-format:
     find src -type f \( -name "*.cpp" -o -name "*.hpp" \) ! -path "*/lib/*" -exec clang-format -i {} +

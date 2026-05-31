@@ -18,6 +18,9 @@ class IInfer {
     static P10Result<std::unique_ptr<IInfer>>
     from_onnx(const std::string& onnx_model_path, const InferConfig& config);
 
+    static P10Result<std::unique_ptr<IInfer>>
+    from_coreml(const std::string& coreml_model_path, const InferConfig& config);
+
     IInfer() = default;
     virtual ~IInfer() = default;
 

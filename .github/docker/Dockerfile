@@ -7,7 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     autoconf autoconf-archive automake libtool \
     libx11-dev libxext-dev libwayland-dev wayland-protocols libxkbcommon-dev \
     python3 ca-certificates just \
+    perl \
+    libdbus-1-dev \
     && update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100 \
     && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100 \
     && update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/bin/clang-scan-deps-20 100 \
+    && ln -sf /usr/bin/ninja /usr/local/bin/ninja \
     && rm -rf /var/lib/apt/lists/*

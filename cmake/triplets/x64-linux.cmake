@@ -5,4 +5,4 @@ set(VCPKG_CMAKE_SYSTEM_NAME Linux)
 
 # Required for linking static libraries into shared libraries (ptensor_media)
 set(VCPKG_CXX_FLAGS "-fPIC")
-set(VCPKG_C_FLAGS "-fPIC -Wno-incompatible-pointer-types-discards-qualifiers")
+set(VCPKG_C_FLAGS "-fPIC -Wno-incompatible-pointer-types-discards-qualifiers -Wno-initializer-overrides")

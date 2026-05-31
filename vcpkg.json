@@ -73,10 +73,19 @@
 					"name": "sdl2",
 					"default-features": false,
 					"features": [
+						"vulkan"
+					],
+					"platform": "!linux"
+				},
+				{
+					"name": "sdl2",
+					"default-features": false,
+					"features": [
 						"vulkan",
 						"x11",
 						"wayland"
-					]
+					],
+					"platform": "linux"
 				},
 				{
 					"name": "vulkan",

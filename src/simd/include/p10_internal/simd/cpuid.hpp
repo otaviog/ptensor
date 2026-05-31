@@ -4,7 +4,9 @@
     #include <intrin.h>
 #endif
 
-#if __has_include(<intrinsics.h>) || defined(_MSC_VER) || __has_include(<immintrin.h>)
+#if defined(_MSC_VER) || \
+    ((defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)) && \
+     (__has_include(<intrinsics.h>) || __has_include(<immintrin.h>)))
     #define PTENSOR_HAS_INTRINSICS_H 1
 #endif
 

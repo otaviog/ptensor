@@ -3,18 +3,18 @@
 namespace p10::infer {
 class InferConfig {
   public:
-    enum Engine { Ort };
+    enum class CoreMLComputeUnits { All, CPUAndGPU, CPUOnly, CPUAndNeuralEngine };
 
-    InferConfig& engine(Engine engine) {
-        engine_ = engine;
+    InferConfig& coreml_compute_units(CoreMLComputeUnits units) {
+        coreml_compute_units_ = units;
         return *this;
     }
 
-    Engine engine() const {
-        return engine_;
+    CoreMLComputeUnits coreml_compute_units() const {
+        return coreml_compute_units_;
     }
 
   private:
-    Engine engine_;
+    CoreMLComputeUnits coreml_compute_units_ = CoreMLComputeUnits::All;
 };
 }  // namespace p10::infer

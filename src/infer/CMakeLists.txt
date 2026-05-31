@@ -71,6 +71,12 @@ target_sources(ptensor_infer
     ort_conversions.hpp
     ort_infer.hpp ort_infer.cpp)
 
+if(APPLE)
+  target_sources(ptensor_infer PRIVATE coreml_infer.hpp coreml_infer.mm)
+  set_source_files_properties(coreml_infer.mm PROPERTIES
+    COMPILE_FLAGS "-fno-objc-arc")
+endif()
+
 target_include_directories(
   ptensor_infer
   PRIVATE
@@ -83,6 +89,12 @@ target_link_libraries(ptensor_infer
     onnxruntime::onnxruntime
     ptensor_log
     CURL::libcurl)
+
+if(APPLE)
+  target_link_libraries(ptensor_infer PRIVATE
+    "-framework CoreML"
+    "-framework Foundation")
+endif()
 
 install(TARGETS ptensor_infer
     ARCHIVE EXCLUDE_FROM_ALL

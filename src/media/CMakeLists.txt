@@ -28,28 +28,28 @@ target_sources(ptensor_media
     FILES ${PUBLIC_HEADERS}
   PRIVATE
     # Common
-    src/time/time.cpp
-    src/io/media_device.cpp
-    src/io/media_capture.cpp
+    time/time.cpp
+    io/media_device.cpp
+    io/media_capture.cpp
     # Common writer
-    src/io/media_writer.impl.hpp
-    src/io/media_writer.cpp
+    io/media_writer.impl.hpp
+    io/media_writer.cpp
     # FFMPEG utils
-    src/io/ffmpeg/ffmpeg_memory.hpp
+    io/ffmpeg/ffmpeg_memory.hpp
     # FFMPEG data and processing
-    src/io/ffmpeg/ffmpeg_audio_fifo.hpp src/io/ffmpeg/ffmpeg_audio_fifo.cpp
-    src/io/ffmpeg/ffmpeg_sws.hpp src/io/ffmpeg/ffmpeg_sws.cpp
-    src/io/ffmpeg/ffmpeg_swr.hpp src/io/ffmpeg/ffmpeg_swr.cpp
+    io/ffmpeg/ffmpeg_audio_fifo.hpp io/ffmpeg/ffmpeg_audio_fifo.cpp
+    io/ffmpeg/ffmpeg_sws.hpp io/ffmpeg/ffmpeg_sws.cpp
+    io/ffmpeg/ffmpeg_swr.hpp io/ffmpeg/ffmpeg_swr.cpp
     # FFMPEG capture
-    src/io/ffmpeg/ffmpeg_media_capture_engine.hpp src/io/ffmpeg/ffmpeg_media_capture_engine.cpp
-    src/io/ffmpeg/ffmpeg_file_media_capture.hpp src/io/ffmpeg/ffmpeg_file_media_capture.cpp
-    src/io/ffmpeg/ffmpeg_device_media_capture.hpp src/io/ffmpeg/ffmpeg_device_media_capture.cpp
-    src/io/ffmpeg/ffmpeg_device_enum.cpp
-    src/io/ffmpeg/ffmpeg_video_decoder.hpp src/io/ffmpeg/ffmpeg_video_decoder.cpp
+    io/ffmpeg/ffmpeg_media_capture_engine.hpp io/ffmpeg/ffmpeg_media_capture_engine.cpp
+    io/ffmpeg/ffmpeg_file_media_capture.hpp io/ffmpeg/ffmpeg_file_media_capture.cpp
+    io/ffmpeg/ffmpeg_device_media_capture.hpp io/ffmpeg/ffmpeg_device_media_capture.cpp
+    io/ffmpeg/ffmpeg_device_enum.cpp
+    io/ffmpeg/ffmpeg_video_decoder.hpp io/ffmpeg/ffmpeg_video_decoder.cpp
     # FFMPEG writer
-    src/io/ffmpeg/ffmpeg_media_writer.hpp src/io/ffmpeg/ffmpeg_media_writer.cpp
-    src/io/ffmpeg/ffmpeg_video_encoder.hpp src/io/ffmpeg/ffmpeg_video_encoder.cpp
-    src/io/ffmpeg/ffmpeg_audio_encoder.hpp src/io/ffmpeg/ffmpeg_audio_encoder.cpp
+    io/ffmpeg/ffmpeg_media_writer.hpp io/ffmpeg/ffmpeg_media_writer.cpp
+    io/ffmpeg/ffmpeg_video_encoder.hpp io/ffmpeg/ffmpeg_video_encoder.cpp
+    io/ffmpeg/ffmpeg_audio_encoder.hpp io/ffmpeg/ffmpeg_audio_encoder.cpp
 )
 
 target_include_directories(ptensor_media

@@ -17,9 +17,9 @@ target_sources(ptensor_io
   BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
   FILES ${PUBLIC_HEADERS}
   PRIVATE
-  src/numpy.cpp
-  src/image.cpp
-  src/audio.cpp
+  numpy.cpp
+  image.cpp
+  audio.cpp
 )
 
 target_include_directories(ptensor_io

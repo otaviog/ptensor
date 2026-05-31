@@ -1,6 +1,6 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <ptensor/simd/bitwise_math.hpp>
+#include <p10_internal/simd/bitwise_math.hpp>
 
 namespace p10::simd {
 TEST_CASE("Simd::bitwise_modulo", "[bitwise math]") {

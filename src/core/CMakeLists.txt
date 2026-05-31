@@ -39,19 +39,19 @@ set_source_files_properties(${PUBLIC_HEADERS} PROPERTIES VS_FOLDER "Public Heade
 # Source to public headers
 target_sources(ptensor
     PRIVATE
-    src/p10_error.cpp
-    src/stride.cpp
-    src/tensor.cpp
-    src/tensor.transpose.cpp
-    src/tensor_print.cpp
-    src/detail/blob.cpp
-    src/dtype.cpp
-    src/base64.cpp
+    p10_error.cpp
+    stride.cpp
+    tensor.cpp
+    tensor.transpose.cpp
+    tensor_print.cpp
+    detail/blob.cpp
+    dtype.cpp
+    base64.cpp
 )
 
 if(WIN32)
     target_sources(ptensor
-        PRIVATE src/detail/string.cpp)
+        PRIVATE detail/string.cpp)
 endif(WIN32)
 
 target_include_directories(ptensor

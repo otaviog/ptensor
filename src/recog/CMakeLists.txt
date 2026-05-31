@@ -16,18 +16,18 @@ target_sources(ptensor_recog
   FILES ${PUBLIC_HEADERS}
   PRIVATE
     # Main detection factory
-    src/face_detection.cpp
-    src/face_detector.cpp
+    face_detection.cpp
+    face_detector.cpp
     # Common algorithms
-    src/nms.hpp src/nms.cpp
+    nms.hpp nms.cpp
     # Ssd anchors
-    src/ssd_anchors/ssd_anchor_rect.hpp
-    src/ssd_anchors/ssd_anchor_cache.hpp src/ssd_anchors/ssd_anchor_cache.cpp
-    src/ssd_anchors/ssd_anchor_decoder.hpp src/ssd_anchors/ssd_anchor_decoder.cpp
+    ssd_anchors/ssd_anchor_rect.hpp
+    ssd_anchors/ssd_anchor_cache.hpp ssd_anchors/ssd_anchor_cache.cpp
+    ssd_anchors/ssd_anchor_decoder.hpp ssd_anchors/ssd_anchor_decoder.cpp
     # Blaze face
-    src/blaze_face/blaze_face.hpp src/blaze_face/blaze_face.cpp
-    src/blaze_face/bf_preprocess.hpp src/blaze_face/bf_preprocess.cpp
-    src/blaze_face/bf_postprocess.hpp src/blaze_face/bf_postprocess.cpp)
+    blaze_face/blaze_face.hpp blaze_face/blaze_face.cpp
+    blaze_face/bf_preprocess.hpp blaze_face/bf_preprocess.cpp
+    blaze_face/bf_postprocess.hpp blaze_face/bf_postprocess.cpp)
 
 target_include_directories(
   ptensor_recog

@@ -4,8 +4,8 @@
 #include <cstdint>
 
 #include <ptensor/dtype.hpp>
-#include <ptensor/simd/compiler.hpp>
-#include <ptensor/simd/cpuid.hpp>
+#include <p10_internal/simd/compiler.hpp>
+#include <p10_internal/simd/cpuid.hpp>
 #include <ptensor/tensor.hpp>
 
 #if PTENSOR_HAS_INTRINSICS_H

@@ -6,7 +6,7 @@
 
 #include <ptensor/dtype.hpp>
 #include <ptensor/p10_error.hpp>
-#include <ptensor/simd/bitwise_math.hpp>
+#include <p10_internal/simd/bitwise_math.hpp>
 #include <ptensor/tensor.hpp>
 
 #if PTENSOR_HAS_INTRINSICS_H

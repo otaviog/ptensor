@@ -4,7 +4,7 @@
 #include <fstream>
 
 #include <curl/curl.h>
-#include <ptensor/log/log.hpp>
+#include <p10_internal/log/log.hpp>
 
 #include "ptensor/p10_error.hpp"
 

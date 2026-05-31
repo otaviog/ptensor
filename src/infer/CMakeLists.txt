@@ -16,10 +16,10 @@ target_sources(ptensor_infer
     BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     FILES ${PUBLIC_HEADERS}
   PRIVATE
-    src/infer.cpp
-    src/model_downloader.hpp src/model_downloader.cpp
-    src/ort_conversions.hpp
-    src/ort_infer.hpp src/ort_infer.cpp)
+    infer.cpp
+    model_downloader.hpp model_downloader.cpp
+    ort_conversions.hpp
+    ort_infer.hpp ort_infer.cpp)
 
 target_include_directories(
   ptensor_infer

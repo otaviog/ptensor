@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <memory>
 
-#include <ptensor/log/log.hpp>
+#include <p10_internal/log/log.hpp>
 #if defined(_MSC_VER)
     #include <ptensor/detail/string.hpp>
 #endif

@@ -28,35 +28,35 @@ target_sources(ptensor_viz
     BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     FILES ${PUBLIC_HEADERS}
   PRIVATE
-    src/gui_app.cpp
-    src/image_texture.cpp
-    src/video_player_component.cpp
+    gui_app.cpp
+    image_texture.cpp
+    video_player_component.cpp
 )
 
 if (_USE_VULKAN_BACKEND)
   target_sources(ptensor_viz
     PRIVATE
-      src/vulkan/imgui_impl_sdl2.h src/vulkan/imgui_impl_sdl2.cpp
-      src/vulkan/imgui_impl_vulkan.h src/vulkan/imgui_impl_vulkan.cpp
-      src/vulkan/image_texture.impl.hpp src/vulkan/image_texture.impl.cpp
-      src/vulkan/vulkan_error.hpp src/vulkan/vulkan_error.cpp
-      src/vulkan/vulkan_context.hpp src/vulkan/vulkan_context.cpp
-      src/vulkan/gui_app.impl.hpp src/vulkan/gui_app.impl.cpp
+      vulkan/imgui_impl_sdl2.h vulkan/imgui_impl_sdl2.cpp
+      vulkan/imgui_impl_vulkan.h vulkan/imgui_impl_vulkan.cpp
+      vulkan/image_texture.impl.hpp vulkan/image_texture.impl.cpp
+      vulkan/vulkan_error.hpp vulkan/vulkan_error.cpp
+      vulkan/vulkan_context.hpp vulkan/vulkan_context.cpp
+      vulkan/gui_app.impl.hpp vulkan/gui_app.impl.cpp
   )
-  target_include_directories(ptensor_viz PRIVATE src/vulkan)
+  target_include_directories(ptensor_viz PRIVATE vulkan)
   set(_BACKEND_LIBS Vulkan::Vulkan)
   target_compile_definitions(ptensor_viz PRIVATE _USE_VULKAN_BACKEND)
 elseif (_USE_METAL_BACKEND)
   target_sources(ptensor_viz
     PRIVATE
-      src/vulkan/imgui_impl_sdl2.h src/vulkan/imgui_impl_sdl2.cpp
-      src/metal/imgui_impl_metal.h src/metal/imgui_impl_metal.mm
-      src/metal/image_texture.impl.hpp src/metal/image_texture.impl.cpp
-      src/metal/gui_app.impl.hpp src/metal/gui_app.impl.cpp
+      vulkan/imgui_impl_sdl2.h vulkan/imgui_impl_sdl2.cpp
+      metal/imgui_impl_metal.h metal/imgui_impl_metal.mm
+      metal/image_texture.impl.hpp metal/image_texture.impl.cpp
+      metal/gui_app.impl.hpp metal/gui_app.impl.cpp
   )
-  # src/metal carries the Metal-CPP headers; src/vulkan provides the shared
+  # metal/ carries the Metal-CPP headers; vulkan/ provides the shared
   # imgui_impl_sdl2.h used by the Metal backend too.
-  target_include_directories(ptensor_viz PRIVATE src/metal src/vulkan)
+  target_include_directories(ptensor_viz PRIVATE metal vulkan)
   set(_BACKEND_LIBS
     "-framework Metal"
     "-framework QuartzCore"

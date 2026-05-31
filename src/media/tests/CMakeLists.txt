@@ -3,7 +3,7 @@ add_library(unit_tests_media OBJECT
     test_ffmpeg_sws.cpp
 )
 target_include_directories(
-    unit_tests_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    unit_tests_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/ptensor/media
     ${FFMPEG_INCLUDE_DIRS})
 ptensor_target_options(unit_tests_media Media)

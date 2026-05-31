@@ -1,4 +1,4 @@
-set(_INCLUDE_DIR include/ptensor/simd)
+set(_INCLUDE_DIR include/p10_internal/simd)
 add_library(ptensor_simd_ INTERFACE)
 
 target_sources(ptensor_simd_ INTERFACE FILE_SET public_headers

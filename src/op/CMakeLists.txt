@@ -32,19 +32,19 @@ set_source_files_properties(${PUBLIC_HEADERS} PROPERTIES VS_FOLDER "Public Heade
 # Source to public headers
 target_sources(ptensor_op
     PRIVATE
-    src/accumulator_traits.hpp
-    src/blur.cpp
-    src/elemwise.cpp
-    src/tensor_scalar.cpp
-    src/resize.cpp
-    src/image_layout.cpp
-    src/laplacian_pyramid.cpp
-    src/fft.cpp
-    src/stack.cpp
-    src/image_rgb_to_gray.cpp
-    src/wave.cpp
-    src/window_function.cpp
-    src/statistics.cpp
+    accumulator_traits.hpp
+    blur.cpp
+    elemwise.cpp
+    tensor_scalar.cpp
+    resize.cpp
+    image_layout.cpp
+    laplacian_pyramid.cpp
+    fft.cpp
+    stack.cpp
+    image_rgb_to_gray.cpp
+    wave.cpp
+    window_function.cpp
+    statistics.cpp
 )
 
 target_include_directories(ptensor_op

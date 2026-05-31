@@ -1,12 +1,12 @@
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory(lib/ng-log EXCLUDE_FROM_ALL)
 
-set(_INCLUDE_DIR include/ptensor/log)
+set(_INCLUDE_DIR include/p10_internal/log)
 add_library(ptensor_log STATIC)
 
 target_sources(ptensor_log
     PRIVATE
-        src/log.cpp
+        log.cpp
         # Embed ng-log objects directly — no exported link dependency
         $<TARGET_OBJECTS:ng-log_internal>
     PUBLIC FILE_SET public_headers

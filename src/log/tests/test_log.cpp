@@ -1,7 +1,7 @@
 #include <stdexcept>
 
 #include <catch2/catch_test_macros.hpp>
-#include <ptensor/log/log.hpp>
+#include <p10_internal/log/log.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
 
 using namespace p10;

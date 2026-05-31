@@ -2,13 +2,13 @@
 
 #include <cstdint>
 
-#include <ptensor/simd/compiler.hpp>
+#include <p10_internal/simd/compiler.hpp>
 
 #ifdef PTENSOR_HAS_INTRINSICS_H
     #include <intrinsics.h>
 #endif
 
-#include <ptensor/simd/cpuid.hpp>
+#include <p10_internal/simd/cpuid.hpp>
 
 #include "p10_error.hpp"
 

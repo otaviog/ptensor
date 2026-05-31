@@ -1,7 +1,7 @@
 #include "blaze_face.hpp"
 
 #include <ptensor/infer/infer.hpp>
-#include <ptensor/log/log.hpp>
+#include <p10_internal/log/log.hpp>
 #include <ptensor/op/resize.hpp>
 #include <ptensor/op/statistics.hpp>
 #include <ptensor/tensor.hpp>

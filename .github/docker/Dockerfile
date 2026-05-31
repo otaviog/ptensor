@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libx11-dev libxext-dev libwayland-dev wayland-protocols libxkbcommon-dev \
     python3 ca-certificates just \
     perl \
+    make \
     libdbus-1-dev \
     && update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100 \
     && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100 \

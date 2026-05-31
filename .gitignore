@@ -22,3 +22,4 @@ settings.local.json
 .projectile
 Testing
 tests/data/video/*.mp4
+.DS_Store

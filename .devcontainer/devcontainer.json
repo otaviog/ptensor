@@ -1,0 +1,23 @@
+{
+  "name": "ptensor",
+  "build": {
+    "dockerfile": "../.github/docker/Dockerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cmake-tools",
+        "twxs.cmake",
+        "skellock.just"
+      ],
+      "settings": {
+        "clangd.arguments": ["--compile-commands-dir=${workspaceFolder}/build/clang/debug"],
+        "cmake.configureOnOpen": false
+      }
+    }
+  },
+  "postCreateCommand": "git submodule update --init --recursive",
+  "remoteUser": "root"
+}

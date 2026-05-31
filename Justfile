@@ -3,15 +3,15 @@ UNIT_TEST := "build/coverage/tests/unit_tests_all"
 _run_coverage:
     cmake --workflow --preset coverage-build
     - {{ UNIT_TEST }}
-    llvm-profdata merge -sparse default.profraw -o edge-ai-coverage.profdata
+    xcrun llvm-profdata merge -sparse default.profraw -o edge-ai-coverage.profdata
     rm default.profraw
 
 coverage: _run_coverage
-    llvm-cov export -object {{ UNIT_TEST }} -instr-profile=edge-ai-coverage.profdata -format=lcov > lcov.info
+    xcrun llvm-cov export -object {{ UNIT_TEST }} -instr-profile=edge-ai-coverage.profdata -format=lcov > lcov.info
     rm edge-ai-coverage.profdata
 
 coverage-html: _run_coverage
-    llvm-cov show --ignore-filename-regex=.*/build/.* -format=html -output-dir=build/coverage/coverage-html -instr-profile=edge-ai-coverage.profdata --object {{ UNIT_TEST }}
+    xcrun llvm-cov show --ignore-filename-regex=.*/build/.* -format=html -output-dir=build/coverage/coverage-html -instr-profile=edge-ai-coverage.profdata --object {{ UNIT_TEST }}
     rm edge-ai-coverage.profdata
 
 clang-format:
@@ -33,3 +33,11 @@ test:
 
 run-ci:
     act --job linux-check
+
+DEVCONTAINER_IMAGE := "ptensor-devcontainer"
+
+devcontainer-build:
+    docker build -t {{ DEVCONTAINER_IMAGE }} -f .github/docker/Dockerfile .
+
+devcontainer-shell: devcontainer-build
+    docker run --rm -it -v "$(pwd)":/workspace -w /workspace {{ DEVCONTAINER_IMAGE }} bash

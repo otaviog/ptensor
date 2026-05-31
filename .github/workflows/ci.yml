@@ -107,6 +107,7 @@ jobs:
       - name: Fix workspace ownership for next run
         if: always()
         run: |
-          RUNNER_UID=$(stat -c '%u' "$(dirname "${{ github.workspace }}")" 2>/dev/null \
-            || stat -c '%u' "${{ github.workspace }}")
-          chown -R "${RUNNER_UID}" "${{ github.workspace }}" || true
+          RUNNER_UID=$(stat -c '%u' "$(dirname "$GITHUB_WORKSPACE")" 2>/dev/null \
+            || stat -c '%u' "$GITHUB_WORKSPACE" 2>/dev/null \
+            || echo 0)
+          [ "${RUNNER_UID}" != "0" ] && chown -R "${RUNNER_UID}" "$GITHUB_WORKSPACE" || true

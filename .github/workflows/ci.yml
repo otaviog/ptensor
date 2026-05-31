@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  VCPKG_DEFAULT_BINARY_CACHE: /workspace/vcpkg-cache
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/../vcpkg-cache
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/ci-builder
 
@@ -107,5 +107,6 @@ jobs:
       - name: Fix workspace ownership for next run
         if: always()
         run: |
-          RUNNER_UID=$(stat -c '%u' "$(dirname "${{ github.workspace }}")")
+          RUNNER_UID=$(stat -c '%u' "$(dirname "${{ github.workspace }}")" 2>/dev/null \
+            || stat -c '%u' "${{ github.workspace }}")
           chown -R "${RUNNER_UID}" "${{ github.workspace }}" || true

@@ -1,6 +1,12 @@
 {
   "permissions": {
-    "allow": [],
+    "allow": [
+      "Bash(gh run watch *)",
+      "Bash(just clang-tidy *)",
+      "Bash(clang-tidy *)",
+      "Bash(nm *)",
+      "Bash(/opt/homebrew/opt/llvm/bin/run-clang-tidy *)"
+    ],
     "deny": [
       "Read(./vcpkg/**)"
     ],

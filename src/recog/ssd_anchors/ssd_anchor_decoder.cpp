@@ -1,6 +1,7 @@
 #include "ssd_anchor_decoder.hpp"
 
 #include <cassert>
+#include <cmath>
 
 namespace p10::recog {
 Rect2f

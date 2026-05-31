@@ -14,10 +14,10 @@ RUN apt-get install -y --no-install-recommends \
     libltdl-dev \
     libgl-dev libgles-dev \
     libpulse-dev \
-    libasound2-dev \
-RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100 \
-RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100 \
-RUN update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/bin/clang-scan-deps-20 100 \
-RUN ln -sf /usr/bin/ninja /usr/local/bin/ninja \
+    libasound2-dev
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
+RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
+RUN update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/bin/clang-scan-deps-20 100
+RUN ln -sf /usr/bin/ninja /usr/local/bin/ninja
 RUN rm -rf /var/lib/apt/lists/*
 RUN curl -fsSL https://bun.com/install | bash

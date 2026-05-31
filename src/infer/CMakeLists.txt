@@ -1,6 +1,30 @@
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/infer)
-set(onnxruntime_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/onnxruntime-osx-arm64-1.24.4/lib/cmake/onnxruntime)
-find_package(onnxruntime CONFIG REQUIRED)
+
+# ONNX Runtime — bypass cmake config (vcpkg wrapping causes path resolution
+# issues with prebuilt tarballs); declare the imported target directly.
+set(_ORT_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/lib/onnxruntime)
+if(NOT EXISTS ${_ORT_ROOT}/include)
+  message(STATUS "ONNX Runtime not found — running scripts/setup.ts")
+  execute_process(
+    COMMAND ${CMAKE_SOURCE_DIR}/scripts/run-bun.sh
+            ${CMAKE_SOURCE_DIR}/scripts/setup.ts
+    RESULT_VARIABLE _ORT_SETUP_RESULT
+    COMMAND_ECHO STDOUT)
+  if(NOT _ORT_SETUP_RESULT EQUAL 0)
+    message(FATAL_ERROR "scripts/setup.ts failed. Run manually: bun scripts/setup.ts")
+  endif()
+endif()
+
+find_library(_ORT_LIB
+  NAMES onnxruntime
+  PATHS ${_ORT_ROOT}/lib ${_ORT_ROOT}/lib64
+  NO_DEFAULT_PATH REQUIRED)
+
+add_library(onnxruntime::onnxruntime SHARED IMPORTED)
+set_target_properties(onnxruntime::onnxruntime PROPERTIES
+  IMPORTED_LOCATION             "${_ORT_LIB}"
+  INTERFACE_INCLUDE_DIRECTORIES "${_ORT_ROOT}/include"
+)
 find_package(CURL REQUIRED)
 
 add_library(ptensor_infer STATIC)

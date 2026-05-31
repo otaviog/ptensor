@@ -1,7 +1,8 @@
 FROM ubuntu:latest
 
 # System dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends \
     ninja-build cmake git curl zip unzip tar pkg-config linux-libc-dev nasm \
     clang-20 clang-tools-20 \
     autoconf autoconf-archive automake libtool \
@@ -14,8 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl-dev libgles-dev \
     libpulse-dev \
     libasound2-dev \
-    && update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100 \
-    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100 \
-    && update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/bin/clang-scan-deps-20 100 \
-    && ln -sf /usr/bin/ninja /usr/local/bin/ninja \
-    && rm -rf /var/lib/apt/lists/*
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100 \
+RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100 \
+RUN update-alternatives --install /usr/bin/clang-scan-deps clang-scan-deps /usr/bin/clang-scan-deps-20 100 \
+RUN ln -sf /usr/bin/ninja /usr/local/bin/ninja \
+RUN rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://bun.com/install | bash

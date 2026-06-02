@@ -4,7 +4,7 @@
 
 #include "p10_error.hpp"
 
-namespace p10 {
+namespace p10::detail {
 
 P10Result<std::wstring> string_to_wstring(const std::string& ansi) {
     ULONG charCount;

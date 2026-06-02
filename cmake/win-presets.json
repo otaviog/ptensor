@@ -11,6 +11,9 @@
       "displayName": "Visual Studio 2026 (Dev)",
       "description": "Development build with Visual Studio (2026)",
       "generator": "Visual Studio 18 2026",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/msbuild/installed"
+      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",

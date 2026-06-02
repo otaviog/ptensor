@@ -47,8 +47,28 @@ if(NOT EXISTS "${_ORT_LOCAL_PATH}")
     endif()
 endif()
 
-set(onnxruntime_DIR "${_ORT_LOCAL_PATH}/lib/cmake/onnxruntime")
-find_package(onnxruntime CONFIG REQUIRED)
+set(_ORT_CMAKE_DIR "${_ORT_LOCAL_PATH}/lib/cmake/onnxruntime")
+if(EXISTS "${_ORT_CMAKE_DIR}/onnxruntimeConfig.cmake")
+    set(onnxruntime_DIR "${_ORT_CMAKE_DIR}")
+    find_package(onnxruntime CONFIG REQUIRED)
+else()
+    # Windows prebuilt doesn't ship cmake configs — create the IMPORTED target directly.
+    if(NOT TARGET onnxruntime::onnxruntime)
+        add_library(onnxruntime::onnxruntime SHARED IMPORTED GLOBAL)
+        if(WIN32)
+            set_target_properties(onnxruntime::onnxruntime PROPERTIES
+                IMPORTED_LOCATION     "${_ORT_LOCAL_PATH}/lib/onnxruntime.dll"
+                IMPORTED_IMPLIB       "${_ORT_LOCAL_PATH}/lib/onnxruntime.lib"
+                INTERFACE_INCLUDE_DIRECTORIES "${_ORT_LOCAL_PATH}/include"
+            )
+        else()
+            set_target_properties(onnxruntime::onnxruntime PROPERTIES
+                IMPORTED_LOCATION     "${_ORT_LOCAL_PATH}/lib/libonnxruntime.so.${_ORT_VERSION}"
+                INTERFACE_INCLUDE_DIRECTORIES "${_ORT_LOCAL_PATH}/include"
+            )
+        endif()
+    endif()
+endif()
 find_package(CURL REQUIRED)
 
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/infer)

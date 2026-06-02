@@ -31,7 +31,7 @@ OrtInfer::OrtInfer(const std::string& model_path, Ort::Env&& env) :
     session_.reset(new Ort::Session(
         env_,
 #if defined(_MSC_VER)
-        string_to_wstring(model_path_).unwrap().c_str(),
+        p10::detail::string_to_wstring(model_path_).unwrap().c_str(),
 #else
         model_path_.c_str(),
 #endif

@@ -30,6 +30,10 @@ target_compile_definitions(ptensor_log PRIVATE
 
 target_link_libraries(ptensor_log PUBLIC ptensor)
 
+if(WIN32)
+    target_link_libraries(ptensor_log PRIVATE dbghelp)
+endif()
+
 set_target_properties(ptensor_log PROPERTIES FOLDER "Log")
 
 install(TARGETS ptensor_log

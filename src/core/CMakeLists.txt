@@ -74,9 +74,10 @@ install(FILES
 
 ptensor_target_options(ptensor "Core")
 
-# On MSVC the static lib and the DLL import lib would both be named ptensor.lib
-# in the same output directory. Give the static lib a different build name.
-if(MSVC)
+# On Windows (MSVC or Clang) the static lib and the DLL import lib would both
+# be named ptensor.lib in the same output directory. Give the static lib a
+# different build name regardless of which Windows toolchain is in use.
+if(WIN32)
     set_target_properties(ptensor PROPERTIES ARCHIVE_OUTPUT_NAME ptensor_static)
 endif()
 

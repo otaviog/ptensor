@@ -9,18 +9,7 @@
 namespace p10::recog {
 
 P10Error BlazeFace::detect(Tensor& images, std::span<FaceDetection> out_detections) {
-    const auto input_shape = images.shape().as_span();
-    if (input_shape.size() != 4) {
-        return P10Error::InvalidArgument << "Input tensor must have 4 dimensions [N x C x H x W]";
-    }
-    if (input_shape[1] != 3) {
-        return P10Error::InvalidArgument << "Input tensor must have 3 channels (C=3)";
-    }
-
-    if (input_shape[0] != out_detections.size()) {
-        return P10Error::InvalidArgument
-            << "Output detections size must match the number of input images";
-    }
+    P10_RETURN_IF_ERROR(verify_detect_arguments(images, out_detections));
 
     auto preproc_result = pre_process_.process(images, input_buffer_[0]);
     if (preproc_result.is_error()) {

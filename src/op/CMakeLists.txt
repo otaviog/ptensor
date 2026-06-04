@@ -7,6 +7,7 @@ find_path(POCKETFFT_INCLUDE_DIRS "pocketfft_hdronly.h" REQUIRED)
 # Public Headers
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/blur.hpp
+  ${_INCLUDE_DIR}/crop.hpp
   ${_INCLUDE_DIR}/elemwise.hpp
   ${_INCLUDE_DIR}/resize.hpp
   ${_INCLUDE_DIR}/image_layout.hpp
@@ -34,6 +35,7 @@ target_sources(ptensor_op
     PRIVATE
     accumulator_traits.hpp
     blur.cpp
+    crop.cpp
     elemwise.cpp
     tensor_scalar.cpp
     resize.cpp

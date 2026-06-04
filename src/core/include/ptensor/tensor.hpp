@@ -20,6 +20,7 @@
 #include "shape.hpp"
 #include "span2d.hpp"
 #include "span3d.hpp"
+#include "span4d.hpp"
 #include "stride.hpp"
 #include "tensor_options.hpp"
 
@@ -369,6 +370,46 @@ class Tensor {
     }
 
     template<typename T>
+    P10Result<PlanarSpan4D<T>> as_span4d() {
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_4d_span<T>());
+
+        auto data_res = data_as<T>();
+        if (!data_res.is_ok()) {
+            return Err(data_res.error());
+        }
+        const auto shape = shape_.as_span();
+        return Ok(
+            PlanarSpan4D<T> {
+                data_res.unwrap(),
+                static_cast<size_t>(shape[0]),
+                static_cast<size_t>(shape[1]),
+                static_cast<size_t>(shape[2]),
+                static_cast<size_t>(shape[3])
+            }
+        );
+    }
+
+    template<typename T>
+    P10Result<PlanarSpan4D<const T>> as_span4d() const {
+        P10_RETURN_ERR_IF_ERROR(check_dims_for_4d_span<T>());
+
+        auto data_res = data_as<const T>();
+        if (data_res.is_error()) {
+            return Err(data_res.error());
+        }
+        const auto shape = shape_.as_span();
+        return Ok(
+            PlanarSpan4D<const T> {
+                data_res.unwrap(),
+                static_cast<size_t>(shape[0]),
+                static_cast<size_t>(shape[1]),
+                static_cast<size_t>(shape[2]),
+                static_cast<size_t>(shape[3])
+            }
+        );
+    }
+
+    template<typename T>
     P10Result<Accessor1D<T>> as_accessor1d() {
         P10_RETURN_ERR_IF_ERROR(check_dims_for_accessor1d<T>());
 
@@ -654,6 +695,29 @@ class Tensor {
             return P10Error::InvalidArgument << "Tensor must be contiguous for Span3D access";
         }
         return check_dims_for_3d_access<T>();
+    }
+
+    template<typename T>
+    P10Error check_dims_for_4d_access() const {
+        if constexpr (detail::IS_COMPLEX_V<std::remove_const_t<T>>) {
+            if (dims() != 5) {
+                return P10Error::InvalidArgument
+                    << "Tensor must have 5 dimensions [N x B x H x W x 2] for complex types";
+            }
+        } else {
+            if (dims() != 4) {
+                return P10Error::InvalidArgument << "Tensor must have 4 dimensions";
+            }
+        }
+        return P10Error::Ok;
+    }
+
+    template<typename T>
+    P10Error check_dims_for_4d_span() const {
+        if (!is_contiguous()) {
+            return P10Error::InvalidArgument << "Tensor must be contiguous for Span4D access";
+        }
+        return check_dims_for_4d_access<T>();
     }
 
     Blob blob_;

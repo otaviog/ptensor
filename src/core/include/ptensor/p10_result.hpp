@@ -38,16 +38,22 @@ class P10Result {
     }
 
     OkType unwrap() {
+        if (is_ok()) {
+            return std::move(std::get<OkType>(value_));
+        }
+
+        error().expect("unwrap called on an error value");
+        // This line should never be reached because err().expect() will panic
         return std::move(std::get<OkType>(value_));
     }
 
     OkType expect(const std::string& message) {
         if (is_ok()) {
-            return unwrap();
+            return std::move(std::get<OkType>(value_));
         }
         error().expect(message);
         // This line should never be reached because err().expect() will panic
-        return unwrap();
+        return std::move(std::get<OkType>(value_));
     }
 
     const P10Error& error() const {

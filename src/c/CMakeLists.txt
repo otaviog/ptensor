@@ -77,6 +77,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     )
 endif()
 
+if(APPLE)
+    set_target_properties(ptensor_capi PROPERTIES
+        INSTALL_RPATH "@loader_path")
+endif()
+
 # Install the target
 install(TARGETS ptensor_capi
     EXPORT ptensorTargets

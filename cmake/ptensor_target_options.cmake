@@ -3,6 +3,9 @@ function(ptensor_target_options target folder)
         $<$<CXX_COMPILER_ID:MSVC>:/W4>
         $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
     )
+    if(APPLE)
+        target_link_options(${target} PRIVATE -Wl,-no_warn_duplicate_libraries)
+    endif()
 
     get_target_property(target_type ${target} TYPE)
     if(NOT WIN32 AND target_type STREQUAL "STATIC_LIBRARY")

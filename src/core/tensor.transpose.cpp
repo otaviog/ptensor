@@ -5,7 +5,7 @@
 #include <p10_internal/simd/compiler.hpp>
 #include <p10_internal/simd/cpuid.hpp>
 
-#ifdef PTENSOR_HAS_INTRINSICS_H
+#if PTENSOR_HAS_INTRINSICS_H
     #include <immintrin.h>
 #endif
 

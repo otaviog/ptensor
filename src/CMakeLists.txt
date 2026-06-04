@@ -76,10 +76,18 @@ endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_options(ptensor_shared PRIVATE -Wl,-Bsymbolic)
 endif()
+if(APPLE)
+    target_link_options(ptensor_shared PRIVATE -Wl,-no_warn_duplicate_libraries)
+endif()
 
 target_include_directories(ptensor_shared PUBLIC
     $<INSTALL_INTERFACE:include>
 )
+
+if(APPLE)
+    set_target_properties(ptensor_shared PROPERTIES
+        INSTALL_RPATH "@loader_path")
+endif()
 
 install(TARGETS ptensor_shared
     EXPORT ptensorTargets

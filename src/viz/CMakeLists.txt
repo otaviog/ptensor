@@ -88,6 +88,9 @@ target_link_libraries(ptensor_viz
 )
 
 ptensor_target_options(ptensor_viz "Viz")
+if(_USE_METAL_BACKEND)
+  target_compile_options(ptensor_viz PRIVATE -Wno-gnu-anonymous-struct)
+endif()
 
 if (BUILD_TESTS)
   add_subdirectory(tests)

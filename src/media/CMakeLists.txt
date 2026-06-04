@@ -1,9 +1,27 @@
 find_package(FFMPEG REQUIRED)
 
-# clang's driver already links libc++ implicitly; FFMPEG_LIBRARIES also lists
-# bare `c++`, which produces a duplicate-library link warning on macOS.
-set(_FFMPEG_LIBRARIES ${FFMPEG_LIBRARIES})
-list(TRANSFORM _FFMPEG_LIBRARIES REPLACE "^c\\+\\+$" "")
+# Build _FFMPEG_LIBRARIES from FFMPEG_LIBRARIES, skipping c++ and its paired
+# optimized/debug keyword. Clang links libc++ implicitly, and a dangling
+# keyword left behind by a simple REPLACE produces consecutive-specifier
+# CMake warnings.
+set(_FFMPEG_LIBRARIES "")
+set(_pending_kw "")
+foreach(_lib IN LISTS FFMPEG_LIBRARIES)
+  if(_lib STREQUAL "optimized" OR _lib STREQUAL "debug")
+    set(_pending_kw "${_lib}")
+  elseif(_lib STREQUAL "c++")
+    set(_pending_kw "")
+  elseif(NOT _lib STREQUAL "")
+    if(_pending_kw)
+      list(APPEND _FFMPEG_LIBRARIES "${_pending_kw}" "${_lib}")
+      set(_pending_kw "")
+    else()
+      list(APPEND _FFMPEG_LIBRARIES "${_lib}")
+    endif()
+  endif()
+endforeach()
+unset(_pending_kw)
+unset(_lib)
 
 set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/ptensor/media)
 add_library(ptensor_media STATIC)

@@ -17,7 +17,7 @@
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
                 "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
-              "VCPKG_MANIFEST_FEATURES": "tests;samples;io;op;infer;recog;media;viz",
+              "VCPKG_MANIFEST_FEATURES": "tests;samples;io;op;infer;media;viz",
                 "WITH_IO": "ON",
                 "WITH_OP": "ON",
        			"WITH_INFER": "ON",

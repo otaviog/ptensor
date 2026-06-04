@@ -17,6 +17,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/iterator.hpp
   ${_INCLUDE_DIR}/span2d.hpp
   ${_INCLUDE_DIR}/span3d.hpp
+  ${_INCLUDE_DIR}/span4d.hpp
   ${_INCLUDE_DIR}/tensor.hpp
   ${_INCLUDE_DIR}/tensor_options.hpp
   ${_INCLUDE_DIR}/tensor_print.hpp

@@ -3,6 +3,7 @@
 #include <ptensor/infer/infer.hpp>
 
 #include "blaze_face/blaze_face.hpp"
+#include "ptensor/p10_error.hpp"
 
 namespace p10::recog {
 
@@ -34,7 +35,7 @@ P10Error IFaceDetector::verify_detect_arguments(Tensor& images, std::span<FaceDe
         return P10Error::InvalidArgument
             << "Output detections size must match the number of input images";
     }
-
+    return P10Error::Ok;
 }
 
 }  // namespace p10::recog

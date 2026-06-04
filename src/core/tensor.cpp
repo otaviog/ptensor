@@ -79,7 +79,7 @@ P10Result<Tensor> Tensor::from_random(
     result.visit([&rng, min, max](auto span) {
         using SpanType = std::decay_t<decltype(span)>::value_type;
         std::uniform_real_distribution<double> dist(min, max);
-        for (auto i = 0; i < span.size(); ++i) {
+        for (auto i = 0UL; i < span.size(); ++i) {
             span[i] = static_cast<SpanType>(dist(rng));
         }
     });

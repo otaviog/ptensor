@@ -25,16 +25,16 @@ P10Error crop(const Tensor& image, size_t x, int y, size_t w, size_t h, Tensor& 
         crop.create(make_shape(num_channels, int64_t(h), int64_t(w)), image.dtype())
     );
 
-    if (image.is_continuous()) {
+    if (image.is_contiguous()) {
         return image.dtype().match([&](auto type_tag) -> P10Error {
             using scalar_t = decltype(type_tag)::type;
 
-            auto src_res = image.as_span3d<const scalar_t>();
+            auto src_res = image.as_planar_span3d<const scalar_t>();
             if (src_res.is_error()) {
                 return src_res.error();
             }
             auto src = src_res.unwrap();
-            auto dst = crop.as_span3d<scalar_t>().unwrap();
+            auto dst = crop.as_planar_span3d<scalar_t>().unwrap();
 
             for (int64_t c = 0; c < num_channels; ++c) {
                 auto plane_src = src[c];
@@ -45,7 +45,7 @@ P10Error crop(const Tensor& image, size_t x, int y, size_t w, size_t h, Tensor& 
                     std::copy(row_src.begin(), row_src.end(), row_dst.begin());
                 }
             }
-            return P10Error::Ok
+            return P10Error::Ok;
         });
     } else {
         return image.dtype().match([&](auto type_tag) -> P10Error {

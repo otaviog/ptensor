@@ -370,7 +370,7 @@ class Tensor {
     }
 
     template<typename T>
-    P10Result<PlanarSpan4D<T>> as_span4d() {
+    P10Result<Span4D<T>> as_span4d() {
         P10_RETURN_ERR_IF_ERROR(check_dims_for_4d_span<T>());
 
         auto data_res = data_as<T>();
@@ -379,7 +379,7 @@ class Tensor {
         }
         const auto shape = shape_.as_span();
         return Ok(
-            PlanarSpan4D<T> {
+            Span4D<T> {
                 data_res.unwrap(),
                 static_cast<size_t>(shape[0]),
                 static_cast<size_t>(shape[1]),
@@ -390,7 +390,7 @@ class Tensor {
     }
 
     template<typename T>
-    P10Result<PlanarSpan4D<const T>> as_span4d() const {
+    P10Result<Span4D<const T>> as_span4d() const {
         P10_RETURN_ERR_IF_ERROR(check_dims_for_4d_span<T>());
 
         auto data_res = data_as<const T>();
@@ -399,7 +399,7 @@ class Tensor {
         }
         const auto shape = shape_.as_span();
         return Ok(
-            PlanarSpan4D<const T> {
+            Span4D<const T> {
                 data_res.unwrap(),
                 static_cast<size_t>(shape[0]),
                 static_cast<size_t>(shape[1]),

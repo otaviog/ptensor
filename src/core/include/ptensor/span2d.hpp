@@ -4,7 +4,16 @@
 #include <cstddef>
 #include <span>
 
+#include "accessor2d.hpp"
+
 namespace p10 {
+struct TileRegion2D {
+    ptrdiff_t offset;
+    size_t width;
+    size_t height;
+    size_t stride;
+};
+
 template<typename T>
 class Span2D {
   public:
@@ -38,6 +47,22 @@ class Span2D {
 
     size_t width() const {
         return width_;
+    }
+
+    Accessor2D<const T> accessor(const TileRegion2D& region) const {
+        return Accessor2D<T>(
+            data_ + region.offset,
+            {region.height, region.width},
+            {region.stride, 1}
+        );
+    }
+
+    Accessor2D<T> accessor(const TileRegion2D& region) {
+        return Accessor2D<T>(
+            data_ + region.offset,
+            {region.height, region.width},
+            {region.stride, 1}
+        );
     }
 
   private:

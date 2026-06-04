@@ -58,7 +58,7 @@ P10Error resize(const Tensor& input, Tensor& output, size_t new_width, size_t ne
 
         if constexpr (std::is_same_v<scalar_t, uint8_t>) {
 #if defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
-            if (simd::is_avx2_supported() && input.is_contiguous()) {
+            if (simd::is_supported(simd::SimdSet::AVX2) && input.is_contiguous()) {
                 return resize_avx2_impl(
                     input_accessor,
                     output.as_accessor3d<scalar_t>().unwrap(),

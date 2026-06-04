@@ -191,7 +191,7 @@ P10Error Tensor::transpose(Tensor& other) const {
 
         const size_t aligned_max_rows = rows - bitwise_modulo<CACHE_BLOCK>(rows);
         const size_t aligned_max_cols = cols - bitwise_modulo<CACHE_BLOCK>(cols);
-        [[maybe_unused]] const bool avx2_supported = simd::is_avx2_supported();
+        [[maybe_unused]] const bool avx2_supported = simd::is_supported(simd::SimdSet::AVX2);
 
         for (size_t block_row = 0; block_row < aligned_max_rows; block_row += CACHE_BLOCK) {
             for (size_t block_col = 0; block_col < aligned_max_cols; block_col += CACHE_BLOCK) {

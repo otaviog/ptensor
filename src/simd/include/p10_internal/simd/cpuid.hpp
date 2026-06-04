@@ -1,31 +1,17 @@
 #pragma once
 
-#ifdef _MSC_VER
-    #include <intrin.h>
-#endif
-
-#if defined(_MSC_VER) || \
-    ((defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)) && \
-     (__has_include(<intrinsics.h>) || __has_include(<immintrin.h>)))
-    #define PTENSOR_HAS_INTRINSICS_H 1
-#endif
+#include <cstddef>
+#include <cinttypes>
 
 namespace p10::simd {
-inline bool is_avx2_supported() {
-#ifdef _MSC_VER
-    int cpuInfo[4];
-    __cpuid(cpuInfo, 0);
-    int nIds = cpuInfo[0];
+enum class SimdSet: uint8_t {
+    AVX2 = 0, WASM = 1, AdvSIMD = 2
+};
 
-    if (nIds >= 7) {
-        __cpuidex(cpuInfo, 7, 0);
-        return (cpuInfo[1] & (1 << 5)) != 0;  // EBX bit 5 is AVX2
-    }
-    return false;
-#elif defined(__x86_64__) || defined(__i386__)
-    return __builtin_cpu_supports("avx2");
-#else
-    return false;
-#endif
-}
+bool is_supported(SimdSet set);
+
+size_t l1_cache_size();
+size_t l2_cache_size();
+size_t l3_cache_size();
+
 }  // namespace p10::simd

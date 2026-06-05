@@ -15,11 +15,11 @@ ImageTexture::~ImageTexture() = default;
 ImageTexture::ImageTexture(ImageTexture&&) noexcept = default;
 ImageTexture& ImageTexture::operator=(ImageTexture&&) noexcept = default;
 
-P10Error ImageTexture::upload(const Tensor& tensor) {
+P10Error ImageTexture::upload(const Tensor& tensor, TensorLayout layout) {
     if (!impl_) {
         return P10Error::InvalidOperation << "ImageTexture not initialized";
     }
-    return impl_->upload(tensor);
+    return impl_->upload(tensor, layout);
 }
 
 ImTextureID ImageTexture::texture_id() const {

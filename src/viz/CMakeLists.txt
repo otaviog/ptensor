@@ -30,6 +30,7 @@ target_sources(ptensor_viz
   PRIVATE
     gui_app.cpp
     image_texture.cpp
+    texture_stager.cpp
     video_player_component.cpp
 )
 

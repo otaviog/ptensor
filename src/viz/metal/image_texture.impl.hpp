@@ -3,6 +3,7 @@
 #include <ptensor/p10_error.hpp>
 
 #include "image_texture.hpp"
+#include "../texture_stager.hpp"
 
 namespace p10 {
 class Tensor;
@@ -11,7 +12,7 @@ class Tensor;
 namespace p10::viz {
 
 struct ImageTextureMetalContext {
-    void* device;  // id<MTLDevice> — not retained here, owned by GuiApp::Impl
+    void* device;         // id<MTLDevice> — not retained here, owned by GuiApp::Impl
     void* command_queue;  // id<MTLCommandQueue> — not retained here, owned by GuiApp::Impl
 };
 
@@ -25,11 +26,13 @@ class ImageTexture::Impl {
 
     Impl(const Impl&) = delete;
     Impl& operator=(const Impl&) = delete;
+    Impl(Impl&&) = delete;
+    Impl& operator=(Impl&&) = delete;
 
-    P10Error upload(const Tensor& tensor);
+    P10Error upload(const Tensor& tensor, TensorLayout layout);
 
     ImTextureID texture_id() const {
-        return (ImTextureID)(uintptr_t)texture_;
+        return reinterpret_cast<ImTextureID>(texture_);
     }
 
     int width() const {
@@ -54,6 +57,10 @@ class ImageTexture::Impl {
     void* texture_ = nullptr;  // CFTypeRef (retained) to id<MTLTexture>
     int width_ = 0;
     int height_ = 0;
+    TextureFormat tex_fmt_ = TextureFormat::Rgba8;
+
+    // Metal can sample R8 and RGBA8 natively.
+    TextureStager stager_ {TextureFormat::Gray8, TextureFormat::Rgba8};
 };
 
 }  // namespace p10::viz

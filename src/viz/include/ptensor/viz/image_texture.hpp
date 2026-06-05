@@ -8,6 +8,11 @@
 
 namespace p10::viz {
 
+enum class TensorLayout {
+    HWC,  ///< channels-last  [H, W, C]
+    CHW,  ///< channels-first [C, H, W]
+};
+
 /// GPU texture for rendering with ImGui. Hides backend (Vulkan/Metal) details.
 class ImageTexture {
   public:
@@ -27,8 +32,9 @@ class ImageTexture {
     ImageTexture(ImageTexture&&) noexcept;
     ImageTexture& operator=(ImageTexture&&) noexcept;
 
-    /// Upload a tensor to GPU as a texture (shape [H, W, C], C in {1, 3, 4}, dtype UInt8 or Float32).
-    P10Error upload(const Tensor& tensor);
+    /// Upload a tensor to GPU as a texture.
+    /// Shape [H, W, C] or [C, H, W] depending on layout. C in {1, 3, 4}, dtype UInt8 or Float32.
+    P10Error upload(const Tensor& tensor, TensorLayout layout = TensorLayout::HWC);
 
     /// Get the ImGui texture ID for use with ImGui::Image().
     ImTextureID texture_id() const;

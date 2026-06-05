@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 
 #include "image_texture.hpp"
+#include "../texture_stager.hpp"
 
 namespace p10 {
 class Tensor;
@@ -25,7 +26,7 @@ class ImageTexture::Impl {
         clear();
     }
 
-    P10Error upload(const Tensor& tensor);
+    P10Error upload(const Tensor& tensor, TensorLayout layout);
 
     ImTextureID texture_id() const {
         return (ImTextureID)descriptor_set_;
@@ -58,6 +59,7 @@ class ImageTexture::Impl {
 
     int width_ = 0;
     int height_ = 0;
+    TextureFormat tex_fmt_ = TextureFormat::Rgba8;
 
     ImageTextureVkContext context_;
 
@@ -66,6 +68,9 @@ class ImageTexture::Impl {
     VkImageView image_view_ = VK_NULL_HANDLE;
     VkSampler sampler_ = VK_NULL_HANDLE;
     VkDescriptorSet descriptor_set_ = VK_NULL_HANDLE;
+
+    // Vulkan can sample R8 and RGBA8 natively.
+    TextureStager stager_ {TextureFormat::Gray8, TextureFormat::Rgba8};
 };
 
 }  // namespace p10::viz

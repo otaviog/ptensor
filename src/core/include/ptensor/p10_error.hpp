@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <string>
-
+#include <utility>
 #include <ptensor/ptensor_error.h>
 
 #include "detail/panic.hpp"
@@ -61,6 +61,14 @@ class P10Error {
         if (is_error()) {
             detail::panic(message + " - " + to_string());
         }
+    }
+
+    template<typename F>
+    P10Error& map_error(F &&func) {
+        if (is_error()) {
+            std::forward<F>(func)(*this);
+        }
+        return *this;
     }
 
   private:

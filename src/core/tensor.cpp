@@ -258,7 +258,7 @@ P10Error Tensor::unsqueeze(int64_t dim) {
         new_shape_s[i] = old_shape_s[i];
     }
     new_shape_s[static_cast<size_t>(dim)] = 1;
-    for (size_t i = static_cast<size_t>(dim); i < dims(); ++i) {
+    for (auto i = static_cast<size_t>(dim); i < dims(); ++i) {
         new_shape_s[i + 1] = old_shape_s[i];
     }
 
@@ -267,7 +267,7 @@ P10Error Tensor::unsqueeze(int64_t dim) {
     return P10Error::Ok;
 }
 
-P10Result<Tensor> Tensor::select_dimension(int64_t dim, int64_t index) {
+P10Result<Tensor> Tensor::select_dimension(int64_t dim, int64_t index) const {
     if (dim >= static_cast<int64_t>(dims()) || dim < 0) {
         return Err(
             P10Error::InvalidArgument << "Cannot select dimension " + std::to_string(dim)

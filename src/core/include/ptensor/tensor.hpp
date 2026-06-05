@@ -173,7 +173,7 @@ class Tensor {
         return shape_.count();
     }
 
-    Tensor as_view() {
+    Tensor as_view() const {
         return Tensor(blob_.view(), shape(), options());
     }
 
@@ -565,7 +565,7 @@ class Tensor {
 
     P10Error unsqueeze(int64_t dim);
 
-    P10Result<Tensor> select_dimension(int64_t dim, int64_t index);
+    P10Result<Tensor> select_dimension(int64_t dim, int64_t index) const;
 
     /// Reshapes the tensor to the given shape.
     /// # Arguments

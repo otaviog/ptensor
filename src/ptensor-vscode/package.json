@@ -3,6 +3,7 @@
   "displayName": "ptensor Tensor Viewer",
   "description": "Debugger helper that visualizes ptensor Tensor contents during a debug session.",
   "version": "0.0.1",
+  "publisher": "ptensor",
   "engines": {
     "vscode": "^1.120.0"
   },
@@ -20,6 +21,11 @@
         "command": "ptensor.viewTensor",
         "title": "Visualize Tensor",
         "category": "ptensor"
+      },
+      {
+        "command": "ptensor.previewSamples",
+        "title": "Preview Sample Tensors",
+        "category": "ptensor"
       }
     ],
     "menus": {
@@ -33,6 +39,9 @@
         {
           "command": "ptensor.viewTensor",
           "when": "inDebugMode"
+        },
+        {
+          "command": "ptensor.previewSamples"
         }
       ]
     },
@@ -53,12 +62,19 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run build:viewer && npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "build:viewer:bundle": "cd ../../bindings/typescript/ptensor-view && bun run build:webview",
+    "copy:viewer": "node ./scripts/copy-viewer.mjs",
+    "build:viewer": "npm run build:viewer:bundle && npm run copy:viewer",
+    "package": "vsce package",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
+  },
+  "dependencies": {
+    "ptensor-ts": "file:../../bindings/typescript/ptensor-ts"
   },
   "devDependencies": {
     "@types/vscode": "^1.120.0",
@@ -68,6 +84,7 @@
     "eslint": "^9.39.3",
     "typescript": "^5.9.3",
     "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.2.1"
   }
 }

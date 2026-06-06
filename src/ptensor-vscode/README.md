@@ -2,6 +2,14 @@
 
 VS Code debugger helper that visualizes `p10::Tensor` contents while a C++ debug session is paused.
 
+## Try it without a debugger
+
+Run **`ptensor: Preview Sample Tensors`** from the command palette. It opens the
+viewer panel with built-in sample tensors (tables, grayscale / RGB images,
+planar vs interleaved, batched) and a sidebar to switch between them — the
+fastest way to see the panel. For pure UI work, `bun run dev` in
+`src/ptensor-view` serves the same components with HMR.
+
 ## What it does
 
 While stopped at a breakpoint, right-click any `Tensor` variable in the **Variables** view and pick **Visualize Tensor**, or run `ptensor: Visualize Tensor` from the command palette and type the expression. The extension queries the debug session for the tensor's shape, dtype, and data pointer, reads the raw bytes via DAP `readMemory`, and opens a webview that shows:

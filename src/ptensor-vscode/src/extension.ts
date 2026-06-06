@@ -4,6 +4,12 @@ import { TensorPanel } from './tensorPanel';
 
 export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
+        vscode.commands.registerCommand('ptensor.previewSamples', () => {
+            TensorPanel.showDemo(context);
+        })
+    );
+
+    context.subscriptions.push(
         vscode.commands.registerCommand('ptensor.viewTensor', async (variable?: unknown) => {
             const session = vscode.debug.activeDebugSession;
             if (!session) {

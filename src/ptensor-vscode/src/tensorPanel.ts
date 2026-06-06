@@ -123,10 +123,10 @@ export class TensorPanel {
         if (TensorPanel.panels.get(this.key) === this) {
             TensorPanel.panels.delete(this.key);
         }
-        this.panel.dispose();
         while (this.disposables.length) {
             this.disposables.pop()?.dispose();
         }
+    }
     }
 }
 

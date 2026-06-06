@@ -1,0 +1,24 @@
+/* Standalone-only chrome: fallbacks for the --vscode-* theme variables so the
+ * panel renders outside a VS Code webview. The .ptv-browser layout itself lives
+ * in src/styles.css, shared with the in-editor demo. */
+
+:root {
+    --vscode-font-family: system-ui, sans-serif;
+    --vscode-foreground: #e0e0e0;
+    --vscode-descriptionForeground: #9a9a9a;
+    --vscode-editorWidget-background: #252526;
+    --vscode-editor-font-family: 'SF Mono', Menlo, monospace;
+    --vscode-panel-border: #3a3a3a;
+    --vscode-button-background: #0e639c;
+    --vscode-button-foreground: #ffffff;
+    --vscode-button-secondaryBackground: #3a3d41;
+    --vscode-button-secondaryForeground: #ffffff;
+    --vscode-editorWarning-foreground: #cca700;
+    --vscode-list-hoverBackground: #2a2d2e;
+}
+
+body {
+    margin: 0;
+    background: #1e1e1e;
+    color: #e0e0e0;
+}

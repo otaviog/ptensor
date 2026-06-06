@@ -1,0 +1,129 @@
+/*
+ * Themed against VS Code webview CSS variables (--vscode-*). The dev playground
+ * defines fallbacks for those variables so the same styles render standalone.
+ */
+
+.ptv-root {
+    font-family: var(--vscode-font-family, system-ui, sans-serif);
+    color: var(--vscode-foreground, #ddd);
+    padding: 12px;
+}
+
+.ptv-title {
+    margin: 0 0 8px 0;
+    font-size: 1.1em;
+}
+
+.ptv-meta {
+    font-size: 0.9em;
+    color: var(--vscode-descriptionForeground, #999);
+    margin-bottom: 12px;
+}
+
+.ptv-stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.ptv-stat {
+    background: var(--vscode-editorWidget-background, #252526);
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.ptv-stat-label {
+    color: var(--vscode-descriptionForeground, #999);
+    font-size: 0.8em;
+}
+
+.ptv-table {
+    border-collapse: collapse;
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-size: 0.9em;
+}
+
+.ptv-table td {
+    padding: 2px 8px;
+    border: 1px solid var(--vscode-panel-border, #3a3a3a);
+    text-align: right;
+}
+
+.ptv-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.ptv-tabs button {
+    background: var(--vscode-button-secondaryBackground, #3a3d41);
+    color: var(--vscode-button-secondaryForeground, #fff);
+    border: none;
+    padding: 4px 10px;
+    cursor: pointer;
+}
+
+.ptv-tabs button.active {
+    background: var(--vscode-button-background, #0e639c);
+    color: var(--vscode-button-foreground, #fff);
+}
+
+.ptv-canvas {
+    image-rendering: pixelated;
+    border: 1px solid var(--vscode-panel-border, #3a3a3a);
+    max-width: 100%;
+}
+
+.ptv-warn {
+    color: var(--vscode-editorWarning-foreground, #cca700);
+    font-style: italic;
+}
+
+/* Sample browser (dev playground + in-editor demo command). */
+.ptv-browser {
+    display: flex;
+    min-height: 100vh;
+}
+
+.ptv-browser-nav {
+    flex: 0 0 220px;
+    border-right: 1px solid var(--vscode-panel-border, #333);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ptv-browser-nav h3 {
+    margin: 0 0 8px;
+    font: 600 0.8em/1 var(--vscode-font-family, system-ui);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--vscode-descriptionForeground, #9a9a9a);
+}
+
+.ptv-browser-nav button {
+    text-align: left;
+    background: transparent;
+    color: var(--vscode-foreground, #ddd);
+    border: none;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font: 0.85em/1.2 var(--vscode-editor-font-family, monospace);
+}
+
+.ptv-browser-nav button:hover {
+    background: var(--vscode-list-hoverBackground, #2a2d2e);
+}
+
+.ptv-browser-nav button.active {
+    background: var(--vscode-button-background, #0e639c);
+    color: var(--vscode-button-foreground, #fff);
+}
+
+.ptv-browser-main {
+    flex: 1;
+    overflow: auto;
+}

@@ -1,0 +1,41 @@
+{
+    "name": "@ptensor/tensor-view",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Framework-agnostic TensorView type and React viewer for ptensor tensors.",
+    "main": "./dist/tensor-view.js",
+    "module": "./dist/tensor-view.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/tensor-view.js"
+        }
+    },
+    "files": ["dist", "src"],
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build && vite build --config vite.lib.config.ts",
+        "build:webview": "vite build",
+        "build:lib": "vite build --config vite.lib.config.ts",
+        "typecheck": "tsc --noEmit",
+        "smoke": "node scripts/smoke-webview.mjs",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "ptensor-ts": "file:../ptensor-ts",
+        "react": "^19.1.0",
+        "react-dom": "^19.1.0"
+    },
+    "devDependencies": {
+        "@types/jsdom": "^28.0.3",
+        "@types/react": "^19.1.0",
+        "@types/react-dom": "^19.1.0",
+        "@vitejs/plugin-react": "^4.3.4",
+        "jsdom": "^29.1.1",
+        "typescript": "^5.9.3",
+        "vite": "^6.0.7",
+        "vite-plugin-dts": "^4.5.0"
+    }
+}

@@ -17,7 +17,7 @@ export interface NamedTensorJson {
 const MISSING_HELPER_MESSAGE =
   "the debugger can't find p10::to_json_debug — it isn't linked into the " +
   'debuggee. Reference it once in your program (e.g. call ' +
-  'p10::to_json_debug(some_tensor)) so the linker keeps the symbol, then rebuild ' +
+  'p10::to_json_debug(some_tensor) so the linker keeps the symbol, then rebuild ' +
   'and restart the debug session.';
 
 /** Debugger phrasings for a failed name lookup (symbol/identifier not found). */

@@ -98,4 +98,6 @@ install(TARGETS ptensor_shared
 # The C API is built last so optional module bindings can be included.
 add_subdirectory(c)
 
-add_subdirectory(ptensor-vscode/cpp)
+if (WITH_VSCODE_VIEWER_DEMO)
+  add_subdirectory(ptensor-vscode/cpp)
+endif()

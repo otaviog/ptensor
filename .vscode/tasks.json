@@ -1,0 +1,41 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "ptensor-view: dev",
+            "detail": "Vite dev server for the tensor viewer playground (HMR + mock tensors).",
+            "type": "shell",
+            "command": "bun run dev",
+            "options": {
+                "cwd": "${workspaceFolder}/bindings/typescript/ptensor-view"
+            },
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "group": "ptensor-view"
+            }
+        },
+        {
+            "label": "ptensor-view: build",
+            "detail": "Build the webview bundle + library artifacts.",
+            "type": "shell",
+            "command": "bun run build",
+            "options": {
+                "cwd": "${workspaceFolder}/bindings/typescript/ptensor-view"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "ptensor-vscode: build:viewer",
+            "detail": "Build the viewer bundle and copy it into the extension's media/.",
+            "type": "shell",
+            "command": "npm run build:viewer",
+            "options": {
+                "cwd": "${workspaceFolder}/src/ptensor-vscode"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

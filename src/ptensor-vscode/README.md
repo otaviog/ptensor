@@ -2,6 +2,37 @@
 
 VS Code debugger helper that visualizes `p10::Tensor` contents while a C++ debug session is paused.
 
+## Install
+
+### Build a `.vsix`
+
+From the repo root:
+
+```bash
+just vscode-package
+code --install-extension build/ptensor-vscode.vsix
+```
+
+`just vscode-package` writes `build/ptensor-vscode.vsix` (vsce's prepublish step
+builds the viewer bundle and compiles the extension first). Reload VS Code after
+installing.
+
+Notes:
+
+- Run `npm install` in `src/ptensor-vscode` once beforehand (links the `file:`
+  dependency on `ptensor-ts` and pulls in `@vscode/vsce`).
+- The `code` CLI must be on `PATH` (VS Code → *Shell Command: Install 'code'
+  command*).
+- Requires VS Code ≥ 1.120 (see `engines.vscode`).
+- `cmake --install` also copies `build/ptensor-vscode.vsix` into
+  `<prefix>/share/ptensor` when the file exists (build it first).
+
+### B. Run from source (dev, hot iterate)
+
+Open `src/ptensor-vscode` in VS Code and press **F5** ("Run Extension") to launch
+an Extension Development Host with the extension loaded. Run
+`just view-build` once first so the webview bundle exists in `media/`.
+
 ## Try it without a debugger
 
 Run **`ptensor: Preview Sample Tensors`** from the command palette. It opens the

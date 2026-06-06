@@ -57,6 +57,20 @@ if (EMSCRIPTEN)
     add_subdirectory(platforms/wasm)
 endif()
 
+# Install the prebuilt VS Code extension .vsix alongside the library, if present.
+# Build it first with `just vscode-package` (writes build/ptensor-vscode.vsix).
+# The existence check runs at install time, so the .vsix can be built after
+# configuring; it is simply skipped when the file is absent.
+set(_PTENSOR_VSIX ${CMAKE_SOURCE_DIR}/build/ptensor-vscode.vsix)
+install(CODE "
+    if (EXISTS \"${_PTENSOR_VSIX}\")
+        file(INSTALL \"${_PTENSOR_VSIX}\"
+             DESTINATION \"\${CMAKE_INSTALL_PREFIX}/share/ptensor\")
+    else()
+        message(STATUS \"ptensor-vscode .vsix not found, skipping (build with: just vscode-package)\")
+    endif()
+")
+
 # Create and install the config files
 # The export will generate ptensorTargets.cmake and configuration-specific files
 # like ptensorTargets-debug.cmake and ptensorTargets-release.cmake

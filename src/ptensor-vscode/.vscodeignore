@@ -3,6 +3,7 @@
 src/**
 scripts/**
 cpp/**
+node_modules/**
 out/test/**
 out/**/__tests__/**
 *.vsix

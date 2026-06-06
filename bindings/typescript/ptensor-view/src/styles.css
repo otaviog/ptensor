@@ -9,15 +9,63 @@
     padding: 12px;
 }
 
+.ptv-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
 .ptv-title {
-    margin: 0 0 8px 0;
+    margin: 0;
     font-size: 1.1em;
+}
+
+.ptv-refresh {
+    font-family: inherit;
+    font-size: 0.85em;
+    color: var(--vscode-button-foreground, #fff);
+    background: var(--vscode-button-background, #0e639c);
+    border: none;
+    border-radius: 2px;
+    padding: 3px 10px;
+    cursor: pointer;
+}
+
+.ptv-refresh:hover {
+    background: var(--vscode-button-hoverBackground, #1177bb);
 }
 
 .ptv-meta {
     font-size: 0.9em;
     color: var(--vscode-descriptionForeground, #999);
     margin-bottom: 12px;
+}
+
+.ptv-badge {
+    display: inline-block;
+    font-size: 0.85em;
+    font-weight: 600;
+    line-height: 1.4;
+    padding: 1px 8px;
+    border-radius: 10px;
+    vertical-align: middle;
+}
+
+.ptv-badge-dtype {
+    color: var(--vscode-badge-foreground, #fff);
+    background: var(--vscode-badge-background, #4d4d4d);
+}
+
+.ptv-badge-ok {
+    color: #0b3d1a;
+    background: var(--vscode-testing-iconPassed, #3fb950);
+}
+
+.ptv-badge-warn {
+    color: #3d2b00;
+    background: var(--vscode-testing-iconQueued, #d29922);
 }
 
 .ptv-stats {

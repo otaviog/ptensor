@@ -31,6 +31,8 @@ interface TensorMessage {
     name?: string;
     tensor: TensorJson;
     tableThreshold?: number;
+    /** Whether the host can re-read this tensor (false for demo/sample tensors). */
+    canRefresh?: boolean;
 }
 
 /** Demo mode: render the built-in sample tensors, no debugger needed. */
@@ -69,6 +71,11 @@ function render(msg: HostMessage): void {
             <TensorViewer
                 tensor={fromTensorJson(msg.tensor, msg.name)}
                 tableThreshold={msg.tableThreshold}
+                onRefresh={
+                    msg.canRefresh && vscode
+                        ? () => vscode.postMessage({ type: 'refresh' })
+                        : undefined
+                }
             />
         );
     root.render(<StrictMode>{body}</StrictMode>);

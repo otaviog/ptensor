@@ -1,0 +1,32 @@
+{
+  "name": "ptensor-ts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Dependency-free core types and JSON (de)serialization for ptensor tensors. Shared by the FFI binding, the webview, and the VS Code extension.",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    }
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node ./scripts/fixup-cjs.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.esm.json",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

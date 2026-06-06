@@ -45,3 +45,8 @@ devcontainer-build:
 
 devcontainer-shell: devcontainer-build
     docker run --rm -it -v "$(pwd)":/workspace -w /workspace {{ DEVCONTAINER_IMAGE }} bash
+
+# Package the VS Code extension into build/ptensor-vscode.vsix.
+vscode-package:
+    mkdir -p build
+    cd src/ptensor-vscode && npx @vscode/vsce package --no-dependencies --out "{{ justfile_directory() }}/build/ptensor-vscode.vsix"

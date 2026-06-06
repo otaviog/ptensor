@@ -1,0 +1,100 @@
+{
+  "name": "ptensor-vscode",
+  "displayName": "ptensor Tensor Viewer",
+  "description": "Debugger helper that visualizes ptensor Tensor contents during a debug session.",
+  "version": "0.0.1",
+  "publisher": "ptensor",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/otaviog/ptensor.git"
+  },
+  "engines": {
+    "vscode": "^1.120.0"
+  },
+  "categories": [
+    "Debuggers",
+    "Visualization"
+  ],
+  "activationEvents": [
+    "onDebug"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ptensor.viewTensor",
+        "title": "Visualize Tensor",
+        "category": "ptensor"
+      },
+      {
+        "command": "ptensor.previewSamples",
+        "title": "Preview Sample Tensors",
+        "category": "ptensor"
+      }
+    ],
+    "menus": {
+      "debug/variables/context": [
+        {
+          "command": "ptensor.viewTensor",
+          "when": "debugProtocolVariableMenuContext == 'ptensorTensor'",
+          "group": "5_view@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "ptensor.viewTensor",
+          "when": "inDebugMode"
+        },
+        {
+          "command": "ptensor.previewSamples"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "ptensor Tensor Viewer",
+      "properties": {
+        "ptensor.tableElementThreshold": {
+          "type": "number",
+          "default": 256,
+          "description": "Maximum element count to render as a table; larger tensors are rendered as an image when the shape allows."
+        },
+        "ptensor.maxBytes": {
+          "type": "number",
+          "default": 67108864,
+          "description": "Hard cap on bytes read from the debuggee per tensor (default 64 MiB)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build:viewer && npm run bundle",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "check-types": "tsc -p ./ --noEmit",
+    "bundle": "npm run check-types && node ./scripts/esbuild.mjs",
+    "build:viewer:bundle": "cd ../../bindings/typescript/ptensor-view && bun run build:webview",
+    "copy:viewer": "node ./scripts/copy-viewer.mjs",
+    "build:viewer": "npm run build:viewer:bundle && npm run copy:viewer",
+    "package": "vsce package --no-dependencies",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "dependencies": {
+    "ptensor-ts": "file:../../bindings/typescript/ptensor-ts"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.120.0",
+    "@types/mocha": "^10.0.10",
+    "esbuild": "^0.25.0",
+    "@types/node": "22.x",
+    "typescript-eslint": "^8.56.1",
+    "eslint": "^9.39.3",
+    "typescript": "^5.9.3",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.2.1"
+  }
+}

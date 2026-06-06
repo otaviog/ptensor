@@ -97,6 +97,20 @@
 	  "initCommands": [
 		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
 	  ]
+	},
+	/// VS Code tensor viewer manual driver (build with -DWITH_VSCODE_VIEWER_DEMO=ON)
+	{
+	  "name": "ptensor-vscode/viewer-demo",
+	  "type": "lldb-dap",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/src/ptensor-vscode/cpp/vscode_viewer_demo",
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "externalConsole": false,
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
 	}
   ],
   "inputs": [

@@ -28,6 +28,7 @@ target_sources(ptensor_viz
     BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     FILES ${PUBLIC_HEADERS}
   PRIVATE
+    app_icon.cpp
     gui_app.cpp
     image_texture.cpp
     texture_stager.cpp
@@ -74,6 +75,7 @@ target_include_directories(ptensor_viz
     $<INSTALL_INTERFACE:include>
   PRIVATE
     ${_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(ptensor_viz

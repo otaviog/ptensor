@@ -2,10 +2,11 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <initializer_list>
 #include <vector>
 
 #include <ptensor/p10_result.hpp>
+
+#include <initializer_list>
 
 #include "image_texture.hpp"  // TensorLayout
 
@@ -38,10 +39,23 @@ struct UploadView {
 /// pointer into a reused internal buffer holding the converted pixels.
 class TextureStager {
   public:
-    explicit TextureStager(std::initializer_list<TextureFormat> supported)
-        : supported_(supported) {}
+    explicit TextureStager(std::initializer_list<TextureFormat> supported) :
+        supported_(supported) {}
 
-    /// Stage `tensor` ([H,W,C] or [C,H,W], C in {1,3,4}, UInt8 or Float32).
+    /// Convert `tensor` to upload-ready pixels for the backend.
+    ///
+    /// Accepts rank-3 tensors in HWC or CHW order, with 1, 3, or 4 channels,
+    /// and dtype UInt8 or Float32.  Float single-channel tensors are rendered as
+    /// a jet heatmap (RGBA, normalized over finite min/max).  Float RGB(A)
+    /// tensors are scaled [0, 1] -> [0, 255] with clamp and round.
+    ///
+    /// Returns a zero-copy view into `tensor` when the tensor's natural format
+    /// is already in `supported`, otherwise a view into an internal buffer.
+    ///
+    /// # Errors
+    ///
+    /// * `P10Error::InvalidArgument` — not rank-3, unsupported channel count, or
+    ///   unsupported dtype.
     P10Result<UploadView> stage(const Tensor& tensor, TensorLayout layout);
 
   private:

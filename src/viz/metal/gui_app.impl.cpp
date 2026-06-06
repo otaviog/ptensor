@@ -9,6 +9,7 @@
 #include <SDL.h>
 #include <SDL_metal.h>
 
+#include "app_icon.hpp"
 #include "image_texture.impl.hpp"
 #include "imgui_impl_metal.h"
 #include "imgui_impl_sdl2.h"
@@ -69,6 +70,8 @@ P10Error GuiApp::Impl::start(const GuiAppParameters& params) {
         return P10Error::InvalidOperation
             << ("SDL_CreateWindow Error: " + std::string(SDL_GetError()));
     }
+
+    set_app_icon(window_);
 
     metal_ = std::make_unique<MetalContext>();
 

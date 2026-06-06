@@ -3,6 +3,7 @@
 #include <SDL.h>
 #include <SDL_vulkan.h>
 
+#include "app_icon.hpp"
 #include "image_texture.impl.hpp"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_vulkan.h"
@@ -44,6 +45,8 @@ P10Error GuiApp::Impl::start(const GuiAppParameters& params) {
         SDL_Quit();
         return P10Error::InvalidOperation << error_msg;
     }
+
+    set_app_icon(window_);
 
     vk_.reset(new VulkanContext);
     if (initialize_vulkan(*vk_, window_, params).is_error()) {

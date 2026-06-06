@@ -105,19 +105,19 @@ describe('media integration (real C library)', () => {
     expect(frame.getChannels()).toBe(3);
   });
 
-  it('VideoFrame.getImage returns an HxWxC uint8 Tensor view', () => {
+  it('VideoFrame.getImage returns an HxWxC uint8 PTensor view', () => {
     const cap = trackCapture(openCapture(TEST_VIDEO));
     cap.nextFrame();
     const frame = trackVideo(cap.getVideo());
 
     const img = frame.getImage();
-    const shape = img.getShape();
+    const shape = img.shape;
 
     expect(shape).toHaveLength(3);
     expect(shape[0]).toBe(BigInt(frame.getHeight()));
     expect(shape[1]).toBe(BigInt(frame.getWidth()));
     expect(shape[2]).toBe(3n);
-    expect(img.getDtype()).toBe('uint8');
+    expect(img.dtype).toBe('uint8');
     expect(img.isEmpty()).toBe(false);
   });
 
@@ -147,7 +147,7 @@ describe('media integration (real C library)', () => {
   it('createVideoFrame image tensor has correct shape', () => {
     const frame = trackVideo(createVideoFrame(64, 48));
     const img = frame.getImage();
-    expect(img.getShape()).toEqual([48n, 64n, 3n]);
+    expect(img.shape).toEqual([48, 64, 3]);
   });
 
   // ---------------------------------------------------------------- //

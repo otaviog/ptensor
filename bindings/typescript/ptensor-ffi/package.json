@@ -1,16 +1,16 @@
 {
-  "name": "ptensor-js",
+  "name": "ptensor-ffi",
   "version": "1.0.0",
-  "description": "PTensor bindings for TypeScript",
+  "description": "Handle-first PTensor bindings for TypeScript (bun-FFI + WASM backends)",
   "type": "module",
-  "main": "./build/ptensor-wrapper.js",
-  "types": "./build/ptensor-wrapper.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "bun build src/ptensor/index.ts --target bun --outdir dist/",
     "clean": "rm -rf build",
     "test": "bun test src/ptensor/__tests__/tensor.test.ts",
     "test:wasm": "bun test src/ptensor/backends/wasm/__tests__/wasm.test.ts",
-    "test:integration": "bun test src/ptensor/__tests__/tensor.integration.test.ts src/ptensor/__tests__/infer.integration.test.ts",
+    "test:integration": "bun test src/ptensor/__tests__/tensor.integration.test.ts src/ptensor/__tests__/media.integration.test.ts",
     "test:all": "bun test",
     "format": "biome format --write .",
     "format:check": "biome format .",
@@ -26,6 +26,9 @@
     "numerical",
     "ai"
   ],
+  "dependencies": {
+    "ptensor-ts": "file:../ptensor-ts"
+  },
   "author": "Otavio Gomes",
   "license": "MIT",
   "devDependencies": {

@@ -40,7 +40,7 @@ import {
   p10_video_frame_width,
 } from './backends/bun/ffi';
 import { P10Error } from './p10Error';
-import { _getRawHandle, _wrapHandle, type Tensor } from './tensor';
+import { _getRawHandle, _wrapHandle, type PTensor } from './tensor';
 
 // ------------------------------------------------------------------ //
 // Value types
@@ -74,11 +74,11 @@ export interface VideoFrame {
   /** Set the presentation timestamp. */
   setTime(t: MediaTime): void;
   /**
-   * Returns a non-owning Tensor view of the frame image data (H×W×C uint8).
+   * Returns a non-owning PTensor view of the frame image data (H×W×C uint8).
    * The view is valid only while this VideoFrame is alive.
-   * Do NOT call delete() on the returned Tensor.
+   * Do NOT call destroy() on the returned PTensor.
    */
-  getImage(): Tensor;
+  getImage(): PTensor;
   /** Releases the native frame handle. */
   delete(): void;
 }
@@ -115,7 +115,7 @@ class VideoFrameImpl implements VideoFrame {
     p10_video_frame_set_time_parts(readHandle(this._buf), t.base.num, t.base.den, t.stamp);
   }
 
-  getImage(): Tensor {
+  getImage(): PTensor {
     const imgBuf = newHandleBuf();
     P10Error.check(ffiInt(p10_video_frame_image(readHandle(this._buf), imgBuf)));
     return _wrapHandle(imgBuf);
@@ -153,11 +153,11 @@ export interface AudioFrame {
   /** Set the presentation timestamp. */
   setTime(t: MediaTime): void;
   /**
-   * Returns a non-owning Tensor view of the samples data (channels × samples).
+   * Returns a non-owning PTensor view of the samples data (channels × samples).
    * The view is valid only while this AudioFrame is alive.
-   * Do NOT call delete() on the returned Tensor.
+   * Do NOT call destroy() on the returned PTensor.
    */
-  getSamples(): Tensor;
+  getSamples(): PTensor;
   /** Releases the native frame handle. */
   delete(): void;
 }
@@ -197,7 +197,7 @@ class AudioFrameImpl implements AudioFrame {
     p10_audio_frame_set_time_parts(readHandle(this._buf), t.base.num, t.base.den, t.stamp);
   }
 
-  getSamples(): Tensor {
+  getSamples(): PTensor {
     const sBuf = newHandleBuf();
     P10Error.check(ffiInt(p10_audio_frame_samples(readHandle(this._buf), sBuf)));
     return _wrapHandle(sBuf);
@@ -214,7 +214,7 @@ class AudioFrameImpl implements AudioFrame {
  * Creates an AudioFrame by copying data from a samples Tensor.
  * The tensor must have shape [channels, numSamples].
  */
-export function createAudioFrame(samples: Tensor, sampleRate: number): AudioFrame {
+export function createAudioFrame(samples: PTensor, sampleRate: number): AudioFrame {
   const buf = newHandleBuf();
   P10Error.check(ffiInt(p10_audio_frame_create(buf, Number(_getRawHandle(samples)), sampleRate)));
   return new AudioFrameImpl(buf);

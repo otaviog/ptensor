@@ -18,10 +18,16 @@ export class TensorPanel {
     private readonly disposables: vscode.Disposable[] = [];
     private pending: unknown;
     private ready = false;
+    // Re-reads the tensor from its source; undefined for demo (sample) panels.
+    private refresh?: () => Promise<NamedTensorJson>;
 
     /** Opens (or reuses) a tab to view a single tensor. */
-    static show(context: vscode.ExtensionContext, tensor: NamedTensorJson) {
-        TensorPanel.open(context, `Tensor: ${tensor.name}`, tensorMessage(tensor));
+    static show(
+        context: vscode.ExtensionContext,
+        tensor: NamedTensorJson,
+        refresh?: () => Promise<NamedTensorJson>
+    ) {
+        TensorPanel.open(context, `Tensor: ${tensor.name}`, tensorMessage(tensor, !!refresh), refresh);
     }
 
     /** Opens (or reuses) a tab in demo mode: the built-in sample tensors. */
@@ -29,10 +35,16 @@ export class TensorPanel {
         TensorPanel.open(context, 'ptensor: Sample Tensors', { type: 'demo', ...threshold() });
     }
 
-    private static open(context: vscode.ExtensionContext, title: string, message: unknown) {
+    private static open(
+        context: vscode.ExtensionContext,
+        title: string,
+        message: unknown,
+        refresh?: () => Promise<NamedTensorJson>
+    ) {
         const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.Beside;
         const existing = TensorPanel.panels.get(title);
         if (existing) {
+            existing.refresh = refresh;
             existing.panel.reveal(column);
             existing.update(title, message);
             return;
@@ -43,17 +55,19 @@ export class TensorPanel {
             column,
             { enableScripts: true, retainContextWhenHidden: true }
         );
-        TensorPanel.panels.set(title, new TensorPanel(context, panel, title, message));
+        TensorPanel.panels.set(title, new TensorPanel(context, panel, title, message, refresh));
     }
 
     private constructor(
         context: vscode.ExtensionContext,
         panel: vscode.WebviewPanel,
         title: string,
-        message: unknown
+        message: unknown,
+        refresh?: () => Promise<NamedTensorJson>
     ) {
         this.key = title;
         this.panel = panel;
+        this.refresh = refresh;
         // First paint is driven by the init message embedded in the HTML below,
         // so no pending message / handshake is needed to render initially.
         this.pending = undefined;
@@ -64,12 +78,28 @@ export class TensorPanel {
                 if (msg?.type === 'ready') {
                     this.ready = true;
                     this.flush();
+                } else if (msg?.type === 'refresh') {
+                    void this.doRefresh();
                 }
             },
             null,
             this.disposables
         );
         this.panel.webview.html = renderHtml(context, this.panel.webview, message);
+    }
+
+    /** Re-reads the tensor and pushes the fresh data to the webview. */
+    private async doRefresh() {
+        if (!this.refresh) {
+            return;
+        }
+        try {
+            const tensor = await this.refresh();
+            this.update(`Tensor: ${tensor.name}`, tensorMessage(tensor, true));
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            vscode.window.showErrorMessage(`ptensor: ${msg}`);
+        }
     }
 
     private update(title: string, message: unknown) {
@@ -109,8 +139,8 @@ function threshold(): { tableThreshold: number } {
     };
 }
 
-function tensorMessage(tensor: NamedTensorJson) {
-    return { type: 'tensor', name: tensor.name, tensor: tensor.json, ...threshold() };
+function tensorMessage(tensor: NamedTensorJson, canRefresh: boolean) {
+    return { type: 'tensor', name: tensor.name, tensor: tensor.json, canRefresh, ...threshold() };
 }
 
 /**

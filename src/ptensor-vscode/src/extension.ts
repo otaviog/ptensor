@@ -1,8 +1,11 @@
 import * as vscode from 'vscode';
-import { readTensor } from './tensorReader';
+import { readTensor } from './readTensor';
 import { TensorPanel } from './tensorPanel';
+import { registerDebugTracker } from './debugTracker';
 
 export function activate(context: vscode.ExtensionContext) {
+    registerDebugTracker(context);
+
     context.subscriptions.push(
         vscode.commands.registerCommand('ptensor.previewSamples', () => {
             TensorPanel.showDemo(context);
@@ -11,32 +14,34 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('ptensor.viewTensor', async (variable?: unknown) => {
-            const session = vscode.debug.activeDebugSession;
-            if (!session) {
-                vscode.window.showErrorMessage('ptensor: no active debug session.');
-                return;
-            }
-
             const expression = await resolveExpression(variable);
             if (!expression) {
                 return;
             }
-
-            const frameId = await getActiveFrameId(session);
-            if (frameId === undefined) {
-                vscode.window.showErrorMessage('ptensor: could not determine the active stack frame.');
-                return;
-            }
-
             try {
-                const tensor = await readTensor(session, frameId, expression);
-                TensorPanel.show(context, tensor);
+                const tensor = await loadTensor(expression);
+                // Re-read from the *current* frame each time (the user may have
+                // stepped since the panel opened).
+                TensorPanel.show(context, tensor, () => loadTensor(expression));
             } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
                 vscode.window.showErrorMessage(`ptensor: ${msg}`);
             }
         })
     );
+}
+
+/** Evaluates `expression` in the active debug session's current frame into a tensor. */
+async function loadTensor(expression: string) {
+    const session = vscode.debug.activeDebugSession;
+    if (!session) {
+        throw new Error('no active debug session.');
+    }
+    const frameId = await getActiveFrameId(session);
+    if (frameId === undefined) {
+        throw new Error('could not determine the active stack frame.');
+    }
+    return readTensor(session, frameId, expression);
 }
 
 export function deactivate() {}

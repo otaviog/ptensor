@@ -32,6 +32,7 @@
       "debug/variables/context": [
         {
           "command": "ptensor.viewTensor",
+          "when": "debugProtocolVariableMenuContext == 'ptensorTensor'",
           "group": "5_view@1"
         }
       ],

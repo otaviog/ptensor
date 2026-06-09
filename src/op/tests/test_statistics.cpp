@@ -18,6 +18,57 @@ TEST_CASE("statistics::mean over from_range", "[op][statistics]") {
     }
 }
 
+TEST_CASE("statistics::mean over an axis", "[op][statistics]") {
+    // values 0..5 laid out as [[0, 1, 2], [3, 4, 5]]
+    auto tensor = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
+
+    SECTION("reduce axis 0") {
+        Tensor reduced;
+        REQUIRE(mean(tensor, 0, reduced).is_ok());
+        REQUIRE(reduced.shape() == make_shape(3));
+        REQUIRE(reduced.dtype() == Dtype::Float64);
+        auto span = reduced.as_span1d<double>().unwrap();
+        REQUIRE(span[0] == Approx(1.5));  // (0 + 3) / 2
+        REQUIRE(span[1] == Approx(2.5));  // (1 + 4) / 2
+        REQUIRE(span[2] == Approx(3.5));  // (2 + 5) / 2
+    }
+
+    SECTION("reduce axis 1") {
+        Tensor reduced;
+        REQUIRE(mean(tensor, 1, reduced).is_ok());
+        REQUIRE(reduced.shape() == make_shape(2));
+        auto span = reduced.as_span1d<double>().unwrap();
+        REQUIRE(span[0] == Approx(1.0));  // (0 + 1 + 2) / 3
+        REQUIRE(span[1] == Approx(4.0));  // (3 + 4 + 5) / 3
+    }
+
+    SECTION("negative axis indexes from the end") {
+        Tensor reduced;
+        REQUIRE(mean(tensor, -1, reduced).is_ok());
+        REQUIRE(reduced.shape() == make_shape(2));
+    }
+
+    SECTION("out of range axis is an error") {
+        Tensor reduced;
+        REQUIRE(mean(tensor, 2, reduced).is_error());
+    }
+}
+
+TEST_CASE("statistics::mean over an axis of a 3D tensor", "[op][statistics]") {
+    // values 0..23 laid out as shape [2, 3, 4]
+    auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
+
+    SECTION("reduce middle axis 1") {
+        Tensor reduced;
+        REQUIRE(mean(tensor, 1, reduced).is_ok());
+        REQUIRE(reduced.shape() == make_shape(2, 4));
+        auto span = reduced.as_span1d<double>().unwrap();
+        // out[0,0] = mean(0, 4, 8) = 4 ; out[1,3] = mean(15, 19, 23) = 19
+        REQUIRE(span[0] == Approx(4.0));
+        REQUIRE(span[7] == Approx(19.0));
+    }
+}
+
 TEST_CASE("statistics::min and max return value+index", "[op][statistics]") {
     auto tensor = Tensor::from_range(make_shape(4), Dtype::Float32).unwrap();
     tensor.visit([](auto span) {

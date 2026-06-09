@@ -9,7 +9,7 @@
 
 namespace p10::infer {
 
-static constexpr auto MNIST_MODEL = "native/cpp/infer/tests/data/mnist-12.onnx";
+static constexpr auto MNIST_MODEL = "src/infer/tests/data/mnist-12.onnx";
 
 TEST_CASE("infer::IInfer::from_onnx", "[infer][ort]") {
     SECTION("errors on non-existent file") {

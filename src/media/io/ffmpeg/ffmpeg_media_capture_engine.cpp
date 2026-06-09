@@ -52,9 +52,12 @@ FfmpegMediaCaptureEngine::next_frame(MediaCapture::WaitMode wait) {
     if (capture_status == CaptureStatus::Reading) {
         if (wait == MediaCapture::WaitMode::Block) {
             current_frame_ = video_queue_.wait_and_pop();
-        } else {
-            current_frame_ = video_queue_.try_pop();
+            // wait_and_pop only returns empty once the queue is cancelled and
+            // drained, i.e. the stream has ended. Block must never report
+            // NotReady, so surface that as Done.
+            return Ok(current_frame_.has_value() ? MediaCapture::Available : MediaCapture::Done);
         }
+        current_frame_ = video_queue_.try_pop();
         return Ok(current_frame_.has_value() ? MediaCapture::Available : MediaCapture::NotReady);
     }
     if (capture_status == CaptureStatus::EndOfFile) {

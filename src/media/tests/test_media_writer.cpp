@@ -47,7 +47,7 @@ TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
                                      .expect("should open output file for write");
 
             for (int current_frame = 0; current_frame < total_frames; ++current_frame) {
-                REQUIRE_THAT(capture.next_frame(), testing::is_ok());
+                REQUIRE_THAT(capture.next_frame(MediaCapture::Block), testing::is_ok());
 
                 VideoFrame video_frame;
                 REQUIRE_THAT(capture.get_video(video_frame), testing::is_ok());
@@ -71,17 +71,17 @@ TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
             // missing frame at the tail.
             int matched_frames = 0;
             for (int current_frame = 0; current_frame < total_frames; ++current_frame) {
-                auto next_in = capture.next_frame();
+                auto next_in = capture.next_frame(MediaCapture::Block);
                 REQUIRE_THAT(next_in, testing::is_ok());
-                if (!next_in.unwrap()) {
+                if (next_in.unwrap() == MediaCapture::Done) {
                     break;
                 }
                 VideoFrame video_frame_in;
                 REQUIRE_THAT(capture.get_video(video_frame_in), testing::is_ok());
 
-                auto next_out = capture_out.next_frame();
+                auto next_out = capture_out.next_frame(MediaCapture::Block);
                 REQUIRE_THAT(next_out, testing::is_ok());
-                if (!next_out.unwrap()) {
+                if (next_out.unwrap() == MediaCapture::Done) {
                     break;
                 }
                 VideoFrame video_frame_out;
@@ -115,7 +115,7 @@ TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
                                  .expect("should open output file for write");
 
         for (int current_frame = 0; current_frame < total_frames; ++current_frame) {
-            REQUIRE_THAT(capture.next_frame(), testing::is_ok());
+            REQUIRE_THAT(capture.next_frame(MediaCapture::Block), testing::is_ok());
             VideoFrame video_frame;
             REQUIRE_THAT(capture.get_video(video_frame), testing::is_ok());
             writer.write_video(video_frame);

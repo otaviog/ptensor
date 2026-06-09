@@ -106,7 +106,7 @@ Tensor::Tensor(Tensor&& other) noexcept :
     dtype_(other.dtype_),
     shape_(std::move(other.shape_)),
     stride_(std::move(other.stride_)),
-    axes_(std::move(other.axes_)),
+    usage_(other.usage_),
     is_contiguous_(other.is_contiguous_) {
     other.dtype_ = Dtype::Float32;
 }
@@ -116,7 +116,7 @@ Tensor& Tensor::operator=(Tensor&& other) noexcept {
     dtype_ = other.dtype_;
     shape_ = std::move(other.shape_);
     stride_ = std::move(other.stride_);
-    axes_ = std::move(other.axes_);
+    usage_ = other.usage_;
     is_contiguous_ = other.is_contiguous_;
     other.dtype_ = Dtype::Float32;
     return *this;
@@ -185,7 +185,7 @@ P10Result<Tensor> Tensor::to_contiguous() const {
             size_t dest_index = 0;
 
             while (iter.has_next()) {
-                dest_span[dest_index] = iter.next();
+                dest_span[dest_index] = iter.next().first;
                 dest_index++;
             }
         },
@@ -314,7 +314,7 @@ void Tensor::set_options(const TensorOptions& options) {
         is_contiguous_ = is_stride_contiguous(stride_, shape_);
     }
 
-    axes_ = options.axes().empty() ? Axes(shape_.dims()) : options.axes();
+    usage_ = options.usage();
 }
 
 P10Error Tensor::reshape(const Shape& new_shape) {
@@ -327,6 +327,13 @@ P10Error Tensor::reshape(const Shape& new_shape) {
     is_contiguous_ = is_stride_contiguous(new_stride, new_shape);
 
     return P10Error::Ok;
+}
+
+P10Result<Tensor> Tensor::as_reshape(const Shape& new_shape) const {
+    P10_RETURN_ERR_IF_ERROR(check_reshapeability(shape(), new_shape, is_contiguous()));
+
+    Stride const new_stride = Stride::from_contiguous_shape(new_shape);
+    return Ok(Tensor(blob_.view(), new_shape, options().stride(new_stride)));
 }
 
 P10Error Tensor::fill(double value) {
@@ -367,7 +374,7 @@ P10Error Tensor::convert_from(const Tensor& source, const TensorOptions options)
             );
             dest_scalar_t* dest_ptr = dest_span.data();
             while (src_it.has_next()) {
-                *dest_ptr++ = static_cast<dest_scalar_t>(src_it.next());
+                *dest_ptr++ = static_cast<dest_scalar_t>(src_it.next().first);
             }
         });
     });

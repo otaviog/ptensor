@@ -21,7 +21,7 @@ TEST_CASE("core::Tensor::full creates tensor filled with specified value", "[ten
     REQUIRE(tensor.dtype() == Dtype::Float32);
     REQUIRE(tensor.shape().count() == 6);
     REQUIRE(tensor.stride().dims() == 2);
-    REQUIRE(tensor.axes().dims() == 2);
+    REQUIRE(tensor.usage() == Usage::NotSpecified);
     REQUIRE(tensor.dims() == 2);
 
     auto data = tensor.as_span1d<float>().unwrap();
@@ -58,7 +58,7 @@ TEST_CASE("core::Tensor::zeros creates tensor filled with zeros", "[tensor][crea
     REQUIRE(tensor.dtype() == Dtype::Float32);
     REQUIRE(tensor.shape().count() == 6);
     REQUIRE(tensor.stride().dims() == 2);
-    REQUIRE(tensor.axes().dims() == 2);
+    REQUIRE(tensor.usage() == Usage::NotSpecified);
     REQUIRE(tensor.dims() == 2);
 
     auto data = tensor.as_span1d<float>().unwrap();
@@ -83,7 +83,7 @@ TEST_CASE("core::Tensor::empty allocates uninitialized tensor", "[tensor][creati
     REQUIRE(tensor.dtype() == Dtype::Float32);
     REQUIRE(tensor.shape().count() == 6);
     REQUIRE(tensor.stride().dims() == 2);
-    REQUIRE(tensor.axes().dims() == 2);
+    REQUIRE(tensor.usage() == Usage::NotSpecified);
     REQUIRE(tensor.dims() == 2);
 }
 
@@ -244,7 +244,7 @@ TEST_CASE("core::Tensor dimensions are tracked correctly", "[tensor][properties]
     REQUIRE(tensor.dims() == 4);
     REQUIRE(tensor.shape().dims() == 4);
     REQUIRE(tensor.stride().dims() == 4);
-    REQUIRE(tensor.axes().dims() == 4);
+    REQUIRE(tensor.usage() == Usage::NotSpecified);
 }
 
 TEST_CASE("core::Tensor::empty() detects empty tensors", "[tensor][properties]") {
@@ -327,7 +327,7 @@ TEST_CASE("core::Tensor::as_view creates view sharing data", "[tensor][view]") {
     SECTION("view has same properties") {
         REQUIRE(tensor_view.shape().dims() == 2);
         REQUIRE(tensor_view.stride().dims() == 2);
-        REQUIRE(tensor_view.axes().dims() == 2);
+        REQUIRE(tensor_view.usage() == Usage::NotSpecified);
         REQUIRE(tensor_view.dims() == 2);
     }
 
@@ -917,6 +917,34 @@ TEST_CASE("core::Tensor::reshape", "[tensor][reshape]") {
         // Attempt to reshape to incompatible shape
         REQUIRE_THAT(
             tensor.reshape(make_shape(4, 2)),
+            testing::is_error(P10Error::InvalidArgument)
+        );
+    }
+}
+
+TEST_CASE("core::Tensor::as_reshape", "[tensor][reshape]") {
+    SECTION("Returns a view without mutating the original") {
+        auto tensor = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
+
+        auto reshaped = tensor.as_reshape(make_shape(3, 2)).unwrap();
+        REQUIRE(reshaped.shape() == make_shape(3, 2));
+        // Original is untouched.
+        REQUIRE(tensor.shape() == make_shape(2, 3));
+    }
+
+    SECTION("View shares data with the original tensor") {
+        auto tensor = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
+
+        auto reshaped = tensor.as_reshape(make_shape(6)).unwrap();
+        reshaped.as_span1d<float>().unwrap()[0] = 99.0f;
+
+        REQUIRE(tensor.as_span1d<float>().unwrap()[0] == Catch::Approx(99.0f));
+    }
+
+    SECTION("Element count mismatch is an error") {
+        auto tensor = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
+        REQUIRE_THAT(
+            tensor.as_reshape(make_shape(4, 2)),
             testing::is_error(P10Error::InvalidArgument)
         );
     }

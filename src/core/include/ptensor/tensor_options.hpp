@@ -1,11 +1,15 @@
 #pragma once
 
-#include "axis.hpp"
 #include "device.hpp"
 #include "dtype.hpp"
 #include "stride.hpp"
 
 namespace p10 {
+
+/// How a tensor's contents are meant to be interpreted. This is a hint only and
+/// does not affect storage or layout. `Image` covers both a single image and a
+/// batch of images (distinct from `Video`, a time sequence of frames).
+enum class Usage : uint8_t { NotSpecified, Image, Signal, Audio, Video };
 
 class TensorOptions {
   public:
@@ -25,9 +29,9 @@ class TensorOptions {
         return stride_;
     }
 
-    /// The axes of the tensor.
-    const Axes& axes() const {
-        return axes_;
+    /// The usage hint of the tensor.
+    Usage usage() const {
+        return usage_;
     }
 
     /// The device of the tensor.
@@ -53,9 +57,9 @@ class TensorOptions {
         return *this;
     }
 
-    /// Sets the axes of the tensor.
-    TensorOptions& axes(const Axes& axes) {
-        axes_ = axes;
+    /// Sets the usage hint of the tensor.
+    TensorOptions& usage(Usage usage) {
+        usage_ = usage;
         return *this;
     }
 
@@ -67,7 +71,7 @@ class TensorOptions {
     Device device_ = Device::Cpu;
     Dtype dtype_ = Dtype::Float32;
     Stride stride_;
-    Axes axes_;
+    Usage usage_ = Usage::NotSpecified;
 };
 
 template<typename scalar_t>
@@ -95,24 +99,24 @@ class MakeViewOptions {
         return *this;
     }
 
-    /// The axes of the tensor.
-    const Axes& axes() const {
-        return axes_;
+    /// The usage hint of the tensor.
+    Usage usage() const {
+        return usage_;
     }
 
-    /// Sets the axes of the tensor.
-    MakeViewOptions& axes(const Axes& axes) {
-        axes_ = axes;
+    /// Sets the usage hint of the tensor.
+    MakeViewOptions& usage(Usage usage) {
+        usage_ = usage;
         return *this;
     }
 
     TensorOptions to_options() const {
-        return TensorOptions().stride(stride()).axes(axes()).dtype(Dtype::from<scalar_t>());
+        return TensorOptions().stride(stride()).usage(usage()).dtype(Dtype::from<scalar_t>());
     }
 
   private:
     Stride stride_;
-    Axes axes_;
+    Usage usage_ = Usage::NotSpecified;
     Device device_ = Device::Cpu;
 };
 

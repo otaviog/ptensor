@@ -6,7 +6,6 @@ add_library(ptensor STATIC)
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/p10_error.hpp
   ${_INCLUDE_DIR}/p10_result.hpp
-  ${_INCLUDE_DIR}/axis.hpp
   ${_INCLUDE_DIR}/device.hpp
   ${_INCLUDE_DIR}/dtype.hpp
   ${_INCLUDE_DIR}/shape.hpp

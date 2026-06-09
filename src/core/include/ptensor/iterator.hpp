@@ -1,8 +1,12 @@
 #pragma once
 
 #include <array>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <numeric>
 #include <span>
+#include <utility>
 
 #include <ptensor/config.h>
 
@@ -22,17 +26,23 @@ class Iterator {
         return curr_element_ < total_elements_;
     }
 
-    scalar_t& next() {
+    /// Advances the iterator, returning a reference to the current element and
+    /// its linear offset (in elements) into the underlying buffer.
+    std::pair<scalar_t&, ptrdiff_t> next() {
         assert(has_next());
         curr_element_++;
 
-        scalar_t* ptr = data_;
+        ptrdiff_t linear_index = 0;
         for (size_t i = 0; i < shape_.size(); i++) {
-            ptr += coords_[i] * stride_[i];
+            linear_index += coords_[i] * stride_[i];
         }
 
         increase_coords();
-        return *ptr;
+        return {data_[linear_index], linear_index};
+    }
+
+    std::span<const int64_t> coords() const {
+        return coords_;
     }
 
   private:

@@ -9,7 +9,6 @@
 #include <type_traits>
 
 #include "accessor3d.hpp"
-#include "axis.hpp"
 #include "detail/blob.hpp"
 #include "detail/complex_traits.hpp"
 #include "device.hpp"
@@ -143,6 +142,12 @@ class Tensor {
         return blob_.device();
     }
 
+    /// Gets the usage hint of the tensor (how its contents are meant to be
+    /// interpreted; does not affect storage or layout).
+    Usage usage() const {
+        return usage_;
+    }
+
     /// Gets the number of dimensions of the tensor.
     size_t dims() const {
         return shape_.dims();
@@ -177,14 +182,9 @@ class Tensor {
         return Tensor(blob_.view(), shape(), options());
     }
 
-    /// Returns the axes information.
-    const Axes& axes() const {
-        return axes_;
-    }
-
     /// Returns a copy of the tensor options.
     TensorOptions options() const {
-        return TensorOptions().dtype(dtype_).stride(stride_).axes(axes_).device(blob_.device());
+        return TensorOptions().dtype(dtype_).stride(stride_).usage(usage_).device(blob_.device());
     }
 
     std::span<const std::byte> as_bytes() const {
@@ -574,6 +574,11 @@ class Tensor {
     /// * An error if the reshape is not possible.
     P10Error reshape(const Shape& new_shape);
 
+    /// Returns a view of the tensor with `new_shape`, sharing the same data.
+    /// Unlike `reshape`, this does not mutate the tensor. The element count must
+    /// match and, for non-contiguous tensors, the layout must allow the reshape.
+    P10Result<Tensor> as_reshape(const Shape& new_shape) const;
+
     /// Transposes a 2D tensor.
     /// # Arguments
     /// * `other` - The transposed tensor.
@@ -724,7 +729,7 @@ class Tensor {
     Dtype dtype_;
     Shape shape_;
     Stride stride_;
-    Axes axes_;
+    Usage usage_ = Usage::NotSpecified;
     bool is_contiguous_ = true;
 };
 }  // namespace p10

@@ -1,5 +1,10 @@
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+# Suppress ng-log's bundled test suite from registering into our ctest.
+# include(CTest) inside ng-log would default BUILD_TESTING to ON; a local
+# normal variable overrides its option() (CMP0077) without touching the cache.
+set(BUILD_TESTING OFF)
 add_subdirectory(lib/ng-log EXCLUDE_FROM_ALL)
+unset(BUILD_TESTING)
 
 set(_INCLUDE_DIR include/p10_internal/log)
 add_library(ptensor_log STATIC)

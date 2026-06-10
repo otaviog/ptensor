@@ -16,7 +16,13 @@ function(target_link_whole_archive target lib)
         $<BUILD_INTERFACE:$<TARGET_PROPERTY:${lib},INTERFACE_INCLUDE_DIRECTORIES>>
     )
     if(MSVC)
+        # cl.exe or clang-cl: linker accepts /WHOLEARCHIVE directly.
         target_link_options(${target} PRIVATE "SHELL:/WHOLEARCHIVE:$<TARGET_FILE:${lib}>")
+    elseif(WIN32)
+        # Plain Clang on Windows uses lld-link; pass /WHOLEARCHIVE via -Wl, so
+        # clang forwards it as a single argument to lld-link.
+        target_link_options(${target} PRIVATE
+            "SHELL:-Wl,/WHOLEARCHIVE:$<TARGET_FILE:${lib}>")
     elseif(APPLE)
         target_link_options(${target} PRIVATE "-Wl,-force_load,$<TARGET_FILE:${lib}>")
     else()

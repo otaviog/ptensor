@@ -85,9 +85,10 @@ namespace {
         const bool avx2_supported = false;  //is_avx2_supported();
 
         const auto kernel_half_size = int(kernel.size() / 2);
-        const auto aligned_max_cols = cols - bitwise_modulo<BLOCK_SIZE>(cols) - kernel.size() + 1;
+        const int64_t aligned_max_cols =
+            cols - bitwise_modulo<BLOCK_SIZE>(cols) - static_cast<int64_t>(kernel.size()) + 1;
 
-        for (size_t row = 0; row < rows; row++) {
+        for (int64_t row = 0; row < rows; row++) {
             apply_1d_kernel_generic(
                 input.row_span(row).subspan(0, kernel_half_size),
                 output.row_span(row).subspan(0, kernel_half_size),
@@ -104,10 +105,10 @@ namespace {
             const auto input_row = input.row(row);
             auto output_row = output.row(row);
 
-            for (size_t block_col = kernel_half_size; block_col < aligned_max_cols;
-                 block_col += BLOCK_SIZE) {
-                for (size_t simd_col = block_col; simd_col < block_col + BLOCK_SIZE;
-                     simd_col += SIMD_SIZE) {
+            for (int64_t block_col = kernel_half_size; block_col < aligned_max_cols;
+                 block_col += static_cast<int64_t>(BLOCK_SIZE)) {
+                for (int64_t simd_col = block_col; simd_col < block_col + static_cast<int64_t>(BLOCK_SIZE);
+                     simd_col += static_cast<int64_t>(SIMD_SIZE)) {
                     const scalar_t* input_block = &input_row[simd_col];
                     scalar_t* output_block = &output.row(row)[simd_col];
 

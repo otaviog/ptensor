@@ -4,6 +4,7 @@
 
 #include <p10_internal/simd/compiler.hpp>
 #include <p10_internal/simd/cpuid.hpp>
+#include <p10_internal/simd/tile.hpp>
 
 #if PTENSOR_HAS_INTRINSICS_H
     #include <immintrin.h>
@@ -19,9 +20,9 @@ namespace {
         int64_t rows,
         int64_t cols,
         const ScalarT* src,
-        size_t src_stride,
+        int64_t src_stride,
         ScalarT* dst,
-        size_t dst_stride
+        int64_t dst_stride
     ) {
         for (int i = 0; i < rows; ++i) {
             for (int j = 0; j < cols; ++j) {
@@ -32,7 +33,7 @@ namespace {
 
     template<typename ScalarT>
     void
-    transpose_8x8_generic(const ScalarT* src, size_t src_stride, ScalarT* dst, size_t dst_stride) {
+    transpose_8x8_generic(const ScalarT* src, int64_t src_stride, ScalarT* dst, int64_t dst_stride) {
         for (int i = 0; i < 8; ++i) {
             for (int j = 0; j < 8; ++j) {
                 dst[(j * dst_stride) + i] = src[(i * src_stride) + j];
@@ -44,7 +45,7 @@ namespace {
 
 #if PTENSOR_HAS_INTRINSICS_H
 PTENSOR_AVX2 void
-transpose_avx2_8x8_32(int32_t const* src, size_t src_stride, int32_t* dst, size_t dst_stride) {
+transpose_avx2_8x8_32(int32_t const* src, int64_t src_stride, int32_t* dst, int64_t dst_stride) {
     __m256i row0 = _mm256_loadu_si256((__m256i const*)src);
     __m256i row1 = _mm256_loadu_si256((__m256i const*)(src + src_stride));
     __m256i row2 = _mm256_loadu_si256((__m256i const*)(src + 2 * src_stride));
@@ -137,16 +138,6 @@ transpose_avx2_8x8_32(int32_t const* src, size_t src_stride, int32_t* dst, size_
 }
 #endif  // x86
 
-namespace {
-
-    template<size_t B>
-    constexpr size_t bitwise_modulo(size_t a) {
-        static_assert((B & (B - 1)) == 0, "B must be a power of two");
-        return a & (B - 1);
-    }
-
-}  // namespace
-
 P10Error Tensor::transpose(Tensor& other) const {
     if (blob_.device() != Device::Cpu) {
         return P10Error::NotImplemented << "Transpose is only implemented for CPU tensors";
@@ -167,76 +158,54 @@ P10Error Tensor::transpose(Tensor& other) const {
         P10_RETURN_IF_ERROR(other.create(make_shape(src_span.width(), src_span.height()), dtype()));
         auto dest_span = other.as_span2d<ScalarT>().unwrap();
 
-        const size_t rows = src_span.height();
-        const size_t cols = src_span.width();
+        const int64_t rows = src_span.height();
+        const int64_t cols = src_span.width();
 
-        const size_t src_stride = src_span.width();
-        const size_t dst_stride = dest_span.width();
+        const int64_t src_stride = src_span.width();
+        const int64_t dst_stride = dest_span.width();
 
-        constexpr size_t CACHE_BLOCK = 64;
         constexpr size_t SIMD_BLOCK = 8;
-
-        if (rows < CACHE_BLOCK || cols < CACHE_BLOCK) {
-            // Fallback to generic transpose for small tensors
-            transpose_generic(
-                rows,
-                cols,
-                src_span.row(0),
-                src_stride,
-                dest_span.row(0),
-                dst_stride
-            );
-            return P10Error::Ok;
-        }
-
-        const size_t aligned_max_rows = rows - bitwise_modulo<CACHE_BLOCK>(rows);
-        const size_t aligned_max_cols = cols - bitwise_modulo<CACHE_BLOCK>(cols);
         [[maybe_unused]] const bool avx2_supported = simd::is_supported(simd::SimdSet::AVX2);
 
-        for (size_t block_row = 0; block_row < aligned_max_rows; block_row += CACHE_BLOCK) {
-            for (size_t block_col = 0; block_col < aligned_max_cols; block_col += CACHE_BLOCK) {
-                for (size_t simd_row = block_row; simd_row < block_row + CACHE_BLOCK;
-                     simd_row += SIMD_BLOCK) {
-                    const auto src_row = src_span.row(simd_row);
+        // A src tile at (row, col) transposes into the dst tile at (col, row).
+        const auto src_block = [&](const TileRegion2D& region) {
+            return &src_span.row(region.row)[region.col];
+        };
+        const auto dst_block = [&](const TileRegion2D& region) {
+            return &dest_span.row(region.col)[region.row];
+        };
 
-                    for (size_t simd_col = block_col; simd_col < block_col + CACHE_BLOCK;
-                         simd_col += SIMD_BLOCK) {
-                        const ScalarT* src_block = &src_row[simd_col];
-                        ScalarT* dest_block = &dest_span.row(simd_col)[simd_row];
-
+        // Interior: full SIMD_BLOCK x SIMD_BLOCK tiles, transposed in registers.
+        const auto simd_impl = [&](const TileRegion2D& region) {
 #if PTENSOR_HAS_INTRINSICS_H
-                        if constexpr (sizeof(ScalarT) == sizeof(int32_t)) {
-                            if (avx2_supported) {
-                                transpose_avx2_8x8_32(
-                                    reinterpret_cast<const int32_t*>(src_block),
-                                    src_stride,
-                                    reinterpret_cast<int32_t*>(dest_block),
-                                    dst_stride
-                                );
-                                continue;
-                            }
-                        }
+            if constexpr (sizeof(ScalarT) == sizeof(int32_t)) {
+                if (avx2_supported) {
+                    transpose_avx2_8x8_32(
+                        reinterpret_cast<const int32_t*>(src_block(region)),
+                        src_stride,
+                        reinterpret_cast<int32_t*>(dst_block(region)),
+                        dst_stride
+                    );
+                    return;
+                }
+            }
 #endif
+            transpose_8x8_generic(src_block(region), src_stride, dst_block(region), dst_stride);
+        };
 
-                        transpose_8x8_generic(src_block, src_stride, dest_block, dst_stride);
-                    }
-                }
-            }
+        // Borders: any leftover rectangle, transposed element by element.
+        const auto scalar_impl = [&](const TileRegion2D& region) {
+            transpose_generic<ScalarT>(
+                region.height,
+                region.width,
+                src_block(region),
+                src_stride,
+                dst_block(region),
+                dst_stride
+            );
+        };
 
-            for (size_t rr = block_row; rr < block_row + CACHE_BLOCK; rr++) {
-                const auto src_row = src_span.row(rr);
-                for (size_t c = aligned_max_cols; c < cols; c++) {
-                    dest_span.row(c)[rr] = src_row[c];
-                }
-            }
-        }
-
-        for (size_t r = aligned_max_rows; r < rows; r++) {
-            const auto src_row = src_span.row(r);
-            for (size_t c = 0; c < cols; c++) {
-                dest_span.row(c)[r] = src_row[c];
-            }
-        }
+        simd::dynamic_tile2d<SIMD_BLOCK, ScalarT>(rows, cols, simd_impl, scalar_impl);
         return P10Error::Ok;
     });
 }

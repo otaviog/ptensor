@@ -108,6 +108,36 @@ namespace {
         state.SetBytesProcessed(state.iterations() * elements * sizeof(int32_t));
     }
 
+    // Baseline: textbook nested-loop transpose, no tiling and no SIMD. Used to
+    // measure what Tensor::transpose (tiled + AVX2 8x8) buys over the naive path.
+    void BM_Transpose_Naive_Int32(benchmark::State& state) {
+        const int size = static_cast<int>(state.range(0));
+
+        std::mt19937_64 const rng(42);
+        Tensor const input =
+            Tensor::from_random(make_shape(size, size), rng, TensorOptions().dtype(Dtype::Int32))
+                .unwrap();
+        Tensor output;
+        output.create(make_shape(size, size), TensorOptions().dtype(Dtype::Int32));
+
+        const auto src = input.as_span2d<const int32_t>().unwrap();
+        auto dst = output.as_span2d<int32_t>().unwrap();
+
+        for (auto _ : state) {
+            for (int64_t i = 0; i < src.height(); ++i) {
+                for (int64_t j = 0; j < src.width(); ++j) {
+                    dst.row(j)[i] = src.row(i)[j];
+                }
+            }
+            benchmark::DoNotOptimize(output);
+            benchmark::ClobberMemory();
+        }
+
+        const int64_t elements = static_cast<int64_t>(size) * size;
+        state.SetItemsProcessed(state.iterations() * elements);
+        state.SetBytesProcessed(state.iterations() * elements * sizeof(int32_t));
+    }
+
     // Small matrices (should not use cache blocking)
     BENCHMARK(BM_Transpose_Small)->Arg(4)->Arg(8)->Arg(16)->Arg(32)->Unit(benchmark::kMicrosecond);
 
@@ -132,6 +162,14 @@ namespace {
 
     // Test SIMD path with int32
     BENCHMARK(BM_Transpose_Int32)
+        ->Arg(64)
+        ->Arg(256)
+        ->Arg(1024)
+        ->Arg(2048)
+        ->Unit(benchmark::kMicrosecond);
+
+    // Naive baseline, same sizes/dtype, to compare against the SIMD path above.
+    BENCHMARK(BM_Transpose_Naive_Int32)
         ->Arg(64)
         ->Arg(256)
         ->Arg(1024)

@@ -1,92 +1,169 @@
 #pragma once
 
+#include <algorithm>
+#include <cmath>
 #include <concepts>
+#include <cstdint>
+#include <utility>
 
-#include "../../../../core/include/span2d.hpp"
+#include <ptensor/tile_region2d.hpp>
+
 #include "bitwise_math.hpp"
+#include "cpuid.hpp"
 
 namespace p10::simd {
 
 struct TileRegion1D {
-    ptrdiff_t offset;
-    size_t size;
-};
-
-struct TileBorder1D {
-    size_t left = 0;
-    size_t right = 0;
+    int64_t offset;
+    int64_t size;
 };
 
 template<typename F>
 concept TileKernel1D = std::invocable<F, TileRegion1D>;
 
-template<size_t CACHE_SIZE, size_t SIMD_SIZE, TileKernel1D GenericKn, TileKernel1D FallbackKn, TileBorder Border = TileBorder1D{}>
-void tile1d(size_t size, GenericKn&& simd_impl, FallbackKn&& fallback_impl) {
-    const size_t tile_size = size - bitwise_modulo<CACHE_SIZE>(size);
+template<size_t CACHE_SIZE, size_t SIMD_SIZE, TileKernel1D SimdKn, TileKernel1D ScalarKn>
+void tile1d(int64_t size, SimdKn&& simd_impl, ScalarKn&& scalar_impl) {
+    static_assert(CACHE_SIZE % SIMD_SIZE == 0, "CACHE_SIZE must be a multiple of SIMD_SIZE");
 
-    for (size_t block = 0; block < tile_size; block += CACHE_SIZE) {
-        for (size_t simd = block; simd < block + CACHE_SIZE; simd += SIMD_SIZE) {
-            simd_impl({static_cast<ptrdiff_t>(simd), SIMD_SIZE});
+    constexpr int64_t CACHE = CACHE_SIZE;
+    constexpr int64_t SIMD = SIMD_SIZE;
+    const int64_t tile_size = size - bitwise_modulo<SIMD_SIZE>(size);
+
+    // Main: SIMD_SIZE chunks, grouped into CACHE_SIZE blocks for locality.
+    for (int64_t block = 0; block < tile_size; block += CACHE) {
+        const int64_t block_end = std::min(block + CACHE, tile_size);
+        for (int64_t offset = block; offset < block_end; offset += SIMD) {
+            simd_impl(TileRegion1D {offset, SIMD});
         }
     }
 
-    fallback_impl({static_cast<ptrdiff_t>(CACHE_SIZE), CACHE_SIZE - size});
+    // Tail: leftover elements that don't fill a SIMD_SIZE chunk.
+    if (tile_size < size) {
+        scalar_impl(TileRegion1D {tile_size, size - tile_size});
+    }
 }
 
-template<size_t SIMD_SIZE, TileKernel1D GenericKn, TileKernel1D ScalarKn>
-void dynamic_tile1d(size_t size, GenericKn simd_impl, ScalarKn &&scalar_impl) {
-    // Todo
-}
+template<size_t SIMD_SIZE, typename scalar_t, TileKernel1D SimdKn, TileKernel1D ScalarKn>
+void dynamic_tile1d(int64_t size, SimdKn&& simd_impl, ScalarKn&& scalar_impl) {
+    // Size the cache block so it stays in L1d (linear in 1D, hence L1 / element).
+    const size_t cache_elems = l1_cache_size() / sizeof(scalar_t);
 
+    if (size < static_cast<int64_t>(SIMD_SIZE)) {
+        std::forward<ScalarKn>(scalar_impl)(TileRegion1D {0, size});
+        return;
+    }
+
+    if (cache_elems >= 8192) {
+        tile1d<8192, SIMD_SIZE>(
+            size,
+            std::forward<SimdKn>(simd_impl),
+            std::forward<ScalarKn>(scalar_impl)
+        );
+    } else if (cache_elems >= 4096) {
+        tile1d<4096, SIMD_SIZE>(
+            size,
+            std::forward<SimdKn>(simd_impl),
+            std::forward<ScalarKn>(scalar_impl)
+        );
+    } else if (cache_elems >= 2048) {
+        tile1d<2048, SIMD_SIZE>(
+            size,
+            std::forward<SimdKn>(simd_impl),
+            std::forward<ScalarKn>(scalar_impl)
+        );
+    } else {
+        tile1d<1024, SIMD_SIZE>(
+            size,
+            std::forward<SimdKn>(simd_impl),
+            std::forward<ScalarKn>(scalar_impl)
+        );
+    }
+}
 
 template<typename F>
 concept TileKernel2D = std::invocable<F, TileRegion2D>;
 
-template<size_t CACHE_BLOCK, size_t SIMD_BLOCK, typename Generic, typename Fallback>
-void tile2d(size_t rows, size_t cols, Generic&& generic_impl, Fallback&& fallback_impl) {
-    const size_t tile_rows = rows - bitwise_modulo<CACHE_BLOCK>(rows);
-    const size_t tile_cols = cols - bitwise_modulo<CACHE_BLOCK>(cols);
+template<size_t CACHE_BLOCK, size_t SIMD_BLOCK, TileKernel2D SimdKn, TileKernel2D ScalarKn>
+void tile2d(int64_t rows, int64_t cols, SimdKn&& simd_impl, ScalarKn&& scalar_impl) {
+    static_assert(CACHE_BLOCK % SIMD_BLOCK == 0, "CACHE_BLOCK must be a multiple of SIMD_BLOCK");
 
-    for (size_t block_row = 0; block_row < tile_rows; block_row += CACHE_BLOCK) {
-        for (size_t block_col = 0; block_col < tile_cols; block_col += CACHE_BLOCK) {
-            for (size_t simd_row = block_row; simd_row < block_row + CACHE_BLOCK;
-                 simd_row += SIMD_BLOCK) {
-                for (size_t simd_col = block_col; simd_col < block_col + CACHE_BLOCK;
-                     simd_col += SIMD_BLOCK) {
-                    simd_impl(SpanRegion2D {
-                        simd_row,
-                        simd_col,
-                    });
+    constexpr int64_t CACHE = CACHE_BLOCK;
+    constexpr int64_t SIMD = SIMD_BLOCK;
+    const int64_t tile_rows = rows - bitwise_modulo<CACHE_BLOCK>(rows);
+    const int64_t tile_cols = cols - bitwise_modulo<CACHE_BLOCK>(cols);
+
+    // Main area [0, tile_rows) x [0, tile_cols), walked in cache blocks that are
+    // further split into SIMD_BLOCK x SIMD_BLOCK tiles.
+#pragma omp parallel for collapse(2) schedule(static)
+    for (int64_t block_row = 0; block_row < tile_rows; block_row += CACHE) {
+        for (int64_t block_col = 0; block_col < tile_cols; block_col += CACHE) {
+            for (int64_t simd_row = block_row; simd_row < block_row + CACHE; simd_row += SIMD) {
+                for (int64_t simd_col = block_col; simd_col < block_col + CACHE; simd_col += SIMD) {
+                    simd_impl(TileRegion2D {simd_row, simd_col, SIMD, SIMD});
                 }
             }
         }
     }
 
-    const SpanRegion2D right_region {
-        tile_cols,
-        tile_rows,  // We process all the bottom cols, so dont bother to do it in the right
-        cols - tile_cols,
-        tile_cols
-    };
-    fallback_impl(right_region);
-
-    const SpanRegion2D bottom_region {tile_rows * tile_cols, rows - tile_rows, cols, rows};
-    fallback_impl(bottom_region);
-}
-
-template<size_t SIMD_BLOCK, typename Generic, typename Fallback>
-bool dynamic_tile2d(size_t rows, size_t cols, Generic&& generic_impl, Fallback&& fallback_impl) {
-    const size_t processor_cache_size = 1024 * 1024 * 5;  // TODO: grab the actual cache size
-
-    if (processor_cache_size > 1024) {
-        tile<64, SIMD_BLOCK>(rows, cols, generic_impl, fallback_impl);
-    } else if (processor_cache_size > 512) {
-        tile<32, SIMD_BLOCK>(rows, cols, generic_impl, fallback_impl);
-    } else {
-        return false;
+    // Right border: rows [0, tile_rows) x cols [tile_cols, cols).
+    if (tile_cols < cols) {
+        scalar_impl(TileRegion2D(0, tile_cols, tile_rows, cols - tile_cols));
     }
 
-    return true;
+    // Bottom border: rows [tile_rows, rows) x all cols.
+    if (tile_rows < rows) {
+        scalar_impl(TileRegion2D(tile_rows, 0, rows - tile_rows, cols));
+    }
+}
+
+template<size_t SIMD_BLOCK, typename scalar_t, TileKernel2D SimdKn, TileKernel2D ScalarKn>
+void dynamic_tile2d(int64_t rows, int64_t cols, SimdKn&& simd_impl, ScalarKn&& scalar_impl) {
+    // Size the cache tile so its working set stays in L1d: a square side in
+    // elements of ~sqrt(L1) bytes / element size (the src and dst tiles share L1).
+    const int64_t processor_cache_size_sqrt =
+        static_cast<int64_t>(std::sqrt(l1_cache_size())) / static_cast<int64_t>(sizeof(scalar_t));
+
+    if (std::max(rows, cols) < processor_cache_size_sqrt) {
+        std::forward<ScalarKn>(scalar_impl)(TileRegion2D {0, 0, rows, cols});
+        return;
+    }
+
+    if (processor_cache_size_sqrt >= 1024) {
+        tile2d<1024, SIMD_BLOCK>(
+            rows,
+            cols,
+            std::forward<SimdKn>(simd_impl),
+            std::forward<ScalarKn>(scalar_impl)
+        );
+    } else if (processor_cache_size_sqrt >= 512) {
+        tile2d<512, SIMD_BLOCK>(
+            rows,
+            cols,
+            std::forward<SimdKn>(simd_impl),
+            std::forward<ScalarKn>(scalar_impl)
+        );
+    } else if (processor_cache_size_sqrt >= 128) {
+        tile2d<128, SIMD_BLOCK>(
+            rows,
+            cols,
+            std::forward<SimdKn>(simd_impl),
+            std::forward<ScalarKn>(scalar_impl)
+        );
+    } else if (processor_cache_size_sqrt >= 64) {
+        tile2d<64, SIMD_BLOCK>(
+            rows,
+            cols,
+            std::forward<SimdKn>(simd_impl),
+            std::forward<ScalarKn>(scalar_impl)
+        );
+    } else {
+        tile2d<32, SIMD_BLOCK>(
+            rows,
+            cols,
+            std::forward<SimdKn>(simd_impl),
+            std::forward<ScalarKn>(scalar_impl)
+        );
+    }
 }
 
 }  // namespace p10::simd

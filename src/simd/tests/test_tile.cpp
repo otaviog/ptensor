@@ -1,25 +1,101 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <p10_internal/simd/tile.hpp>
+#include <ptensor/accessor2D.hpp>
+#include <ptensor/tensor.hpp>
+#include <ptensor/testing/compare_tensors.hpp>
+#include <ptensor/testing/catch2_assertions.hpp>
 
 namespace p10::simd {
 
-void generic_impl(Accessor2D<const float> src, Accessor2D<float> dst) {
-    for (auto row = 0; row<src.height(); row++) {
-        for (auto col = 0; col<src.width(); col++) {
-            dst[col][row] = src[row][col];
+namespace {
+    constexpr size_t SIMD_BLOCK = 4;
+
+    // Fixed 4x4 transpose. Constant bounds let the compiler unroll and vectorize
+    // it (gather of 4 rows, scattered store) without hand-written intrinsics.
+    void simd_transpose(Accessor2D<const int32_t> src, Accessor2D<int32_t> dst) {
+        for (size_t i = 0; i < SIMD_BLOCK; i++) {
+            for (size_t j = 0; j < SIMD_BLOCK; j++) {
+                dst[j][i] = src[i][j];
+            }
         }
     }
+
+    // Generic transpose for the leftover border regions of any shape.
+    void scalar_transpose(Accessor2D<const int32_t> src, Accessor2D<int32_t> dst) {
+        for (auto i = 0; i < src.rows(); i++) {
+            for (auto j = 0; j < src.cols(); j++) {
+                dst[j][i] = src[i][j];
+            }
+        }
+    }
+}  // namespace
+
+TEST_CASE("Simd::tile", "[simd][tile]") {
+    constexpr size_t SHAPE_WIDTH = 1220;
+    constexpr size_t SHAPE_HEIGHT = 1360;
+    const auto int32 = TensorOptions().dtype(Dtype::Int32);
+
+    Tensor input_image = Tensor::from_range(make_shape(SHAPE_HEIGHT, SHAPE_WIDTH), int32).unwrap();
+
+    Tensor output_image;
+    output_image.create(make_shape(SHAPE_WIDTH, SHAPE_HEIGHT), int32);
+
+    Tensor expected_image;
+    expected_image.create(make_shape(SHAPE_WIDTH, SHAPE_HEIGHT), int32);
+
+    const auto src = input_image.as_span2d<const int32_t>().unwrap();
+    const auto dst = output_image.as_span2d<int32_t>().unwrap();
+    const auto expected = expected_image.as_span2d<int32_t>().unwrap();
+
+    // Reference: transpose the whole image in one shot with the scalar kernel.
+    scalar_transpose(
+        src({0, 0, SHAPE_HEIGHT, SHAPE_WIDTH}),
+        expected({0, 0, SHAPE_WIDTH, SHAPE_HEIGHT})
+    );
+
+    // The transposed element of a src region lands at the transposed dst region.
+    dynamic_tile2d<SIMD_BLOCK, int32_t>(
+        SHAPE_HEIGHT,
+        SHAPE_WIDTH,
+        [&](auto region) { simd_transpose(src(region), dst(region.transposed())); },
+        [&](auto region) { scalar_transpose(src(region), dst(region.transposed())); }
+    );
+
+    REQUIRE_THAT(testing::compare_tensors(output_image, expected_image), testing::is_ok());
 }
 
-TEST_CASE("Simd::tile", "[bitwise math]") {
-    tile<4, 64, float>
-        (image.as_span2d<const float>(),
-         [](auto region) {
-             generic_impl(source.acessor(region), dst.accessor(transpose_region(region)));
-         },
-         
-            
+TEST_CASE("Simd::tile1d", "[simd][tile]") {
+    // Size deliberately not a multiple of the SIMD chunk so the scalar tail runs.
+    constexpr size_t SIZE = 10003;
+    constexpr size_t SIMD_CHUNK = 8;
+    const auto int32 = TensorOptions().dtype(Dtype::Int32);
+
+    Tensor input = Tensor::from_range(make_shape(SIZE), int32).unwrap();
+
+    Tensor output;
+    output.create(make_shape(SIZE), int32);
+
+    const auto src = input.as_span1d<const int32_t>().unwrap();
+    const auto dst = output.as_span1d<int32_t>().unwrap();
+
+    // x -> 2x via a fixed SIMD chunk for the body and a scalar tail.
+    const auto simd_double = [&](const TileRegion1D& region) {
+        for (int64_t k = 0; k < region.size; k++) {
+            dst[region.offset + k] = src[region.offset + k] * 2;
+        }
+    };
+    const auto scalar_double = [&](const TileRegion1D& region) {
+        for (int64_t k = 0; k < region.size; k++) {
+            dst[region.offset + k] = src[region.offset + k] * 2;
+        }
+    };
+
+    dynamic_tile1d<SIMD_CHUNK, int32_t>(SIZE, simd_double, scalar_double);
+
+    for (size_t i = 0; i < SIZE; i++) {
+        REQUIRE(dst[i] == src[i] * 2);
+    }
 }
 
 }  // namespace p10::simd

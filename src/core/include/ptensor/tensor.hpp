@@ -269,8 +269,8 @@ class Tensor {
         return Ok(
             Span2D<T> {
                 data_res.unwrap(),
-                static_cast<size_t>(shape[0]),
-                static_cast<size_t>(shape[1])
+                shape[0],
+                shape[1]
             }
         );
     }
@@ -287,8 +287,8 @@ class Tensor {
         return Ok(
             Span2D<const T> {
                 data_res.unwrap(),
-                static_cast<size_t>(shape[0]),
-                static_cast<size_t>(shape[1])
+                shape[0],
+                shape[1]
             }
         );
     }
@@ -305,9 +305,9 @@ class Tensor {
         return Ok(
             Span3D<T> {
                 data_res.unwrap(),
-                static_cast<size_t>(shape[0]),
-                static_cast<size_t>(shape[1]),
-                static_cast<size_t>(shape[2])
+                shape[0],
+                shape[1],
+                shape[2]
             }
         );
     }
@@ -324,9 +324,9 @@ class Tensor {
         return Ok(
             Span3D<const T> {
                 data_res.unwrap(),
-                static_cast<size_t>(shape[0]),
-                static_cast<size_t>(shape[1]),
-                static_cast<size_t>(shape[2])
+                shape[0],
+                shape[1],
+                shape[2]
             }
         );
     }
@@ -344,9 +344,9 @@ class Tensor {
         return Ok(
             PlanarSpan3D<T> {
                 data_res.unwrap(),
-                static_cast<size_t>(shape[0]),
-                static_cast<size_t>(shape[1]),
-                static_cast<size_t>(shape[2])
+                shape[0],
+                shape[1],
+                shape[2]
             }
         );
     }
@@ -362,9 +362,9 @@ class Tensor {
         return Ok(
             PlanarSpan3D<const T> {
                 data_res.unwrap(),
-                static_cast<size_t>(shape[0]),
-                static_cast<size_t>(shape[1]),
-                static_cast<size_t>(shape[2])
+                shape[0],
+                shape[1],
+                shape[2]
             }
         );
     }
@@ -381,10 +381,10 @@ class Tensor {
         return Ok(
             Span4D<T> {
                 data_res.unwrap(),
-                static_cast<size_t>(shape[0]),
-                static_cast<size_t>(shape[1]),
-                static_cast<size_t>(shape[2]),
-                static_cast<size_t>(shape[3])
+                shape[0],
+                shape[1],
+                shape[2],
+                shape[3]
             }
         );
     }
@@ -401,10 +401,10 @@ class Tensor {
         return Ok(
             Span4D<const T> {
                 data_res.unwrap(),
-                static_cast<size_t>(shape[0]),
-                static_cast<size_t>(shape[1]),
-                static_cast<size_t>(shape[2]),
-                static_cast<size_t>(shape[3])
+                shape[0],
+                shape[1],
+                shape[2],
+                shape[3]
             }
         );
     }

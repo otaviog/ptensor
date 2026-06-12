@@ -33,13 +33,13 @@ void tile1d(int64_t size, SimdKn&& simd_impl, ScalarKn&& scalar_impl) {
     for (int64_t block = 0; block < tile_size; block += CACHE) {
         const int64_t block_end = std::min(block + CACHE, tile_size);
         for (int64_t offset = block; offset < block_end; offset += SIMD) {
-            simd_impl(TileRegion1D {offset, SIMD});
+            simd_impl({.offset = offset, .size = SIMD});
         }
     }
 
     // Tail: leftover elements that don't fill a SIMD_SIZE chunk.
     if (tile_size < size) {
-        scalar_impl(TileRegion1D {tile_size, size - tile_size});
+        scalar_impl(TileRegion1D {.offset = tile_size, .size = size - tile_size});
     }
 }
 
@@ -49,7 +49,7 @@ void dynamic_tile1d(int64_t size, SimdKn&& simd_impl, ScalarKn&& scalar_impl) {
     const size_t cache_elems = l1_cache_size() / sizeof(scalar_t);
 
     if (size < static_cast<int64_t>(SIMD_SIZE)) {
-        std::forward<ScalarKn>(scalar_impl)(TileRegion1D {0, size});
+        std::forward<ScalarKn>(scalar_impl)({.offset = 0, .size = size});
         return;
     }
 
@@ -99,7 +99,12 @@ void tile2d(int64_t rows, int64_t cols, SimdKn&& simd_impl, ScalarKn&& scalar_im
         for (int64_t block_col = 0; block_col < tile_cols; block_col += CACHE) {
             for (int64_t simd_row = block_row; simd_row < block_row + CACHE; simd_row += SIMD) {
                 for (int64_t simd_col = block_col; simd_col < block_col + CACHE; simd_col += SIMD) {
-                    simd_impl(TileRegion2D {simd_row, simd_col, SIMD, SIMD});
+                    simd_impl(TileRegion2D {
+                        .row = simd_row,
+                        .col = simd_col,
+                        .height = SIMD,
+                        .width = SIMD
+                    });
                 }
             }
         }
@@ -107,12 +112,19 @@ void tile2d(int64_t rows, int64_t cols, SimdKn&& simd_impl, ScalarKn&& scalar_im
 
     // Right border: rows [0, tile_rows) x cols [tile_cols, cols).
     if (tile_cols < cols) {
-        scalar_impl(TileRegion2D(0, tile_cols, tile_rows, cols - tile_cols));
+        scalar_impl(TileRegion2D {
+            .row = 0,
+            .col = tile_cols,
+            .height = tile_rows,
+            .width = cols - tile_cols
+        });
     }
 
     // Bottom border: rows [tile_rows, rows) x all cols.
     if (tile_rows < rows) {
-        scalar_impl(TileRegion2D(tile_rows, 0, rows - tile_rows, cols));
+        scalar_impl(
+            TileRegion2D {.row = tile_rows, .col = 0, .height = rows - tile_rows, .width = cols}
+        );
     }
 }
 
@@ -124,7 +136,9 @@ void dynamic_tile2d(int64_t rows, int64_t cols, SimdKn&& simd_impl, ScalarKn&& s
         static_cast<int64_t>(std::sqrt(l1_cache_size())) / static_cast<int64_t>(sizeof(scalar_t));
 
     if (std::max(rows, cols) < processor_cache_size_sqrt) {
-        std::forward<ScalarKn>(scalar_impl)(TileRegion2D {0, 0, rows, cols});
+        std::forward<ScalarKn>(scalar_impl)(
+            TileRegion2D {.row = 0, .col = 0, .height = rows, .width = cols}
+        );
         return;
     }
 

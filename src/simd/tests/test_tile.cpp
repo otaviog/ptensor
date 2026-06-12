@@ -3,8 +3,8 @@
 #include <p10_internal/simd/tile.hpp>
 #include <ptensor/accessor2D.hpp>
 #include <ptensor/tensor.hpp>
-#include <ptensor/testing/compare_tensors.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+#include <ptensor/testing/compare_tensors.hpp>
 
 namespace p10::simd {
 
@@ -50,8 +50,8 @@ TEST_CASE("Simd::tile", "[simd][tile]") {
 
     // Reference: transpose the whole image in one shot with the scalar kernel.
     scalar_transpose(
-        src({0, 0, SHAPE_HEIGHT, SHAPE_WIDTH}),
-        expected({0, 0, SHAPE_WIDTH, SHAPE_HEIGHT})
+        src({.row = 0, .col = 0, .height = SHAPE_HEIGHT, .width = SHAPE_WIDTH}),
+        expected({.row = 0, .col = 0, .height = SHAPE_WIDTH, .width = SHAPE_HEIGHT})
     );
 
     // The transposed element of a src region lands at the transposed dst region.

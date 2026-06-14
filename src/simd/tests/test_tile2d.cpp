@@ -31,7 +31,7 @@ namespace {
     }
 }  // namespace
 
-TEST_CASE("Simd::tile", "[simd][tile]") {
+TEST_CASE("Simd::dynamic_tile", "[simd][tile]") {
     constexpr size_t SHAPE_WIDTH = 1220;
     constexpr size_t SHAPE_HEIGHT = 1360;
     const auto int32 = TensorOptions().dtype(Dtype::Int32);
@@ -65,37 +65,38 @@ TEST_CASE("Simd::tile", "[simd][tile]") {
     REQUIRE_THAT(testing::compare_tensors(output_image, expected_image), testing::is_ok());
 }
 
-TEST_CASE("Simd::tile1d", "[simd][tile]") {
-    // Size deliberately not a multiple of the SIMD chunk so the scalar tail runs.
-    constexpr size_t SIZE = 10003;
-    constexpr size_t SIMD_CHUNK = 8;
+TEST_CASE("Simd::dispatch_tile", "[simd][tile]") {
+    constexpr size_t SHAPE_WIDTH = 1220;
+    constexpr size_t SHAPE_HEIGHT = 1360;
     const auto int32 = TensorOptions().dtype(Dtype::Int32);
 
-    Tensor input = Tensor::from_range(make_shape(SIZE), int32).unwrap();
+    Tensor input_image = Tensor::from_range(make_shape(SHAPE_HEIGHT, SHAPE_WIDTH), int32).unwrap();
 
-    Tensor output;
-    output.create(make_shape(SIZE), int32);
+    Tensor output_image;
+    output_image.create(make_shape(SHAPE_WIDTH, SHAPE_HEIGHT), int32);
 
-    const auto src = input.as_span1d<const int32_t>().unwrap();
-    const auto dst = output.as_span1d<int32_t>().unwrap();
+    Tensor expected_image;
+    expected_image.create(make_shape(SHAPE_WIDTH, SHAPE_HEIGHT), int32);
 
-    // x -> 2x via a fixed SIMD chunk for the body and a scalar tail.
-    const auto simd_double = [&](const TileRegion1D& region) {
-        for (int64_t k = 0; k < region.size; k++) {
-            dst[region.offset + k] = src[region.offset + k] * 2;
-        }
-    };
-    const auto scalar_double = [&](const TileRegion1D& region) {
-        for (int64_t k = 0; k < region.size; k++) {
-            dst[region.offset + k] = src[region.offset + k] * 2;
-        }
-    };
+    const auto src = input_image.as_span2d<const int32_t>().unwrap();
+    const auto dst = output_image.as_span2d<int32_t>().unwrap();
+    const auto expected = expected_image.as_span2d<int32_t>().unwrap();
 
-    dynamic_tile1d<SIMD_CHUNK, int32_t>(SIZE, simd_double, scalar_double);
+    // Reference: transpose the whole image in one shot with the scalar kernel.
+    scalar_transpose(
+        src({.row = 0, .col = 0, .height = SHAPE_HEIGHT, .width = SHAPE_WIDTH}),
+        expected({.row = 0, .col = 0, .height = SHAPE_WIDTH, .width = SHAPE_HEIGHT})
+    );
 
-    for (size_t i = 0; i < SIZE; i++) {
-        REQUIRE(dst[i] == src[i] * 2);
-    }
+    // The transposed element of a src region lands at the transposed dst region.
+    dispatch_tile2d<int32_t>(
+        SHAPE_HEIGHT,
+        SHAPE_WIDTH,
+        [&](auto region) { scalar_transpose(src(region), dst(region.transposed())); },
+        GenericSimd<SIMD_BLOCK>([&](auto region) { simd_transpose(src(region), dst(region.transposed())); })
+    );
+
+    REQUIRE_THAT(testing::compare_tensors(output_image, expected_image), testing::is_ok());
 }
 
 }  // namespace p10::simd

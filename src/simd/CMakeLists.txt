@@ -32,6 +32,13 @@ target_include_directories(ptensor_simd_ PUBLIC
 
 ptensor_target_options(ptensor_simd_ "Core")
 
+# PUBLIC so the OpenMP flag reaches every TU that compiles the tile2d pragma,
+# including consumers that link this lib PRIVATE (the flag is a build-time usage
+# requirement, applied to their own compilation).
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(ptensor_simd_ PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
 if (BUILD_TESTS)
     add_subdirectory(tests)
 endif()

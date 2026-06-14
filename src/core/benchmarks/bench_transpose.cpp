@@ -82,7 +82,7 @@ namespace {
     // Time one specific transpose kernel directly, bypassing the cpuid dispatch
     // in Tensor::transpose. make_kernel builds the SIMD spec under test from the
     // tile closures; tile2d_autoblock drives it with the scalar border kernel.
-    template<typename MakeKernel>
+    template<simd::TileExecution Exec = simd::TileExecution::SEQUENTIAL, typename MakeKernel>
     void run_kernel_int32(benchmark::State& state, MakeKernel make_kernel) {
         constexpr size_t SIMD_BLOCK = 8;
         const int size = static_cast<int>(state.range(0));
@@ -111,7 +111,7 @@ namespace {
             make_transpose_border<int32_t>(src_block, dst_block, src_stride, dst_stride);
 
         for (auto _ : state) {
-            simd::tile2d_autoblock<SIMD_BLOCK, int32_t>(
+            simd::tile2d_autoblock<SIMD_BLOCK, int32_t, Exec>(
                 src.height(), src.width(), kernel.fn, border
             );
             benchmark::DoNotOptimize(dst);
@@ -154,15 +154,50 @@ namespace {
     }
 #endif
 
+    // Parallel (OpenMP) counterparts of the native SIMD kernel, to measure the
+    // TileExecution::PARALLEL win at sizes large enough to amortize thread setup.
+    void BM_Kernel_Scalar_Parallel(benchmark::State& state) {
+        run_kernel_int32<simd::TileExecution::PARALLEL>(
+            state,
+            [](auto sb, auto db, int64_t ss, int64_t ds) {
+                return simd::Portable<8>(make_transpose_border<int32_t>(sb, db, ss, ds));
+            }
+        );
+    }
+
+    void BM_Kernel_Portable_Parallel(benchmark::State& state) {
+        run_kernel_int32<simd::TileExecution::PARALLEL>(
+            state,
+            [](auto sb, auto db, int64_t ss, int64_t ds) {
+                return make_portable_transpose<8, int32_t>(sb, db, ss, ds);
+            }
+        );
+    }
+
+#if PTENSOR_HAS_NEON
+    void BM_Kernel_Neon_Parallel(benchmark::State& state) {
+        run_kernel_int32<simd::TileExecution::PARALLEL>(
+            state,
+            [](auto sb, auto db, int64_t ss, int64_t ds) { return make_neon_transpose<8>(sb, db, ss, ds); }
+        );
+    }
+#endif
+
     // Per-kernel comparison: only kernels the target can actually emit are
     // registered (empty stand-in kernels are never benchmarked).
     BENCHMARK(BM_Kernel_Scalar)->Arg(256)->Arg(1024)->Arg(2048)->Unit(benchmark::kMicrosecond);
+    BENCHMARK(BM_Kernel_Scalar_Parallel)
+        ->Arg(1024)->Arg(2048)->Arg(4096)->Unit(benchmark::kMicrosecond);
     BENCHMARK(BM_Kernel_Portable)->Arg(256)->Arg(1024)->Arg(2048)->Unit(benchmark::kMicrosecond);
+    BENCHMARK(BM_Kernel_Portable_Parallel)
+        ->Arg(1024)->Arg(2048)->Arg(4096)->Unit(benchmark::kMicrosecond);
 #if PTENSOR_HAS_INTRINSICS_H
     BENCHMARK(BM_Kernel_Avx2)->Arg(256)->Arg(1024)->Arg(2048)->Unit(benchmark::kMicrosecond);
 #endif
 #if PTENSOR_HAS_NEON
     BENCHMARK(BM_Kernel_Neon)->Arg(256)->Arg(1024)->Arg(2048)->Unit(benchmark::kMicrosecond);
+    BENCHMARK(BM_Kernel_Neon_Parallel)
+        ->Arg(1024)->Arg(2048)->Arg(4096)->Unit(benchmark::kMicrosecond);
 #endif
 
     // Square matrices across scales: small (no cache blocking) through large

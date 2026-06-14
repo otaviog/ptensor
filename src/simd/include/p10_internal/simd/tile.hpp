@@ -4,11 +4,9 @@
 #include <cmath>
 #include <concepts>
 #include <cstdint>
-#include <type_traits>
 #include <utility>
 
-//#include <ptensor/tile_region2d.hpp>
-#include "../../core/include/ptensor/tile_region2d.hpp"
+#include <ptensor/tile_region2d.hpp>
 #include "bitwise_math.hpp"
 #include "cpuid.hpp"
 #include "tile_execution.hpp"
@@ -173,6 +171,16 @@ void tile2d(
 template<size_t SimdBlock, TileKernel2DFn Fn>
 constexpr TileKernel2D<SimdBlock, SimdSet::AVX2, Fn> Avx2(Fn &&fn) {
     return TileKernel2D<SimdBlock, SimdSet::AVX2, Fn>(fn);
+}
+
+template<size_t SimdBlock, TileKernel2DFn Fn>
+constexpr TileKernel2D<SimdBlock, SimdSet::AdvSIMD, Fn> AdvSIMD(Fn &&fn) {
+    return TileKernel2D<SimdBlock, SimdSet::AdvSIMD, Fn>(fn);
+}
+
+template<size_t SimdBlock, TileKernel2DFn Fn>
+constexpr TileKernel2D<SimdBlock, SimdSet::WASM, Fn> Wasm(Fn &&fn) {
+    return TileKernel2D<SimdBlock, SimdSet::WASM, Fn>(fn);
 }
 
 template<size_t SimdBlock, TileKernel2DFn Fn>

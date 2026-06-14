@@ -6,8 +6,8 @@ bool is_supported(SimdSet set) {
 #ifdef __wasm_simd128__
     if (set == SimdSet::WASM) { return true; }
 #endif
-    (void)set;
-    return false;
+    
+    return set == SimdSet::NONE;
 }
 
 // Conservative defaults representative of typical hardware running WASM engines.

@@ -135,8 +135,9 @@ concept HasConstExpr = requires(T entity) {
 
 template<typename T>
 concept TileKernel2DConcept = requires(T entity) {
-    requires HasConstExpr<T, size_t, &T::SIMD_BLOCK>;
-    requires HasConstExpr<T, SimdSet, &T::INSTRUCTIONS>;
+   requires HasConstExpr<T, size_t, &T::SIMD_BLOCK>;
+   requires HasConstExpr<T, SimdSet, &T::INSTRUCTIONS>;
+   {entity.fn};
 };
 
 template<typename scalar_t, TileKernel2DFn ScalarKn>
@@ -158,30 +159,23 @@ void dispatch_tile2d(
 ) {
     if constexpr (is_compiler_supported(CurrentKernel::INSTRUCTIONS)) {
         if (is_supported(CurrentKernel::INSTRUCTIONS)) {
-            return dynamic_tile2d<CurrentKernel::SIMD_BLOCK>(
+            return dynamic_tile2d<CurrentKernel::SIMD_BLOCK, scalar_t>(
                 rows,
                 cols,
-                current_kern.kernel,
-                std::forward(scalar_impl)
+                current_kern.fn,
+                std::forward<ScalarKn>(scalar_impl)
             );
-        } 
-        return dispatch_tile2d<scalar_t>(
-                rows,
-                cols,
-                current_kern.kernel,
-                std::forward(scalar_impl),
-                kernels...
-            );        
+        }
     }
 
+    // Current kernel unusable (compiler can't emit it, or CPU lacks it):
+    // drop it and try the remaining kernels with the same scalar fallback.
     return dispatch_tile2d<scalar_t>(
-                rows,
-                cols,
-                current_kern.kernel,
-                std::forward(scalar_impl),
-                kernels...
-            );        
-    
+        rows,
+        cols,
+        std::forward<ScalarKn>(scalar_impl),
+        kernels...
+    );
 }
 
 template<size_t SimdBlock, TileKernel2DFn Fn>

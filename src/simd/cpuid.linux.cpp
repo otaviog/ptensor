@@ -27,6 +27,7 @@ bool is_supported(SimdSet set) {
     case SimdSet::AVX2: return AVX2;
     case SimdSet::WASM: return false;
     case SimdSet::AdvSIMD: return ADV_SIMD;
+    case SimdSet::NONE: return true;
     }
     return false;
 }

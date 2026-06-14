@@ -55,7 +55,7 @@ TEST_CASE("Simd::dynamic_tile", "[simd][tile]") {
     );
 
     // The transposed element of a src region lands at the transposed dst region.
-    tile2d_autocache<SIMD_BLOCK, int32_t>(
+    tile2d_autoblock<SIMD_BLOCK, int32_t>(
         SHAPE_HEIGHT,
         SHAPE_WIDTH,
         [&](auto region) { simd_transpose(src(region), dst(region.transposed())); },
@@ -93,7 +93,7 @@ TEST_CASE("Simd::dispatch_tile", "[simd][tile]") {
         SHAPE_HEIGHT,
         SHAPE_WIDTH,
         [&](auto region) { scalar_transpose(src(region), dst(region.transposed())); },
-        GenericSimd<SIMD_BLOCK>([&](auto region) { simd_transpose(src(region), dst(region.transposed())); })
+        Portable<SIMD_BLOCK>([&](auto region) { simd_transpose(src(region), dst(region.transposed())); })
     );
 
     REQUIRE_THAT(testing::compare_tensors(output_image, expected_image), testing::is_ok());

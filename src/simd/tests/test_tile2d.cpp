@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <p10_internal/simd/tile2d.hpp>
@@ -97,6 +99,52 @@ TEST_CASE("Simd::tile2d", "[simd][tile]") {
     );
 
     REQUIRE_THAT(testing::compare_tensors(output_image, expected_image), testing::is_ok());
+}
+
+TEST_CASE("Simd::tile2d_blocked border", "[simd][tile]") {
+    // Paint every cell each kernel visits; the split must cover the domain
+    // exactly once, with the SIMD kernel confined to the halo-inset interior.
+    constexpr int64_t ROWS = 200;
+    constexpr int64_t COLS = 160;
+    constexpr TileBorder BORDER {.horizontal = 2, .vertical = 3};
+    constexpr size_t CACHE = 32;
+    constexpr size_t SIMD = 8;
+
+    std::vector<int> simd_paint(static_cast<size_t>(ROWS * COLS), 0);
+    std::vector<int> total_paint(static_cast<size_t>(ROWS * COLS), 0);
+
+    const auto paint = [&](std::vector<int>& grid, const TileRegion2D& region) {
+        for (int64_t r = region.row; r < region.row + region.height; r++) {
+            for (int64_t c = region.col; c < region.col + region.width; c++) {
+                grid[static_cast<size_t>((r * COLS) + c)]++;
+            }
+        }
+    };
+
+    tile2d_blocked<CACHE, SIMD, TileExecution::SEQUENTIAL, BORDER>(
+        ROWS,
+        COLS,
+        [&](const TileRegion2D& region) {
+            paint(simd_paint, region);
+            paint(total_paint, region);
+        },
+        [&](const TileRegion2D& region) { paint(total_paint, region); }
+    );
+
+    for (int64_t r = 0; r < ROWS; r++) {
+        for (int64_t c = 0; c < COLS; c++) {
+            const size_t idx = static_cast<size_t>((r * COLS) + c);
+            CAPTURE(r, c);
+            // Every cell written exactly once (no gaps, no overlap).
+            REQUIRE(total_paint[idx] == 1);
+            // SIMD cells only inside the inset interior; the frame is scalar-only.
+            const bool inset = r >= BORDER.vertical && r < ROWS - BORDER.vertical
+                && c >= BORDER.horizontal && c < COLS - BORDER.horizontal;
+            if (simd_paint[idx] == 1) {
+                REQUIRE(inset);
+            }
+        }
+    }
 }
 
 }  // namespace p10::simd

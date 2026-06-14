@@ -85,6 +85,7 @@ endif()
 
 if(BUILD_TESTS)
   add_subdirectory(tests)
+  add_subdirectory(benchmarks)
 endif()
 
 #### Installation

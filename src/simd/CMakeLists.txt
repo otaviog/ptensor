@@ -20,6 +20,8 @@ target_sources(ptensor_simd_
         ${_INCLUDE_DIR}/bitwise_math.hpp
         ${_INCLUDE_DIR}/compiler.hpp
         ${_INCLUDE_DIR}/cpuid.hpp
+        ${_INCLUDE_DIR}/tile1d.hpp
+        ${_INCLUDE_DIR}/tile2d.hpp
     PRIVATE
         ${_CPUID_IMPL}
 )

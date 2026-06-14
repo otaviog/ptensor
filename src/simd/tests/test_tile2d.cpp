@@ -1,6 +1,6 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <p10_internal/simd/tile.hpp>
+#include <p10_internal/simd/tile2d.hpp>
 #include <ptensor/accessor2D.hpp>
 #include <ptensor/tensor.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>

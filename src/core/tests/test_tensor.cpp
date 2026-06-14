@@ -994,6 +994,31 @@ TEST_CASE("core::Tensor::transpose", "[tensor][transpose]") {
         }
     }
 
+    SECTION("Transpose into self") {
+        // from_range fills row-major 0..n-1, so element (i, j) holds i*cols + j;
+        // after transposing into the same tensor, (j, i) must hold that value.
+        auto type = GENERATE(Dtype::Float32, Dtype::Int64);
+        DYNAMIC_SECTION("Testing self-transpose with type " << to_string(type)) {
+            const size_t rows = 40;
+            const size_t cols = 30;
+            auto tensor = Tensor::from_range(make_shape(rows, cols), type).unwrap();
+
+            REQUIRE(tensor.transpose(tensor).is_ok());
+            REQUIRE(tensor.shape() == make_shape(cols, rows));
+
+            tensor.visit([&](const auto& element) {
+                using scalar_t = std::decay_t<decltype(element)>::element_type;
+                auto data = tensor.as_span1d<scalar_t>().unwrap();
+                for (size_t i = 0; i < rows; i++) {
+                    for (size_t j = 0; j < cols; j++) {
+                        const auto expected_value = static_cast<scalar_t>((i * cols) + j);
+                        REQUIRE(data[(j * rows) + i] == expected_value);
+                    }
+                }
+            });
+        }
+    }
+
     SECTION("Invalid cases") {
         SECTION("Non 2D Tensor") {
             auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();

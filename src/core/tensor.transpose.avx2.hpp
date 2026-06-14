@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include <p10_internal/simd/compiler.hpp>
-#include <p10_internal/simd/tile.hpp>
+#include <p10_internal/simd/tile2d.hpp>
 
 #if PTENSOR_HAS_INTRINSICS_H
     #include <immintrin.h>
@@ -133,7 +133,14 @@ auto make_avx2_transpose(
     (void) dst_block;
     (void) src_stride;
     (void) dst_stride;
-    return simd::Avx2<SIMD_BLOCK>([](const TileRegion2D&) {});
+    return simd::Avx2<SIMD_BLOCK>([](const TileRegion2D&) {
+        // This no-op body must never reach codegen on an AVX2-capable target,
+        // where tile2d would select it and silently skip the transpose.
+        static_assert(
+            !simd::is_compiler_supported(simd::SimdSet::AVX2),
+            "empty AVX2 transpose kernel instantiated on an AVX2-capable target"
+        );
+    });
 #endif
 }
 

@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include <p10_internal/simd/compiler.hpp>
-#include <p10_internal/simd/tile.hpp>
+#include <p10_internal/simd/tile2d.hpp>
 
 #if PTENSOR_HAS_NEON
     #include <arm_neon.h>
@@ -73,7 +73,14 @@ auto make_neon_transpose(
     (void) dst_block;
     (void) src_stride;
     (void) dst_stride;
-    return simd::Neon<SIMD_BLOCK>([](const TileRegion2D&) {});
+    return simd::Neon<SIMD_BLOCK>([](const TileRegion2D&) {
+        // This no-op body must never reach codegen on a NEON-capable target,
+        // where tile2d would select it and silently skip the transpose.
+        static_assert(
+            !simd::is_compiler_supported(simd::SimdSet::AdvSIMD),
+            "empty NEON transpose kernel instantiated on a NEON-capable target"
+        );
+    });
 #endif
 }
 

@@ -1,16 +1,13 @@
 #include "tensor.hpp"
 
 #include <cstdint>
+#include <utility>
 
-#include <p10_internal/simd/compiler.hpp>
-#include <p10_internal/simd/cpuid.hpp>
 #include <p10_internal/simd/tile.hpp>
 
-#if PTENSOR_HAS_INTRINSICS_H
-    #include <immintrin.h>
-#endif
-
 #include "p10_error.hpp"
+#include "tensor.transpose.avx2.hpp"
+#include "tensor.transpose.neon.hpp"
 
 namespace p10 {
 namespace {
@@ -24,8 +21,8 @@ namespace {
         ScalarT* dst,
         int64_t dst_stride
     ) {
-        for (int i = 0; i < rows; ++i) {
-            for (int j = 0; j < cols; ++j) {
+        for (int64_t i = 0; i < rows; ++i) {
+            for (int64_t j = 0; j < cols; ++j) {
                 dst[(j * dst_stride) + i] = src[(i * src_stride) + j];
             }
         }
@@ -43,101 +40,6 @@ namespace {
 
 }  // namespace
 
-#if PTENSOR_HAS_INTRINSICS_H
-PTENSOR_AVX2 void
-transpose_avx2_8x8_32(int32_t const* src, int64_t src_stride, int32_t* dst, int64_t dst_stride) {
-    __m256i row0 = _mm256_loadu_si256((__m256i const*)src);
-    __m256i row1 = _mm256_loadu_si256((__m256i const*)(src + src_stride));
-    __m256i row2 = _mm256_loadu_si256((__m256i const*)(src + 2 * src_stride));
-    __m256i row3 = _mm256_loadu_si256((__m256i const*)(src + 3 * src_stride));
-    __m256i row4 = _mm256_loadu_si256((__m256i const*)(src + 4 * src_stride));
-    __m256i row5 = _mm256_loadu_si256((__m256i const*)(src + 5 * src_stride));
-    __m256i row6 = _mm256_loadu_si256((__m256i const*)(src + 6 * src_stride));
-    __m256i row7 = _mm256_loadu_si256((__m256i const*)(src + 7 * src_stride));
-    /* Starts with
-       r0 = 00 01 02 03 | 04 05 06 07
-       r1 = 08 09 10 11 | 12 13 14 15
-       r2 = 16 17 18 19 | 20 21 22 23
-       r3 = 24 25 26 27 | 28 29 30 31
-       r4 = 32 33 34 35 | 36 37 38 39
-       r5 = 40 41 42 43 | 44 45 46 47
-       r6 = 48 49 50 51 | 52 53 54 55
-       r7 = 56 57 58 59 | 60 61 62 63
-    */
-
-    __m256i t0a = _mm256_unpacklo_epi32(row0, row1);
-    __m256i t0b = _mm256_unpackhi_epi32(row0, row1);
-
-    __m256i t2a = _mm256_unpacklo_epi32(row2, row3);
-    __m256i t2b = _mm256_unpackhi_epi32(row2, row3);
-
-    __m256i t4a = _mm256_unpacklo_epi32(row4, row5);
-    __m256i t4b = _mm256_unpackhi_epi32(row4, row5);
-
-    __m256i t6a = _mm256_unpacklo_epi32(row6, row7);
-    __m256i t6b = _mm256_unpackhi_epi32(row6, row7);
-    /* Transposed the first 2x2 matrices
-       t0a = [00 08; 01 09] | [04 12; 05 13]
-       t0b = [02 10; 03 11] | [06 14; 07 15]
-
-       t2a = [16 24; 17 25] | [20 28; 21 29]
-       t2b = [18 26; 19 27] | [22 30; 23 31]
-        
-       t4a = [32 40; 33 41] | [36 44; 37 45]
-       t4b = [34 42; 35 43] | [38 46; 39 47]
-
-       t6a = [48 56; 49 57] | [52 60; 53 61]
-       t6b = [50 58; 51 59] | [54 62; 55 63]
-    */
-
-    __m256i s0 = _mm256_unpacklo_epi64(t0a, t2a);
-    __m256i s1 = _mm256_unpackhi_epi64(t0a, t2a);
-
-    __m256i s2 = _mm256_unpacklo_epi64(t0b, t2b);
-    __m256i s3 = _mm256_unpackhi_epi64(t0b, t2b);
-
-    __m256i s4 = _mm256_unpacklo_epi64(t4a, t6a);
-    __m256i s5 = _mm256_unpackhi_epi64(t4a, t6a);
-
-    __m256i s6 = _mm256_unpacklo_epi64(t4b, t6b);
-    __m256i s7 = _mm256_unpackhi_epi64(t4b, t6b);
-
-    /* Now unites the 4x4 blocks into 8x8 blocks
-       s0 = [00 08 16 24] | [04 12 20 28]
-       s1 = [01 09 17 25] | [05 13 21 29]
-
-       s2 = [02 10 18 26] | [06 14 22 30]
-       s3 = [03 11 19 27] | [07 15 23 31]
-
-       s4 = [32 40 48 56] | [36 44 52 60]
-       s5 = [33 41 49 57] | [37 45 53 61]
-
-       s6 = [34 42 50 58] | [38 46 54 62]
-       s7 = [35 43 51 59] | [39 47 55 63]
-    */
-
-    constexpr int PERMUTE_MASK_LOW_128bits = 0x20;
-    constexpr int PERMUTE_MASK_HIGH_128bits = 0x31;
-    __m256i row0t = _mm256_permute2f128_si256(s0, s4, PERMUTE_MASK_LOW_128bits);
-    __m256i row1t = _mm256_permute2f128_si256(s1, s5, PERMUTE_MASK_LOW_128bits);
-    __m256i row2t = _mm256_permute2f128_si256(s2, s6, PERMUTE_MASK_LOW_128bits);
-    __m256i row3t = _mm256_permute2f128_si256(s3, s7, PERMUTE_MASK_LOW_128bits);
-    __m256i row4t = _mm256_permute2f128_si256(s0, s4, PERMUTE_MASK_HIGH_128bits);
-    __m256i row5t = _mm256_permute2f128_si256(s1, s5, PERMUTE_MASK_HIGH_128bits);
-    __m256i row6t = _mm256_permute2f128_si256(s2, s6, PERMUTE_MASK_HIGH_128bits);
-    __m256i row7t = _mm256_permute2f128_si256(s3, s7, PERMUTE_MASK_HIGH_128bits);
-
-    _mm256_storeu_si256((__m256i*)(dst + 0 * dst_stride), row0t);
-    _mm256_storeu_si256((__m256i*)(dst + 1 * dst_stride), row1t);
-    _mm256_storeu_si256((__m256i*)(dst + 2 * dst_stride), row2t);
-    _mm256_storeu_si256((__m256i*)(dst + 3 * dst_stride), row3t);
-    _mm256_storeu_si256((__m256i*)(dst + 4 * dst_stride), row4t);
-    _mm256_storeu_si256((__m256i*)(dst + 5 * dst_stride), row5t);
-    _mm256_storeu_si256((__m256i*)(dst + 6 * dst_stride), row6t);
-    _mm256_storeu_si256((__m256i*)(dst + 7 * dst_stride), row7t);
-}
-#endif  // x86
-
 P10Error Tensor::transpose(Tensor& other) const {
     if (blob_.device() != Device::Cpu) {
         return P10Error::NotImplemented << "Transpose is only implemented for CPU tensors";
@@ -145,6 +47,15 @@ P10Error Tensor::transpose(Tensor& other) const {
 
     if (!is_contiguous()) {
         return P10Error::NotImplemented << "Transpose is only implemented for contiguous tensors";
+    }
+
+    // Transposing into self would realloc this tensor's blob while the kernels
+    // still read its old storage. Route through a temporary, then move it back.
+    if (&other == this) {
+        Tensor result;
+        P10_RETURN_IF_ERROR(transpose(result));
+        other = std::move(result);
+        return P10Error::Ok;
     }
 
     return visit([this, &other](auto type_span) -> P10Error {
@@ -156,7 +67,11 @@ P10Error Tensor::transpose(Tensor& other) const {
         }
         auto src_span = src_span_res.unwrap();
         P10_RETURN_IF_ERROR(other.create(make_shape(src_span.width(), src_span.height()), dtype()));
-        auto dest_span = other.as_span2d<ScalarT>().unwrap();
+        auto dest_span_res = other.as_span2d<ScalarT>();
+        if (dest_span_res.is_error()) {
+            return dest_span_res.error();
+        }
+        auto dest_span = dest_span_res.unwrap();
 
         const int64_t rows = src_span.height();
         const int64_t cols = src_span.width();
@@ -165,7 +80,6 @@ P10Error Tensor::transpose(Tensor& other) const {
         const int64_t dst_stride = dest_span.width();
 
         constexpr size_t SIMD_BLOCK = 8;
-        [[maybe_unused]] const bool avx2_supported = simd::is_supported(simd::SimdSet::AVX2);
 
         // A src tile at (row, col) transposes into the dst tile at (col, row).
         const auto src_block = [&](const TileRegion2D& region) {
@@ -176,20 +90,7 @@ P10Error Tensor::transpose(Tensor& other) const {
         };
 
         // Interior: full SIMD_BLOCK x SIMD_BLOCK tiles, transposed in registers.
-        const auto simd_impl = [&](const TileRegion2D& region) {
-#if PTENSOR_HAS_INTRINSICS_H
-            if constexpr (sizeof(ScalarT) == sizeof(int32_t)) {
-                if (avx2_supported) {
-                    transpose_avx2_8x8_32(
-                        reinterpret_cast<const int32_t*>(src_block(region)),
-                        src_stride,
-                        reinterpret_cast<int32_t*>(dst_block(region)),
-                        dst_stride
-                    );
-                    return;
-                }
-            }
-#endif
+        const auto transpose_block = [&](const TileRegion2D& region) {
             transpose_8x8_generic(src_block(region), src_stride, dst_block(region), dst_stride);
         };
 
@@ -205,7 +106,24 @@ P10Error Tensor::transpose(Tensor& other) const {
             );
         };
 
-        simd::tile2d_autoblock<SIMD_BLOCK, ScalarT>(rows, cols, simd_impl, scalar_impl);
+        // tile2d picks the first kernel the running CPU supports (via cpuid),
+        // otherwise the next, and the scalar kernel always handles the borders.
+        // The SIMD 8x8 kernels move 32-bit lanes, so they also serve float32
+        // (the bit pattern is shuffled untouched); larger types fall to scalar.
+        if constexpr (sizeof(ScalarT) == sizeof(int32_t)) {
+            simd::tile2d<ScalarT>(
+                rows,
+                cols,
+                scalar_impl,
+                make_avx2_transpose<SIMD_BLOCK>(src_block, dst_block, src_stride, dst_stride),
+                make_neon_transpose<SIMD_BLOCK>(src_block, dst_block, src_stride, dst_stride),
+                simd::Portable<SIMD_BLOCK>(transpose_block)
+            );
+            return P10Error::Ok;
+        }
+        simd::tile2d<ScalarT>(
+            rows, cols, scalar_impl, simd::Portable<SIMD_BLOCK>(transpose_block)
+        );
         return P10Error::Ok;
     });
 }

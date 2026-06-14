@@ -31,7 +31,7 @@ namespace {
     }
 }  // namespace
 
-TEST_CASE("Simd::dynamic_tile", "[simd][tile]") {
+TEST_CASE("Simd::tile2d_autoblock", "[simd][tile]") {
     constexpr size_t SHAPE_WIDTH = 1220;
     constexpr size_t SHAPE_HEIGHT = 1360;
     const auto int32 = TensorOptions().dtype(Dtype::Int32);
@@ -65,7 +65,7 @@ TEST_CASE("Simd::dynamic_tile", "[simd][tile]") {
     REQUIRE_THAT(testing::compare_tensors(output_image, expected_image), testing::is_ok());
 }
 
-TEST_CASE("Simd::dispatch_tile", "[simd][tile]") {
+TEST_CASE("Simd::tile2d", "[simd][tile]") {
     constexpr size_t SHAPE_WIDTH = 1220;
     constexpr size_t SHAPE_HEIGHT = 1360;
     const auto int32 = TensorOptions().dtype(Dtype::Int32);

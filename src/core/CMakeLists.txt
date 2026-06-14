@@ -43,6 +43,8 @@ target_sources(ptensor
     stride.cpp
     tensor.cpp
     tensor.transpose.cpp
+    tensor.transpose.avx2.hpp
+    tensor.transpose.neon.hpp
     tensor_print.cpp
     detail/blob.cpp
     dtype.cpp

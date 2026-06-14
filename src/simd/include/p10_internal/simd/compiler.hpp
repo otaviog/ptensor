@@ -15,3 +15,9 @@
 #else
     #define PTENSOR_HAS_INTRINSICS_H 0
 #endif
+
+#if defined(__aarch64__) && __has_include(<arm_neon.h>)
+    #define PTENSOR_HAS_NEON 1
+#else
+    #define PTENSOR_HAS_NEON 0
+#endif

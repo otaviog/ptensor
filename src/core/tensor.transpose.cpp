@@ -205,7 +205,7 @@ P10Error Tensor::transpose(Tensor& other) const {
             );
         };
 
-        simd::dynamic_tile2d<SIMD_BLOCK, ScalarT>(rows, cols, simd_impl, scalar_impl);
+        simd::tile2d_autocache<SIMD_BLOCK, ScalarT>(rows, cols, simd_impl, scalar_impl);
         return P10Error::Ok;
     });
 }

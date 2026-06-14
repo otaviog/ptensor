@@ -24,7 +24,7 @@ template<
     TileExecution ExecutionMode,
     TileKernel2DFn SimdFn,
     TileKernel2DFn ScalarFn>
-void tile2d(int64_t rows, int64_t cols, SimdFn&& simd_impl, ScalarFn&& scalar_impl) {
+void tile2d_blocked(int64_t rows, int64_t cols, SimdFn&& simd_impl, ScalarFn&& scalar_impl) {
     static_assert(CACHE_BLOCK % SIMD_BLOCK == 0, "CACHE_BLOCK must be a multiple of SIMD_BLOCK");
 
     constexpr int64_t CACHE = CACHE_BLOCK;
@@ -68,8 +68,18 @@ void tile2d(int64_t rows, int64_t cols, SimdFn&& simd_impl, ScalarFn&& scalar_im
     }
 }
 
+// Round a target cache-tile side (in elements) down to a multiple of
+// SIMD_BLOCK, never below one block. Guarantees tile2d_blocked's
+// CACHE % SIMD_BLOCK == 0 invariant for any SIMD_BLOCK, so the divisibility
+// static_assert can never fire from an auto-picked bucket.
+template<size_t SIMD_BLOCK>
+constexpr size_t snap_to_simd(size_t target) {
+    const size_t blocks = target / SIMD_BLOCK;
+    return (blocks == 0 ? size_t {1} : blocks) * SIMD_BLOCK;
+}
+
 template<size_t SIMD_BLOCK, typename scalar_t, TileKernel2DFn SimdKn, TileKernel2DFn ScalarKn>
-void dynamic_tile2d(int64_t rows, int64_t cols, SimdKn&& simd_impl, ScalarKn&& scalar_impl) {
+void tile2d_autocache(int64_t rows, int64_t cols, SimdKn&& simd_impl, ScalarKn&& scalar_impl) {
     // Size the cache tile so its working set stays in L1d: a square side in
     // elements of ~sqrt(L1) bytes / element size (the src and dst tiles share L1).
     const int64_t processor_cache_size_sqrt =
@@ -83,39 +93,28 @@ void dynamic_tile2d(int64_t rows, int64_t cols, SimdKn&& simd_impl, ScalarKn&& s
     }
 
     if (processor_cache_size_sqrt >= 1024) {
-        tile2d<1024, SIMD_BLOCK, TileExecution::SEQUENTIAL>(
-            rows,
-            cols,
-            std::forward<SimdKn>(simd_impl),
-            std::forward<ScalarKn>(scalar_impl)
+        tile2d_blocked<snap_to_simd<SIMD_BLOCK>(1024), SIMD_BLOCK, TileExecution::SEQUENTIAL>(
+            rows, cols, std::forward<SimdKn>(simd_impl), std::forward<ScalarKn>(scalar_impl)
         );
     } else if (processor_cache_size_sqrt >= 512) {
-        tile2d<512, SIMD_BLOCK, TileExecution::SEQUENTIAL>(
-            rows,
-            cols,
-            std::forward<SimdKn>(simd_impl),
-            std::forward<ScalarKn>(scalar_impl)
+        tile2d_blocked<snap_to_simd<SIMD_BLOCK>(512), SIMD_BLOCK, TileExecution::SEQUENTIAL>(
+            rows, cols, std::forward<SimdKn>(simd_impl), std::forward<ScalarKn>(scalar_impl)
+        );
+    } else if (processor_cache_size_sqrt >= 256) {
+        tile2d_blocked<snap_to_simd<SIMD_BLOCK>(256), SIMD_BLOCK, TileExecution::SEQUENTIAL>(
+            rows, cols, std::forward<SimdKn>(simd_impl), std::forward<ScalarKn>(scalar_impl)
         );
     } else if (processor_cache_size_sqrt >= 128) {
-        tile2d<128, SIMD_BLOCK, TileExecution::SEQUENTIAL>(
-            rows,
-            cols,
-            std::forward<SimdKn>(simd_impl),
-            std::forward<ScalarKn>(scalar_impl)
+        tile2d_blocked<snap_to_simd<SIMD_BLOCK>(128), SIMD_BLOCK, TileExecution::SEQUENTIAL>(
+            rows, cols, std::forward<SimdKn>(simd_impl), std::forward<ScalarKn>(scalar_impl)
         );
     } else if (processor_cache_size_sqrt >= 64) {
-        tile2d<64, SIMD_BLOCK, TileExecution::SEQUENTIAL>(
-            rows,
-            cols,
-            std::forward<SimdKn>(simd_impl),
-            std::forward<ScalarKn>(scalar_impl)
+        tile2d_blocked<snap_to_simd<SIMD_BLOCK>(64), SIMD_BLOCK, TileExecution::SEQUENTIAL>(
+            rows, cols, std::forward<SimdKn>(simd_impl), std::forward<ScalarKn>(scalar_impl)
         );
     } else {
-        tile2d<32, SIMD_BLOCK, TileExecution::SEQUENTIAL>(
-            rows,
-            cols,
-            std::forward<SimdKn>(simd_impl),
-            std::forward<ScalarKn>(scalar_impl)
+        tile2d_blocked<snap_to_simd<SIMD_BLOCK>(32), SIMD_BLOCK, TileExecution::SEQUENTIAL>(
+            rows, cols, std::forward<SimdKn>(simd_impl), std::forward<ScalarKn>(scalar_impl)
         );
     }
 }
@@ -127,21 +126,14 @@ struct TileKernel2D {
     KernelFn fn;
 };
 
-template<typename T, typename ConstType, auto ConstPtr>
-concept HasConstExpr = requires(T entity) {
-    requires std::bool_constant<(*ConstPtr, true)>::value;
-    requires std::same_as<std::remove_cvref_t<decltype(*ConstPtr)>, ConstType>;
-};
-
 template<typename T>
-concept TileKernel2DConcept = requires(T entity) {
-   requires HasConstExpr<T, size_t, &T::SIMD_BLOCK>;
-   requires HasConstExpr<T, SimdSet, &T::INSTRUCTIONS>;
-   {entity.fn};
-};
+concept TileKernel2DConcept = requires {
+    { T::SIMD_BLOCK } -> std::convertible_to<size_t>;
+    { T::INSTRUCTIONS } -> std::convertible_to<SimdSet>;
+} && TileKernel2DFn<decltype(T::fn)>;
 
 template<typename scalar_t, TileKernel2DFn ScalarKn>
-void dispatch_tile2d(
+void tile2d(
     int64_t rows,
     int64_t cols,
     ScalarKn&& scalar_impl) {
@@ -150,16 +142,16 @@ void dispatch_tile2d(
 }
 
 template<typename scalar_t, TileKernel2DFn ScalarKn, TileKernel2DConcept CurrentKernel, typename... Args>
-void dispatch_tile2d(
+void tile2d(
     int64_t rows,
     int64_t cols,
     ScalarKn&& scalar_impl,
-    CurrentKernel current_kern,
-    Args... kernels
+    const CurrentKernel& current_kern,
+    const Args&... kernels
 ) {
     if constexpr (is_compiler_supported(CurrentKernel::INSTRUCTIONS)) {
         if (is_supported(CurrentKernel::INSTRUCTIONS)) {
-            return dynamic_tile2d<CurrentKernel::SIMD_BLOCK, scalar_t>(
+            return tile2d_autocache<CurrentKernel::SIMD_BLOCK, scalar_t>(
                 rows,
                 cols,
                 current_kern.fn,
@@ -170,7 +162,7 @@ void dispatch_tile2d(
 
     // Current kernel unusable (compiler can't emit it, or CPU lacks it):
     // drop it and try the remaining kernels with the same scalar fallback.
-    return dispatch_tile2d<scalar_t>(
+    return tile2d<scalar_t>(
         rows,
         cols,
         std::forward<ScalarKn>(scalar_impl),
@@ -187,6 +179,5 @@ template<size_t SimdBlock, TileKernel2DFn Fn>
 constexpr TileKernel2D<SimdBlock, SimdSet::NONE, Fn> GenericSimd(Fn &&fn) {
     return TileKernel2D<SimdBlock, SimdSet::NONE, Fn>(fn);
 }
-
 
 }  // namespace p10::simd

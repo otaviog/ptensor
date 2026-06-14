@@ -55,7 +55,7 @@ TEST_CASE("Simd::dynamic_tile", "[simd][tile]") {
     );
 
     // The transposed element of a src region lands at the transposed dst region.
-    dynamic_tile2d<SIMD_BLOCK, int32_t>(
+    tile2d_autocache<SIMD_BLOCK, int32_t>(
         SHAPE_HEIGHT,
         SHAPE_WIDTH,
         [&](auto region) { simd_transpose(src(region), dst(region.transposed())); },
@@ -89,7 +89,7 @@ TEST_CASE("Simd::dispatch_tile", "[simd][tile]") {
     );
 
     // The transposed element of a src region lands at the transposed dst region.
-    dispatch_tile2d<int32_t>(
+    tile2d<int32_t>(
         SHAPE_HEIGHT,
         SHAPE_WIDTH,
         [&](auto region) { scalar_transpose(src(region), dst(region.transposed())); },

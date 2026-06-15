@@ -18,10 +18,12 @@ image_to_tensor(const Tensor& image, Tensor& out_tensor, const ImageToTensorOpti
         return P10Error::InvalidArgument << "Input tensor must be contiguous in memory.";
     }
 
-    const auto image_span = image.as_span3d<uint8_t>().expect("Invalid image");
-    const size_t num_channels = image_span.channels();
-    const size_t height = image_span.height();
-    const size_t width = image_span.width();
+    // HWC image: dims come from the tensor shape (Accessor3D names dims for the
+    // CHW case, so don't query channels()/rows()/cols() here).
+    const auto image_span = image.as_accessor3d<uint8_t>().expect("Invalid image");
+    const auto height = static_cast<size_t>(image.shape(0).unwrap());
+    const auto width = static_cast<size_t>(image.shape(1).unwrap());
+    const auto num_channels = static_cast<size_t>(image.shape(2).unwrap());
     const Dtype out_dtype = options.target_dtype().value_or(Dtype::Float32);
     const bool do_normalize = options.normalize();
 
@@ -37,24 +39,24 @@ image_to_tensor(const Tensor& image, Tensor& out_tensor, const ImageToTensorOpti
     out_dtype.match(
         [&](auto int_id) {
             using T = decltype(int_id)::type;
-            auto out_span = out_tensor.as_planar_span3d<T>().unwrap();
+            auto out_span = out_tensor.as_span3d<T>().unwrap();
             for (size_t row = 0; row < height; row++) {
                 for (size_t col = 0; col < width; col++) {
-                    const auto& ch = image_span.channel(row, col);
+                    const auto& ch = image_span[row][col];
                     for (size_t c = 0; c < num_channels; c++) {
-                        out_span[c].row(row)[col] = static_cast<T>(ch[c]);
+                        out_span[c][row][col] = static_cast<T>(ch[c]);
                     }
                 }
             }
         },
         [&](auto float_id) {
             using T = decltype(float_id)::type;
-            auto out_span = out_tensor.as_planar_span3d<T>().unwrap();
+            auto out_span = out_tensor.as_span3d<T>().unwrap();
             for (size_t row = 0; row < height; row++) {
                 for (size_t col = 0; col < width; col++) {
-                    const auto& ch = image_span.channel(row, col);
+                    const auto& ch = image_span[row][col];
                     for (size_t c = 0; c < num_channels; c++) {
-                        out_span[c].row(row)[col] = do_normalize ? T(ch[c]) / T(255) : T(ch[c]);
+                        out_span[c][row][col] = do_normalize ? T(ch[c]) / T(255) : T(ch[c]);
                     }
                 }
             }
@@ -122,10 +124,10 @@ P10Error image_from_tensor(
             out_dtype.match(
                 [&](auto int_out_id) {
                     using Tout = decltype(int_out_id)::type;
-                    auto out_span = out_image_tensor.as_span3d<Tout>().unwrap();
+                    auto out_span = out_image_tensor.as_accessor3d<Tout>().unwrap();
                     for (size_t row = 0; row < height; row++) {
                         for (size_t col = 0; col < width; col++) {
-                            auto out_ch = out_span.channel(row, col);
+                            auto out_ch = out_span[row][col];
                             for (size_t c = 0; c < num_channels; c++) {
                                 const Fin val =
                                     in_data[(c * plane_size) + (row * width) + col] * Fin {255};
@@ -136,10 +138,10 @@ P10Error image_from_tensor(
                 },
                 [&](auto float_out_id) {
                     using Tout = decltype(float_out_id)::type;
-                    auto out_span = out_image_tensor.as_span3d<Tout>().unwrap();
+                    auto out_span = out_image_tensor.as_accessor3d<Tout>().unwrap();
                     for (size_t row = 0; row < height; row++) {
                         for (size_t col = 0; col < width; col++) {
-                            auto out_ch = out_span.channel(row, col);
+                            auto out_ch = out_span[row][col];
                             for (size_t c = 0; c < num_channels; c++) {
                                 out_ch[c] = static_cast<Tout>(
                                     in_data[(c * plane_size) + (row * width) + col]

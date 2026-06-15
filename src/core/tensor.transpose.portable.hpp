@@ -44,7 +44,7 @@ auto make_portable_transpose(
     int64_t src_stride,
     int64_t dst_stride
 ) {
-    return simd::Portable<SIMD_BLOCK>([=](const TileRegion2D& region) {
+    return simd::Portable<SIMD_BLOCK>([=](const Region2D& region) {
         transpose_8x8_generic<ScalarT>(src_block(region), src_stride, dst_block(region), dst_stride);
     });
 }
@@ -58,7 +58,7 @@ auto make_transpose_border(
     int64_t src_stride,
     int64_t dst_stride
 ) {
-    return [=](const TileRegion2D& region) {
+    return [=](const Region2D& region) {
         transpose_generic<ScalarT>(
             region.height,
             region.width,

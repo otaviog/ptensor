@@ -456,20 +456,20 @@ TEST_CASE("core::Tensor::as_span2d converts to 2D span", "[tensor][span]") {
         auto tensor = Tensor::zeros(make_shape(3, 4)).unwrap();
         auto span = tensor.as_span2d<float>().unwrap();
 
-        REQUIRE(span.height() == 3);
-        REQUIRE(span.width() == 4);
+        REQUIRE(span.rows() == 3);
+        REQUIRE(span.cols() == 4);
 
         // Set values using 2D access
         for (size_t i = 0; i < 3; i++) {
             for (size_t j = 0; j < 4; j++) {
-                span.row(i)[j] = static_cast<float>(i * 4 + j);
+                span[i][j] = static_cast<float>(i * 4 + j);
             }
         }
 
         // Verify values
         for (size_t i = 0; i < 3; i++) {
             for (size_t j = 0; j < 4; j++) {
-                REQUIRE(span.row(i)[j] == Catch::Approx(float(i * 4 + j)));
+                REQUIRE(span[i][j] == Catch::Approx(float(i * 4 + j)));
             }
         }
     }
@@ -479,10 +479,10 @@ TEST_CASE("core::Tensor::as_span2d converts to 2D span", "[tensor][span]") {
         const auto& const_tensor = tensor;
         auto span = const_tensor.as_span2d<float>().unwrap();
 
-        REQUIRE(span.height() == 2);
-        REQUIRE(span.width() == 5);
-        REQUIRE(span.row(0)[0] == Catch::Approx(7.0f));
-        REQUIRE(span.row(1)[4] == Catch::Approx(7.0f));
+        REQUIRE(span.rows() == 2);
+        REQUIRE(span.cols() == 5);
+        REQUIRE(span[0][0] == Catch::Approx(7.0f));
+        REQUIRE(span[1][4] == Catch::Approx(7.0f));
     }
 
     SECTION("supports int64 dtype") {
@@ -490,9 +490,9 @@ TEST_CASE("core::Tensor::as_span2d converts to 2D span", "[tensor][span]") {
             Tensor::full(make_shape(2, 3), 100, TensorOptions().dtype(Dtype::Int64)).unwrap();
         auto span = tensor.as_span2d<int64_t>().unwrap();
 
-        REQUIRE(span.height() == 2);
-        REQUIRE(span.width() == 3);
-        REQUIRE(span.row(0)[0] == 100);
+        REQUIRE(span.rows() == 2);
+        REQUIRE(span.cols() == 3);
+        REQUIRE(span[0][0] == 100);
     }
 
     SECTION("fails for non-2D tensor") {
@@ -510,99 +510,95 @@ TEST_CASE("core::Tensor::as_span2d converts to 2D span", "[tensor][span]") {
     }
 }
 
-TEST_CASE("core::Tensor::as_span3d converts to 3D span", "[tensor][span]") {
+TEST_CASE("core::Tensor::as_accessor3d converts to 3D span", "[tensor][span]") {
     SECTION("creates 3D span for float tensor") {
         auto tensor = Tensor::zeros(make_shape(2, 3, 4)).unwrap();
-        auto span = tensor.as_span3d<float>().unwrap();
+        auto span = tensor.as_accessor3d<float>().unwrap();
 
-        REQUIRE(span.height() == 2);
-        REQUIRE(span.width() == 3);
-        REQUIRE(span.channels() == 4);
+        REQUIRE(span.channels() == 2);
+        REQUIRE(span.rows() == 3);
+        REQUIRE(span.cols() == 4);
 
         // Set values using 3D access
         for (size_t h = 0; h < 2; h++) {
             for (size_t w = 0; w < 3; w++) {
                 for (size_t c = 0; c < 4; c++) {
-                    span.channel(h, w)[c] = static_cast<float>(h * 12 + w * 4 + c);
+                    span[h][w][c] = static_cast<float>(h * 12 + w * 4 + c);
                 }
             }
         }
 
         // Verify values
-        REQUIRE(span.channel(0, 0)[0] == Catch::Approx(0.0f));
-        REQUIRE(span.channel(0, 0)[3] == Catch::Approx(3.0f));
-        REQUIRE(span.channel(0, 2)[2] == Catch::Approx(10.0f));
-        REQUIRE(span.channel(1, 1)[1] == Catch::Approx(17.0f));
+        REQUIRE(span[0][0][0] == Catch::Approx(0.0f));
+        REQUIRE(span[0][0][3] == Catch::Approx(3.0f));
+        REQUIRE(span[0][2][2] == Catch::Approx(10.0f));
+        REQUIRE(span[1][1][1] == Catch::Approx(17.0f));
     }
 
     SECTION("const version works correctly") {
         auto tensor = Tensor::full(make_shape(2, 2, 3), 5.5f).unwrap();
         const auto& const_tensor = tensor;
-        auto span = const_tensor.as_span3d<float>().unwrap();
+        auto span = const_tensor.as_accessor3d<float>().unwrap();
 
-        REQUIRE(span.height() == 2);
-        REQUIRE(span.width() == 2);
-        REQUIRE(span.channels() == 3);
-        REQUIRE(span.channel(0, 0)[0] == Catch::Approx(5.5f));
-        REQUIRE(span.channel(1, 1)[2] == Catch::Approx(5.5f));
+        REQUIRE(span.channels() == 2);
+        REQUIRE(span.rows() == 2);
+        REQUIRE(span.cols() == 3);
+        REQUIRE(span[0][0][0] == Catch::Approx(5.5f));
+        REQUIRE(span[1][1][2] == Catch::Approx(5.5f));
     }
 
     SECTION("supports uint8 dtype") {
         auto tensor =
             Tensor::full(make_shape(2, 2, 3), 128, TensorOptions().dtype(Dtype::Uint8)).unwrap();
-        auto span = tensor.as_span3d<uint8_t>().unwrap();
+        auto span = tensor.as_accessor3d<uint8_t>().unwrap();
 
-        REQUIRE(span.height() == 2);
-        REQUIRE(span.width() == 2);
-        REQUIRE(span.channels() == 3);
-        REQUIRE(span.channel(0, 0)[0] == 128);
+        REQUIRE(span.channels() == 2);
+        REQUIRE(span.rows() == 2);
+        REQUIRE(span.cols() == 3);
+        REQUIRE(span[0][0][0] == 128);
     }
 
     SECTION("row access works correctly") {
         auto tensor = Tensor::zeros(make_shape(3, 4, 2)).unwrap();
-        auto span = tensor.as_span3d<float>().unwrap();
+        auto span = tensor.as_accessor3d<float>().unwrap();
 
-        auto* row0 = span.row(0);
-        auto* row1 = span.row(1);
+        span[0][0][0] = 1.0f;
+        span[1][0][0] = 2.0f;
 
-        // Each row should point to width * channels elements
-        row0[0] = 1.0f;
-        row1[0] = 2.0f;
-
-        REQUIRE(span.channel(0, 0)[0] == Catch::Approx(1.0f));
-        REQUIRE(span.channel(1, 0)[0] == Catch::Approx(2.0f));
+        REQUIRE(span[0][0][0] == Catch::Approx(1.0f));
+        REQUIRE(span[1][0][0] == Catch::Approx(2.0f));
     }
 
     SECTION("fails for non-3D tensor") {
         REQUIRE_THAT(
-            Tensor::zeros(make_shape(2, 3)).unwrap().as_span3d<float>(),
+            Tensor::zeros(make_shape(2, 3)).unwrap().as_accessor3d<float>(),
             testing::is_error(P10Error::InvalidArgument)
         );
     }
 
     SECTION("fails with wrong dtype") {
         REQUIRE_THAT(
-            Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_span3d<int32_t>(),
+            Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_accessor3d<int32_t>(),
             testing::is_error(P10Error::InvalidArgument)
         );
     }
 }
 
-TEST_CASE("core::Tensor::as_planar_span3d converts to planar 3D span", "[tensor][span]") {
+TEST_CASE("core::Tensor::as_span3d converts to planar 3D span", "[tensor][span]") {
     SECTION("creates planar 3D span for float tensor") {
         auto tensor = Tensor::zeros(make_shape(3, 4, 5)).unwrap();
-        auto span = tensor.as_planar_span3d<float>().unwrap();
+        auto span = tensor.as_span3d<float>().unwrap();
 
         REQUIRE(span.channels() == 3);
-        REQUIRE(span.height() == 4);
-        REQUIRE(span.width() == 5);
+        REQUIRE(span.rows() == 4);
+        REQUIRE(span.cols() == 5);
 
         // Set values in each plane
         for (size_t c = 0; c < 3; c++) {
             auto plane = span[c];
             for (size_t h = 0; h < 4; h++) {
                 for (size_t w = 0; w < 5; w++) {
-                    plane.row(h)[w] = static_cast<float>(c * 100 + h * 10 + w);
+                    plane[h][w] = static_cast<float>(c * 100 + h * 10 + w);
                 }
             }
         }
@@ -617,49 +613,49 @@ TEST_CASE("core::Tensor::as_planar_span3d converts to planar 3D span", "[tensor]
     SECTION("const version works correctly") {
         auto tensor = Tensor::full(make_shape(2, 3, 4), 9.0f).unwrap();
         const auto& const_tensor = tensor;
-        auto span = const_tensor.as_planar_span3d<float>().unwrap();
+        auto span = const_tensor.as_span3d<float>().unwrap();
 
         REQUIRE(span.channels() == 2);
-        REQUIRE(span.height() == 3);
-        REQUIRE(span.width() == 4);
+        REQUIRE(span.rows() == 3);
+        REQUIRE(span.cols() == 4);
 
         auto plane0 = span[0];
-        REQUIRE(plane0.row(0)[0] == Catch::Approx(9.0f));
-        REQUIRE(plane0.row(2)[3] == Catch::Approx(9.0f));
+        REQUIRE(plane0[0][0] == Catch::Approx(9.0f));
+        REQUIRE(plane0[2][3] == Catch::Approx(9.0f));
     }
 
     SECTION("supports uint16 dtype") {
         auto tensor =
             Tensor::full(make_shape(2, 3, 4), 1000, TensorOptions().dtype(Dtype::Uint16)).unwrap();
-        auto span = tensor.as_planar_span3d<uint16_t>().unwrap();
+        auto span = tensor.as_span3d<uint16_t>().unwrap();
 
         REQUIRE(span.channels() == 2);
-        REQUIRE(span.height() == 3);
-        REQUIRE(span.width() == 4);
-        REQUIRE(span[0].row(0)[0] == 1000);
+        REQUIRE(span.rows() == 3);
+        REQUIRE(span.cols() == 4);
+        REQUIRE(span[0][0][0] == 1000);
     }
 
     SECTION("plane dimensions are correct") {
         auto tensor = Tensor::zeros(make_shape(3, 10, 20)).unwrap();
-        auto span = tensor.as_planar_span3d<float>().unwrap();
+        auto span = tensor.as_span3d<float>().unwrap();
 
         for (size_t c = 0; c < 3; c++) {
             auto plane = span[c];
-            REQUIRE(plane.height() == 10);
-            REQUIRE(plane.width() == 20);
+            REQUIRE(plane.rows() == 10);
+            REQUIRE(plane.cols() == 20);
         }
     }
 
     SECTION("fails for non-3D tensor") {
         REQUIRE_THAT(
-            Tensor::zeros(make_shape(2, 3, 4, 5)).unwrap().as_planar_span3d<float>(),
+            Tensor::zeros(make_shape(2, 3, 4, 5)).unwrap().as_span3d<float>(),
             testing::is_error(P10Error::InvalidArgument)
         );
     }
 
     SECTION("fails with wrong dtype") {
         REQUIRE_THAT(
-            Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_planar_span3d<double>(),
+            Tensor::zeros(make_shape(2, 3, 4)).unwrap().as_span3d<double>(),
             testing::is_error(P10Error::InvalidArgument)
         );
     }
@@ -1062,7 +1058,7 @@ TEST_CASE("core::Tensor::as_accessor1d converts to 1D accessor", "[tensor][acces
         auto tensor = Tensor::from_range(make_shape(5), Dtype::Float32).unwrap();
         auto accessor = tensor.as_accessor1d<float>().unwrap();
 
-        REQUIRE(accessor.size() == 5);
+        REQUIRE(accessor.cols() == 5);
         for (size_t i = 0; i < 5; i++) {
             REQUIRE(accessor[i] == Catch::Approx(float(i)));
         }
@@ -1073,7 +1069,7 @@ TEST_CASE("core::Tensor::as_accessor1d converts to 1D accessor", "[tensor][acces
         const auto& const_tensor = tensor;
         auto accessor = const_tensor.as_accessor1d<int32_t>().unwrap();
 
-        REQUIRE(accessor.size() == 4);
+        REQUIRE(accessor.cols() == 4);
         for (size_t i = 0; i < 4; i++) {
             REQUIRE(accessor[i] == int32_t(i));
         }
@@ -1084,7 +1080,7 @@ TEST_CASE("core::Tensor::as_accessor1d converts to 1D accessor", "[tensor][acces
             Tensor::from_range(make_shape(6), TensorOptions().stride(make_stride(2))).unwrap();
         auto accessor = tensor.as_accessor1d<float>().unwrap();
 
-        REQUIRE(accessor.size() == 6);
+        REQUIRE(accessor.cols() == 6);
         // With stride 2, logical indices map to physical indices: 0->0, 1->2, 2->4, etc.
         auto span = tensor.as_span1d<float>().unwrap();
         for (size_t i = 0; i < 3;
@@ -1115,7 +1111,7 @@ TEST_CASE("core::Tensor::as_accessor1d converts to 1D accessor", "[tensor][acces
             tensor.visit([&](auto&& typed_span) {
                 using T = std::decay_t<decltype(typed_span)>::element_type;
                 auto accessor = tensor.as_accessor1d<T>().unwrap();
-                REQUIRE(accessor.size() == 4);
+                REQUIRE(accessor.cols() == 4);
                 REQUIRE(accessor[2] == T(2));
             });
         }
@@ -1139,7 +1135,7 @@ TEST_CASE("core::Tensor::as_accessor1d converts to 1D accessor", "[tensor][acces
         SECTION("accessor works with complex numberes") {
             auto tensor = Tensor::from_range(make_shape(4, 2), Dtype::Float32).unwrap();
             auto accessor = tensor.as_accessor1d<std::complex<float>>().unwrap();
-            REQUIRE(accessor.size() == 4);
+            REQUIRE(accessor.cols() == 4);
         }
 
         SECTION("fails with wrong underlying dtype") {
@@ -1226,7 +1222,7 @@ TEST_CASE("core::Tensor::as_accessor2d converts to 2D accessor", "[tensor][acces
         auto accessor2d = tensor.as_accessor2d<float>().unwrap();
         auto row_accessor = accessor2d[1];
 
-        REQUIRE(row_accessor.size() == 4);
+        REQUIRE(row_accessor.cols() == 4);
         REQUIRE(row_accessor[0] == Catch::Approx(4.0f));
         REQUIRE(row_accessor[3] == Catch::Approx(7.0f));
     }
@@ -1376,7 +1372,7 @@ TEST_CASE("core::Tensor::as_accessor3d converts to 3D accessor", "[tensor][acces
         auto accessor3d = tensor.as_accessor3d<float>().unwrap();
         auto row_accessor = accessor3d[0][1];
 
-        REQUIRE(row_accessor.size() == 4);
+        REQUIRE(row_accessor.cols() == 4);
         REQUIRE(row_accessor[0] == Catch::Approx(4.0f));
         REQUIRE(row_accessor[3] == Catch::Approx(7.0f));
     }
@@ -1447,7 +1443,7 @@ TEST_CASE("core::Tensor::as_accessor3d converts to 3D accessor", "[tensor][acces
             auto accessor3d = tensor.as_accessor3d<std::complex<float>>().unwrap();
             auto row_accessor = accessor3d[0][1];
 
-            REQUIRE(row_accessor.size() == 4);
+            REQUIRE(row_accessor.cols() == 4);
         }
 
         SECTION("fails with wrong underlying dtype") {

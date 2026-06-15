@@ -65,9 +65,9 @@ namespace {
         auto dst = output.as_span2d<int32_t>().unwrap();
 
         for (auto _ : state) {
-            for (int64_t i = 0; i < src.height(); ++i) {
-                for (int64_t j = 0; j < src.width(); ++j) {
-                    dst.row(j)[i] = src.row(i)[j];
+            for (int64_t i = 0; i < src.rows(); ++i) {
+                for (int64_t j = 0; j < src.cols(); ++j) {
+                    dst[j][i] = src[i][j];
                 }
             }
             benchmark::DoNotOptimize(output);
@@ -96,14 +96,14 @@ namespace {
 
         const auto src = input.as_span2d<const int32_t>().unwrap();
         auto dst = output.as_span2d<int32_t>().unwrap();
-        const int64_t src_stride = src.width();
-        const int64_t dst_stride = dst.width();
+        const int64_t src_stride = src.cols();
+        const int64_t dst_stride = dst.cols();
 
-        const auto src_block = [&](const TileRegion2D& region) {
-            return &src.row(region.row)[region.col];
+        const auto src_block = [&](const Region2D& region) {
+            return &src[region.row][region.col];
         };
-        const auto dst_block = [&](const TileRegion2D& region) {
-            return &dst.row(region.col)[region.row];
+        const auto dst_block = [&](const Region2D& region) {
+            return &dst[region.col][region.row];
         };
 
         auto kernel = make_kernel(src_block, dst_block, src_stride, dst_stride);
@@ -112,7 +112,7 @@ namespace {
 
         for (auto _ : state) {
             simd::tile2d_autoblock<SIMD_BLOCK, int32_t, Exec>(
-                src.height(), src.width(), kernel.fn, border
+                src.rows(), src.cols(), kernel.fn, border
             );
             benchmark::DoNotOptimize(dst);
             benchmark::ClobberMemory();

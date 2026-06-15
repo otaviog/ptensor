@@ -100,8 +100,8 @@ P10Error Fft::forward_real(const Tensor& signal_in, Tensor& freq_out) const {
                 stride_out,
                 1,
                 pocketfft::FORWARD,
-                signal_in_s.row(0),
-                freq_out_s.row(0),
+                signal_in_s[0].data(),
+                freq_out_s[0].data(),
                 scalar_t(scalar_factor)
             );
 
@@ -160,8 +160,8 @@ P10Error Fft::inverse_real(const Tensor& freq_in, Tensor& signal_out) const {
                 stride_out,
                 1,
                 pocketfft::BACKWARD,
-                freq_in_s.row(0),
-                signal_out_s.row(0),
+                freq_in_s[0].data(),
+                signal_out_s[0].data(),
                 scalar_t(scalar_factor)
             );
 

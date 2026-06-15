@@ -36,21 +36,24 @@ P10Error save_image(const std::string& path, const Tensor& tensor) {
         const auto span = tensor.as_span2d<uint8_t>().unwrap();
         stbi_write_png(
             path.c_str(),
-            static_cast<int>(span.width()),
-            static_cast<int>(span.height()),
+            static_cast<int>(span.cols()),
+            static_cast<int>(span.rows()),
             1,
-            span.row(0),
-            static_cast<int>(span.width())
+            span[0].data(),
+            static_cast<int>(span.cols())
         );
     } else if (tensor.dims() == 3) {
-        auto span = tensor.as_span3d<uint8_t>().unwrap();
+        // HWC: shape is (height, width, channels).
+        const auto height = static_cast<int>(tensor.shape(0).unwrap());
+        const auto width = static_cast<int>(tensor.shape(1).unwrap());
+        const auto channels = static_cast<int>(tensor.shape(2).unwrap());
         stbi_write_png(
             path.c_str(),
-            static_cast<int>(span.width()),
-            static_cast<int>(span.height()),
-            static_cast<int>(span.channels()),
-            span.data(),
-            static_cast<int>(span.width() * span.channels())
+            width,
+            height,
+            channels,
+            tensor.as_bytes().data(),
+            width * channels
         );
     }
     return P10Error::Ok;

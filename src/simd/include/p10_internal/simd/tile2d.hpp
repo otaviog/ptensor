@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <utility>
 
-#include <ptensor/tile_region2d.hpp>
+#include <ptensor/region2d.hpp>
 #include "bitwise_math.hpp"
 #include "cpuid.hpp"
 #include "tile_execution.hpp"
@@ -14,7 +14,7 @@
 namespace p10::simd {
 
 template<typename F>
-concept TileKernel2DFn = std::invocable<F, TileRegion2D>;
+concept TileKernel2DFn = std::invocable<F, Region2D>;
 
 // Compile-time halo size for stencil kernels (blur, convolution, ...). Each SIMD
 // tile reads `horizontal` extra columns left/right and `vertical` extra rows
@@ -63,7 +63,7 @@ void tile2d_blocked(int64_t rows, int64_t cols, SimdFn&& simd_impl, ScalarFn&& s
         for (int64_t block_col = col_begin; block_col < col_end; block_col += CACHE) {
             for (int64_t simd_row = block_row; simd_row < block_row + CACHE; simd_row += SIMD) {
                 for (int64_t simd_col = block_col; simd_col < block_col + CACHE; simd_col += SIMD) {
-                    simd_impl(TileRegion2D {
+                    simd_impl(Region2D {
                         .row = simd_row,
                         .col = simd_col,
                         .height = SIMD,
@@ -78,20 +78,20 @@ void tile2d_blocked(int64_t rows, int64_t cols, SimdFn&& simd_impl, ScalarFn&& s
     // around the SIMD area. With Border{} this collapses to the right and bottom
     // remainder bands of a plain tiling.
     if (row_begin > 0) {  // top band
-        scalar_impl(TileRegion2D {.row = 0, .col = 0, .height = row_begin, .width = cols});
+        scalar_impl(Region2D {.row = 0, .col = 0, .height = row_begin, .width = cols});
     }
     if (row_end < rows) {  // bottom band
         scalar_impl(
-            TileRegion2D {.row = row_end, .col = 0, .height = rows - row_end, .width = cols}
+            Region2D {.row = row_end, .col = 0, .height = rows - row_end, .width = cols}
         );
     }
     if (tiled_rows > 0 && col_begin > 0) {  // left band
         scalar_impl(
-            TileRegion2D {.row = row_begin, .col = 0, .height = tiled_rows, .width = col_begin}
+            Region2D {.row = row_begin, .col = 0, .height = tiled_rows, .width = col_begin}
         );
     }
     if (tiled_rows > 0 && col_end < cols) {  // right band
-        scalar_impl(TileRegion2D {
+        scalar_impl(Region2D {
             .row = row_begin,
             .col = col_end,
             .height = tiled_rows,
@@ -125,7 +125,7 @@ void tile2d_autoblock(int64_t rows, int64_t cols, SimdFn&& simd_impl, ScalarFn&&
 
     if (std::max(rows, cols) < l1_tile_side) {
         std::forward<ScalarFn>(scalar_impl)(
-            TileRegion2D {.row = 0, .col = 0, .height = rows, .width = cols}
+            Region2D {.row = 0, .col = 0, .height = rows, .width = cols}
         );
         return;
     }
@@ -180,7 +180,7 @@ void tile2d(
     int64_t cols,
     ScalarKn&& scalar_impl) {
     scalar_impl(
-        TileRegion2D {.row = 0, .col = 0, .height = rows, .width = cols});
+        Region2D {.row = 0, .col = 0, .height = rows, .width = cols});
 }
 
 template<

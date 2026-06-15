@@ -6,7 +6,7 @@
 #include <span>
 
 #include "accessor2d.hpp"
-#include "tile_region2d.hpp"
+#include "region2d.hpp"
 
 namespace p10 {
 
@@ -15,37 +15,45 @@ class Span2D {
   public:
     Span2D() = default;
 
-    Span2D(T* data, int64_t height, int64_t width) : data_(data), height_(height), width_(width) {}
+    Span2D(T* data, int64_t rows, int64_t cols) : data_(data), rows_(rows), cols_(cols) {}
 
-    T* row(int64_t row) const {
-        assert(row < height_);
-        return data_ + row * width_;
+    int64_t rows() const {
+        return rows_;
     }
 
-    std::span<T> operator[](int64_t row) const {
-        assert(row < height_);
-        return std::span<T>(data_ + row * width_, static_cast<size_t>(width_));
+    int64_t cols() const {
+        return cols_;
+    }
+    
+    std::span<const T> operator[](int64_t row) const {
+        assert(row < rows_);
+        return std::span<const T>(data_ + row * cols_, static_cast<size_t>(cols_));
     }
 
-    int64_t height() const {
-        return height_;
+    std::span<T> operator[](int64_t row)  {
+        assert(row < rows_);
+        return std::span<T>(data_ + row * cols_, static_cast<size_t>(cols_));
     }
-
-    int64_t width() const {
-        return width_;
-    }
-
-    Accessor2D<T> operator()(const TileRegion2D& region) const {
+    
+    Accessor2D<T> operator()(const Region2D& region) {
         return Accessor2D<T>(
-            data_ + region.row * width_ + region.col,
+            data_ + region.row * cols_ + region.col,
             {region.height, region.width},
-            {width_, 1}
+            {cols_, 1}
+        );
+    }
+
+    Accessor2D<const T> operator()(const Region2D& region) const {
+        return Accessor2D<const T>(
+            data_ + region.row * cols_ + region.col,
+            {region.height, region.width},
+            {cols_, 1}
         );
     }
 
   private:
     T* data_ = nullptr;
-    int64_t height_ = 0;
-    int64_t width_ = 0;
+    int64_t rows_ = 0;
+    int64_t cols_ = 0;
 };
 }  // namespace p10

@@ -78,10 +78,10 @@ Tensor rgb_interleaved_u8() {
     constexpr int64_t h = 48;
     constexpr int64_t w = 64;
     auto t = Tensor::empty(make_shape(h, w, 3), p10::TensorOptions(Dtype::Uint8)).expect("rgb_hwc");
-    auto d = t.as_span3d<uint8_t>().expect("rgb_hwc span");
+    auto d = t.as_accessor3d<uint8_t>().expect("rgb_hwc span");
     for (int64_t y = 0; y < h; ++y) {
         for (int64_t x = 0; x < w; ++x) {
-            auto* px = d.channel(y, x);
+            auto px = d[y][x];
             px[0] = static_cast<uint8_t>(x * 255 / w);
             px[1] = static_cast<uint8_t>(y * 255 / h);
             px[2] = 128;
@@ -94,7 +94,7 @@ Tensor rgb_planar_f32() {
     constexpr int64_t h = 48;
     constexpr int64_t w = 64;
     auto t = Tensor::empty(make_shape(3, h, w)).expect("rgb_chw");
-    auto d = t.as_planar_span3d<float>().expect("rgb_chw span");
+    auto d = t.as_span3d<float>().expect("rgb_chw span");
     // Span3D over a (C, H, W) tensor: channel(c, y) points at plane c, row y.
     for (int64_t y = 0; y < h; ++y) {
         for (int64_t x = 0; x < w; ++x) {

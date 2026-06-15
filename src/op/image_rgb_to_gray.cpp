@@ -18,14 +18,14 @@ p10::P10Error image_rgb_to_gray(const p10::Tensor& rgb_image, p10::Tensor& gray_
     auto width = rgb_image.shape(1).unwrap();
     P10_RETURN_IF_ERROR(gray_image.create(make_shape(height, width), Dtype::Uint8));
 
-    auto rgb_span = rgb_image.as_span3d<const uint8_t>().unwrap();
+    auto rgb_span = rgb_image.as_accessor3d<const uint8_t>().unwrap();
     auto gray_span = gray_image.as_span2d<uint8_t>().unwrap();
 
     for (size_t h = 0; h < static_cast<size_t>(height); ++h) {
-        const auto* const rgb_row = rgb_span.row(h);
-        auto* gray_row = gray_span.row(h);
+        const auto rgb_row = rgb_span[h];
+        auto gray_row = gray_span[h];
         for (size_t w = 0; w < static_cast<size_t>(width); ++w) {
-            const auto* rgb_pixel = &rgb_row[w * 3];
+            const auto rgb_pixel = rgb_row[w];
             uint8_t const r = rgb_pixel[0];
             uint8_t const g = rgb_pixel[1];
             uint8_t const b = rgb_pixel[2];

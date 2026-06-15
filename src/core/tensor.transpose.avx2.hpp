@@ -120,7 +120,7 @@ auto make_avx2_transpose(
     int64_t dst_stride
 ) {
 #if PTENSOR_HAS_INTRINSICS_H
-    return simd::Avx2<SIMD_BLOCK>([=](const TileRegion2D& region) {
+    return simd::Avx2<SIMD_BLOCK>([=](const Region2D& region) {
         transpose_avx2_8x8_32(
             reinterpret_cast<const int32_t*>(src_block(region)),
             src_stride,
@@ -133,7 +133,7 @@ auto make_avx2_transpose(
     (void) dst_block;
     (void) src_stride;
     (void) dst_stride;
-    return simd::Avx2<SIMD_BLOCK>([](const TileRegion2D&) {
+    return simd::Avx2<SIMD_BLOCK>([](const Region2D&) {
         // This no-op body must never reach codegen on an AVX2-capable target,
         // where tile2d would select it and silently skip the transpose.
         static_assert(

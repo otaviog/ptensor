@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <functional>
 #include <optional>
@@ -26,6 +27,17 @@
 namespace p10 {
 
 using OptionalDeallocationFunction = std::optional<std::function<void(void*)>>;
+
+/// Controls how an `as_span*`/`as_accessor*` view reconciles the tensor rank
+/// with the rank the accessor needs.
+enum class RankFit {
+    /// Exact rank or error (default). Ops that require a fixed rank get it.
+    Strict,
+    /// Reach the target rank by adding/removing leading size-1 dims:
+    /// `[H,W]` -> `[1,H,W]`, `[1,C,H,W]` -> `[C,H,W]`. A leading dim that is
+    /// not size 1 cannot be dropped and yields an error.
+    Flexible,
+};
 
 /// Tensor class.
 ///
@@ -258,289 +270,190 @@ class Tensor {
         return Ok(std::span<scalar_t> {blob_.data<scalar_t>(), elem_count});
     }
 
-    template<typename T>
+    template<typename T, RankFit Fit = RankFit::Strict>
     P10Result<Span2D<T>> as_span2d() {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_2d_span<T>());
+        if (!is_contiguous()) {
+            return Err(P10Error::NotImplemented << "Tensor must be contiguous for Span2D access");
+        }
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
             return Err(data_res.error());
         }
-        const auto shape = shape_.as_span();
-        return Ok(
-            Span2D<T> {
-                data_res.unwrap(),
-                shape[0],
-                shape[1]
-            }
-        );
+        auto fit = fit_rank<2, Fit>(logical_rank<T>());
+        if (fit.is_error()) {
+            return Err(fit.error());
+        }
+        const auto [shape, stride] = fit.unwrap();
+        return Ok(Span2D<T> {data_res.unwrap(), shape[0], shape[1]});
     }
 
-    template<typename T>
+    template<typename T, RankFit Fit = RankFit::Strict>
     P10Result<Span2D<const T>> as_span2d() const {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_2d_span<T>());
-
+        if (!is_contiguous()) {
+            return Err(P10Error::NotImplemented << "Tensor must be contiguous for Span2D access");
+        }
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
             return Err(data_res.error());
         }
-        const auto shape = shape_.as_span();
-        return Ok(
-            Span2D<const T> {
-                data_res.unwrap(),
-                shape[0],
-                shape[1]
-            }
-        );
+        auto fit = fit_rank<2, Fit>(logical_rank<T>());
+        if (fit.is_error()) {
+            return Err(fit.error());
+        }
+        const auto [shape, stride] = fit.unwrap();
+        return Ok(Span2D<const T> {data_res.unwrap(), shape[0], shape[1]});
     }
 
-    template<typename T>
+    template<typename T, RankFit Fit = RankFit::Strict>
     P10Result<Span3D<T>> as_span3d() {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_span<T>());
-
+        if (!is_contiguous()) {
+            return Err(P10Error::InvalidArgument << "Tensor must be contiguous for Span3D access");
+        }
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
             return Err(data_res.error());
         }
-        const auto shape = shape_.as_span();
-        return Ok(
-            Span3D<T> {
-                data_res.unwrap(),
-                shape[0],
-                shape[1],
-                shape[2]
-            }
-        );
+        auto fit = fit_rank<3, Fit>(logical_rank<T>());
+        if (fit.is_error()) {
+            return Err(fit.error());
+        }
+        const auto [shape, stride] = fit.unwrap();
+        return Ok(Span3D<T> {data_res.unwrap(), shape[0], shape[1], shape[2]});
     }
 
-    template<typename T>
+    template<typename T, RankFit Fit = RankFit::Strict>
     P10Result<Span3D<const T>> as_span3d() const {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_span<T>());
-
-        auto data_res = data_as<const T>();
-        if (!data_res.is_ok()) {
-            return Err(data_res.error());
+        if (!is_contiguous()) {
+            return Err(P10Error::InvalidArgument << "Tensor must be contiguous for Span3D access");
         }
-        const auto shape = shape_.as_span();
-        return Ok(
-            Span3D<const T> {
-                data_res.unwrap(),
-                shape[0],
-                shape[1],
-                shape[2]
-            }
-        );
-    }
-
-    template<typename T>
-    P10Result<PlanarSpan3D<T>> as_planar_span3d() {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_span<T>());
-
-        auto data_res = data_as<T>();
-        if (!data_res.is_ok()) {
-            return Err(data_res.error());
-        }
-
-        const auto shape = shape_.as_span();
-        return Ok(
-            PlanarSpan3D<T> {
-                data_res.unwrap(),
-                shape[0],
-                shape[1],
-                shape[2]
-            }
-        );
-    }
-
-    template<typename T>
-    P10Result<PlanarSpan3D<const T>> as_planar_span3d() const {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_span<T>());
         auto data_res = data_as<const T>();
         if (data_res.is_error()) {
             return Err(data_res.error());
         }
-        const auto shape = shape_.as_span();
-        return Ok(
-            PlanarSpan3D<const T> {
-                data_res.unwrap(),
-                shape[0],
-                shape[1],
-                shape[2]
-            }
-        );
+        auto fit = fit_rank<3, Fit>(logical_rank<T>());
+        if (fit.is_error()) {
+            return Err(fit.error());
+        }
+        const auto [shape, stride] = fit.unwrap();
+        return Ok(Span3D<const T> {data_res.unwrap(), shape[0], shape[1], shape[2]});
     }
 
-    template<typename T>
+    template<typename T, RankFit Fit = RankFit::Strict>
     P10Result<Span4D<T>> as_span4d() {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_4d_span<T>());
-
+        if (!is_contiguous()) {
+            return Err(P10Error::InvalidArgument << "Tensor must be contiguous for Span4D access");
+        }
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
             return Err(data_res.error());
         }
-        const auto shape = shape_.as_span();
-        return Ok(
-            Span4D<T> {
-                data_res.unwrap(),
-                shape[0],
-                shape[1],
-                shape[2],
-                shape[3]
-            }
-        );
+        auto fit = fit_rank<4, Fit>(logical_rank<T>());
+        if (fit.is_error()) {
+            return Err(fit.error());
+        }
+        const auto [shape, stride] = fit.unwrap();
+        return Ok(Span4D<T> {data_res.unwrap(), shape[0], shape[1], shape[2], shape[3]});
     }
 
-    template<typename T>
+    template<typename T, RankFit Fit = RankFit::Strict>
     P10Result<Span4D<const T>> as_span4d() const {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_4d_span<T>());
-
+        if (!is_contiguous()) {
+            return Err(P10Error::InvalidArgument << "Tensor must be contiguous for Span4D access");
+        }
         auto data_res = data_as<const T>();
         if (data_res.is_error()) {
             return Err(data_res.error());
         }
-        const auto shape = shape_.as_span();
-        return Ok(
-            Span4D<const T> {
-                data_res.unwrap(),
-                shape[0],
-                shape[1],
-                shape[2],
-                shape[3]
-            }
-        );
+        auto fit = fit_rank<4, Fit>(logical_rank<T>());
+        if (fit.is_error()) {
+            return Err(fit.error());
+        }
+        const auto [shape, stride] = fit.unwrap();
+        return Ok(Span4D<const T> {data_res.unwrap(), shape[0], shape[1], shape[2], shape[3]});
     }
 
-    template<typename T>
+    template<typename T, RankFit Fit = RankFit::Strict>
     P10Result<Accessor1D<T>> as_accessor1d() {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_accessor1d<T>());
-
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
             return Err(data_res.error());
         }
-
-        return Ok(
-            Accessor1D<T> {
-                data_res.unwrap(),
-                shape_[0].unwrap(),
-                stride_[0].unwrap(),
-            }
-        );
+        auto fit = fit_rank<1, Fit>(logical_rank<T>());
+        if (fit.is_error()) {
+            return Err(fit.error());
+        }
+        const auto [shape, stride] = fit.unwrap();
+        return Ok(Accessor1D<T> {data_res.unwrap(), shape[0], stride[0]});
     }
 
-    template<typename T>
+    template<typename T, RankFit Fit = RankFit::Strict>
     P10Result<Accessor1D<const T>> as_accessor1d() const {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_accessor1d<T>());
-
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
             return Err(data_res.error());
         }
-
-        return Ok(
-            Accessor1D<const T> {
-                data_res.unwrap(),
-                shape_[0].unwrap(),
-                stride_[0].unwrap(),
-            }
-        );
+        auto fit = fit_rank<1, Fit>(logical_rank<T>());
+        if (fit.is_error()) {
+            return Err(fit.error());
+        }
+        const auto [shape, stride] = fit.unwrap();
+        return Ok(Accessor1D<const T> {data_res.unwrap(), shape[0], stride[0]});
     }
 
-    template<typename T>
+    template<typename T, RankFit Fit = RankFit::Strict>
     P10Result<Accessor2D<T>> as_accessor2d() {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_2d_access<T>());
-
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
             return Err(data_res.error());
         }
-
-        auto shape = shape_.as_span();
-        auto stride = stride_.as_span();
-
-        return Ok(
-            Accessor2D<T> {
-                data_res.unwrap(),
-                std::array<int64_t, 2> {shape[0], shape[1]},
-                std::array<int64_t, 2> {
-                    stride[0],
-                    stride[1],
-                }
-            }
-        );
+        auto fit = fit_rank<2, Fit>(logical_rank<T>());
+        if (fit.is_error()) {
+            return Err(fit.error());
+        }
+        const auto [shape, stride] = fit.unwrap();
+        return Ok(Accessor2D<T> {data_res.unwrap(), shape, stride});
     }
 
-    template<typename T>
+    template<typename T, RankFit Fit = RankFit::Strict>
     P10Result<Accessor2D<const T>> as_accessor2d() const {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_2d_access<T>());
-
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
             return Err(data_res.error());
         }
-
-        auto shape = shape_.as_span();
-        auto stride = stride_.as_span();
-
-        return Ok(
-            Accessor2D<const T> {
-                data_res.unwrap(),
-                std::array<int64_t, 2> {shape[0], shape[1]},
-                std::array<int64_t, 2> {
-                    stride[0],
-                    stride[1],
-                }
-            }
-        );
+        auto fit = fit_rank<2, Fit>(logical_rank<T>());
+        if (fit.is_error()) {
+            return Err(fit.error());
+        }
+        const auto [shape, stride] = fit.unwrap();
+        return Ok(Accessor2D<const T> {data_res.unwrap(), shape, stride});
     }
 
-    template<typename T>
+    template<typename T, RankFit Fit = RankFit::Strict>
     P10Result<Accessor3D<T>> as_accessor3d() {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_access<T>());
-
         auto data_res = data_as<T>();
         if (!data_res.is_ok()) {
             return Err(data_res.error());
         }
-
-        auto shape = shape_.as_span();
-        auto stride = stride_.as_span();
-
-        return Ok(
-            Accessor3D<T> {
-                data_res.unwrap(),
-                std::array<int64_t, 3> {shape[0], shape[1], shape[2]},
-                std::array<int64_t, 3> {
-                    stride[0],
-                    stride[1],
-                    stride[2],
-                }
-            }
-        );
+        auto fit = fit_rank<3, Fit>(logical_rank<T>());
+        if (fit.is_error()) {
+            return Err(fit.error());
+        }
+        const auto [shape, stride] = fit.unwrap();
+        return Ok(Accessor3D<T> {data_res.unwrap(), shape, stride});
     }
 
-    template<typename T>
+    template<typename T, RankFit Fit = RankFit::Strict>
     P10Result<Accessor3D<const T>> as_accessor3d() const {
-        P10_RETURN_ERR_IF_ERROR(check_dims_for_3d_access<T>());
-
         auto data_res = data_as<const T>();
         if (!data_res.is_ok()) {
             return Err(data_res.error());
         }
-
-        auto shape = shape_.as_span();
-        auto stride = stride_.as_span();
-
-        return Ok(
-            Accessor3D<const T> {
-                data_res.unwrap(),
-                std::array<int64_t, 3> {shape[0], shape[1], shape[2]},
-                std::array<int64_t, 3> {
-                    stride[0],
-                    stride[1],
-                    stride[2],
-                }
-            }
-        );
+        auto fit = fit_rank<3, Fit>(logical_rank<T>());
+        if (fit.is_error()) {
+            return Err(fit.error());
+        }
+        const auto [shape, stride] = fit.unwrap();
+        return Ok(Accessor3D<const T> {data_res.unwrap(), shape, stride});
     }
 
     auto visit(auto&& visitor) {
@@ -586,6 +499,10 @@ class Tensor {
     /// * An error if the tensor is not 2D or not contiguous or device is not CPU.
     P10Error transpose(Tensor& other) const;
 
+    P10Error transpose() {
+        return transpose(*this);
+    }
+    
     P10Error fill(double value);
 
     P10Error copy_from(const Tensor& src);
@@ -641,88 +558,70 @@ class Tensor {
         return P10Error::Ok;
     }
 
+    // Logical rank of the tensor for view purposes: complex tensors carry a
+    // trailing size-2 (real/imag) dim that the element type folds away.
     template<typename T>
-    P10Error check_dims_for_accessor1d() const {
+    size_t logical_rank() const {
         if constexpr (detail::IS_COMPLEX_V<std::remove_const_t<T>>) {
-            if (dims() != 2) {
-                return P10Error::InvalidArgument
-                    << "Tensor must have 2 dimensions [N x 2] for complex types";
+            return dims() - 1;
+        } else {
+            return dims();
+        }
+    }
+
+    // Reconciles the tensor's first `d` extents/strides to rank N. RankFit::Strict
+    // requires d == N exactly; RankFit::Flexible reaches N by adding (low->high)
+    // or dropping leading size-1 dims. `d` is the logical rank (see logical_rank).
+    template<size_t N, RankFit Fit>
+    P10Result<std::pair<std::array<int64_t, N>, std::array<int64_t, N>>>
+    fit_rank(size_t d) const {
+        const auto shape = shape_.as_span();
+        const auto stride = stride_.as_span();
+
+        std::array<int64_t, N> out_shape {};
+        std::array<int64_t, N> out_stride {};
+
+        if constexpr (Fit == RankFit::Strict) {
+            if (d != N) {
+                return Err(
+                    P10Error::InvalidArgument
+                    << "Tensor rank does not match the requested view rank"
+                );
+            }
+        }
+
+        if (d == N) {
+            for (size_t i = 0; i < N; ++i) {
+                out_shape[i] = shape[i];
+                out_stride[i] = stride[i];
+            }
+        } else if (d < N) {
+            const size_t pad = N - d;
+            const int64_t lead = d > 0 ? shape[0] * stride[0] : 1;
+            for (size_t i = 0; i < pad; ++i) {
+                out_shape[i] = 1;
+                out_stride[i] = lead;
+            }
+            for (size_t i = 0; i < d; ++i) {
+                out_shape[pad + i] = shape[i];
+                out_stride[pad + i] = stride[i];
             }
         } else {
-            if (dims() != 1) {
-                return P10Error::InvalidArgument << "Tensor must have 1 dimension";
+            const size_t drop = d - N;
+            for (size_t i = 0; i < drop; ++i) {
+                if (shape[i] != 1) {
+                    return Err(
+                        P10Error::InvalidArgument,
+                        "Cannot fit rank: leading dimension is not size 1"
+                    );
+                }
+            }
+            for (size_t i = 0; i < N; ++i) {
+                out_shape[i] = shape[drop + i];
+                out_stride[i] = stride[drop + i];
             }
         }
-        return P10Error::Ok;
-    }
-
-    template<typename T>
-    P10Error check_dims_for_2d_access() const {
-        if constexpr (detail::IS_COMPLEX_V<std::remove_const_t<T>>) {
-            if (dims() != 3) {
-                return P10Error::InvalidArgument
-                    << "Tensor must have 3 dimensions [N x T x 2] for complex types";
-            }
-        } else {
-            if (dims() != 2) {
-                return P10Error::InvalidArgument << "Tensor must have 2 dimensions";
-            }
-        }
-        return P10Error::Ok;
-    }
-
-    template<typename T>
-    P10Error check_dims_for_3d_access() const {
-        if constexpr (detail::IS_COMPLEX_V<std::remove_const_t<T>>) {
-            if (dims() != 4) {
-                return P10Error::InvalidArgument
-                    << "Tensor must have 4 dimensions [N x H x W x 2] for complex types";
-            }
-        } else {
-            if (dims() != 3) {
-                return P10Error::InvalidArgument << "Tensor must have 3 dimensions";
-            }
-        }
-        return P10Error::Ok;
-    }
-
-    template<typename T>
-    P10Error check_dims_for_2d_span() const {
-        if (!is_contiguous()) {
-            return P10Error::NotImplemented << "Tensor must be contiguous for Span2D access";
-        }
-        return check_dims_for_2d_access<T>();
-    }
-
-    template<typename T>
-    P10Error check_dims_for_3d_span() const {
-        if (!is_contiguous()) {
-            return P10Error::InvalidArgument << "Tensor must be contiguous for Span3D access";
-        }
-        return check_dims_for_3d_access<T>();
-    }
-
-    template<typename T>
-    P10Error check_dims_for_4d_access() const {
-        if constexpr (detail::IS_COMPLEX_V<std::remove_const_t<T>>) {
-            if (dims() != 5) {
-                return P10Error::InvalidArgument
-                    << "Tensor must have 5 dimensions [N x B x H x W x 2] for complex types";
-            }
-        } else {
-            if (dims() != 4) {
-                return P10Error::InvalidArgument << "Tensor must have 4 dimensions";
-            }
-        }
-        return P10Error::Ok;
-    }
-
-    template<typename T>
-    P10Error check_dims_for_4d_span() const {
-        if (!is_contiguous()) {
-            return P10Error::InvalidArgument << "Tensor must be contiguous for Span4D access";
-        }
-        return check_dims_for_4d_access<T>();
+        return Ok(std::make_pair(out_shape, out_stride));
     }
 
     Blob blob_;

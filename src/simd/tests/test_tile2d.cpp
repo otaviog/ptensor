@@ -113,7 +113,7 @@ TEST_CASE("Simd::tile2d_blocked border", "[simd][tile]") {
     std::vector<int> simd_paint(static_cast<size_t>(ROWS * COLS), 0);
     std::vector<int> total_paint(static_cast<size_t>(ROWS * COLS), 0);
 
-    const auto paint = [&](std::vector<int>& grid, const TileRegion2D& region) {
+    const auto paint = [&](std::vector<int>& grid, const Region2D& region) {
         for (int64_t r = region.row; r < region.row + region.height; r++) {
             for (int64_t c = region.col; c < region.col + region.width; c++) {
                 grid[static_cast<size_t>((r * COLS) + c)]++;
@@ -124,11 +124,11 @@ TEST_CASE("Simd::tile2d_blocked border", "[simd][tile]") {
     tile2d_blocked<CACHE, SIMD, TileExecution::SEQUENTIAL, BORDER>(
         ROWS,
         COLS,
-        [&](const TileRegion2D& region) {
+        [&](const Region2D& region) {
             paint(simd_paint, region);
             paint(total_paint, region);
         },
-        [&](const TileRegion2D& region) { paint(total_paint, region); }
+        [&](const Region2D& region) { paint(total_paint, region); }
     );
 
     for (int64_t r = 0; r < ROWS; r++) {

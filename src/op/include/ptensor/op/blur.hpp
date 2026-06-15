@@ -33,7 +33,7 @@ class GaussianBlur {
     GaussianBlur(size_t kernel_size) :
         kernel_{.data = {}, .size = kernel_size} {}
 
-    Tensor horizontal_out_;
+    Tensor scratch_;
 };
 
 }  // namespace p10::op

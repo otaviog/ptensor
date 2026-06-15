@@ -17,17 +17,17 @@ namespace p10::op::fastblur {
 
 namespace {
     template<int KHALF>
-    void hblur_pass(PlanarSpan3D<const float> input, PlanarSpan3D<float> output, const float* kernel) {
+    void hblur_pass(Span3D<const float> input, Span3D<float> output, const float* kernel) {
         constexpr simd::TileBorder BORDER {.horizontal = KHALF, .vertical = 0};
-        const TileRegion2D full {
-            .row = 0, .col = 0, .height = input.height(), .width = input.width()
+        const Region2D full {
+            .row = 0, .col = 0, .height = input.rows(), .width = input.cols()
         };
         for (int64_t channel_plane = 0; channel_plane < input.channels(); channel_plane++) {
             Accessor2D<const float> in = input[channel_plane](full);
             Accessor2D<float> out = output[channel_plane](full);
             simd::tile2d<float, simd::TileExecution::SEQUENTIAL, BORDER>(
-                input.height(),
-                input.width(),
+                input.rows(),
+                input.cols(),
                 make_hblur_border<KHALF>(in, out, kernel),
                 make_avx2_hblur<KHALF>(in, out, kernel),
                 make_neon_hblur<KHALF>(in, out, kernel),
@@ -39,8 +39,8 @@ namespace {
 
 template<typename scalar_t>
 constexpr bool try_fast_blur(
-    PlanarSpan3D<const scalar_t> src,
-    PlanarSpan3D<scalar_t> dst,
+    Span3D<const scalar_t> src,
+    Span3D<scalar_t> dst,
     std::span<const float> kernel) {
     (void) src;
     (void) dst;
@@ -50,8 +50,8 @@ constexpr bool try_fast_blur(
 
 template<>
 inline bool try_fast_blur<float>(
-    PlanarSpan3D<const float> src,
-    PlanarSpan3D<float> dst,
+    Span3D<const float> src,
+    Span3D<float> dst,
     std::span<const float> kernel
 ) {
     size_t khalf = kernel.size() >> 1;

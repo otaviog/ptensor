@@ -88,7 +88,7 @@ TEST_CASE("Op: Blur float32 plane", "[tensorop][blur]") {
             for (int x = 0; x < width; ++x) {
                 float sum = 0.0F;
                 for (int k = -half; k <= half; ++k) {
-                    sum += in.row(y)[std::clamp(x + k, 0, width - 1)] * kernel[k + half];
+                    sum += in[y][std::clamp(x + k, 0, width - 1)] * kernel[k + half];
                 }
                 horizontal[(y * width) + x] = sum;
             }
@@ -107,7 +107,7 @@ TEST_CASE("Op: Blur float32 plane", "[tensorop][blur]") {
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 CAPTURE(y, x);
-                REQUIRE(out.row(y)[x] == Catch::Approx(reference[(y * width) + x]).margin(1e-4));
+                REQUIRE(out[y][x] == Catch::Approx(reference[(y * width) + x]).margin(1e-4));
             }
         }
     }

@@ -20,7 +20,7 @@ namespace p10::op {
 template<int KHALF>
 auto make_avx2_hblur(Accessor2D<const float> input, Accessor2D<float> output, const float* kernel) {
 #if PTENSOR_HAS_INTRINSICS_H
-    return simd::Avx2<8>([=](const TileRegion2D& region) {
+    return simd::Avx2<8>([=](const Region2D& region) {
         // TODO: replace with AVX2 intrinsics (8-wide float, _mm256_fmadd_ps).
         hblur_region<KHALF>(input, output, kernel, region, /*clamp_edges=*/false);
     });
@@ -28,7 +28,7 @@ auto make_avx2_hblur(Accessor2D<const float> input, Accessor2D<float> output, co
     (void) input;
     (void) output;
     (void) kernel;
-    return simd::Avx2<8>([](const TileRegion2D&) {
+    return simd::Avx2<8>([](const Region2D&) {
         static_assert(
             !simd::is_compiler_supported(simd::SimdSet::AVX2),
             "empty AVX2 hblur kernel instantiated on an AVX2-capable target"

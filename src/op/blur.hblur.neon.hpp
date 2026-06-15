@@ -19,7 +19,7 @@ namespace p10::op {
 template<int KHALF>
 auto make_neon_hblur(Accessor2D<const float> input, Accessor2D<float> output, const float* kernel) {
 #if PTENSOR_HAS_NEON
-    return simd::Neon<8>([=](const TileRegion2D& region) {
+    return simd::Neon<8>([=](const Region2D& region) {
         // TODO: replace with NEON intrinsics (float32x4_t, vfmaq_f32).
         hblur_region<KHALF>(input, output, kernel, region, /*clamp_edges=*/false);
     });
@@ -27,7 +27,7 @@ auto make_neon_hblur(Accessor2D<const float> input, Accessor2D<float> output, co
     (void) input;
     (void) output;
     (void) kernel;
-    return simd::Neon<8>([](const TileRegion2D&) {
+    return simd::Neon<8>([](const Region2D&) {
         static_assert(
             !simd::is_compiler_supported(simd::SimdSet::AdvSIMD),
             "empty NEON hblur kernel instantiated on a NEON-capable target"

@@ -1,14 +1,10 @@
 #pragma once
 
 #include <array>
-#include <memory>
 #include <span>
 
 #include <ptensor/p10_result.hpp>
-
-namespace p10 {
-class Tensor;
-}
+#include <ptensor/tensor.hpp>
 
 namespace p10::op {
 class GaussianBlur {
@@ -20,19 +16,24 @@ class GaussianBlur {
     P10Error transform(const Tensor& input, Tensor& output);
 
   private:
-    using KernelStorage = std::array<float, MAX_KERNEL_SIZE>;
+    struct {
+        std::array<float, MAX_KERNEL_SIZE> data;
+        size_t size;
 
-    GaussianBlur(KernelStorage kernel, size_t kernel_size) :
-        kernel_data_(kernel),
-        kernel_size_(kernel_size) {}
+        std::span<const float> get() const {
+            return std::span<const float>(data.data(), size);
+        }
 
-    std::span<const float> get_kernel() const {
-        return std::span<const float>(kernel_data_.data(), kernel_size_);
-    }
+        std::span<float> get() {
+            return std::span<float>(data.data(), size);
+        }
+        
+    } kernel_;
 
-    KernelStorage kernel_data_;
-    std::shared_ptr<Tensor> horizontal_out_;
-    size_t kernel_size_;
+    GaussianBlur(size_t kernel_size) :
+        kernel_{.data = {}, .size = kernel_size} {}
+
+    Tensor horizontal_out_;
 };
 
 }  // namespace p10::op

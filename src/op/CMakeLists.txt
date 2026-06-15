@@ -34,7 +34,8 @@ set_source_files_properties(${PUBLIC_HEADERS} PROPERTIES VS_FOLDER "Public Heade
 target_sources(ptensor_op
     PRIVATE
     accumulator_traits.hpp
-    blur.cpp
+    blur.fast.hpp
+    blur.general.cpp
     crop.cpp
     elemwise.cpp
     tensor_scalar.cpp

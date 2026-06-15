@@ -47,8 +47,8 @@ TEST_CASE("Simd::tile2d_autoblock", "[simd][tile]") {
     expected_image.create(make_shape(SHAPE_WIDTH, SHAPE_HEIGHT), int32);
 
     const auto src = input_image.as_span2d<const int32_t>().unwrap();
-    const auto dst = output_image.as_span2d<int32_t>().unwrap();
-    const auto expected = expected_image.as_span2d<int32_t>().unwrap();
+    auto dst = output_image.as_span2d<int32_t>().unwrap();
+    auto expected = expected_image.as_span2d<int32_t>().unwrap();
 
     // Reference: transpose the whole image in one shot with the scalar kernel.
     scalar_transpose(
@@ -81,8 +81,8 @@ TEST_CASE("Simd::tile2d", "[simd][tile]") {
     expected_image.create(make_shape(SHAPE_WIDTH, SHAPE_HEIGHT), int32);
 
     const auto src = input_image.as_span2d<const int32_t>().unwrap();
-    const auto dst = output_image.as_span2d<int32_t>().unwrap();
-    const auto expected = expected_image.as_span2d<int32_t>().unwrap();
+    auto dst = output_image.as_span2d<int32_t>().unwrap();
+    auto expected = expected_image.as_span2d<int32_t>().unwrap();
 
     // Reference: transpose the whole image in one shot with the scalar kernel.
     scalar_transpose(

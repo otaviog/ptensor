@@ -74,17 +74,15 @@ namespace {
 P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) {
     const Dtype dtype = input.dtype();
 
-    // Accept a 2D plane (H, W) or a planar 3D image (C, H, W). RankFit::Flexible
-    // promotes the 2D case to a single plane.
-    if (input.shape().dims() != 2 && input.shape().dims() != 3) {
-        return P10Error::InvalidArgument << "Input must be a 2D plane or a planar 3D image.";
+    if (input.shape().dims() < 2 ) {
+        return P10Error::InvalidArgument << "Input tensor must have at least 2 dimensions.";
     }
 
     P10_RETURN_IF_ERROR(scratch_.create(input.shape(), dtype));
 
     return dtype.match([&](auto type_tag) -> P10Error {
         using scalar_t = decltype(type_tag)::type;
-
+        
         if constexpr (std::is_arithmetic_v<scalar_t>) {
             const auto kernel = kernel_.get();
 
@@ -93,12 +91,12 @@ P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) {
             {
                 auto src = input.as_span3d<const scalar_t, RankFit::Flexible>().unwrap();
                 auto dst = scratch_.as_span3d<scalar_t, RankFit::Flexible>().unwrap();
-                const auto pass = [&](const Region2D& region) {
-                    for (int64_t plane = 0; plane < src.channels(); plane++) {
-                        blur_kernel(src[plane](region).as_const(), dst[plane](region), kernel);
-                    }
-                };
                 if (!fastblur::try_fast_blur<scalar_t>(src, dst, kernel)) {
+                    const auto pass = [&](const Region2D& region) {
+                        for (int64_t plane = 0; plane < src.channels(); plane++) {
+                            blur_kernel(src[plane](region), dst[plane](region), kernel);
+                        }
+                    };
                     simd::tile2d<scalar_t>(src.rows(), src.cols(), pass, simd::Portable<32>(pass));
                 }
             }

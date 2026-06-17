@@ -10,7 +10,7 @@
 #include <array>
 #include <type_traits>
 
-#include "blur.hblur.portable.hpp"
+#include "blur.hblur.hpp"
 #include "p10_internal/simd/tile2d.hpp"
 #include "ptensor/region2d.hpp"
 

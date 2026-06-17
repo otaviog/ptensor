@@ -21,6 +21,9 @@ concept Scalar = std::is_arithmetic_v<T>;
 namespace {
     void create_gaussian_kernel(std::span<float> kernel, float sigma);
 
+    // Interior pass for a fixed half-width KHALF: the tap loop unrolls because
+    // KHALF is a compile-time constant. tile2d runs this unrolled kernel on the
+    // halo-inset interior and hands the clamped frame to scalar_kernel.
     template<Scalar scalar_t, size_t KHALF>
     void hblur_pass_impl(
         Span3D<const scalar_t> src,
@@ -28,63 +31,57 @@ namespace {
         std::span<const float> kernel,
         auto scalar_kernel
     ) {
-        const int half = static_cast<int>(kernel.size()) / 2;
-        const simd::TileBorder border {.horizontal = half, .vertical = 0};
-        const Region2D full {.row = 0, .col = 0, .height = src.rows(), .width = src.cols()};
+        const simd::TileBorder border {.horizontal = KHALF, .vertical = 0};
 
         const auto simd_kernel = [=](const Region2D& region) {
-            const int64_t col_end = region.col + region.width;
+            Span3D<const scalar_t> in = src;
+            Span3D<scalar_t> out = dst;  // mutable handle: the [=] copy is const
             const int64_t row_end = region.row + region.height;
-            for (int64_t channel = 0; channel < src.channels(); ++channel) {
+            for (int64_t channel = 0; channel < in.channels(); ++channel) {
+                auto out_plane = out[channel].as_accessor().transpose();
                 for (int64_t row = region.row; row < row_end; ++row) {
                     hblur_portable<scalar_t, KHALF>(
-                        src[channel](row).as_const(),
-                        dst[channel].as_accessor().transpose()[row],
-                        region.col,
-                        col_end,
+                        in[channel](row).slice(region.col, region.width),
+                        out_plane[row].slice(region.col, region.width),
                         kernel.data()
                     );
                 }
-            };
+            }
+        };
 
-            simd::tile2d<scalar_t, simd::TileExecution::SEQUENTIAL>(
-                src.rows(),
-                dst.cols(),
-                border,
-                scalar_kernel,
-                simd::Portable<8, scalar_t>(simd_kernel)
-            );
-        }
+        simd::tile2d<scalar_t, simd::TileExecution::SEQUENTIAL>(
+            src.rows(),
+            dst.cols(),
+            border,
+            scalar_kernel,
+            simd::Portable<8, scalar_t>(simd_kernel)
+        );
     }
 
     // One horizontal blur pass over every channel plane, runtime kernel size.
     // tile2d carries the +/-half apron as a runtime border: the interior runs
-    // the SIMD (or portable) kernel without edge checks while the scalar sweep
-    // clamps the frame. Only float has SIMD kernels; tile2d's dtype dispatch
-    // drops them for other types, which fall through to the scalar sweep below.
+    // the unrolled portable kernel without edge checks while the scalar sweep
+    // clamps the frame. Half-widths past the unrolled cases fall back to a
+    // scalar-only tiling.
     template<Scalar scalar_t>
     void
     hblur_pass(Span3D<const scalar_t> src, Span3D<scalar_t> dst, std::span<const float> kernel) {
         const int half = static_cast<int>(kernel.size()) / 2;
-        const simd::TileBorder border {.horizontal = half, .vertical = 0};
-        const Region2D full {.row = 0, .col = 0, .height = src.rows(), .width = src.cols()};
 
         // Clamping scalar sweep: serves the edge frame, and the whole plane
-        // when scalar_t has no SIMD kernel.
+        // for the scalar-only fallback.
         const auto scalar_edge = [=](const Region2D& region) {
-            const int64_t col_end = region.col + region.width;
+            Span3D<const scalar_t> in = src;
+            Span3D<scalar_t> out = dst;  // mutable handle: the [=] copy is const
             const int64_t row_end = region.row + region.height;
-            for (int64_t channel = 0; channel < src.channels(); ++channel) {
+            for (int64_t channel = 0; channel < in.channels(); ++channel) {
+                auto out_plane = out[channel].as_accessor().transpose();
                 for (int64_t row = region.row; row < row_end; ++row) {
                     hblur_scalar<scalar_t>(
-                        src[channel][row],
-                        dst[channel].as_accessor().transpose()[row],
-                        region.col,
-                        col_end,
+                        in[channel](row).slice(region.col, region.width),
+                        out_plane[row].slice(region.col, region.width),
                         half,
-                        kernel.data(),
-                        src.cols(),
-                        /*clamp_edges=*/true
+                        kernel.data()
                     );
                 }
             }
@@ -137,12 +134,11 @@ P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) {
 
             const auto in = input.as_span3d<const scalar_t, RankFit::Flexible>().unwrap();
             auto scratch = scratch_.as_span3d<scalar_t, RankFit::Flexible>().unwrap();
-
-            hblur_pass<scalar_t>(in, scratch, kernel);
-            scratch_.transpose();
             auto out = output.as_span3d<scalar_t, RankFit::Flexible>().unwrap();
+            
+            hblur_pass<scalar_t>(in, scratch, kernel);
             hblur_pass<scalar_t>(scratch.as_const(), out, kernel);
-            output.transpose();
+            // The hblur_pass already transposes the planes
             return P10Error::Ok;
         } else {
             return P10Error::InvalidArgument << "Unsupported data type for this operation.";

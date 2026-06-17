@@ -31,18 +31,14 @@ class Accessor3D {
     Accessor2D<T> operator[](size_t depth) {
         assert(depth < static_cast<size_t>(shape_[0]));
         return Accessor2D<T>(
-            data_ + depth * strides_[0],
-            {shape_[1], shape_[2]},
-            {strides_[1], strides_[2]}
+            data_ + depth * strides_[0], {shape_[1], shape_[2]}, {strides_[1], strides_[2]}
         );
     }
 
     Accessor2D<const T> operator[](size_t depth) const {
         assert(depth < static_cast<size_t>(shape_[0]));
         return Accessor2D<const T>(
-            data_ + depth * strides_[0],
-            {shape_[1], shape_[2]},
-            {strides_[1], strides_[2]}
+            data_ + depth * strides_[0], {shape_[1], shape_[2]}, {strides_[1], strides_[2]}
         );
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 
@@ -23,13 +24,13 @@ class Accessor2D {
         return shape_[1];
     }
 
-    Accessor1D<T> operator[](size_t row) {
-        assert(row < static_cast<size_t>(shape_[0]));
+    // A row is self-bounded to its own columns; halo comes from slicing a row of
+    // a full-width plane (see Span2D), not from a region accessor.
+    Accessor1D<T> operator[](int64_t row) {
         return Accessor1D<T>(data_ + row * strides_[0], shape_[1], strides_[1]);
     }
 
-    Accessor1D<const T> operator[](size_t row) const {
-        assert(row < static_cast<size_t>(shape_[0]));
+    Accessor1D<const T> operator[](int64_t row) const {
         return Accessor1D<const T>(data_ + row * strides_[0], shape_[1], strides_[1]);
     }
 
@@ -38,10 +39,7 @@ class Accessor2D {
     }
 
     Accessor2D transpose() const {
-        return {
-            {shape_[1], shape_[0]},
-            {strides_[1], strides_[2]}
-        };
+        return Accessor2D(data_, {shape_[1], shape_[0]}, {strides_[1], strides_[0]});
     }
 
   private:

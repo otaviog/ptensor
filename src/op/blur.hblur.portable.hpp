@@ -44,47 +44,42 @@ struct Accumulator {
     }
 };
 
-// One horizontal convolution sweep over columns [col_begin, col_end) of a row.
-// `half` is the kernel radius; pass a compile-time constant to let the tap loop
-// unroll. clamp_edges clamps the apron to [0, width); interior SIMD tiles skip
-// it because the tiler guarantees the +/-half apron is in bounds.
+// Border sweep over a tile-local row view: `half` is the kernel radius (runtime).
+// in_row/out_row are local coordinates (index 0 is the tile's first column); the
+// tap clamps into [-left(), right()] so the apron replicates the row edges. Used
+// where the tiler cannot guarantee an in-bounds apron.
 template<typename scalar_t>
 inline void hblur_scalar(
     Accessor1D<const scalar_t> in_row,
     Accessor1D<scalar_t> out_row,
-    int64_t col_begin,
-    int64_t col_end,
     int half,
-    const float* kernel,
-    int64_t width,
-    bool clamp_edges
+    const float* kernel
 ) {
-    for (int64_t col = col_begin; col < col_end; ++col) {
+    const int64_t lo = -in_row.left();
+    const int64_t hi = in_row.right();
+    for (int64_t col = 0; col < out_row.cols(); ++col) {
         Accumulator<scalar_t> acc;
         for (int k = -half; k <= half; ++k) {
-            int64_t src_col = col + k;
-            if (clamp_edges) {
-                src_col = std::clamp<int64_t>(src_col, 0, width - 1);
-            }
+            const int64_t src_col = std::clamp<int64_t>(col + k, lo, hi);
             acc.add(in_row[src_col], kernel[k + half]);
         }
         out_row[col] = acc.store();
     }
 }
 
+// Interior sweep over a tile-local row view. KHALF is compile-time so the tap
+// loop unrolls. No clamp: the tiler insets the interior by the halo, so the
+// +/-KHALF apron is always in bounds (and the row bounds assert it in debug).
 template<typename scalar_t, int64_t KHALF>
 inline void hblur_portable(
     Accessor1D<const scalar_t> in_row,
     Accessor1D<scalar_t> out_row,
-    int64_t col_begin,
-    int64_t col_end,
     const float* kernel
 ) {
-    for (int64_t col = col_begin; col < col_end; ++col) {
+    for (int64_t col = 0; col < out_row.cols(); ++col) {
         Accumulator<scalar_t> acc;
         for (int k = -KHALF; k <= KHALF; ++k) {
-            int64_t src_col = col + k;
-            acc.add(in_row[src_col], kernel[k + KHALF]);
+            acc.add(in_row[col + k], kernel[k + KHALF]);
         }
         out_row[col] = acc.store();
     }

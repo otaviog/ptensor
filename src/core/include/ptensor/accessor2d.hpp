@@ -37,6 +37,13 @@ class Accessor2D {
         return Accessor2D<const T>(data_, shape_, strides_);
     }
 
+    Accessor2D transpose() const {
+        return {
+            {shape_[1], shape_[0]},
+            {strides_[1], strides_[2]}
+        };
+    }
+
   private:
     T* data_;
     std::array<int64_t, 2> shape_;

@@ -61,26 +61,32 @@ P10Error Tensor::transpose(Tensor& other) const {
             return &dest_span[region.col][region.row];
         };
 
-        auto border = make_transpose_border<ScalarT>(src_block, dst_block, src_stride, dst_stride);
+        auto edge = make_transpose_border<ScalarT>(src_block, dst_block, src_stride, dst_stride);
         auto portable =
             make_portable_transpose<SIMD_BLOCK, ScalarT>(src_block, dst_block, src_stride, dst_stride);
 
         // tile2d picks the first kernel the running CPU supports (via cpuid),
-        // otherwise the next, and the border kernel always handles the edges.
+        // otherwise the next, and the edge kernel always handles the borders.
         // The SIMD 8x8 kernels move 32-bit lanes, so they also serve float32
         // (the bit pattern is shuffled untouched); larger types fall to scalar.
+        // Transpose has no stencil halo, so the tile border is empty.
         if constexpr (sizeof(ScalarT) == sizeof(int32_t)) {
             simd::tile2d<ScalarT>(
                 rows,
                 cols,
-                border,
-                make_avx2_transpose<SIMD_BLOCK>(src_block, dst_block, src_stride, dst_stride),
-                make_neon_transpose<SIMD_BLOCK>(src_block, dst_block, src_stride, dst_stride),
+                simd::TileBorder {},
+                edge,
+                make_avx2_transpose<SIMD_BLOCK, ScalarT>(
+                    src_block, dst_block, src_stride, dst_stride
+                ),
+                make_neon_transpose<SIMD_BLOCK, ScalarT>(
+                    src_block, dst_block, src_stride, dst_stride
+                ),
                 portable
             );
             return P10Error::Ok;
         }
-        simd::tile2d<ScalarT>(rows, cols, border, portable);
+        simd::tile2d<ScalarT>(rows, cols, simd::TileBorder {}, edge, portable);
         return P10Error::Ok;
     });
 }

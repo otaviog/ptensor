@@ -51,6 +51,23 @@ class Span2D {
         );
     }
 
+    Accessor2D<T> as_accessor() {
+        return Accessor2D<T>(
+            data_,
+            {rows_, cols_},
+            {cols_, 1});
+    }
+        
+    Accessor1D<T> operator()(int64_t row) {
+        assert(row < rows_);
+        return Accessor1D<T>(data_ + row * cols_, cols_, 1);
+    }
+
+    Accessor1D<const T> operator()(int64_t row) const {
+        assert(row < rows_);
+        return Accessor1D<const T>(data_ + row * cols_, cols_, 1);
+    }
+
   private:
     T* data_ = nullptr;
     int64_t rows_ = 0;

@@ -16,12 +16,13 @@ namespace p10::simd {
 template<typename F>
 concept TileKernel2DFn = std::invocable<F, Region2D>;
 
-// Compile-time halo size for stencil kernels (blur, convolution, ...). Each SIMD
+// Runtime halo size for stencil kernels (blur, convolution, ...). Each SIMD
 // tile reads `horizontal` extra columns left/right and `vertical` extra rows
 // top/bottom; the tiler keeps the SIMD kernel inside the region where that apron
 // stays in bounds and hands the edge frame to the scalar kernel (which clamps).
 // A power-of-two halo is not required; only the cache block must be. Default {}
-// (no halo) reproduces a plain elementwise tiling.
+// (no halo) reproduces a plain elementwise tiling. Passed as a runtime value so
+// a single kernel instantiation serves every kernel size.
 struct TileBorder {
     int64_t horizontal = 0;
     int64_t vertical = 0;
@@ -31,16 +32,21 @@ template<
     size_t CACHE_BLOCK,
     size_t SIMD_BLOCK,
     TileExecution ExecutionMode,
-    TileBorder Border = TileBorder {},
     TileKernel2DFn SimdFn,
     TileKernel2DFn ScalarFn>
-void tile2d_blocked(int64_t rows, int64_t cols, SimdFn&& simd_impl, ScalarFn&& scalar_impl) {
+void tile2d_blocked(
+    int64_t rows,
+    int64_t cols,
+    TileBorder border,
+    SimdFn&& simd_impl,
+    ScalarFn&& scalar_impl
+) {
     static_assert(CACHE_BLOCK % SIMD_BLOCK == 0, "CACHE_BLOCK must be a multiple of SIMD_BLOCK");
 
     constexpr int64_t CACHE = CACHE_BLOCK;
     constexpr int64_t SIMD = SIMD_BLOCK;
-    constexpr int64_t BORDER_V = Border.vertical;
-    constexpr int64_t BORDER_H = Border.horizontal;
+    const int64_t BORDER_V = border.vertical;
+    const int64_t BORDER_H = border.horizontal;
 
     // SIMD walks the interior inset by the halo, aligned down to whole cache
     // blocks; everything outside is the edge frame plus the alignment remainder.
@@ -114,10 +120,15 @@ template<
     size_t SIMD_BLOCK,
     typename scalar_t,
     TileExecution ExecutionMode = TileExecution::SEQUENTIAL,
-    TileBorder Border = TileBorder {},
     TileKernel2DFn SimdFn,
     TileKernel2DFn ScalarFn>
-void tile2d_autoblock(int64_t rows, int64_t cols, SimdFn&& simd_impl, ScalarFn&& scalar_impl) {
+void tile2d_autoblock(
+    int64_t rows,
+    int64_t cols,
+    TileBorder border,
+    SimdFn&& simd_impl,
+    ScalarFn&& scalar_impl
+) {
     // Side of a square cache tile, in elements: ~sqrt(L1) bytes / element size,
     // so the working set stays in L1d (the src and dst tiles share L1).
     const int64_t l1_tile_side =
@@ -131,28 +142,28 @@ void tile2d_autoblock(int64_t rows, int64_t cols, SimdFn&& simd_impl, ScalarFn&&
     }
 
     if (l1_tile_side >= 1024) {
-        tile2d_blocked<floor_to_simd<SIMD_BLOCK>(1024), SIMD_BLOCK, ExecutionMode, Border>(
-            rows, cols, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
+        tile2d_blocked<floor_to_simd<SIMD_BLOCK>(1024), SIMD_BLOCK, ExecutionMode>(
+            rows, cols, border, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
         );
     } else if (l1_tile_side >= 512) {
-        tile2d_blocked<floor_to_simd<SIMD_BLOCK>(512), SIMD_BLOCK, ExecutionMode, Border>(
-            rows, cols, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
+        tile2d_blocked<floor_to_simd<SIMD_BLOCK>(512), SIMD_BLOCK, ExecutionMode>(
+            rows, cols, border, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
         );
     } else if (l1_tile_side >= 256) {
-        tile2d_blocked<floor_to_simd<SIMD_BLOCK>(256), SIMD_BLOCK, ExecutionMode, Border>(
-            rows, cols, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
+        tile2d_blocked<floor_to_simd<SIMD_BLOCK>(256), SIMD_BLOCK, ExecutionMode>(
+            rows, cols, border, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
         );
     } else if (l1_tile_side >= 128) {
-        tile2d_blocked<floor_to_simd<SIMD_BLOCK>(128), SIMD_BLOCK, ExecutionMode, Border>(
-            rows, cols, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
+        tile2d_blocked<floor_to_simd<SIMD_BLOCK>(128), SIMD_BLOCK, ExecutionMode>(
+            rows, cols, border, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
         );
     } else if (l1_tile_side >= 64) {
-        tile2d_blocked<floor_to_simd<SIMD_BLOCK>(64), SIMD_BLOCK, ExecutionMode, Border>(
-            rows, cols, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
+        tile2d_blocked<floor_to_simd<SIMD_BLOCK>(64), SIMD_BLOCK, ExecutionMode>(
+            rows, cols, border, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
         );
     } else {
-        tile2d_blocked<floor_to_simd<SIMD_BLOCK>(32), SIMD_BLOCK, ExecutionMode, Border>(
-            rows, cols, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
+        tile2d_blocked<floor_to_simd<SIMD_BLOCK>(32), SIMD_BLOCK, ExecutionMode>(
+            rows, cols, border, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
         );
     }
 }
@@ -169,18 +180,19 @@ template<typename T>
 concept TileKernelSpec2D = requires {
     { T::SIMD_BLOCK } -> std::convertible_to<size_t>;
     { T::INSTRUCTIONS } -> std::convertible_to<SimdSet>;
-    { T::TargetScalar } -> std::convertible_to<typename T::TargetScalar>;
+    typename T::TargetScalar;
 } && TileKernel2DFn<decltype(T::fn)>;
 
 template<
     typename scalar_t,
     TileExecution ExecutionMode = TileExecution::SEQUENTIAL,
-    TileBorder Border = TileBorder {},
     TileKernel2DFn ScalarKn>
 void tile2d(
     int64_t rows,
     int64_t cols,
+    TileBorder border,
     ScalarKn&& scalar_impl) {
+    (void) border;
     scalar_impl(
         Region2D {.row = 0, .col = 0, .height = rows, .width = cols});
 }
@@ -188,22 +200,23 @@ void tile2d(
 template<
     typename scalar_t,
     TileExecution ExecutionMode = TileExecution::SEQUENTIAL,
-    TileBorder Border = TileBorder {},
     TileKernel2DFn ScalarKn,
     TileKernelSpec2D CurrentKernel,
     typename... Args>
 void tile2d(
     int64_t rows,
     int64_t cols,
+    TileBorder border,
     ScalarKn&& scalar_impl,
     const CurrentKernel& current_kernel,
     const Args&... kernels
 ) {
     if constexpr (is_compiler_supported(CurrentKernel::INSTRUCTIONS) && std::is_same_v<scalar_t, typename CurrentKernel::TargetScalar> ) {
         if (is_supported(CurrentKernel::INSTRUCTIONS)) {
-            return tile2d_autoblock<CurrentKernel::SIMD_BLOCK, scalar_t, ExecutionMode, Border>(
+            return tile2d_autoblock<CurrentKernel::SIMD_BLOCK, scalar_t, ExecutionMode>(
                 rows,
                 cols,
+                border,
                 current_kernel.fn,
                 std::forward<ScalarKn>(scalar_impl)
             );
@@ -212,9 +225,10 @@ void tile2d(
 
     // Current kernel unusable (compiler can't emit it, or CPU lacks it):
     // drop it and try the remaining kernels with the same scalar fallback.
-    return tile2d<scalar_t, ExecutionMode, Border>(
+    return tile2d<scalar_t, ExecutionMode>(
         rows,
         cols,
+        border,
         std::forward<ScalarKn>(scalar_impl),
         kernels...
     );

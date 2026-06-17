@@ -12,38 +12,44 @@
 
 namespace p10::op {
 
-// Accumulate in float for small integer types, double for >=32-bit ints; floats
-// pass through. The scalar/portable convolution shares this with the generic
-// fallback in blur.general.cpp.
+// Weighted-sum accumulator for the convolution tap loop. Accumulates in a type
+// wide enough for scalar_t (float for small ints, double for >=32-bit ints, the
+// float type itself for floats), then on store rounds + saturates back to
+// scalar_t for integers and passes floats through unchanged (so the float fast
+// path stays bit-identical).
 template<typename scalar_t>
-using blur_accum_t = std::conditional_t<
-    std::is_floating_point_v<scalar_t>,
-    scalar_t,
-    std::conditional_t<(sizeof(scalar_t) >= 4), double, float>>;
+struct Accumulator {
+    using accum_t = std::conditional_t<
+        std::is_floating_point_v<scalar_t>,
+        scalar_t,
+        std::conditional_t<(sizeof(scalar_t) >= 4), double, float>>;
 
-// Stores an accumulator into the output scalar: round + saturate for integers,
-// passthrough for floats (so the float fast path is bit-identical).
-template<typename scalar_t>
-inline scalar_t blur_store(blur_accum_t<scalar_t> value) {
-    if constexpr (std::is_floating_point_v<scalar_t>) {
-        return static_cast<scalar_t>(value);
-    } else {
-        using limits = std::numeric_limits<scalar_t>;
-        using accum_t = blur_accum_t<scalar_t>;
-        return static_cast<scalar_t>(std::clamp(
-            std::round(value),
-            static_cast<accum_t>(limits::min()),
-            static_cast<accum_t>(limits::max())
-        ));
+    accum_t sum = 0;
+
+    void add(scalar_t value, float weight) {
+        sum += static_cast<accum_t>(value) * static_cast<accum_t>(weight);
     }
-}
+
+    scalar_t store() const {
+        if constexpr (std::is_floating_point_v<scalar_t>) {
+            return static_cast<scalar_t>(sum);
+        } else {
+            using limits = std::numeric_limits<scalar_t>;
+            return static_cast<scalar_t>(std::clamp(
+                std::round(sum),
+                static_cast<accum_t>(limits::min()),
+                static_cast<accum_t>(limits::max())
+            ));
+        }
+    }
+};
 
 // One horizontal convolution sweep over columns [col_begin, col_end) of a row.
 // `half` is the kernel radius; pass a compile-time constant to let the tap loop
 // unroll. clamp_edges clamps the apron to [0, width); interior SIMD tiles skip
 // it because the tiler guarantees the +/-half apron is in bounds.
 template<typename scalar_t>
-inline void hblur_row(
+inline void hblur_scalar(
     Accessor1D<const scalar_t> in_row,
     Accessor1D<scalar_t> out_row,
     int64_t col_begin,
@@ -53,84 +59,36 @@ inline void hblur_row(
     int64_t width,
     bool clamp_edges
 ) {
-    using accum_t = blur_accum_t<scalar_t>;
     for (int64_t col = col_begin; col < col_end; ++col) {
-        accum_t sum = 0;
+        Accumulator<scalar_t> acc;
         for (int k = -half; k <= half; ++k) {
             int64_t src_col = col + k;
             if (clamp_edges) {
                 src_col = std::clamp<int64_t>(src_col, 0, width - 1);
             }
-            sum += static_cast<accum_t>(in_row[src_col]) * static_cast<accum_t>(kernel[k + half]);
+            acc.add(in_row[src_col], kernel[k + half]);
         }
-        out_row[col] = blur_store<scalar_t>(sum);
+        out_row[col] = acc.store();
     }
 }
 
-// Horizontal 1D convolution over a tile region. KHALF is the kernel half-size
-// (radius), known at compile time so the tap loop unrolls. The interior SIMD
-// tiles run with clamp_edges == false (the tiler guarantees the +/-KHALF apron
-// is in bounds); the edge frame runs the same loop with clamping.
-template<int KHALF>
-inline void hblur_region(
-    Accessor2D<const float> input,
-    Accessor2D<float> output,
-    const float* kernel,
-    const Region2D& region,
-    bool clamp_edges
-) {
-    const int64_t width = input.cols();
-    const int64_t row_end = region.row + region.height;
-    const int64_t col_end = region.col + region.width;
-
-    for (int64_t row = region.row; row < row_end; ++row) {
-        hblur_row<
-            float>(input[row], output[row], region.col, col_end, KHALF, kernel, width, clamp_edges);
-    }
-}
-
-// Portable interior kernel: the generic loop with no edge clamping. Always
-// available; the compiler vectorizes it where it can.
-template<int KHALF>
-auto make_portable_hblur(
-    Accessor2D<const float> input,
-    Accessor2D<float> output,
+template<typename scalar_t, int64_t KHALF>
+inline void hblur_portable(
+    Accessor1D<const scalar_t> in_row,
+    Accessor1D<scalar_t> out_row,
+    int64_t col_begin,
+    int64_t col_end,
     const float* kernel
 ) {
-    return simd::Portable<8>([=](const Region2D& region) {
-        hblur_region<KHALF>(input, output, kernel, region, /*clamp_edges=*/false);
-    });
-}
-
-// Scalar edge kernel for the left/right frame (and any alignment remainder),
-// where the apron spills past the image and must be clamped.
-template<int KHALF>
-auto make_hblur_border(
-    Accessor2D<const float> input,
-    Accessor2D<float> output,
-    const float* kernel
-) {
-    return [=](const Region2D& region) {
-        hblur_region<KHALF>(input, output, kernel, region, /*clamp_edges=*/true);
-    };
-}
-
-template<typename scalar_t>
-void hblur_scalar(
-    std::span<const scalar_t> src,
-    std::span<scalar_t> dst,
-    std::span<const float> kernel,
-    int64_t kleft,
-    int64_t kright
-) {
-    for (int64_t col = 0; col < src.size(); ++col) {
-        double sum = 0.0;
-        for (int k = kleft; k < kright; ++k) {
-            const int64_t src_col = col + k;
-            sum += static_cast<double>(src[src_col]) * static_cast<double>(kernel[k]);
+    for (int64_t col = col_begin; col < col_end; ++col) {
+        Accumulator<scalar_t> acc;
+        for (int k = -KHALF; k <= KHALF; ++k) {
+            int64_t src_col = col + k;
+            acc.add(in_row[src_col], kernel[k + KHALF]);
         }
-        dst[col] = static_cast<scalar_t>(sum);
+        out_row[col] = acc.store();
     }
 }
+
 
 }  // namespace p10::op

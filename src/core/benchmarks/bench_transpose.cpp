@@ -107,12 +107,12 @@ namespace {
         };
 
         auto kernel = make_kernel(src_block, dst_block, src_stride, dst_stride);
-        auto border =
+        auto edge =
             make_transpose_border<int32_t>(src_block, dst_block, src_stride, dst_stride);
 
         for (auto _ : state) {
             simd::tile2d_autoblock<SIMD_BLOCK, int32_t, Exec>(
-                src.rows(), src.cols(), kernel.fn, border
+                src.rows(), src.cols(), simd::TileBorder {}, kernel.fn, edge
             );
             benchmark::DoNotOptimize(dst);
             benchmark::ClobberMemory();
@@ -134,14 +134,14 @@ namespace {
     // tiling) to isolate the blocking win from the SIMD win.
     void BM_Kernel_Scalar(benchmark::State& state) {
         run_kernel_int32(state, [](auto sb, auto db, int64_t ss, int64_t ds) {
-            return simd::Portable<8>(make_transpose_border<int32_t>(sb, db, ss, ds));
+            return simd::Portable<8, int32_t>(make_transpose_border<int32_t>(sb, db, ss, ds));
         });
     }
 
 #if PTENSOR_HAS_INTRINSICS_H
     void BM_Kernel_Avx2(benchmark::State& state) {
         run_kernel_int32(state, [](auto sb, auto db, int64_t ss, int64_t ds) {
-            return make_avx2_transpose<8>(sb, db, ss, ds);
+            return make_avx2_transpose<8, int32_t>(sb, db, ss, ds);
         });
     }
 #endif
@@ -149,7 +149,7 @@ namespace {
 #if PTENSOR_HAS_NEON
     void BM_Kernel_Neon(benchmark::State& state) {
         run_kernel_int32(state, [](auto sb, auto db, int64_t ss, int64_t ds) {
-            return make_neon_transpose<8>(sb, db, ss, ds);
+            return make_neon_transpose<8, int32_t>(sb, db, ss, ds);
         });
     }
 #endif
@@ -160,7 +160,7 @@ namespace {
         run_kernel_int32<simd::TileExecution::PARALLEL>(
             state,
             [](auto sb, auto db, int64_t ss, int64_t ds) {
-                return simd::Portable<8>(make_transpose_border<int32_t>(sb, db, ss, ds));
+                return simd::Portable<8, int32_t>(make_transpose_border<int32_t>(sb, db, ss, ds));
             }
         );
     }
@@ -178,7 +178,7 @@ namespace {
     void BM_Kernel_Neon_Parallel(benchmark::State& state) {
         run_kernel_int32<simd::TileExecution::PARALLEL>(
             state,
-            [](auto sb, auto db, int64_t ss, int64_t ds) { return make_neon_transpose<8>(sb, db, ss, ds); }
+            [](auto sb, auto db, int64_t ss, int64_t ds) { return make_neon_transpose<8, int32_t>(sb, db, ss, ds); }
         );
     }
 #endif

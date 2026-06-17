@@ -60,6 +60,7 @@ TEST_CASE("Simd::tile2d_autoblock", "[simd][tile]") {
     tile2d_autoblock<SIMD_BLOCK, int32_t>(
         SHAPE_HEIGHT,
         SHAPE_WIDTH,
+        TileBorder {},
         [&](auto region) { simd_transpose(src(region), dst(region.transposed())); },
         [&](auto region) { scalar_transpose(src(region), dst(region.transposed())); }
     );
@@ -94,8 +95,11 @@ TEST_CASE("Simd::tile2d", "[simd][tile]") {
     tile2d<int32_t>(
         SHAPE_HEIGHT,
         SHAPE_WIDTH,
+        TileBorder {},
         [&](auto region) { scalar_transpose(src(region), dst(region.transposed())); },
-        Portable<SIMD_BLOCK>([&](auto region) { simd_transpose(src(region), dst(region.transposed())); })
+        Portable<SIMD_BLOCK, int32_t>([&](auto region) {
+            simd_transpose(src(region), dst(region.transposed()));
+        })
     );
 
     REQUIRE_THAT(testing::compare_tensors(output_image, expected_image), testing::is_ok());
@@ -121,9 +125,10 @@ TEST_CASE("Simd::tile2d_blocked border", "[simd][tile]") {
         }
     };
 
-    tile2d_blocked<CACHE, SIMD, TileExecution::SEQUENTIAL, BORDER>(
+    tile2d_blocked<CACHE, SIMD, TileExecution::SEQUENTIAL>(
         ROWS,
         COLS,
+        BORDER,
         [&](const Region2D& region) {
             paint(simd_paint, region);
             paint(total_paint, region);

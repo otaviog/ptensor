@@ -9,7 +9,7 @@
 
 #include <type_traits>
 
-#include "blur.fast.hpp"
+#include "blur.hblur.portable.hpp"
 #include "p10_internal/simd/tile2d.hpp"
 #include "ptensor/region2d.hpp"
 
@@ -21,85 +21,87 @@ concept Scalar = std::is_arithmetic_v<T>;
 namespace {
     void create_gaussian_kernel(std::span<float> kernel, float sigma);
 
-    // Generic horizontal blur for any arithmetic dtype (scalar fallback path,
-    // runtime kernel size). Shares the tap loop with the float fast path via
-    // hblur_row. The given accessor is the whole region to blur, so clamp the
-    // apron to its own extent.
-    template<Scalar scalar_t>
-    void blur_kernel(
-        Accessor2D<const scalar_t> input,
-        Accessor2D<scalar_t> output,
-        std::span<const float> kernel
+    template<Scalar scalar_t, size_t KHALF>
+    void hblur_pass_impl(
+        Span3D<const scalar_t> src,
+        Span3D<scalar_t> dst,
+        std::span<const float> kernel,
+        auto scalar_kernel
     ) {
-        const int half = int(kernel.size()) / 2;
-        const int64_t width = input.cols();
-        for (int64_t row = 0; row < input.rows(); ++row) {
-            hblur_row<scalar_t>(
-                input[row],
-                output[row],
-                0,
-                width,
-                half,
-                kernel.data(),
-                width,
-                /*clamp_edges=*/true
+        const int half = static_cast<int>(kernel.size()) / 2;
+        const simd::TileBorder border {.horizontal = half, .vertical = 0};
+        const Region2D full {.row = 0, .col = 0, .height = src.rows(), .width = src.cols()};
+
+        const auto simd_kernel = [=](const Region2D& region) {
+            const int64_t col_end = region.col + region.width;
+            const int64_t row_end = region.row + region.height;
+            for (int64_t channel = 0; channel < src.channels(); ++channel) {
+                for (int64_t row = region.row; row < row_end; ++row) {
+                    hblur_portable<scalar_t, KHALF>(
+                        src[channel](row).as_const(),
+                        dst[channel].as_accessor().transpose()[row],
+                        region.col,
+                        col_end,
+                        kernel.data()
+                    );
+                }
+            };
+
+            simd::tile2d<scalar_t, simd::TileExecution::SEQUENTIAL>(
+                src.rows(),
+                dst.cols(),
+                border,
+                scalar_kernel,
+                simd::Portable<8, scalar_t>(simd_kernel)
             );
         }
     }
 
-    template<Scalar scalar_t, size_t KHALF>
-    void hblur_pass_with_border(
-        Span3D<const scalar_t> src,
-        Span3D<scalar_t> dst,
-        std::span<const float_t> kernel
-    ) {
-        auto channel_wise_pass = [&](auto blur_func, const auto in, auto out) {
-            return [&](const Region2D region) {
-                for (int64_t channel = 0; channel < in.channels(); ++channel) {
-                    const auto in_region = in[channel](region);
-                    auto out_region = out[channel](region);
-                    for (int64_t row = 0; row < in.rows(); ++row) {
-                        blur_func(in_region[row], out_region[row], kernel);
-                    }
-                }
-            };
-        };
-
-        constexpr simd::TileBorder BORDER {.horizontal = KHALF, .vertical = 0};
-        const Region2D full {.row = 0, .col = 0, .height = src.rows(), .width = src.cols()};
-
-        simd::tile2d<float, simd::TileExecution::SEQUENTIAL, BORDER>(
-            src.rows(),
-            dst.cols(),
-            channel_wise_pass(hblur_scalar),
-
-                make_hblur_border<KHALF>(in, out, kernel),
-            make_avx2_hblur<KHALF>(in, out, kernel),
-            make_neon_hblur<KHALF>(in, out, kernel),
-            make_portable_hblur<KHALF>(in, out, kernel)
-        );
-    }
-
+    // One horizontal blur pass over every channel plane, runtime kernel size.
+    // tile2d carries the +/-half apron as a runtime border: the interior runs
+    // the SIMD (or portable) kernel without edge checks while the scalar sweep
+    // clamps the frame. Only float has SIMD kernels; tile2d's dtype dispatch
+    // drops them for other types, which fall through to the scalar sweep below.
     template<Scalar scalar_t>
     void
-    hblur_pass(Span3D<const scalar_t> src, Span3D<scalar_t> dst, std::span<const float_t> kernel) {
-        const size_t khalf = kernel.size() >> 1;
+    hblur_pass(Span3D<const scalar_t> src, Span3D<scalar_t> dst, std::span<const float> kernel) {
+        const int half = static_cast<int>(kernel.size()) / 2;
+        const simd::TileBorder border {.horizontal = half, .vertical = 0};
+        const Region2D full {.row = 0, .col = 0, .height = src.rows(), .width = src.cols()};
 
-        switch (khalf) {
+        // Clamping scalar sweep: serves the edge frame, and the whole plane
+        // when scalar_t has no SIMD kernel.
+        const auto scalar_edge = [=](const Region2D& region) {
+            const int64_t col_end = region.col + region.width;
+            const int64_t row_end = region.row + region.height;
+            for (int64_t channel = 0; channel < src.channels(); ++channel) {
+                for (int64_t row = region.row; row < row_end; ++row) {
+                    hblur_scalar<scalar_t>(
+                        src[channel][row],
+                        dst[channel].as_accessor().transpose()[row],
+                        region.col,
+                        col_end,
+                        half,
+                        kernel.data(),
+                        src.cols(),
+                        /*clamp_edges=*/true
+                    );
+                }
+            }
+        };
+
+        switch (half) {
             case 1:
-                hblur_pass_with_border<1>(src, dst, kernel);
+                hblur_pass_impl<scalar_t, 1>(src, dst, kernel, scalar_edge);
                 break;
             case 2:
-                hblur_pass_with_border<2>(src, dst, kernel);
+                hblur_pass_impl<scalar_t, 2>(src, dst, kernel, scalar_edge);
                 break;
             case 3:
-                hblur_pass_with_border<3>(src, dst, kernel);
-                break;
-            case 4:
-                hblur_pass_with_border<4>(src, dst, kernel);
+                hblur_pass_impl<scalar_t, 3>(src, dst, kernel, scalar_edge);
                 break;
             default:
-                hblur_pass_with_border<0>(src, dst, kernel);
+                simd::tile2d<scalar_t>(src.rows(), src.cols(), simd::TileBorder{}, scalar_edge);
         }
     }
 }  // namespace

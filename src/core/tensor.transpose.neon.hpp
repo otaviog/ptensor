@@ -52,7 +52,7 @@ transpose_neon_8x8_32(int32_t const* src, int64_t src_stride, int32_t* dst, int6
 // Build a NEON 8x8 transpose kernel for 32-bit elements. With NEON the kernel
 // transposes a register tile; otherwise it returns an empty kernel that tile2d's
 // dispatch compiles out (is_compiler_supported(AdvSIMD) is false off aarch64).
-template<size_t SIMD_BLOCK, typename SrcBlock, typename DstBlock>
+template<size_t SIMD_BLOCK, typename ScalarT, typename SrcBlock, typename DstBlock>
 auto make_neon_transpose(
     SrcBlock src_block,
     DstBlock dst_block,
@@ -60,7 +60,7 @@ auto make_neon_transpose(
     int64_t dst_stride
 ) {
 #if PTENSOR_HAS_NEON
-    return simd::Neon<SIMD_BLOCK>([=](const Region2D& region) {
+    return simd::Neon<SIMD_BLOCK, ScalarT>([=](const Region2D& region) {
         transpose_neon_8x8_32(
             reinterpret_cast<const int32_t*>(src_block(region)),
             src_stride,
@@ -73,7 +73,7 @@ auto make_neon_transpose(
     (void) dst_block;
     (void) src_stride;
     (void) dst_stride;
-    return simd::Neon<SIMD_BLOCK>([](const Region2D&) {
+    return simd::Neon<SIMD_BLOCK, ScalarT>([](const Region2D&) {
         // This no-op body must never reach codegen on a NEON-capable target,
         // where tile2d would select it and silently skip the transpose.
         static_assert(

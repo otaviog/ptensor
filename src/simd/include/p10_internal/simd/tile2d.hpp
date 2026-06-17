@@ -157,10 +157,11 @@ void tile2d_autoblock(int64_t rows, int64_t cols, SimdFn&& simd_impl, ScalarFn&&
     }
 }
 
-template<size_t SimdBlock, SimdSet TargetInstructions, TileKernel2DFn KernelFn>
+template<size_t SimdBlock, SimdSet TargetInstructions, typename TargetType, TileKernel2DFn KernelFn>
 struct TileKernel2D {
     static constexpr size_t SIMD_BLOCK = SimdBlock;
     static constexpr SimdSet INSTRUCTIONS = TargetInstructions;
+    using TargetScalar = TargetType;
     KernelFn fn;
 };
 
@@ -168,6 +169,7 @@ template<typename T>
 concept TileKernelSpec2D = requires {
     { T::SIMD_BLOCK } -> std::convertible_to<size_t>;
     { T::INSTRUCTIONS } -> std::convertible_to<SimdSet>;
+    { T::TargetScalar } -> std::convertible_to<typename T::TargetScalar>;
 } && TileKernel2DFn<decltype(T::fn)>;
 
 template<
@@ -197,7 +199,7 @@ void tile2d(
     const CurrentKernel& current_kernel,
     const Args&... kernels
 ) {
-    if constexpr (is_compiler_supported(CurrentKernel::INSTRUCTIONS)) {
+    if constexpr (is_compiler_supported(CurrentKernel::INSTRUCTIONS) && std::is_same_v<scalar_t, typename CurrentKernel::TargetScalar> ) {
         if (is_supported(CurrentKernel::INSTRUCTIONS)) {
             return tile2d_autoblock<CurrentKernel::SIMD_BLOCK, scalar_t, ExecutionMode, Border>(
                 rows,
@@ -218,24 +220,24 @@ void tile2d(
     );
 }
 
-template<size_t SimdBlock, TileKernel2DFn Fn>
-constexpr TileKernel2D<SimdBlock, SimdSet::AVX2, Fn> Avx2(Fn &&fn) {
-    return TileKernel2D<SimdBlock, SimdSet::AVX2, Fn>(fn);
+template<size_t SimdBlock, typename Scalar, TileKernel2DFn Fn>
+constexpr TileKernel2D<SimdBlock, SimdSet::AVX2, Scalar, Fn> Avx2(Fn &&fn) {
+    return TileKernel2D<SimdBlock, SimdSet::AVX2, Scalar, Fn>(fn);
 }
 
-template<size_t SimdBlock, TileKernel2DFn Fn>
-constexpr TileKernel2D<SimdBlock, SimdSet::AdvSIMD, Fn> Neon(Fn &&fn) {
-    return TileKernel2D<SimdBlock, SimdSet::AdvSIMD, Fn>(fn);
+template<size_t SimdBlock, typename Scalar, TileKernel2DFn Fn>
+constexpr TileKernel2D<SimdBlock, SimdSet::AdvSIMD, Scalar, Fn> Neon(Fn &&fn) {
+    return TileKernel2D<SimdBlock, SimdSet::AdvSIMD, Scalar, Fn>(fn);
 }
 
-template<size_t SimdBlock, TileKernel2DFn Fn>
-constexpr TileKernel2D<SimdBlock, SimdSet::WASM, Fn> Wasm(Fn &&fn) {
-    return TileKernel2D<SimdBlock, SimdSet::WASM, Fn>(fn);
+template<size_t SimdBlock,  typename Scalar, TileKernel2DFn Fn>
+constexpr TileKernel2D<SimdBlock, SimdSet::WASM, Scalar, Fn> Wasm(Fn &&fn) {
+    return TileKernel2D<SimdBlock, SimdSet::WASM, Scalar, Fn>(fn);
 }
 
-template<size_t SimdBlock, TileKernel2DFn Fn>
-constexpr TileKernel2D<SimdBlock, SimdSet::NONE, Fn> Portable(Fn &&fn) {
-    return TileKernel2D<SimdBlock, SimdSet::NONE, Fn>(fn);
+template<size_t SimdBlock, typename Scalar, TileKernel2DFn Fn>
+constexpr TileKernel2D<SimdBlock, SimdSet::NONE, Scalar, Fn> Portable(Fn &&fn) {
+    return TileKernel2D<SimdBlock, SimdSet::NONE, Scalar, Fn>(fn);
 }
 
 }  // namespace p10::simd

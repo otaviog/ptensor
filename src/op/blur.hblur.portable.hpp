@@ -4,10 +4,11 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
-#include <type_traits>
 
-#include <ptensor/span2d.hpp>
 #include <p10_internal/simd/tile2d.hpp>
+#include <ptensor/span2d.hpp>
+
+#include <type_traits>
 
 namespace p10::op {
 
@@ -83,16 +84,19 @@ inline void hblur_region(
     const int64_t col_end = region.col + region.width;
 
     for (int64_t row = region.row; row < row_end; ++row) {
-        hblur_row<float>(
-            input[row], output[row], region.col, col_end, KHALF, kernel, width, clamp_edges
-        );
+        hblur_row<
+            float>(input[row], output[row], region.col, col_end, KHALF, kernel, width, clamp_edges);
     }
 }
 
 // Portable interior kernel: the generic loop with no edge clamping. Always
 // available; the compiler vectorizes it where it can.
 template<int KHALF>
-auto make_portable_hblur(Accessor2D<const float> input, Accessor2D<float> output, const float* kernel) {
+auto make_portable_hblur(
+    Accessor2D<const float> input,
+    Accessor2D<float> output,
+    const float* kernel
+) {
     return simd::Portable<8>([=](const Region2D& region) {
         hblur_region<KHALF>(input, output, kernel, region, /*clamp_edges=*/false);
     });
@@ -101,10 +105,32 @@ auto make_portable_hblur(Accessor2D<const float> input, Accessor2D<float> output
 // Scalar edge kernel for the left/right frame (and any alignment remainder),
 // where the apron spills past the image and must be clamped.
 template<int KHALF>
-auto make_hblur_border(Accessor2D<const float> input, Accessor2D<float> output, const float* kernel) {
+auto make_hblur_border(
+    Accessor2D<const float> input,
+    Accessor2D<float> output,
+    const float* kernel
+) {
     return [=](const Region2D& region) {
         hblur_region<KHALF>(input, output, kernel, region, /*clamp_edges=*/true);
     };
+}
+
+template<typename scalar_t>
+void hblur_scalar(
+    std::span<const scalar_t> src,
+    std::span<scalar_t> dst,
+    std::span<const float> kernel,
+    int64_t kleft,
+    int64_t kright
+) {
+    for (int64_t col = 0; col < src.size(); ++col) {
+        double sum = 0.0;
+        for (int k = kleft; k < kright; ++k) {
+            const int64_t src_col = col + k;
+            sum += static_cast<double>(src[src_col]) * static_cast<double>(kernel[k]);
+        }
+        dst[col] = static_cast<scalar_t>(sum);
+    }
 }
 
 }  // namespace p10::op

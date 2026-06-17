@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdint>
+
 #include "span2d.hpp"
 
 namespace p10 {
@@ -38,7 +39,11 @@ class Span3D {
     int64_t cols() const {
         return cols_;
     }
-    
+
+    Span3D<const T> as_const() const {
+        return Span3D<const T> {data_, channels_, rows_, cols_};
+    }
+
   private:
     T* data_ = nullptr;
     int64_t channels_ = 0;

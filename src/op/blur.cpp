@@ -7,6 +7,7 @@
 #include <ptensor/p10_error.hpp>
 #include <ptensor/tensor.hpp>
 
+#include <array>
 #include <type_traits>
 
 #include "blur.hblur.portable.hpp"
@@ -20,6 +21,18 @@ concept Scalar = std::is_arithmetic_v<T>;
 
 namespace {
     void create_gaussian_kernel(std::span<float> kernel, float sigma);
+
+    // Input shape with its last two (plane) dims swapped: the layout a single
+    // transposing hblur_pass produces.
+    Shape plane_transposed(const Shape& shape) {
+        const size_t dims = shape.dims();
+        std::array<size_t, P10_MAX_SHAPE> perm {};
+        for (size_t i = 0; i < dims; ++i) {
+            perm[i] = i;
+        }
+        std::swap(perm[dims - 1], perm[dims - 2]);
+        return shape.permute(std::span<const size_t>(perm.data(), dims)).unwrap();
+    }
 
     // Interior pass for a fixed half-width KHALF: the tap loop unrolls because
     // KHALF is a compile-time constant. tile2d runs this unrolled kernel on the
@@ -49,9 +62,10 @@ namespace {
             }
         };
 
-        simd::tile2d<scalar_t, simd::TileExecution::SEQUENTIAL>(
+        // Iterate the source plane; the kernel transposes each row into dst.
+        simd::tile2d<scalar_t, simd::TileExecution::PARALLEL>(
             src.rows(),
-            dst.cols(),
+            src.cols(),
             border,
             scalar_kernel,
             simd::Portable<8, scalar_t>(simd_kernel)
@@ -123,7 +137,10 @@ P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) {
         return P10Error::InvalidArgument << "Input tensor must have at least 2 dimensions.";
     }
 
-    P10_RETURN_IF_ERROR(scratch_.create(input.shape(), dtype));
+    // Each hblur_pass writes its result transposed, so the intermediate holds a
+    // plane-transposed image; the second pass transposes it back to the input
+    // layout. Size scratch with the plane dims swapped accordingly.
+    P10_RETURN_IF_ERROR(scratch_.create(plane_transposed(input.shape()), dtype));
     P10_RETURN_IF_ERROR(output.create(input.shape(), dtype));
 
     return dtype.match([&](auto type_tag) -> P10Error {
@@ -135,10 +152,9 @@ P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) {
             const auto in = input.as_span3d<const scalar_t, RankFit::Flexible>().unwrap();
             auto scratch = scratch_.as_span3d<scalar_t, RankFit::Flexible>().unwrap();
             auto out = output.as_span3d<scalar_t, RankFit::Flexible>().unwrap();
-            
+
             hblur_pass<scalar_t>(in, scratch, kernel);
             hblur_pass<scalar_t>(scratch.as_const(), out, kernel);
-            // The hblur_pass already transposes the planes
             return P10Error::Ok;
         } else {
             return P10Error::InvalidArgument << "Unsupported data type for this operation.";

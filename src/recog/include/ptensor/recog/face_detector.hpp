@@ -103,11 +103,12 @@ class IFaceDetector {
     /// * An error if the faces can not be detected.
     virtual P10Error detect(Tensor& images, std::span<FaceDetection> out_detections) = 0;
 
-    P10Error detect(Tensor& image, FaceDetection &out_detections) {
+    P10Error detect(Tensor& image, FaceDetection& out_detections) {
         return detect(image, std::span<FaceDetection>(&out_detections, 1));
     }
-    
-protected:
-    static P10Error verify_detect_arguments(Tensor& images, std::span<FaceDetection> out_detections);
+
+  protected:
+    static P10Error
+    verify_detect_arguments(Tensor& images, std::span<FaceDetection> out_detections);
 };
 }  // namespace p10::recog

@@ -16,8 +16,8 @@ constexpr bool is_compiler_supported(SimdSet set) {
 #if defined(__aarch64__)
     return set == SimdSet::AdvSIMD || set == SimdSet::NONE;
 #endif
-    
+
     return set == SimdSet::NONE;
 }
 
-}
+}  // namespace p10::simd

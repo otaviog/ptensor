@@ -29,7 +29,7 @@ P10Error WindowFunction::transform(const Tensor& input, Tensor& output) {
         const auto num_signals = input_span.rows();
         const auto num_samples = input_span.cols();
 
-        for (size_t signal_idx = 0; signal_idx < num_signals; ++signal_idx) {
+        for (int64_t signal_idx = 0; signal_idx < num_signals; ++signal_idx) {
             auto out_row = output_span[signal_idx].data();
             const auto in_row = input_span[signal_idx].data();
             std::transform(
@@ -67,7 +67,7 @@ WindowFunction::transform_borders(const Tensor& input, Tensor& output, size_t bo
         const auto num_signals = input_span.rows();
         const auto num_samples = input_span.cols();
 
-        for (size_t signal_idx = 0; signal_idx < num_signals; ++signal_idx) {
+        for (int64_t signal_idx = 0; signal_idx < num_signals; ++signal_idx) {
             auto out_row = output_span[signal_idx].data();
             const auto in_row = input_span[signal_idx].data();
 

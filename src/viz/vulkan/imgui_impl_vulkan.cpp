@@ -1945,7 +1945,8 @@ void ImGui_ImplVulkanH_DestroyWindow(
     ImGui_ImplVulkanH_Window* wd,
     const VkAllocationCallbacks* allocator
 ) {
-    vkDeviceWaitIdle(device
+    vkDeviceWaitIdle(
+        device
     );  // FIXME: We could wait on the Queue if we had the queue in wd-> (otherwise VulkanH functions can't use globals)
     //vkQueueWaitIdle(bd->Queue);
 

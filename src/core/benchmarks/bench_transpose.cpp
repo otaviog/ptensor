@@ -1,10 +1,9 @@
 #include <random>
 
 #include <benchmark/benchmark.h>
-#include <ptensor/tensor.hpp>
-
 #include <p10_internal/simd/compiler.hpp>
 #include <p10_internal/simd/tile2d.hpp>
+#include <ptensor/tensor.hpp>
 
 #include "tensor.transpose.avx2.hpp"
 #include "tensor.transpose.neon.hpp"
@@ -99,20 +98,19 @@ namespace {
         const int64_t src_stride = src.cols();
         const int64_t dst_stride = dst.cols();
 
-        const auto src_block = [&](const Region2D& region) {
-            return &src[region.row][region.col];
-        };
-        const auto dst_block = [&](const Region2D& region) {
-            return &dst[region.col][region.row];
-        };
+        const auto src_block = [&](const Region2D& region) { return &src[region.row][region.col]; };
+        const auto dst_block = [&](const Region2D& region) { return &dst[region.col][region.row]; };
 
         auto kernel = make_kernel(src_block, dst_block, src_stride, dst_stride);
-        auto edge =
-            make_transpose_border<int32_t>(src_block, dst_block, src_stride, dst_stride);
+        auto edge = make_transpose_border<int32_t>(src_block, dst_block, src_stride, dst_stride);
 
         for (auto _ : state) {
             simd::tile2d_autoblock<SIMD_BLOCK, int32_t, Exec>(
-                src.rows(), src.cols(), simd::TileBorder {}, kernel.fn, edge
+                src.rows(),
+                src.cols(),
+                simd::TileBorder {},
+                kernel.fn,
+                edge
             );
             benchmark::DoNotOptimize(dst);
             benchmark::ClobberMemory();
@@ -178,7 +176,9 @@ namespace {
     void BM_Kernel_Neon_Parallel(benchmark::State& state) {
         run_kernel_int32<simd::TileExecution::PARALLEL>(
             state,
-            [](auto sb, auto db, int64_t ss, int64_t ds) { return make_neon_transpose<8, int32_t>(sb, db, ss, ds); }
+            [](auto sb, auto db, int64_t ss, int64_t ds) {
+                return make_neon_transpose<8, int32_t>(sb, db, ss, ds);
+            }
         );
     }
 #endif
@@ -187,17 +187,26 @@ namespace {
     // registered (empty stand-in kernels are never benchmarked).
     BENCHMARK(BM_Kernel_Scalar)->Arg(256)->Arg(1024)->Arg(2048)->Unit(benchmark::kMicrosecond);
     BENCHMARK(BM_Kernel_Scalar_Parallel)
-        ->Arg(1024)->Arg(2048)->Arg(4096)->Unit(benchmark::kMicrosecond);
+        ->Arg(1024)
+        ->Arg(2048)
+        ->Arg(4096)
+        ->Unit(benchmark::kMicrosecond);
     BENCHMARK(BM_Kernel_Portable)->Arg(256)->Arg(1024)->Arg(2048)->Unit(benchmark::kMicrosecond);
     BENCHMARK(BM_Kernel_Portable_Parallel)
-        ->Arg(1024)->Arg(2048)->Arg(4096)->Unit(benchmark::kMicrosecond);
+        ->Arg(1024)
+        ->Arg(2048)
+        ->Arg(4096)
+        ->Unit(benchmark::kMicrosecond);
 #if PTENSOR_HAS_INTRINSICS_H
     BENCHMARK(BM_Kernel_Avx2)->Arg(256)->Arg(1024)->Arg(2048)->Unit(benchmark::kMicrosecond);
 #endif
 #if PTENSOR_HAS_NEON
     BENCHMARK(BM_Kernel_Neon)->Arg(256)->Arg(1024)->Arg(2048)->Unit(benchmark::kMicrosecond);
     BENCHMARK(BM_Kernel_Neon_Parallel)
-        ->Arg(1024)->Arg(2048)->Arg(4096)->Unit(benchmark::kMicrosecond);
+        ->Arg(1024)
+        ->Arg(2048)
+        ->Arg(4096)
+        ->Unit(benchmark::kMicrosecond);
 #endif
 
     // Square matrices across scales: small (no cache blocking) through large

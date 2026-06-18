@@ -3,10 +3,10 @@
 namespace p10::infer {
 
 class FaceDetLite: public IFaceDetector {
-public:
+  public:
     P10Error detect(Tensor& images, std::span<FaceDetection> out_detections) override;
-    
-private:
+
+  private:
     std::unique_ptr<infer::IInfer> infer_;
 };
-}
+}  // namespace p10::infer

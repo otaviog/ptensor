@@ -19,4 +19,4 @@ P10Result<std::wstring> string_to_wstring(const std::string& ansi) {
     }
     return Ok(std::move(wide));
 }
-}  // namespace p10
+}  // namespace p10::detail

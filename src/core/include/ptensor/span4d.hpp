@@ -21,16 +21,12 @@ class Span4D {
 
     Span3D<T> operator[](int64_t batch) {
         assert(batch < batch_);
-        return Span3D<T>(
-            data_ + batch * channels_ * rows_ * cols_, channels_, rows_, cols_
-        );
+        return Span3D<T>(data_ + batch * channels_ * rows_ * cols_, channels_, rows_, cols_);
     }
 
     Span3D<const T> operator[](int64_t batch) const {
         assert(batch < batch_);
-        return Span3D<const T>(
-            data_ + batch * channels_ * rows_ * cols_, channels_, rows_, cols_
-        );
+        return Span3D<const T>(data_ + batch * channels_ * rows_ * cols_, channels_, rows_, cols_);
     }
 
     int64_t batch() const {

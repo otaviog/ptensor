@@ -7,6 +7,7 @@
 #include <utility>
 
 #include <ptensor/region2d.hpp>
+
 #include "bitwise_math.hpp"
 #include "cpuid.hpp"
 #include "tile_execution.hpp"
@@ -69,12 +70,9 @@ void tile2d_blocked(
         for (int64_t block_col = col_begin; block_col < col_end; block_col += CACHE) {
             for (int64_t simd_row = block_row; simd_row < block_row + CACHE; simd_row += SIMD) {
                 for (int64_t simd_col = block_col; simd_col < block_col + CACHE; simd_col += SIMD) {
-                    simd_impl(Region2D {
-                        .row = simd_row,
-                        .col = simd_col,
-                        .height = SIMD,
-                        .width = SIMD
-                    });
+                    simd_impl(
+                        Region2D {.row = simd_row, .col = simd_col, .height = SIMD, .width = SIMD}
+                    );
                 }
             }
         }
@@ -87,9 +85,7 @@ void tile2d_blocked(
         scalar_impl(Region2D {.row = 0, .col = 0, .height = row_begin, .width = cols});
     }
     if (row_end < rows) {  // bottom band
-        scalar_impl(
-            Region2D {.row = row_end, .col = 0, .height = rows - row_end, .width = cols}
-        );
+        scalar_impl(Region2D {.row = row_end, .col = 0, .height = rows - row_end, .width = cols});
     }
     if (tiled_rows > 0 && col_begin > 0) {  // left band
         scalar_impl(
@@ -97,12 +93,14 @@ void tile2d_blocked(
         );
     }
     if (tiled_rows > 0 && col_end < cols) {  // right band
-        scalar_impl(Region2D {
-            .row = row_begin,
-            .col = col_end,
-            .height = tiled_rows,
-            .width = cols - col_end
-        });
+        scalar_impl(
+            Region2D {
+                .row = row_begin,
+                .col = col_end,
+                .height = tiled_rows,
+                .width = cols - col_end
+            }
+        );
     }
 }
 
@@ -143,27 +141,51 @@ void tile2d_autoblock(
 
     if (l1_tile_side >= 1024) {
         tile2d_blocked<floor_to_simd<SIMD_BLOCK>(1024), SIMD_BLOCK, ExecutionMode>(
-            rows, cols, border, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
+            rows,
+            cols,
+            border,
+            std::forward<SimdFn>(simd_impl),
+            std::forward<ScalarFn>(scalar_impl)
         );
     } else if (l1_tile_side >= 512) {
         tile2d_blocked<floor_to_simd<SIMD_BLOCK>(512), SIMD_BLOCK, ExecutionMode>(
-            rows, cols, border, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
+            rows,
+            cols,
+            border,
+            std::forward<SimdFn>(simd_impl),
+            std::forward<ScalarFn>(scalar_impl)
         );
     } else if (l1_tile_side >= 256) {
         tile2d_blocked<floor_to_simd<SIMD_BLOCK>(256), SIMD_BLOCK, ExecutionMode>(
-            rows, cols, border, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
+            rows,
+            cols,
+            border,
+            std::forward<SimdFn>(simd_impl),
+            std::forward<ScalarFn>(scalar_impl)
         );
     } else if (l1_tile_side >= 128) {
         tile2d_blocked<floor_to_simd<SIMD_BLOCK>(128), SIMD_BLOCK, ExecutionMode>(
-            rows, cols, border, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
+            rows,
+            cols,
+            border,
+            std::forward<SimdFn>(simd_impl),
+            std::forward<ScalarFn>(scalar_impl)
         );
     } else if (l1_tile_side >= 64) {
         tile2d_blocked<floor_to_simd<SIMD_BLOCK>(64), SIMD_BLOCK, ExecutionMode>(
-            rows, cols, border, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
+            rows,
+            cols,
+            border,
+            std::forward<SimdFn>(simd_impl),
+            std::forward<ScalarFn>(scalar_impl)
         );
     } else {
         tile2d_blocked<floor_to_simd<SIMD_BLOCK>(32), SIMD_BLOCK, ExecutionMode>(
-            rows, cols, border, std::forward<SimdFn>(simd_impl), std::forward<ScalarFn>(scalar_impl)
+            rows,
+            cols,
+            border,
+            std::forward<SimdFn>(simd_impl),
+            std::forward<ScalarFn>(scalar_impl)
         );
     }
 }
@@ -187,14 +209,9 @@ template<
     typename scalar_t,
     TileExecution ExecutionMode = TileExecution::SEQUENTIAL,
     TileKernel2DFn ScalarKn>
-void tile2d(
-    int64_t rows,
-    int64_t cols,
-    TileBorder border,
-    ScalarKn&& scalar_impl) {
-    (void) border;
-    scalar_impl(
-        Region2D {.row = 0, .col = 0, .height = rows, .width = cols});
+void tile2d(int64_t rows, int64_t cols, TileBorder border, ScalarKn&& scalar_impl) {
+    (void)border;
+    scalar_impl(Region2D {.row = 0, .col = 0, .height = rows, .width = cols});
 }
 
 template<
@@ -211,7 +228,10 @@ void tile2d(
     const CurrentKernel& current_kernel,
     const Args&... kernels
 ) {
-    if constexpr (is_compiler_supported(CurrentKernel::INSTRUCTIONS) && std::is_same_v<scalar_t, typename CurrentKernel::TargetScalar> ) {
+    if constexpr (
+        is_compiler_supported(CurrentKernel::INSTRUCTIONS)
+        && std::is_same_v<scalar_t, typename CurrentKernel::TargetScalar>
+    ) {
         if (is_supported(CurrentKernel::INSTRUCTIONS)) {
             return tile2d_autoblock<CurrentKernel::SIMD_BLOCK, scalar_t, ExecutionMode>(
                 rows,
@@ -235,22 +255,22 @@ void tile2d(
 }
 
 template<size_t SimdBlock, typename Scalar, TileKernel2DFn Fn>
-constexpr TileKernel2D<SimdBlock, SimdSet::AVX2, Scalar, Fn> Avx2(Fn &&fn) {
+constexpr TileKernel2D<SimdBlock, SimdSet::AVX2, Scalar, Fn> Avx2(Fn&& fn) {
     return TileKernel2D<SimdBlock, SimdSet::AVX2, Scalar, Fn>(fn);
 }
 
 template<size_t SimdBlock, typename Scalar, TileKernel2DFn Fn>
-constexpr TileKernel2D<SimdBlock, SimdSet::AdvSIMD, Scalar, Fn> Neon(Fn &&fn) {
+constexpr TileKernel2D<SimdBlock, SimdSet::AdvSIMD, Scalar, Fn> Neon(Fn&& fn) {
     return TileKernel2D<SimdBlock, SimdSet::AdvSIMD, Scalar, Fn>(fn);
 }
 
-template<size_t SimdBlock,  typename Scalar, TileKernel2DFn Fn>
-constexpr TileKernel2D<SimdBlock, SimdSet::WASM, Scalar, Fn> Wasm(Fn &&fn) {
+template<size_t SimdBlock, typename Scalar, TileKernel2DFn Fn>
+constexpr TileKernel2D<SimdBlock, SimdSet::WASM, Scalar, Fn> Wasm(Fn&& fn) {
     return TileKernel2D<SimdBlock, SimdSet::WASM, Scalar, Fn>(fn);
 }
 
 template<size_t SimdBlock, typename Scalar, TileKernel2DFn Fn>
-constexpr TileKernel2D<SimdBlock, SimdSet::NONE, Scalar, Fn> Portable(Fn &&fn) {
+constexpr TileKernel2D<SimdBlock, SimdSet::NONE, Scalar, Fn> Portable(Fn&& fn) {
     return TileKernel2D<SimdBlock, SimdSet::NONE, Scalar, Fn>(fn);
 }
 

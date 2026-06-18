@@ -24,26 +24,30 @@ class Span2D {
     int64_t cols() const {
         return cols_;
     }
-    
+
     std::span<const T> operator[](int64_t row) const {
         assert(row < rows_);
         return std::span<const T>(data_ + row * cols_, static_cast<size_t>(cols_));
     }
 
-    std::span<T> operator[](int64_t row)  {
+    std::span<T> operator[](int64_t row) {
         assert(row < rows_);
         return std::span<T>(data_ + row * cols_, static_cast<size_t>(cols_));
     }
-    
+
     Accessor2D<T> operator()(const Region2D& region) {
         return Accessor2D<T>(
-            data_ + region.row * cols_ + region.col, {region.height, region.width}, {cols_, 1}
+            data_ + region.row * cols_ + region.col,
+            {region.height, region.width},
+            {cols_, 1}
         );
     }
 
     Accessor2D<const T> operator()(const Region2D& region) const {
         return Accessor2D<const T>(
-            data_ + region.row * cols_ + region.col, {region.height, region.width}, {cols_, 1}
+            data_ + region.row * cols_ + region.col,
+            {region.height, region.width},
+            {cols_, 1}
         );
     }
 

@@ -44,7 +44,10 @@ transpose_neon_8x8_32(int32_t const* src, int64_t src_stride, int32_t* dst, int6
     transpose_neon_4x4_32(src + 4, src_stride, dst + 4 * dst_stride, dst_stride);
     transpose_neon_4x4_32(src + 4 * src_stride, src_stride, dst + 4, dst_stride);
     transpose_neon_4x4_32(
-        src + 4 * src_stride + 4, src_stride, dst + 4 * dst_stride + 4, dst_stride
+        src + 4 * src_stride + 4,
+        src_stride,
+        dst + 4 * dst_stride + 4,
+        dst_stride
     );
 }
 #endif  // PTENSOR_HAS_NEON
@@ -69,10 +72,10 @@ auto make_neon_transpose(
         );
     });
 #else
-    (void) src_block;
-    (void) dst_block;
-    (void) src_stride;
-    (void) dst_stride;
+    (void)src_block;
+    (void)dst_block;
+    (void)src_stride;
+    (void)dst_stride;
     return simd::Neon<SIMD_BLOCK, ScalarT>([](const Region2D&) {
         // This no-op body must never reach codegen on a NEON-capable target,
         // where tile2d would select it and silently skip the transpose.

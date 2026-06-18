@@ -47,8 +47,8 @@ namespace {
         std::vector<float> kernel(kernel_size);
         float sum = 0.0F;
         for (int i = -half; i <= half; ++i) {
-            kernel[i + half] =
-                std::exp(-(i * i) / (2 * sigma * sigma)) / (sigma * std::sqrt(2.0F * std::numbers::pi));
+            kernel[i + half] = std::exp(-(i * i) / (2 * sigma * sigma))
+                / (sigma * std::sqrt(2.0F * std::numbers::pi));
             sum += kernel[i + half];
         }
         for (auto& value : kernel) {
@@ -69,9 +69,12 @@ TEST_CASE("Op: Blur float32 plane", "[tensorop][blur]") {
 
     DYNAMIC_SECTION("kernel size " << kernel_size) {
         std::mt19937_64 rng(123);
-        const Tensor input =
-            Tensor::from_random(make_shape(height, width), rng, TensorOptions().dtype(Dtype::Float32))
-                .unwrap();
+        const Tensor input = Tensor::from_random(
+                                 make_shape(height, width),
+                                 rng,
+                                 TensorOptions().dtype(Dtype::Float32)
+        )
+                                 .unwrap();
 
         auto blur_op = GaussianBlur::create(kernel_size, sigma).unwrap();
         Tensor output;
@@ -97,7 +100,8 @@ TEST_CASE("Op: Blur float32 plane", "[tensorop][blur]") {
             for (int x = 0; x < width; ++x) {
                 float sum = 0.0F;
                 for (int k = -half; k <= half; ++k) {
-                    sum += horizontal[(std::clamp(y + k, 0, height - 1) * width) + x] * kernel[k + half];
+                    sum += horizontal[(std::clamp(y + k, 0, height - 1) * width) + x]
+                        * kernel[k + half];
                 }
                 reference[(y * width) + x] = sum;
             }

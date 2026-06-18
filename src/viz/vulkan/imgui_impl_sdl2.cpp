@@ -500,9 +500,11 @@ bool ImGui_ImplSDL2_ProcessEvent(const SDL_Event* event) {
             if (ImGui_ImplSDL2_GetViewportForWindowID(event->wheel.windowID) == nullptr)
                 return false;
             //IMGUI_DEBUG_LOG("wheel %.2f %.2f, precise %.2f %.2f\n", (float)event->wheel.x, (float)event->wheel.y, event->wheel.preciseX, event->wheel.preciseY);
-    #if SDL_VERSION_ATLEAST(2, \
-                            0, \
-                            18)  // If this fails to compile on Emscripten: update to latest Emscripten!
+    #if SDL_VERSION_ATLEAST( \
+        2, \
+        0, \
+        18 \
+    )  // If this fails to compile on Emscripten: update to latest Emscripten!
             float wheel_x = -event->wheel.preciseX;
             float wheel_y = event->wheel.preciseY;
     #else

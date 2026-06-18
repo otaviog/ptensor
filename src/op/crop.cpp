@@ -20,7 +20,8 @@ P10Error crop(const Tensor& image, size_t x, size_t y, size_t w, size_t h, Tenso
 
     const int64_t num_channels = image_shape[0];
 
-    P10_RETURN_IF_ERROR(crop.create(make_shape(num_channels, int64_t(h), int64_t(w)), image.dtype())
+    P10_RETURN_IF_ERROR(
+        crop.create(make_shape(num_channels, int64_t(h), int64_t(w)), image.dtype())
     );
 
     if (image.is_contiguous()) {

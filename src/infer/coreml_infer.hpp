@@ -14,8 +14,8 @@ struct CoreMLModel;
 
 class CoreMLInfer: public IInfer {
   public:
-    static P10Result<std::unique_ptr<IInfer>> create(const std::string& model_path,
-                                                     const InferConfig& config);
+    static P10Result<std::unique_ptr<IInfer>>
+    create(const std::string& model_path, const InferConfig& config);
 
     ~CoreMLInfer() override;
 
@@ -30,9 +30,11 @@ class CoreMLInfer: public IInfer {
     }
 
   private:
-    CoreMLInfer(std::unique_ptr<CoreMLModel> model,
-                std::vector<std::string> input_names,
-                std::vector<std::string> output_names);
+    CoreMLInfer(
+        std::unique_ptr<CoreMLModel> model,
+        std::vector<std::string> input_names,
+        std::vector<std::string> output_names
+    );
 
     std::unique_ptr<CoreMLModel> model_;
     std::vector<std::string> input_names_;

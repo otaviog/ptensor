@@ -52,8 +52,8 @@ TEST_CASE("op::image::to tensor and back conversion", "[imageop]") {
     auto image_span = original_image.as_accessor3d<uint8_t>().unwrap();
 
     // Set some test values
-    for (size_t row = 0; row < image_span.channels(); row++) {
-        for (size_t col = 0; col < image_span.rows(); col++) {
+    for (int64_t row = 0; row < image_span.channels(); row++) {
+        for (int64_t col = 0; col < image_span.rows(); col++) {
             auto channel = image_span[row][col];
             channel[0] = static_cast<uint8_t>(row % 256);
             channel[1] = static_cast<uint8_t>(col % 256);
@@ -81,8 +81,8 @@ TEST_CASE("op::image::to tensor and back conversion", "[imageop]") {
     auto original_span = original_image.as_accessor3d<uint8_t>().unwrap();
     auto result_span = result_image.as_accessor3d<uint8_t>().unwrap();
 
-    for (size_t row = 0; row < original_span.channels(); row++) {
-        for (size_t col = 0; col < original_span.rows(); col++) {
+    for (int64_t row = 0; row < original_span.channels(); row++) {
+        for (int64_t col = 0; col < original_span.rows(); col++) {
             const auto original_channel = original_span[row][col];
             const auto result_channel = result_span[row][col];
 
@@ -100,8 +100,8 @@ TEST_CASE("op::image::from tensor value clamping", "[imageop]") {
     auto tensor_span = float_tensor.as_span3d<float>().unwrap();
 
     // Set values: channel 0 = -0.5 (below 0), channel 1 = 0.5 (normal), channel 2 = 1.5 (above 1)
-    for (size_t row = 0; row < tensor_span.rows(); row++) {
-        for (size_t col = 0; col < tensor_span.cols(); col++) {
+    for (int64_t row = 0; row < tensor_span.rows(); row++) {
+        for (int64_t col = 0; col < tensor_span.cols(); col++) {
             tensor_span[0][row][col] = -0.5f;
             tensor_span[1][row][col] = 0.5f;
             tensor_span[2][row][col] = 1.5f;
@@ -115,8 +115,8 @@ TEST_CASE("op::image::from tensor value clamping", "[imageop]") {
     auto image_span = image_tensor.as_accessor3d<uint8_t>().unwrap();
 
     // Verify clamping
-    for (size_t row = 0; row < image_span.channels(); row++) {
-        for (size_t col = 0; col < image_span.rows(); col++) {
+    for (int64_t row = 0; row < image_span.channels(); row++) {
+        for (int64_t col = 0; col < image_span.rows(); col++) {
             const auto channel = image_span[row][col];
             REQUIRE(channel[0] == 0);  // -0.5 * 255 clamped to 0
             REQUIRE(channel[1] == 127);  // 0.5 * 255 = 127.5 ≈ 127

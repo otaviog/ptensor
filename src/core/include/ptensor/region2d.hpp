@@ -14,7 +14,7 @@ struct Region2D {
 
     // Region with row/col and height/width swapped (the transposed location).
     Region2D transposed() const {
-        return {.row = col, .col = row, .height=width, .width=height};
+        return {.row = col, .col = row, .height = width, .width = height};
     }
 };
 }  // namespace p10

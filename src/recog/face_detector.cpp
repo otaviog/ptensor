@@ -22,7 +22,8 @@ IFaceDetector::create(const FaceDetectorModel& model, std::unique_ptr<infer::IIn
     return Err(P10Error::InvalidArgument << "Unsupported face detection model");
 }
 
-P10Error IFaceDetector::verify_detect_arguments(Tensor& images, std::span<FaceDetection> out_detections) {
+P10Error
+IFaceDetector::verify_detect_arguments(Tensor& images, std::span<FaceDetection> out_detections) {
     const auto input_shape = images.shape().as_span();
     if (input_shape.size() != 4) {
         return P10Error::InvalidArgument << "Input tensor must have 4 dimensions [N x C x H x W]";

@@ -26,8 +26,8 @@ TEST_CASE("RGB to gray: Pure red converts correctly", "[image_rgb_to_gray]") {
     auto rgb = Tensor::zeros(make_shape(5, 5, 3), Dtype::Uint8).unwrap();
     auto rgb_span = rgb.as_accessor3d<uint8_t>().unwrap();
 
-    for (size_t h = 0; h < rgb_span.channels(); ++h) {
-        for (size_t w = 0; w < rgb_span.rows(); ++w) {
+    for (int64_t h = 0; h < rgb_span.channels(); ++h) {
+        for (int64_t w = 0; w < rgb_span.rows(); ++w) {
             auto pixel = rgb_span[h][w];
             pixel[0] = 255;
             pixel[1] = 0;
@@ -39,8 +39,8 @@ TEST_CASE("RGB to gray: Pure red converts correctly", "[image_rgb_to_gray]") {
     REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
 
     auto gray_span = gray.as_span2d<uint8_t>().unwrap();
-    for (size_t h = 0; h < gray_span.rows(); ++h) {
-        for (size_t w = 0; w < gray_span.cols(); ++w) {
+    for (int64_t h = 0; h < gray_span.rows(); ++h) {
+        for (int64_t w = 0; w < gray_span.cols(); ++w) {
             REQUIRE(gray_span[h][w] == Approx(53).margin(1));
         }
     }
@@ -50,8 +50,8 @@ TEST_CASE("RGB to gray: Pure green converts correctly", "[image_rgb_to_gray]") {
     auto rgb = Tensor::zeros(make_shape(5, 5, 3), Dtype::Uint8).unwrap();
     auto rgb_span = rgb.as_accessor3d<uint8_t>().unwrap();
 
-    for (size_t h = 0; h < rgb_span.channels(); ++h) {
-        for (size_t w = 0; w < rgb_span.rows(); ++w) {
+    for (int64_t h = 0; h < rgb_span.channels(); ++h) {
+        for (int64_t w = 0; w < rgb_span.rows(); ++w) {
             auto pixel = rgb_span[h][w];
             pixel[0] = 0;
             pixel[1] = 255;
@@ -64,8 +64,8 @@ TEST_CASE("RGB to gray: Pure green converts correctly", "[image_rgb_to_gray]") {
 
     auto gray_span = gray.as_span2d<uint8_t>().unwrap();
     // Expected: 0.72 * 255 = 183.6 H 183
-    for (size_t h = 0; h < gray_span.rows(); ++h) {
-        for (size_t w = 0; w < gray_span.cols(); ++w) {
+    for (int64_t h = 0; h < gray_span.rows(); ++h) {
+        for (int64_t w = 0; w < gray_span.cols(); ++w) {
             REQUIRE(gray_span[h][w] == Approx(183).margin(1));
         }
     }
@@ -75,8 +75,8 @@ TEST_CASE("RGB to gray: Pure blue converts correctly", "[image_rgb_to_gray]") {
     auto rgb = Tensor::zeros(make_shape(5, 5, 3), Dtype::Uint8).unwrap();
     auto rgb_s = rgb.as_accessor3d<uint8_t>().unwrap();
 
-    for (size_t h = 0; h < rgb_s.channels(); ++h) {
-        for (size_t w = 0; w < rgb_s.rows(); ++w) {
+    for (int64_t h = 0; h < rgb_s.channels(); ++h) {
+        for (int64_t w = 0; w < rgb_s.rows(); ++w) {
             auto pixel = rgb_s[h][w];
             pixel[0] = 0;
             pixel[1] = 0;
@@ -88,8 +88,8 @@ TEST_CASE("RGB to gray: Pure blue converts correctly", "[image_rgb_to_gray]") {
     REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
 
     auto gray_span = gray.as_span2d<uint8_t>().unwrap();
-    for (size_t h = 0; h < gray_span.rows(); ++h) {
-        for (size_t w = 0; w < gray_span.cols(); ++w) {
+    for (int64_t h = 0; h < gray_span.rows(); ++h) {
+        for (int64_t w = 0; w < gray_span.cols(); ++w) {
             REQUIRE(gray_span[h][w] == Approx(17).margin(1));
         }
     }
@@ -102,8 +102,8 @@ TEST_CASE("RGB to gray: White converts to white", "[image_rgb_to_gray]") {
     REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
 
     auto gray_span = gray.as_span2d<uint8_t>().unwrap();
-    for (size_t h = 0; h < gray_span.rows(); ++h) {
-        for (size_t w = 0; w < gray_span.cols(); ++w) {
+    for (int64_t h = 0; h < gray_span.rows(); ++h) {
+        for (int64_t w = 0; w < gray_span.cols(); ++w) {
             REQUIRE(gray_span[h][w] == 255);
         }
     }
@@ -116,8 +116,8 @@ TEST_CASE("RGB to gray: Black converts to black", "[image_rgb_to_gray]") {
     REQUIRE_THAT(image_rgb_to_gray(rgb, gray), is_ok());
 
     auto gray_span = gray.as_span2d<uint8_t>().unwrap();
-    for (size_t h = 0; h < gray_span.rows(); ++h) {
-        for (size_t w = 0; w < gray_span.cols(); ++w) {
+    for (int64_t h = 0; h < gray_span.rows(); ++h) {
+        for (int64_t w = 0; w < gray_span.cols(); ++w) {
             REQUIRE(gray_span[h][w] == 0);
         }
     }
@@ -276,8 +276,8 @@ TEST_CASE("RGB to gray: Gradient pattern", "[image_rgb_to_gray]") {
     auto rgb = Tensor::zeros(make_shape(16, 16, 3), Dtype::Uint8).unwrap();
     auto rgb_span = rgb.as_accessor3d<uint8_t>().unwrap();
 
-    for (size_t h = 0; h < rgb_span.channels(); ++h) {
-        for (size_t w = 0; w < rgb_span.rows(); ++w) {
+    for (int64_t h = 0; h < rgb_span.channels(); ++h) {
+        for (int64_t w = 0; w < rgb_span.rows(); ++w) {
             auto pixel = rgb_span[h][w];
             pixel[0] = static_cast<uint8_t>((h * 255) / 15);  // Vertical gradient
             pixel[1] = static_cast<uint8_t>((w * 255) / 15);  // Horizontal gradient

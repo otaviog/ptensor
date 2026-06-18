@@ -62,8 +62,12 @@ P10Error Tensor::transpose(Tensor& other) const {
         };
 
         auto edge = make_transpose_border<ScalarT>(src_block, dst_block, src_stride, dst_stride);
-        auto portable =
-            make_portable_transpose<SIMD_BLOCK, ScalarT>(src_block, dst_block, src_stride, dst_stride);
+        auto portable = make_portable_transpose<SIMD_BLOCK, ScalarT>(
+            src_block,
+            dst_block,
+            src_stride,
+            dst_stride
+        );
 
         // tile2d picks the first kernel the running CPU supports (via cpuid),
         // otherwise the next, and the edge kernel always handles the borders.
@@ -77,10 +81,16 @@ P10Error Tensor::transpose(Tensor& other) const {
                 simd::TileBorder {},
                 edge,
                 make_avx2_transpose<SIMD_BLOCK, ScalarT>(
-                    src_block, dst_block, src_stride, dst_stride
+                    src_block,
+                    dst_block,
+                    src_stride,
+                    dst_stride
                 ),
                 make_neon_transpose<SIMD_BLOCK, ScalarT>(
-                    src_block, dst_block, src_stride, dst_stride
+                    src_block,
+                    dst_block,
+                    src_stride,
+                    dst_stride
                 ),
                 portable
             );

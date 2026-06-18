@@ -61,7 +61,11 @@ class Accessor1D {
     // still read the apron and clamp to the row edges.
     Accessor1D slice(int64_t offset, int64_t length) const {
         return Accessor1D(
-            data_ + offset * stride_, length, stride_, min_index_ - offset, max_index_ - offset
+            data_ + offset * stride_,
+            length,
+            stride_,
+            min_index_ - offset,
+            max_index_ - offset
         );
     }
 

@@ -55,9 +55,8 @@ Tensor matrix_f32() {
 }
 
 Tensor matrix_i64() {
-    auto t =
-        Tensor::from_range(make_shape(2, 3), p10::TensorOptions(Dtype::Int64), 1).expect("matrix_i64"
-        );
+    auto t = Tensor::from_range(make_shape(2, 3), p10::TensorOptions(Dtype::Int64), 1)
+                 .expect("matrix_i64");
     return t;
 }
 
@@ -100,7 +99,7 @@ Tensor rgb_planar_f32() {
         for (int64_t x = 0; x < w; ++x) {
             d[0][y][x] = static_cast<float>(x) / static_cast<float>(w);  // R
             d[1][y][x] = static_cast<float>(y) / static_cast<float>(h);  // G
-            d[2][y][x] = 0.5F;                                           // B
+            d[2][y][x] = 0.5F;  // B
         }
     }
     return t;
@@ -129,8 +128,8 @@ Tensor batch_nhwc_u8() {
     constexpr int64_t n = 2;
     constexpr int64_t h = 32;
     constexpr int64_t w = 32;
-    auto t =
-        Tensor::empty(make_shape(n, h, w, 3), p10::TensorOptions(Dtype::Uint8)).expect("batch_nhwc");
+    auto t = Tensor::empty(make_shape(n, h, w, 3), p10::TensorOptions(Dtype::Uint8))
+                 .expect("batch_nhwc");
     auto d = t.as_span4d<uint8_t>().expect("batch_nhwc span");
     for (int64_t b = 0; b < n; ++b) {
         for (int64_t y = 0; y < h; ++y) {
@@ -182,8 +181,8 @@ int main() {
 
     // Keep everything referenced so nothing is optimized out before the trap.
     return static_cast<int>(
-        scalar.size() + vec8.size() + mat4x5.size() + mat_i64.size() + gray.size()
-        + rgb_hwc.size() + rgb_chw.size() + batch_nchw.size() + batch_nhwc.size() + large_1d.size()
+        scalar.size() + vec8.size() + mat4x5.size() + mat_i64.size() + gray.size() + rgb_hwc.size()
+            + rgb_chw.size() + batch_nchw.size() + batch_nhwc.size() + large_1d.size()
         & 0
     );
 }

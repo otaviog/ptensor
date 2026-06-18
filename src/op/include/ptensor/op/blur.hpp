@@ -27,11 +27,10 @@ class GaussianBlur {
         std::span<float> get() {
             return std::span<float>(data.data(), size);
         }
-        
+
     } kernel_;
 
-    GaussianBlur(size_t kernel_size) :
-        kernel_{.data = {}, .size = kernel_size} {}
+    GaussianBlur(size_t kernel_size) : kernel_ {.data = {}, .size = kernel_size} {}
 
     Tensor scratch_;
 };

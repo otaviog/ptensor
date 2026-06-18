@@ -10,6 +10,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/dtype.hpp
   ${_INCLUDE_DIR}/shape.hpp
   ${_INCLUDE_DIR}/stride.hpp
+  ${_INCLUDE_DIR}/region2d.hpp
   ${_INCLUDE_DIR}/accessor1d.hpp
   ${_INCLUDE_DIR}/accessor2d.hpp
   ${_INCLUDE_DIR}/accessor3d.hpp

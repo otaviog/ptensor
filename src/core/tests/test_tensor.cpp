@@ -946,6 +946,31 @@ TEST_CASE("core::Tensor::as_reshape", "[tensor][reshape]") {
     }
 }
 
+TEST_CASE("core::Tensor::ravel", "[tensor][reshape]") {
+    SECTION("Flattens a multi-dimensional tensor to 1D") {
+        auto tensor = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
+
+        auto raveled = tensor.ravel().unwrap();
+        REQUIRE(raveled.shape() == make_shape(6));
+        REQUIRE(tensor.shape() == make_shape(2, 3));
+    }
+
+    SECTION("View shares data with the original tensor") {
+        auto tensor = Tensor::from_range(make_shape(2, 3), Dtype::Float32).unwrap();
+
+        auto raveled = tensor.ravel().unwrap();
+        raveled.as_span1d<float>().unwrap()[0] = 99.0f;
+
+        REQUIRE(tensor.as_span1d<float>().unwrap()[0] == Catch::Approx(99.0f));
+    }
+
+    SECTION("Already 1D tensor is unchanged") {
+        auto tensor = Tensor::from_range(make_shape(4), Dtype::Float32).unwrap();
+        auto raveled = tensor.ravel().unwrap();
+        REQUIRE(raveled.shape() == make_shape(4));
+    }
+}
+
 namespace {
     void test_transpose(Dtype type, size_t rows, size_t cols) {
         auto tensor = Tensor::from_range(make_shape(rows, cols), type).unwrap();

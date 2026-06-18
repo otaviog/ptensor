@@ -492,6 +492,10 @@ class Tensor {
     /// match and, for non-contiguous tensors, the layout must allow the reshape.
     P10Result<Tensor> as_reshape(const Shape& new_shape) const;
 
+    /// Returns a 1D view of the tensor with all elements flattened, sharing the
+    /// same data. The tensor layout must allow the flatten (e.g. contiguous).
+    P10Result<Tensor> ravel() const;
+
     /// Transposes a 2D tensor.
     /// # Arguments
     /// * `other` - The transposed tensor.
@@ -502,7 +506,7 @@ class Tensor {
     P10Error transpose() {
         return transpose(*this);
     }
-    
+
     P10Error fill(double value);
 
     P10Error copy_from(const Tensor& src);
@@ -573,8 +577,7 @@ class Tensor {
     // requires d == N exactly; RankFit::Flexible reaches N by adding (low->high)
     // or dropping leading size-1 dims. `d` is the logical rank (see logical_rank).
     template<size_t N, RankFit Fit>
-    P10Result<std::pair<std::array<int64_t, N>, std::array<int64_t, N>>>
-    fit_rank(size_t d) const {
+    P10Result<std::pair<std::array<int64_t, N>, std::array<int64_t, N>>> fit_rank(size_t d) const {
         const auto shape = shape_.as_span();
         const auto stride = stride_.as_span();
 

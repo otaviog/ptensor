@@ -336,6 +336,10 @@ P10Result<Tensor> Tensor::as_reshape(const Shape& new_shape) const {
     return Ok(Tensor(blob_.view(), new_shape, options().stride(new_stride)));
 }
 
+P10Result<Tensor> Tensor::ravel() const {
+    return as_reshape(make_shape(shape().count()));
+}
+
 P10Error Tensor::fill(double value) {
     if (device() != Device::Cpu) {
         return P10Error::NotImplemented << "Fill is only implemented for CPU tensors";

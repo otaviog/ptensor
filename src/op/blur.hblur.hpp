@@ -7,6 +7,7 @@
 
 #include <p10_internal/simd/tile2d.hpp>
 #include <ptensor/span2d.hpp>
+#include <ptensor/span3d.hpp>
 
 #include <type_traits>
 
@@ -85,5 +86,66 @@ inline void hblur_portable(
     }
 }
 
+// Build a tile region kernel that sweeps every channel/row of the tile and hands
+// each tile-local (in, out) row pair to `row_kernel`. The output is written
+// transposed (out plane viewed transposed), so a horizontal pass produces the
+// plane-transposed result the second pass consumes. Shared by the portable and
+// the SIMD specs so they differ only in the per-row tap.
+template<typename scalar_t, typename RowKernel>
+auto hblur_region_sweep(
+    Span3D<const scalar_t> src,
+    Span3D<scalar_t> dst,
+    const float* kernel,
+    RowKernel row_kernel
+) {
+    return [=](const Region2D& region) {
+        Span3D<const scalar_t> in = src;
+        Span3D<scalar_t> out = dst;  // mutable handle: the [=] copy is const
+        const int64_t row_end = region.row + region.height;
+        for (int64_t channel = 0; channel < in.channels(); ++channel) {
+            auto out_plane = out[channel].as_accessor().transpose();
+            for (int64_t row = region.row; row < row_end; ++row) {
+                row_kernel(
+                    in[channel](row).slice(region.col, region.width),
+                    out_plane[row].slice(region.col, region.width),
+                    kernel
+                );
+            }
+        }
+    };
+}
+
+// Portable interior spec: the unrolled, clamp-free tap over every tile row.
+// Always available; tile2d selects it when no SIMD kernel fits the target.
+template<typename scalar_t, int64_t KHALF>
+auto make_portable_hblur(Span3D<const scalar_t> src, Span3D<scalar_t> dst, const float* kernel) {
+    return simd::Portable<8, scalar_t>(hblur_region_sweep<scalar_t>(
+        src,
+        dst,
+        kernel,
+        [](Accessor1D<const scalar_t> in_row, Accessor1D<scalar_t> out_row, const float* k) {
+            hblur_portable<scalar_t, KHALF>(in_row, out_row, k);
+        }
+    ));
+}
+
+// Clamping scalar sweep over every tile row: serves the edge frame, and the
+// whole plane for the scalar-only fallback (kernel sizes past the unrolled set).
+template<typename scalar_t>
+auto make_scalar_hblur(
+    Span3D<const scalar_t> src,
+    Span3D<scalar_t> dst,
+    const float* kernel,
+    int half
+) {
+    return hblur_region_sweep<scalar_t>(
+        src,
+        dst,
+        kernel,
+        [half](Accessor1D<const scalar_t> in_row, Accessor1D<scalar_t> out_row, const float* k) {
+            hblur_scalar<scalar_t>(in_row, out_row, half, k);
+        }
+    );
+}
 
 }  // namespace p10::op

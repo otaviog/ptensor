@@ -3,8 +3,12 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 # include(CTest) inside ng-log would default BUILD_TESTING to ON; a local
 # normal variable overrides its option() (CMP0077) without touching the cache.
 set(BUILD_TESTING OFF)
+# We don't use gflags-based log flags; disabling it skips ng-log's
+# find_package(gflags), which otherwise warns at configure when gflags is absent.
+set(WITH_GFLAGS OFF)
 add_subdirectory(lib/ng-log EXCLUDE_FROM_ALL)
 unset(BUILD_TESTING)
+unset(WITH_GFLAGS)
 
 set(_INCLUDE_DIR include/p10_internal/log)
 add_library(ptensor_log STATIC)

@@ -78,7 +78,20 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 if(APPLE)
+    # capi links the core archive and the optional module archives, which each
+    # re-propagate core and the webp/sharpyuv deps, so they appear twice on the
+    # link line. The duplicates are harmless (linker ignores them); silence the
+    # warning, matching ptensor_shared.
+    target_link_options(ptensor_capi PRIVATE -Wl,-no_warn_duplicate_libraries)
+endif()
+
+if(APPLE)
+    # onnxruntime is installed next to libptensor_capi.dylib, so @loader_path
+    # resolves it at runtime. Build with the install rpath directly so the install
+    # step does not rewrite it (the rewrite is not idempotent on incremental
+    # installs and errors out when the dylib is already up-to-date).
     set_target_properties(ptensor_capi PROPERTIES
+        BUILD_WITH_INSTALL_RPATH TRUE
         INSTALL_RPATH "@loader_path")
 endif()
 

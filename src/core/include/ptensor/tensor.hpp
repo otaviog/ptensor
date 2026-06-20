@@ -492,8 +492,9 @@ class Tensor {
     /// match and, for non-contiguous tensors, the layout must allow the reshape.
     P10Result<Tensor> as_reshape(const Shape& new_shape) const;
 
-    /// Returns a 1D view of the tensor with all elements flattened, sharing the
-    /// same data. The tensor layout must allow the flatten (e.g. contiguous).
+    /// Returns a 1D tensor with all elements flattened. When the layout allows
+    /// it (e.g. contiguous) this is a view sharing the same data; otherwise it
+    /// falls back to a contiguous copy.
     P10Result<Tensor> ravel() const;
 
     /// Transposes a 2D tensor.

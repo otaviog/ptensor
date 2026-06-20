@@ -969,6 +969,23 @@ TEST_CASE("core::Tensor::ravel", "[tensor][reshape]") {
         auto raveled = tensor.ravel().unwrap();
         REQUIRE(raveled.shape() == make_shape(4));
     }
+
+    SECTION("Non-contiguous tensor falls back to a contiguous copy") {
+        auto tensor = Tensor::from_range(make_shape(2, 3, 4), Dtype::Float32).unwrap();
+        // Non-contiguous 2x4 view with logical values [4,5,6,7, 16,17,18,19].
+        auto selected = tensor.select_dimension(1, 1).unwrap();
+        REQUIRE_FALSE(selected.is_contiguous());
+
+        auto raveled = selected.ravel().unwrap();
+        REQUIRE(raveled.shape() == make_shape(8));
+        REQUIRE(raveled.is_contiguous());
+
+        auto data = raveled.as_span1d<float>().unwrap();
+        const std::array<float, 8> expected = {4, 5, 6, 7, 16, 17, 18, 19};
+        for (size_t i = 0; i < expected.size(); ++i) {
+            REQUIRE(data[i] == Catch::Approx(expected[i]));
+        }
+    }
 }
 
 namespace {

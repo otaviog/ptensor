@@ -54,23 +54,35 @@ P10Error Fft::forward(const Tensor&, Tensor&) {
 }
 
 P10Error Fft::forward_real(const Tensor& signal_in, Tensor& freq_out) const {
-    if (signal_in.dims() != 2) {
+    if (signal_in.dims() > 2) {
         return P10Error::InvalidArgument << "Input tensor must have [N x T]";
     }
     P10_RETURN_IF_ERROR(check_input_device_and_dtype(signal_in));
 
     const auto type = signal_in.dtype();
-    const auto num_samples = signal_in.shape(1).unwrap();
-    const auto num_signals = signal_in.shape(0).unwrap();
+    const auto signal_in_shape = signal_in.shape().as_span();
+
+    int64_t num_signals = 1;
+    int64_t num_samples = 0;
+    if (signal_in_shape.size() == 1) {
+        num_samples = signal_in_shape[0];
+    } else { // .size() == 2
+        num_samples = signal_in_shape[1];
+        num_signals = signal_in_shape[0];
+    }
+
     const auto num_ffts = num_samples / 2 + 1;
+
+    if (signal_in_shape.size() == 1) {
+        P10_RETURN_IF_ERROR(freq_out.create(make_shape(num_ffts, 2), type));
+    } else {
+        P10_RETURN_IF_ERROR(freq_out.create(make_shape(num_signals, num_ffts, 2), type));
+    }
 
     double scalar_factor = 1.0;
     if (normalize_ == Normalize::ByN) {
         scalar_factor = 1.0 / static_cast<double>(num_samples);
     }
-
-    freq_out.create(make_shape(num_signals, num_ffts, 2), type);
-
     pocketfft::shape_t shape_in = {
         static_cast<size_t>(num_signals),
         static_cast<size_t>(num_samples)
@@ -82,8 +94,8 @@ P10Error Fft::forward_real(const Tensor& signal_in, Tensor& freq_out) const {
         [&](auto t) -> P10Error {
             using scalar_t = decltype(t)::type;
 
-            auto freq_out_s = freq_out.as_span2d<std::complex<scalar_t>>().unwrap();
-            const auto signal_in_s = signal_in.as_span2d<const scalar_t>().unwrap();
+            auto freq_out_s = freq_out.as_span2d<std::complex<scalar_t>, RankFit::Flexible>().unwrap();
+            const auto signal_in_s = signal_in.as_span2d<const scalar_t, RankFit::Flexible>().unwrap();
 
             pocketfft::stride_t stride_in = {
                 std::ptrdiff_t(num_samples * sizeof(scalar_t)),

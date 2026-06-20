@@ -66,7 +66,7 @@ P10Error Fft::forward_real(const Tensor& signal_in, Tensor& freq_out) const {
     int64_t num_samples = 0;
     if (signal_in_shape.size() == 1) {
         num_samples = signal_in_shape[0];
-    } else { // .size() == 2
+    } else {  // .size() == 2
         num_samples = signal_in_shape[1];
         num_signals = signal_in_shape[0];
     }
@@ -94,8 +94,10 @@ P10Error Fft::forward_real(const Tensor& signal_in, Tensor& freq_out) const {
         [&](auto t) -> P10Error {
             using scalar_t = decltype(t)::type;
 
-            auto freq_out_s = freq_out.as_span2d<std::complex<scalar_t>, RankFit::Flexible>().unwrap();
-            const auto signal_in_s = signal_in.as_span2d<const scalar_t, RankFit::Flexible>().unwrap();
+            auto freq_out_s =
+                freq_out.as_span2d<std::complex<scalar_t>, RankFit::Flexible>().unwrap();
+            const auto signal_in_s =
+                signal_in.as_span2d<const scalar_t, RankFit::Flexible>().unwrap();
 
             pocketfft::stride_t stride_in = {
                 std::ptrdiff_t(num_samples * sizeof(scalar_t)),

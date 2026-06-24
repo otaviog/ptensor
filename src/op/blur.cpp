@@ -1,184 +1,91 @@
 #include "blur.hpp"
 
-#include <algorithm>
+#include <array>
 #include <cmath>
 #include <numbers>
 
 #include <ptensor/dtype.hpp>
 #include <ptensor/p10_error.hpp>
-#include <p10_internal/simd/bitwise_math.hpp>
-#include <p10_internal/simd/compiler.hpp>
 #include <ptensor/tensor.hpp>
-
-#if PTENSOR_HAS_INTRINSICS_H
-    #include <immintrin.h>  // AVX2 intrinsics
-#endif
 
 #include <type_traits>
 
-#include "accumulator_traits.hpp"
+#include "blur.hblur.avx2.hpp"
+#include "blur.hblur.hpp"
+#include "blur.hblur.neon.hpp"
+#include "p10_internal/simd/tile2d.hpp"
+#include "ptensor/region2d.hpp"
 
 namespace p10::op {
-using detail::accumulator_traits;
+
+template<typename T>
+concept Scalar = std::is_arithmetic_v<T>;
 
 namespace {
     void create_gaussian_kernel(std::span<float> kernel, float sigma);
 
-#if 0
-    template<typename scalar_t, typename accum_t>
-    void apply_1d_kernel_generic(
-        std::span<const scalar_t> input,
-        std::span<scalar_t> output,
-        std::span<const accum_t> kernel,
-        int kernel_half_size
+    // Input shape with its last two (plane) dims swapped: the layout a single
+    // transposing hblur_pass produces.
+    Shape plane_transposed(const Shape& shape) {
+        const size_t dims = shape.dims();
+        std::array<size_t, P10_MAX_SHAPE> perm {};
+        for (size_t i = 0; i < dims; ++i) {
+            perm[i] = i;
+        }
+        std::swap(perm[dims - 1], perm[dims - 2]);
+        return shape.permute(std::span<const size_t>(perm.data(), dims)).unwrap();
+    }
+
+    // Interior pass for a fixed half-width KHALF: the tap loop unrolls because
+    // KHALF is a compile-time constant. tile2d runs the first kernel the target
+    // supports on the halo-inset interior and hands the clamped frame to
+    // scalar_kernel. The AVX2/NEON specs are tagged float, so tile2d drops them
+    // for other dtypes, which fall through to the portable interior.
+    template<Scalar scalar_t, size_t KHALF>
+    void hblur_pass_impl(
+        Span3D<const scalar_t> src,
+        Span3D<scalar_t> dst,
+        std::span<const float> kernel,
+        auto scalar_kernel
     ) {
-        for (int x = 0; x < int(input.size()); ++x) {
-            accumulator_traits<scalar_t> sum = 0;
-            for (int k = -kernel_half_size; k <= kernel_half_size; ++k) {
-                const int xx = x + k;
-                if (xx < 0 || xx >= int(input.size())) {
-                    continue;
-                }
-                sum += accum_t(input[xx]) * kernel[k + kernel_half_size];
-            }
-            output[x] = accumulator_traits<scalar_t>::to_scalar(sum);
+        const simd::TileBorder border {.horizontal = KHALF, .vertical = 0};
+
+        simd::tile2d<scalar_t, simd::TileExecution::PARALLEL>(
+            src.rows(),
+            src.cols(),
+            border,
+            scalar_kernel,
+            make_avx2_hblur<scalar_t, KHALF>(src, dst, kernel.data()),
+            make_neon_hblur<scalar_t, KHALF>(src, dst, kernel.data()),
+            make_portable_hblur<scalar_t, KHALF>(src, dst, kernel.data())
+        );
+    }
+
+    // One horizontal blur pass over every channel plane, runtime kernel size.
+    // tile2d carries the +/-half apron as a runtime border: the interior runs
+    // the unrolled kernel without edge checks while the scalar sweep clamps the
+    // frame. Half-widths past the unrolled cases fall back to a scalar-only
+    // tiling.
+    template<Scalar scalar_t>
+    void
+    hblur_pass(Span3D<const scalar_t> src, Span3D<scalar_t> dst, std::span<const float> kernel) {
+        const int half = static_cast<int>(kernel.size()) / 2;
+        const auto scalar_edge = make_scalar_hblur<scalar_t>(src, dst, kernel.data(), half);
+
+        switch (half) {
+            case 1:
+                hblur_pass_impl<scalar_t, 1>(src, dst, kernel, scalar_edge);
+                break;
+            case 2:
+                hblur_pass_impl<scalar_t, 2>(src, dst, kernel, scalar_edge);
+                break;
+            case 3:
+                hblur_pass_impl<scalar_t, 3>(src, dst, kernel, scalar_edge);
+                break;
+            default:
+                simd::tile2d<scalar_t>(src.rows(), src.cols(), simd::TileBorder {}, scalar_edge);
         }
     }
-
-    template<typename scalar_t, typename accum_t>
-    void apply_1d_kernel_8_generic(
-        scalar_t* input,
-        const scalar_t* output,
-        const accum_t* kernel,
-        int kernel_half_size
-    ) {
-        for (int x = 0; x < 8; ++x) {
-            accumulator_traits<scalar_t> sum = 0;
-            for (int k = -kernel_half_size; k <= kernel_half_size; ++k) {
-                sum += accum_t(input[x + k]) * kernel[k + kernel_half_size];
-            }
-            output[x] = accumulator_traits<scalar_t>::to_scalar(sum);
-        }
-    }
-
-    __attribute__((target("avx2"))) void apply_1d_kernel_8_avx(
-        float* input,
-        const float* output,
-        const float* kernel,
-        int kernel_half_size
-    ) {
-        // TODO: implement AVX version
-    }
-#endif
-
-    template<typename scalar_t, typename accum_t>
-    void apply_1d_kernel(
-        Span2D<const scalar_t> input,
-        Span2D<scalar_t> output,
-        std::span<const accum_t> kernel
-    ) {
-        constexpr size_t BLOCK_SIZE = 64;
-        constexpr size_t SIMD_SIZE = 8;
-
-        const auto rows = input.rows();
-        const auto cols = input.cols();
-        const bool avx2_supported = false;  //is_avx2_supported();
-
-        const auto kernel_half_size = int(kernel.size() / 2);
-        const auto aligned_max_cols = cols - bitwise_modulo<BLOCK_SIZE>(cols) - kernel.size() + 1;
-
-        for (size_t row = 0; row < rows; row++) {
-            apply_1d_kernel_generic(
-                input.row_span(row).subspan(0, kernel_half_size),
-                output.row_span(row).subspan(0, kernel_half_size),
-                kernel,
-                kernel_half_size
-            );
-            apply_1d_kernel_generic(
-                input.row_span(row).subspan(cols - kernel_half_size, kernel_half_size),
-                output.row_span(row).subspan(cols - kernel_half_size, kernel_half_size),
-                kernel,
-                kernel_half_size
-            );
-
-            const auto input_row = input.row(row);
-            auto output_row = output.row(row);
-
-            for (size_t block_col = kernel_half_size; block_col < aligned_max_cols;
-                 block_col += BLOCK_SIZE) {
-                for (size_t simd_col = block_col; simd_col < block_col + BLOCK_SIZE;
-                     simd_col += SIMD_SIZE) {
-                    const scalar_t* input_block = &input_row[simd_col];
-                    scalar_t* output_block = &output.row(row)[simd_col];
-
-                    if constexpr (std::is_same_v<scalar_t, float>) {
-                        if (avx2_supported) {
-                            apply_1d_kernel_8_avx(
-                                input_block,
-                                output_block,
-                                kernel.data(),
-                                kernel_half_size
-                            );
-                            continue;
-                        }
-                    }
-                    apply_1d_kernel_8_generic(
-                        input_block,
-                        output_block,
-                        reinterpret_cast<const accum_t*>(kernel.data()),
-                        kernel_half_size
-                    );
-                }
-            }
-        }
-    }
-
-    template<typename scalar_t, typename fixed_t>
-    void apply_horizontal_kernel(
-        Accessor2D<const scalar_t> input,
-        Accessor2D<scalar_t> output,
-        std::span<const fixed_t> kernel
-    ) {
-        const int half_size = int(kernel.size()) / 2;
-        const int height = int(input.rows());
-        const int width = int(input.cols());
-
-        for (int y = 0; y < height; ++y) {
-            const auto input_row = input[y];
-            auto output_row = output[y];
-            for (int x = 0; x < width; ++x) {
-                fixed_t sum = 0;
-                for (int k = -half_size; k <= half_size; ++k) {
-                    const int xx = std::clamp(x + k, 0, width - 1);
-                    sum += fixed_t(input_row[xx]) * kernel[k + half_size];
-                }
-                output_row[x] = scalar_t(accumulator_traits<scalar_t>::to_scalar(sum));
-            }
-        }
-    }
-
-    template<typename scalar_t, typename fixed_t>
-    void apply_vertical_kernel(
-        Accessor2D<const scalar_t> input,
-        Accessor2D<scalar_t> output,
-        std::span<const fixed_t> kernel
-    ) {
-        const int half_size = int(kernel.size()) / 2;
-        const int height = int(input.rows());
-        const int width = int(input.cols());
-        for (int y = 0; y < height; ++y) {
-            auto output_row = output[y];
-            for (int x = 0; x < width; ++x) {
-                fixed_t sum = 0;
-                for (int k = -half_size; k <= half_size; ++k) {
-                    const int yy = std::clamp(y + k, 0, height - 1);
-                    sum += fixed_t(input[yy][x]) * kernel[k + half_size];
-                }
-                output_row[x] = scalar_t(accumulator_traits<scalar_t>::to_scalar(sum));
-            }
-        }
-    }
-
 }  // namespace
 
 P10Result<GaussianBlur> GaussianBlur::create(size_t kernel_size, float sigma) {
@@ -189,21 +96,51 @@ P10Result<GaussianBlur> GaussianBlur::create(size_t kernel_size, float sigma) {
             "MAX_KERNEL_SIZE."
         );
     }
-    KernelStorage kernel_stack_data;
-    std::span<float> const kernel {kernel_stack_data.data(), kernel_size};
-    create_gaussian_kernel(kernel, sigma);
+    GaussianBlur new_blur {kernel_size};
+    create_gaussian_kernel(new_blur.kernel_.get(), sigma);
+    return Ok(std::move(new_blur));
+}
 
-    return Ok(GaussianBlur(kernel_stack_data, kernel_size));
+P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) {
+    const Dtype dtype = input.dtype();
+
+    if (input.shape().dims() < 2) {
+        return P10Error::InvalidArgument << "Input tensor must have at least 2 dimensions.";
+    }
+
+    // Each hblur_pass writes its result transposed, so the intermediate holds a
+    // plane-transposed image; the second pass transposes it back to the input
+    // layout. Size scratch with the plane dims swapped accordingly.
+    P10_RETURN_IF_ERROR(scratch_.create(plane_transposed(input.shape()), dtype));
+    P10_RETURN_IF_ERROR(output.create(input.shape(), dtype));
+
+    return dtype.match([&](auto type_tag) -> P10Error {
+        using scalar_t = decltype(type_tag)::type;
+
+        if constexpr (std::is_arithmetic_v<scalar_t>) {
+            const auto kernel = kernel_.get();
+
+            const auto in = input.as_span3d<const scalar_t, RankFit::Flexible>().unwrap();
+            auto scratch = scratch_.as_span3d<scalar_t, RankFit::Flexible>().unwrap();
+            auto out = output.as_span3d<scalar_t, RankFit::Flexible>().unwrap();
+
+            hblur_pass<scalar_t>(in, scratch, kernel);
+            hblur_pass<scalar_t>(scratch.as_const(), out, kernel);
+            return P10Error::Ok;
+        } else {
+            return P10Error::InvalidArgument << "Unsupported data type for this operation.";
+        }
+    });
 }
 
 namespace {
     void create_gaussian_kernel(std::span<float> kernel, float sigma) {
-        float sum = 0.0f;
+        float sum = 0.0F;
         int const half_size = static_cast<int>(kernel.size() / 2);
         for (int i = -half_size; i <= half_size; ++i) {
             kernel[i + half_size] = static_cast<float>(
                 std::exp(-(i * i) / (2 * sigma * sigma))
-                / (sigma * std::sqrt(2.0f * std::numbers::pi))
+                / (sigma * std::sqrt(2.0F * std::numbers::pi))
             );
             sum += kernel[i + half_size];
         }
@@ -212,61 +149,6 @@ namespace {
             value /= sum;
         }
     }
-
 }  // namespace
-
-P10Error GaussianBlur::transform(const Tensor& input, Tensor& output) {
-    if (input.shape().dims() != 3) {
-        return P10Error::InvalidArgument << "Input tensor must be a 3D image with shape (H, W, C).";
-    }
-
-    const Dtype dtype = input.dtype();
-
-    if (horizontal_out_ == nullptr) {
-        horizontal_out_ = std::make_shared<Tensor>();
-    }
-
-    P10_RETURN_IF_ERROR(horizontal_out_->create(input.shape(), dtype));
-    P10_RETURN_IF_ERROR(output.create(input.shape(), dtype));
-
-    return dtype.match([&](auto type_tag) -> P10Error {
-        using scalar_t = decltype(type_tag)::type;
-        using accum_t = accumulator_traits<scalar_t>::accum_type;
-
-        if constexpr (!std::is_same_v<accum_t, detail::AccumulatorNotDefined>) {
-            auto input_acc = input.as_accessor3d<const scalar_t>().unwrap();
-            auto horizontal_out_acc = horizontal_out_->as_accessor3d<scalar_t>().unwrap();
-            auto output_acc = output.as_accessor3d<scalar_t>().unwrap();
-
-            const auto float_kernel = get_kernel();
-
-            std::array<accum_t, MAX_KERNEL_SIZE> kernel;
-            std::transform(
-                float_kernel.begin(),
-                float_kernel.end(),
-                kernel.begin(),
-                [](float value) { return accumulator_traits<scalar_t>::from_float(value); }
-            );
-
-            const std::span<const accum_t> kernel_span {kernel.data(), get_kernel().size()};
-
-            for (int64_t channel_plane = 0; channel_plane < input_acc.channels(); channel_plane++) {
-                apply_horizontal_kernel<scalar_t, accum_t>(
-                    input_acc[channel_plane],
-                    horizontal_out_acc[channel_plane],
-                    kernel_span
-                );
-                apply_vertical_kernel<scalar_t, accum_t>(
-                    horizontal_out_acc[channel_plane].as_const(),
-                    output_acc[channel_plane],
-                    kernel_span
-                );
-            }
-            return P10Error::Ok;
-        } else {
-            return P10Error::InvalidArgument << "Unsupported data type for this operation.";
-        }
-    });
-}
 
 }  // namespace p10::op

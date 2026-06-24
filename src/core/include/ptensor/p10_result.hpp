@@ -56,8 +56,11 @@ class P10Result {
         return std::move(std::get<OkType>(value_));
     }
 
-    const P10Error& error() const {
-        return std::get<P10Error>(value_);
+    P10Error error() const {
+        if (is_error()) {
+            return std::get<P10Error>(value_);
+        }
+        return P10Error::Ok;
     }
 
     P10Error unwrap_err() {

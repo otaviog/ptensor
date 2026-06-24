@@ -25,6 +25,19 @@ If vcpkg is not clone yet, run the following command first:
 git submodule update --init --recursive
 ```
 
+### OpenMP (parallel tiling)
+
+`TileExecution::PARALLEL` in the simd tiler uses OpenMP. gcc (Linux) and MSVC
+(Windows) ship the runtime, so no extra step there. Apple clang does not — on
+macOS install libomp once:
+
+```shell
+brew install libomp
+```
+
+CMake finds it automatically (`find_package(OpenMP)`, with a brew hint on macOS).
+If it is missing the build still works; `PARALLEL` just runs sequentially.
+
 ### WebAssembly Build
 
 To build for WebAssembly, you need to have Emscripten SDK installed:

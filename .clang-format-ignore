@@ -1,3 +1,4 @@
-src/viz/src/metal/Metal/Metal.hpp
-src/viz/src/metal/imgui_impl*
-src/viz/src/vulkan/imgui_impl*
+src/log/lib/ng-log/*
+src/viz/metal/Metal/*
+src/viz/metal/imgui_impl*
+src/viz/vulkan/imgui_impl*

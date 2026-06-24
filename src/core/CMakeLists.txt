@@ -10,6 +10,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/dtype.hpp
   ${_INCLUDE_DIR}/shape.hpp
   ${_INCLUDE_DIR}/stride.hpp
+  ${_INCLUDE_DIR}/region2d.hpp
   ${_INCLUDE_DIR}/accessor1d.hpp
   ${_INCLUDE_DIR}/accessor2d.hpp
   ${_INCLUDE_DIR}/accessor3d.hpp
@@ -43,6 +44,8 @@ target_sources(ptensor
     stride.cpp
     tensor.cpp
     tensor.transpose.cpp
+    tensor.transpose.avx2.hpp
+    tensor.transpose.neon.hpp
     tensor_print.cpp
     detail/blob.cpp
     dtype.cpp
@@ -83,6 +86,7 @@ endif()
 
 if(BUILD_TESTS)
   add_subdirectory(tests)
+  add_subdirectory(benchmarks)
 endif()
 
 #### Installation

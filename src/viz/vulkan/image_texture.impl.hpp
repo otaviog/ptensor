@@ -3,8 +3,8 @@
 #include <ptensor/p10_error.hpp>
 #include <vulkan/vulkan.h>
 
-#include "image_texture.hpp"
 #include "../texture_stager.hpp"
+#include "image_texture.hpp"
 
 namespace p10 {
 class Tensor;

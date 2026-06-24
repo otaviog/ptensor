@@ -118,5 +118,57 @@ TEST_CASE("Op: FFT and IFFT", "[tensorop]") {
             REQUIRE_THAT(testing::compare_tensors(large_signals, rec_signal), testing::is_ok());
         }
     }
+
+    SECTION("ForwardReal accepts 1D input") {
+        constexpr size_t SIGNAL_SIZE = 256;
+        constexpr size_t NUM_FFTS = SIGNAL_SIZE / 2 + 1;
+
+        SineWaveParams params;
+        params.sample_rate(48000.0).period(0.01).frequency(16000.0).amplitude(1.0);
+
+        Tensor signal_1d;
+        REQUIRE_THAT(
+            generate_sine_wave(SIGNAL_SIZE, Dtype::Float32, params, signal_1d),
+            testing::is_ok()
+        );
+        REQUIRE(signal_1d.shape() == make_shape(SIGNAL_SIZE));
+
+        SECTION("Produces a [F x 2] frequency tensor") {
+            Tensor freq_1d;
+            REQUIRE_THAT(
+                Fft(FftOptions().direction(Fft::ForwardReal)).transform(signal_1d, freq_1d),
+                testing::is_ok()
+            );
+            REQUIRE(freq_1d.shape() == make_shape(NUM_FFTS, 2));
+        }
+
+        SECTION("Matches the [1 x T] batched result") {
+            Tensor freq_1d;
+            REQUIRE_THAT(
+                Fft(FftOptions().direction(Fft::ForwardReal)).transform(signal_1d, freq_1d),
+                testing::is_ok()
+            );
+
+            auto signal_2d = signal_1d.as_reshape(make_shape(1, SIGNAL_SIZE)).unwrap();
+            Tensor freq_2d;
+            REQUIRE_THAT(
+                Fft(FftOptions().direction(Fft::ForwardReal)).transform(signal_2d, freq_2d),
+                testing::is_ok()
+            );
+            REQUIRE(freq_2d.shape() == make_shape(1, NUM_FFTS, 2));
+
+            auto freq_2d_row = freq_2d.select_dimension(0, 0).unwrap();
+            REQUIRE_THAT(testing::compare_tensors(freq_1d, freq_2d_row), testing::is_ok());
+        }
+    }
+
+    SECTION("ForwardReal rejects more than 2 dimensions") {
+        auto signal_3d = Tensor::zeros(make_shape(2, 2, 4)).unwrap();
+        Tensor freq;
+        REQUIRE_THAT(
+            Fft(FftOptions().direction(Fft::ForwardReal)).transform(signal_3d, freq),
+            testing::is_error(P10Error::InvalidArgument)
+        );
+    }
 }
 }  // namespace p10::op

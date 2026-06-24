@@ -16,6 +16,21 @@
 		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
 	  ]
 	},
+	{
+	  "name": "simd/unit-test",
+	  "type": "lldb-dap",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/tests/unit_tests_all",
+	  "args": ["[simd]"],
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "environment": [],
+	  "externalConsole": true,
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
+	},
 	/// media
 	{
 	  "name": "media/transcoder",

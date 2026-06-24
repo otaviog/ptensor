@@ -7,5 +7,5 @@ class Tensor;
 };
 
 namespace p10::op {
-P10Error crop(const Tensor &image, size_t x, size_t y, size_t w, size_t h, Tensor &crop);
+P10Error crop(const Tensor& image, size_t x, size_t y, size_t w, size_t h, Tensor& crop);
 }

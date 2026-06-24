@@ -27,10 +27,12 @@ class Accessor2D {
     // A row is self-bounded to its own columns; halo comes from slicing a row of
     // a full-width plane (see Span2D), not from a region accessor.
     Accessor1D<T> operator[](int64_t row) {
+        assert(row >= 0 && row < shape_[0]);
         return Accessor1D<T>(data_ + row * strides_[0], shape_[1], strides_[1]);
     }
 
     Accessor1D<const T> operator[](int64_t row) const {
+        assert(row >= 0 && row < shape_[0]);
         return Accessor1D<const T>(data_ + row * strides_[0], shape_[1], strides_[1]);
     }
 

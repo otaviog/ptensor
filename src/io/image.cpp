@@ -43,6 +43,9 @@ P10Error save_image(const std::string& path, const Tensor& tensor) {
             static_cast<int>(span.cols())
         );
     } else if (tensor.dims() == 3) {
+        if (!tensor.is_contiguous()) {
+            return P10Error::InvalidArgument << "Tensor must be contiguous for image save";
+        }
         // HWC: shape is (height, width, channels).
         const auto height = static_cast<int>(tensor.shape(0).unwrap());
         const auto width = static_cast<int>(tensor.shape(1).unwrap());

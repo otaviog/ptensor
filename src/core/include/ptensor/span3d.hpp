@@ -19,12 +19,12 @@ class Span3D {
         cols_(width) {}
 
     Span2D<const T> operator[](int64_t channel) const {
-        assert(channel < channels_);
+        assert(channel >= 0 && channel < channels_);
         return Span2D<const T>(data_ + cols_ * rows_ * channel, rows_, cols_);
     }
 
     Span2D<T> operator[](int64_t channel) {
-        assert(channel < channels_);
+        assert(channel >= 0 && channel < channels_);
         return Span2D<T>(data_ + cols_ * rows_ * channel, rows_, cols_);
     }
 

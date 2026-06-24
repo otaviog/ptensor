@@ -20,12 +20,12 @@ class Span4D {
         cols_(width) {}
 
     Span3D<T> operator[](int64_t batch) {
-        assert(batch < batch_);
+        assert(batch >= 0 && batch < batch_);
         return Span3D<T>(data_ + batch * channels_ * rows_ * cols_, channels_, rows_, cols_);
     }
 
     Span3D<const T> operator[](int64_t batch) const {
-        assert(batch < batch_);
+        assert(batch >= 0 && batch < batch_);
         return Span3D<const T>(data_ + batch * channels_ * rows_ * cols_, channels_, rows_, cols_);
     }
 

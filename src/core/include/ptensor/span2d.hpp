@@ -26,12 +26,12 @@ class Span2D {
     }
 
     std::span<const T> operator[](int64_t row) const {
-        assert(row < rows_);
+        assert(row >= 0 && row < rows_);
         return std::span<const T>(data_ + row * cols_, static_cast<size_t>(cols_));
     }
 
     std::span<T> operator[](int64_t row) {
-        assert(row < rows_);
+        assert(row >= 0 && row < rows_);
         return std::span<T>(data_ + row * cols_, static_cast<size_t>(cols_));
     }
 

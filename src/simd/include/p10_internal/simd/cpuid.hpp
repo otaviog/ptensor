@@ -16,4 +16,6 @@ size_t l3_cache_size();
 
 #if defined(__clang__)
     #include "cpuid.is_compiler_supported.clang.hpp"
+#elif defined(_MSC_VER)
+    #include "cpuid.is_compiler_supported.msvc.hpp"
 #endif

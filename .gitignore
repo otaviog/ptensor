@@ -23,3 +23,4 @@ settings.local.json
 Testing
 tests/data/video/*.mp4
 .DS_Store
+/ptensor-logs

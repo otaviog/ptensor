@@ -3,6 +3,7 @@
 #include <ptensor/p10_error.hpp>
 
 #include "ffmpeg_audio_encoder.hpp"
+#include "ffmpeg_init.hpp"
 #include "ffmpeg_wrap_error.hpp"
 
 extern "C" {
@@ -39,6 +40,8 @@ FfmpegMediaWriter::~FfmpegMediaWriter() {
 
 P10Result<std::shared_ptr<FfmpegMediaWriter>>
 FfmpegMediaWriter::create(const std::string& path, const MediaParameters& params) {
+    ffmpeg_init();
+
     AVFormatContext* format_ctx = nullptr;
     // Allocate output format context
     P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(

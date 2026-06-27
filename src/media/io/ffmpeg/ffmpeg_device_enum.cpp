@@ -3,6 +3,7 @@
 
 #include <ptensor/media/io/media_device.hpp>
 
+#include "ffmpeg_init.hpp"
 #include "ffmpeg_wrap_error.hpp"
 
 extern "C" {
@@ -114,6 +115,8 @@ namespace {
     }
 
     P10Result<std::vector<RawDeviceEntry>> enumerate_raw() {
+        ffmpeg_init();
+
         if (DEVICE_INPUT_FORMAT == nullptr) {
             return Err(
                 P10Error::NotImplemented << "Device enumeration not supported on this platform"

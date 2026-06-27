@@ -54,6 +54,7 @@ target_sources(ptensor_media
     io/media_writer.cpp
     # FFMPEG utils
     io/ffmpeg/ffmpeg_memory.hpp
+    io/ffmpeg/ffmpeg_init.hpp io/ffmpeg/ffmpeg_init.cpp
     # FFMPEG data and processing
     io/ffmpeg/ffmpeg_audio_fifo.hpp io/ffmpeg/ffmpeg_audio_fifo.cpp
     io/ffmpeg/ffmpeg_sws.hpp io/ffmpeg/ffmpeg_sws.cpp

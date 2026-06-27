@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "ffmpeg_audio_decoder.hpp"
+#include "ffmpeg_init.hpp"
 #include "ffmpeg_memory.hpp"
 #include "ffmpeg_video_decoder.hpp"
 #include "ffmpeg_wrap_error.hpp"
@@ -100,6 +101,8 @@ P10Result<FfmpegMediaCaptureEngine::OpenResult> FfmpegMediaCaptureEngine::open_f
     const AVInputFormat* fmt,
     AVDictionary** options
 ) {
+    ffmpeg_init();
+
     AVFormatContext* format_ctx = nullptr;
     const P10Error open_error =
         wrap_ffmpeg_error(avformat_open_input(&format_ctx, url.c_str(), fmt, options));

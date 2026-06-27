@@ -4,6 +4,7 @@ add_library(ptensor STATIC)
 ##
 # Public Headers
 set(PUBLIC_HEADERS
+  ${_INCLUDE_DIR}/initialize.hpp
   ${_INCLUDE_DIR}/p10_error.hpp
   ${_INCLUDE_DIR}/p10_result.hpp
   ${_INCLUDE_DIR}/device.hpp
@@ -39,7 +40,8 @@ set_source_files_properties(${PUBLIC_HEADERS} PROPERTIES VS_FOLDER "Public Heade
 ##
 # Source to public headers
 target_sources(ptensor
-    PRIVATE
+  PRIVATE
+    initialize.cpp
     p10_error.cpp
     stride.cpp
     tensor.cpp

@@ -21,6 +21,8 @@ FfmpegFileMediaCapture::open(const std::string& path) {
     auto capture = std::shared_ptr<FfmpegFileMediaCapture>(
         new FfmpegFileMediaCapture(opened.format_ctx, opened.audio_decoder, opened.video_decoder)
     );
+
+    capture->set_text_source(path, opened.text_stream_indices);
     capture->start_decoding_thread();
     return Ok(std::move(capture));
 }

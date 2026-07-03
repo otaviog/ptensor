@@ -1,9 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "../media_writer.impl.hpp"
 #include "ffmpeg_audio_encoder.hpp"
+#include "ffmpeg_text_encoder.hpp"
 #include "ffmpeg_video_encoder.hpp"
 
 struct AVFormatContext;
@@ -30,12 +32,15 @@ class FfmpegMediaWriter: public MediaWriter::Impl {
 
     P10Error write_audio(const AudioFrame& frame) override;
 
+    P10Error write_text(size_t stream_index, const Text& text) override;
+
   private:
     FfmpegMediaWriter(
         AVFormatContext* format_context,
         MediaParameters params,
         std::unique_ptr<FfmpegVideoEncoder> video_encoder,
-        std::unique_ptr<FfmpegAudioEncoder> audio_encoder
+        std::unique_ptr<FfmpegAudioEncoder> audio_encoder,
+        std::vector<std::unique_ptr<FfmpegTextEncoder>> text_encoders
     );
 
     P10Error flush_video_encoder();
@@ -50,5 +55,6 @@ class FfmpegMediaWriter: public MediaWriter::Impl {
 
     std::unique_ptr<FfmpegVideoEncoder> video_encoder_;
     std::unique_ptr<FfmpegAudioEncoder> audio_encoder_;
+    std::vector<std::unique_ptr<FfmpegTextEncoder>> text_encoders_;
 };
 }  // namespace p10::media

@@ -27,4 +27,8 @@ P10Error MediaWriter::write_audio(const AudioFrame& frame) {
     return impl_->write_audio(frame);
 }
 
+P10Error MediaWriter::write_text(size_t stream_index, const Text& text) {
+    return impl_->write_text(stream_index, text);
+}
+
 }  // namespace p10::media

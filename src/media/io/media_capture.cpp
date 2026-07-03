@@ -61,6 +61,10 @@ P10Error MediaCapture::get_audio(AudioFrame& frame) {
     return impl_->get_audio(frame);
 }
 
+P10Result<TextStreams> MediaCapture::get_text_streams() const {
+    return impl_->get_text_streams();
+}
+
 std::optional<int64_t> MediaCapture::video_frame_count() const {
     return impl_->video_frame_count();
 }

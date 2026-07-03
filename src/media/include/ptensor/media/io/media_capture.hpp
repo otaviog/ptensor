@@ -8,6 +8,7 @@
 #include <ptensor/p10_result.hpp>
 
 #include "../media_parameters.hpp"
+#include "../text_streams.hpp"
 #include "media_device.hpp"
 
 namespace p10::media {
@@ -68,6 +69,13 @@ class MediaCapture {
 
     /// Get the most recently decoded audio frame.
     P10Error get_audio(AudioFrame& frame);
+
+    /// Read the source's text (subtitle) streams.
+    ///
+    /// Returns a TextStreams snapshot exposing count(), get_text() and
+    /// find_text_at(). For file captures the streams are scanned on this call
+    /// (once); live device captures carry no text and yield an empty snapshot.
+    P10Result<TextStreams> get_text_streams() const;
 
     /// Get total video frame count (if known).
     std::optional<int64_t> video_frame_count() const;

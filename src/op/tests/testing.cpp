@@ -2,24 +2,9 @@
 
 #include <ptensor/io/image.hpp>
 
-namespace p10::testing {
-
-std::string suffixed(const std::string& filename, const std::string& suffix) {
-    std::filesystem::path const path(filename);
-    std::string const stem = path.stem().string();
-    return stem + "-" + suffix + path.extension().string();
-}
-
-std::filesystem::path get_output_path() {
-    std::filesystem::path output_path("tests/output");
-    std::filesystem::create_directories(output_path);
-    return output_path;
-}
-
-namespace samples {
+namespace p10::testing::samples {
     std::tuple<Tensor, std::string> image01() {
         const std::string image = "image01.png";
         return {io::load_image("tests/data/image/" + image).expect("Can't load test image"), image};
     }
-}  // namespace samples
-}  // namespace p10::testing
+}  // namespace p10::testing::samples

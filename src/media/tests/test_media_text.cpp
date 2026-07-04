@@ -9,6 +9,7 @@
 #include <ptensor/media/text.hpp>
 #include <ptensor/media/text_streams.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+#include <ptensor/testing/output_path.hpp>
 
 #include "media_parameters.hpp"
 #include "text_parameters.hpp"
@@ -18,8 +19,8 @@
 namespace p10::media {
 
 TEST_CASE("media::text stream write/read roundtrip", "[media][text]") {
-    const std::string out_file = "tests/output/text_roundtrip.mkv";
-    std::filesystem::create_directories("tests/output");
+    const auto output_dir = testing::get_output_path("media/text");
+    const std::string out_file = (output_dir / "text_roundtrip.mkv").string();
 
     const Rational time_base {1, 1000};  // milliseconds
 
@@ -137,7 +138,8 @@ TEST_CASE("media::text stream write/read roundtrip", "[media][text]") {
         MediaParameters params;
         params.add_text_stream(TextParameters().language("eng"));
 
-        auto result = MediaWriter::open_file("tests/output/text_roundtrip.mp4", params);
+        auto result =
+            MediaWriter::open_file((output_dir / "text_roundtrip.mp4").string(), params);
         REQUIRE_THAT(result, testing::is_error(P10Error::InvalidArgument));
     }
 

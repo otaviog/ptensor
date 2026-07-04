@@ -22,6 +22,9 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/tensor.hpp
   ${_INCLUDE_DIR}/tensor_options.hpp
   ${_INCLUDE_DIR}/tensor_print.hpp
+  ${_INCLUDE_DIR}/map/opencv2.hpp
+  ${_INCLUDE_DIR}/map/eigen.hpp
+  ${_INCLUDE_DIR}/map/rerun.hpp
   ${_INCLUDE_DIR}/detail/blob.hpp
   ${_INCLUDE_DIR}/detail/string.hpp
   ${_INCLUDE_DIR}/detail/panic.hpp

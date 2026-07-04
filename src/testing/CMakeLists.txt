@@ -6,6 +6,7 @@ target_sources(ptensor_testing INTERFACE FILE_SET public_headers
     BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
     FILES ${_INCLUDE_DIR}/catch2_assertions.hpp
     ${_INCLUDE_DIR}/compare_tensors.hpp
+    ${_INCLUDE_DIR}/output_path.hpp
     )
 
 target_include_directories(ptensor_testing INTERFACE

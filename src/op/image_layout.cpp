@@ -78,7 +78,7 @@ image_to_tensor(const Tensor& image, Tensor& out_tensor, const ImageToTensorOpti
 P10Error image_from_tensor(
     const Tensor& tensor,
     Tensor& out_image_tensor,
-    std::optional<Dtype> target_dtype
+    const ImageFromTensorOptions& options
 ) {
     if (tensor.dtype() != Dtype::Float32 && tensor.dtype() != Dtype::Float64) {
         return P10Error::InvalidArgument << "Input tensor must be of float type.";
@@ -100,7 +100,8 @@ P10Error image_from_tensor(
     const auto num_channels = static_cast<size_t>(tensor.shape(base).unwrap());
     const auto height = static_cast<size_t>(tensor.shape(base + 1).unwrap());
     const auto width = static_cast<size_t>(tensor.shape(base + 2).unwrap());
-    const Dtype out_dtype = target_dtype.value_or(Dtype::Uint8);
+    const Dtype out_dtype = options.target_dtype().value_or(Dtype::Uint8);
+    const bool do_normalize = options.normalize();
 
     out_image_tensor.create(
         make_shape(
@@ -129,8 +130,8 @@ P10Error image_from_tensor(
                         for (size_t col = 0; col < width; col++) {
                             auto out_ch = out_span[row][col];
                             for (size_t c = 0; c < num_channels; c++) {
-                                const Fin val =
-                                    in_data[(c * plane_size) + (row * width) + col] * Fin {255};
+                                const Fin in_val = in_data[(c * plane_size) + (row * width) + col];
+                                const Fin val = do_normalize ? in_val * Fin {255} : in_val;
                                 out_ch[c] = static_cast<Tout>(std::clamp(val, Fin {0}, Fin {255}));
                             }
                         }

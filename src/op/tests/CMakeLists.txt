@@ -1,7 +1,7 @@
 add_library(unit_tests_op OBJECT
     testing.hpp testing.cpp
     test_elemwise.cpp
-    test_image.cpp
+    test_image_layout.cpp
     test_crop.cpp
     test_laplacian_pyramid.cpp
     test_resize.cpp

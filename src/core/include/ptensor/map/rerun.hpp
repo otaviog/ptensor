@@ -54,6 +54,9 @@ inline P10Result<rerun::archetypes::Tensor> to_rerun_tensor(const Tensor& tensor
     if (tensor.empty()) {
         return Err(P10Error::InvalidArgument << "Tensor is empty");
     }
+    if (tensor.device() != Device::Cpu) {
+        return Err(P10Error::NotImplemented << "rerun adapters require CPU tensors");
+    }
     if (!tensor.is_contiguous()) {
         return Err(P10Error::InvalidArgument << "Tensor must be contiguous for rerun");
     }
@@ -78,6 +81,9 @@ inline P10Result<rerun::archetypes::Tensor> to_rerun_tensor(const Tensor& tensor
 inline P10Result<rerun::archetypes::Image> to_rerun_image(const Tensor& tensor) {
     if (tensor.empty()) {
         return Err(P10Error::InvalidArgument << "Tensor is empty");
+    }
+    if (tensor.device() != Device::Cpu) {
+        return Err(P10Error::NotImplemented << "rerun adapters require CPU tensors");
     }
     if (!tensor.is_contiguous()) {
         return Err(P10Error::InvalidArgument << "Tensor must be contiguous for rerun");

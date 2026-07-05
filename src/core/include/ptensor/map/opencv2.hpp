@@ -15,7 +15,7 @@
 
 namespace p10 {
 
-namespace {
+// Helper conversions (kept in namespace p10 so unit tests can call them)
 /// Converts a dtype to an OpenCV depth (CV_8U, CV_32F, ...).
 inline P10Result<int> to_opencv_depth(Dtype dtype) {
     switch (dtype.value) {
@@ -133,6 +133,9 @@ inline P10Error to_opencv(const Tensor& tensor, cv::Mat& mat) {
     if (tensor.empty()) {
         return P10Error::InvalidArgument << "Tensor is empty";
     }
+    if (tensor.device() != Device::Cpu) {
+        return P10Error::NotImplemented << "OpenCV adapters require CPU tensors";
+    }
     if (tensor.dims() != 2 && tensor.dims() != 3) {
         return P10Error::InvalidArgument << "Tensor must be [H, W] or [H, W, C]";
     }
@@ -187,6 +190,9 @@ inline P10Error to_opencv(const Tensor& tensor, cv::Mat& mat) {
 inline P10Result<cv::Mat> to_opencv_view(Tensor& tensor) {
     if (tensor.empty()) {
         return Err(P10Error::InvalidArgument << "Tensor is empty");
+    }
+    if (tensor.device() != Device::Cpu) {
+        return Err(P10Error::NotImplemented << "OpenCV adapters require CPU tensors");
     }
     if (tensor.dims() != 2 && tensor.dims() != 3) {
         return Err(P10Error::InvalidArgument << "Tensor must be [H, W] or [H, W, C]");

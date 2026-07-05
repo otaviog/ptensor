@@ -34,6 +34,9 @@ using EigenConstMap = Eigen::Map<
 /// The map does not own the data: the tensor must outlive the returned map.
 template<typename scalar_t>
 inline P10Result<EigenMap<scalar_t>> to_eigen_map(Tensor& tensor) {
+    if (tensor.device() != Device::Cpu) {
+        return Err(P10Error::NotImplemented << "Eigen adapters require CPU tensors");
+    }
     if (tensor.dims() != 2) {
         return Err(P10Error::InvalidArgument << "Tensor must be 2D for an Eigen matrix map");
     }
@@ -56,6 +59,9 @@ inline P10Result<EigenMap<scalar_t>> to_eigen_map(Tensor& tensor) {
 
 template<typename scalar_t>
 inline P10Result<EigenConstMap<scalar_t>> to_eigen_map(const Tensor& tensor) {
+    if (tensor.device() != Device::Cpu) {
+        return Err(P10Error::NotImplemented << "Eigen adapters require CPU tensors");
+    }
     if (tensor.dims() != 2) {
         return Err(P10Error::InvalidArgument << "Tensor must be 2D for an Eigen matrix map");
     }

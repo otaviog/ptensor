@@ -7,6 +7,7 @@
 #include <ptensor/media/audio_parameters.hpp>
 #include <ptensor/media/video_parameters.hpp>
 
+#include "../camera_controls.hpp"
 #include "ffmpeg_media_capture_engine.hpp"
 
 namespace p10::media {
@@ -40,13 +41,23 @@ class FfmpegDeviceMediaCapture: public FfmpegMediaCaptureEngine {
         return std::nullopt;
     }
 
+    P10Result<int> get_camera_control(CameraControlId id) const override;
+    P10Error set_camera_control(CameraControlId id, int value) override;
+    P10Result<CameraControlRange> get_camera_control_range(CameraControlId id) const override;
+    P10Result<bool> get_camera_auto_control(CameraAutoControlId id) const override;
+    P10Error set_camera_auto_control(CameraAutoControlId id, bool enabled) override;
+
   private:
     FfmpegDeviceMediaCapture(
         AVFormatContext* format_ctx,
         std::shared_ptr<FfmpegAudioDecoder> audio_decoder,
-        std::shared_ptr<FfmpegVideoDecoder> video_decoder
+        std::shared_ptr<FfmpegVideoDecoder> video_decoder,
+        std::unique_ptr<CameraControlBackend> camera_controls
     ) :
-        FfmpegMediaCaptureEngine(format_ctx, std::move(audio_decoder), std::move(video_decoder)) {}
+        FfmpegMediaCaptureEngine(format_ctx, std::move(audio_decoder), std::move(video_decoder)),
+        camera_controls_(std::move(camera_controls)) {}
+
+    std::unique_ptr<CameraControlBackend> camera_controls_;
 };
 
 }  // namespace p10::media

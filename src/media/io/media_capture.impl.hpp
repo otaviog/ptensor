@@ -3,6 +3,7 @@
 
 #include <ptensor/p10_result.hpp>
 
+#include "camera_controls.hpp"
 #include "io/media_capture.hpp"
 #include "text_streams.hpp"
 
@@ -39,6 +40,34 @@ class MediaCapture::Impl {
 
     virtual P10Error seek(double /*seconds*/) {
         return P10Error::NotImplemented << "Seek not supported for this capture source";
+    }
+
+    /// Camera property controls (focus, exposure, brightness, ...). Defaults
+    /// to NotImplemented; only live device captures override these.
+    virtual P10Result<int> get_camera_control(CameraControlId /*id*/) const {
+        return Err(
+            P10Error::NotImplemented << "Camera controls not supported for this capture source"
+        );
+    }
+
+    virtual P10Error set_camera_control(CameraControlId /*id*/, int /*value*/) {
+        return P10Error::NotImplemented << "Camera controls not supported for this capture source";
+    }
+
+    virtual P10Result<CameraControlRange> get_camera_control_range(CameraControlId /*id*/) const {
+        return Err(
+            P10Error::NotImplemented << "Camera controls not supported for this capture source"
+        );
+    }
+
+    virtual P10Result<bool> get_camera_auto_control(CameraAutoControlId /*id*/) const {
+        return Err(
+            P10Error::NotImplemented << "Camera controls not supported for this capture source"
+        );
+    }
+
+    virtual P10Error set_camera_auto_control(CameraAutoControlId /*id*/, bool /*enabled*/) {
+        return P10Error::NotImplemented << "Camera controls not supported for this capture source";
     }
 };
 }  // namespace p10::media

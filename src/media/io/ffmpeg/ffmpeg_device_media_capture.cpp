@@ -74,11 +74,56 @@ P10Result<std::shared_ptr<FfmpegDeviceMediaCapture>> FfmpegDeviceMediaCapture::o
     }
     OpenResult opened = open_result.unwrap();
 
-    auto capture = std::shared_ptr<FfmpegDeviceMediaCapture>(
-        new FfmpegDeviceMediaCapture(opened.format_ctx, opened.audio_decoder, opened.video_decoder)
-    );
+    auto capture = std::shared_ptr<FfmpegDeviceMediaCapture>(new FfmpegDeviceMediaCapture(
+        opened.format_ctx,
+        opened.audio_decoder,
+        opened.video_decoder,
+        open_camera_control_backend(video_device_index)
+    ));
     capture->start_decoding_thread();
     return Ok(std::move(capture));
+}
+
+P10Result<int> FfmpegDeviceMediaCapture::get_camera_control(CameraControlId id) const {
+    if (!camera_controls_) {
+        return Err(
+            P10Error::NotImplemented << "Camera controls not supported on this platform/device"
+        );
+    }
+    return camera_controls_->get(id);
+}
+
+P10Error FfmpegDeviceMediaCapture::set_camera_control(CameraControlId id, int value) {
+    if (!camera_controls_) {
+        return P10Error::NotImplemented << "Camera controls not supported on this platform/device";
+    }
+    return camera_controls_->set(id, value);
+}
+
+P10Result<CameraControlRange> FfmpegDeviceMediaCapture::get_camera_control_range(CameraControlId id
+) const {
+    if (!camera_controls_) {
+        return Err(
+            P10Error::NotImplemented << "Camera controls not supported on this platform/device"
+        );
+    }
+    return camera_controls_->get_range(id);
+}
+
+P10Result<bool> FfmpegDeviceMediaCapture::get_camera_auto_control(CameraAutoControlId id) const {
+    if (!camera_controls_) {
+        return Err(
+            P10Error::NotImplemented << "Camera controls not supported on this platform/device"
+        );
+    }
+    return camera_controls_->get_auto(id);
+}
+
+P10Error FfmpegDeviceMediaCapture::set_camera_auto_control(CameraAutoControlId id, bool enabled) {
+    if (!camera_controls_) {
+        return P10Error::NotImplemented << "Camera controls not supported on this platform/device";
+    }
+    return camera_controls_->set_auto(id, enabled);
 }
 
 namespace {

@@ -3,6 +3,7 @@
 #include <string>
 #include <utility>
 
+#include "camera_controls.hpp"
 #include "ffmpeg/ffmpeg_device_media_capture.hpp"
 #include "ffmpeg/ffmpeg_file_media_capture.hpp"
 
@@ -78,6 +79,126 @@ P10Error MediaCapture::seek(double seconds) {
         return P10Error::InvalidArgument << "MediaCapture not open";
     }
     return impl_->seek(seconds);
+}
+
+P10Error MediaCapture::set_auto_focus(bool enabled) {
+    return impl_->set_camera_auto_control(CameraAutoControlId::Focus, enabled);
+}
+
+P10Result<bool> MediaCapture::get_auto_focus() const {
+    return impl_->get_camera_auto_control(CameraAutoControlId::Focus);
+}
+
+P10Error MediaCapture::set_focus_distance(int value) {
+    return impl_->set_camera_control(CameraControlId::FocusDistance, value);
+}
+
+P10Result<int> MediaCapture::get_focus_distance() const {
+    return impl_->get_camera_control(CameraControlId::FocusDistance);
+}
+
+P10Result<CameraControlRange> MediaCapture::get_focus_distance_range() const {
+    return impl_->get_camera_control_range(CameraControlId::FocusDistance);
+}
+
+P10Error MediaCapture::set_auto_exposure(bool enabled) {
+    return impl_->set_camera_auto_control(CameraAutoControlId::Exposure, enabled);
+}
+
+P10Result<bool> MediaCapture::get_auto_exposure() const {
+    return impl_->get_camera_auto_control(CameraAutoControlId::Exposure);
+}
+
+P10Error MediaCapture::set_exposure(int value) {
+    return impl_->set_camera_control(CameraControlId::Exposure, value);
+}
+
+P10Result<int> MediaCapture::get_exposure() const {
+    return impl_->get_camera_control(CameraControlId::Exposure);
+}
+
+P10Result<CameraControlRange> MediaCapture::get_exposure_range() const {
+    return impl_->get_camera_control_range(CameraControlId::Exposure);
+}
+
+P10Error MediaCapture::set_brightness(int value) {
+    return impl_->set_camera_control(CameraControlId::Brightness, value);
+}
+
+P10Result<int> MediaCapture::get_brightness() const {
+    return impl_->get_camera_control(CameraControlId::Brightness);
+}
+
+P10Result<CameraControlRange> MediaCapture::get_brightness_range() const {
+    return impl_->get_camera_control_range(CameraControlId::Brightness);
+}
+
+P10Error MediaCapture::set_contrast(int value) {
+    return impl_->set_camera_control(CameraControlId::Contrast, value);
+}
+
+P10Result<int> MediaCapture::get_contrast() const {
+    return impl_->get_camera_control(CameraControlId::Contrast);
+}
+
+P10Result<CameraControlRange> MediaCapture::get_contrast_range() const {
+    return impl_->get_camera_control_range(CameraControlId::Contrast);
+}
+
+P10Error MediaCapture::set_saturation(int value) {
+    return impl_->set_camera_control(CameraControlId::Saturation, value);
+}
+
+P10Result<int> MediaCapture::get_saturation() const {
+    return impl_->get_camera_control(CameraControlId::Saturation);
+}
+
+P10Result<CameraControlRange> MediaCapture::get_saturation_range() const {
+    return impl_->get_camera_control_range(CameraControlId::Saturation);
+}
+
+P10Error MediaCapture::set_gain(int value) {
+    return impl_->set_camera_control(CameraControlId::Gain, value);
+}
+
+P10Result<int> MediaCapture::get_gain() const {
+    return impl_->get_camera_control(CameraControlId::Gain);
+}
+
+P10Result<CameraControlRange> MediaCapture::get_gain_range() const {
+    return impl_->get_camera_control_range(CameraControlId::Gain);
+}
+
+P10Error MediaCapture::set_auto_white_balance(bool enabled) {
+    return impl_->set_camera_auto_control(CameraAutoControlId::WhiteBalance, enabled);
+}
+
+P10Result<bool> MediaCapture::get_auto_white_balance() const {
+    return impl_->get_camera_auto_control(CameraAutoControlId::WhiteBalance);
+}
+
+P10Error MediaCapture::set_white_balance_temperature(int value) {
+    return impl_->set_camera_control(CameraControlId::WhiteBalanceTemperature, value);
+}
+
+P10Result<int> MediaCapture::get_white_balance_temperature() const {
+    return impl_->get_camera_control(CameraControlId::WhiteBalanceTemperature);
+}
+
+P10Result<CameraControlRange> MediaCapture::get_white_balance_temperature_range() const {
+    return impl_->get_camera_control_range(CameraControlId::WhiteBalanceTemperature);
+}
+
+P10Error MediaCapture::set_zoom(int value) {
+    return impl_->set_camera_control(CameraControlId::Zoom, value);
+}
+
+P10Result<int> MediaCapture::get_zoom() const {
+    return impl_->get_camera_control(CameraControlId::Zoom);
+}
+
+P10Result<CameraControlRange> MediaCapture::get_zoom_range() const {
+    return impl_->get_camera_control_range(CameraControlId::Zoom);
 }
 
 }  // namespace p10::media

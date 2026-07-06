@@ -9,6 +9,7 @@
 
 #include "../media_parameters.hpp"
 #include "../text_streams.hpp"
+#include "camera_control.hpp"
 #include "media_device.hpp"
 
 namespace p10::media {
@@ -85,6 +86,79 @@ class MediaCapture {
 
     /// Seek to position in seconds from the start. File captures only.
     P10Error seek(double seconds);
+
+    // -- Camera property controls -------------------------------------------
+    // Only supported by live device captures (see is_stream()); file captures
+    // and platforms without a control backend return NotImplemented.
+
+    /// Enable (true) or disable (false) automatic focus.
+    P10Error set_auto_focus(bool enabled);
+    /// Check whether automatic focus is enabled.
+    P10Result<bool> get_auto_focus() const;
+    /// Set the manual focus distance. Only takes effect with auto focus off.
+    P10Error set_focus_distance(int value);
+    /// Get the current focus distance.
+    P10Result<int> get_focus_distance() const;
+    /// Get the supported range for the focus distance.
+    P10Result<CameraControlRange> get_focus_distance_range() const;
+
+    /// Enable (true) or disable (false) automatic exposure.
+    P10Error set_auto_exposure(bool enabled);
+    /// Check whether automatic exposure is enabled.
+    P10Result<bool> get_auto_exposure() const;
+    /// Set the manual exposure value. Only takes effect with auto exposure off.
+    P10Error set_exposure(int value);
+    /// Get the current exposure value.
+    P10Result<int> get_exposure() const;
+    /// Get the supported range for exposure.
+    P10Result<CameraControlRange> get_exposure_range() const;
+
+    /// Set brightness.
+    P10Error set_brightness(int value);
+    /// Get current brightness.
+    P10Result<int> get_brightness() const;
+    /// Get the supported range for brightness.
+    P10Result<CameraControlRange> get_brightness_range() const;
+
+    /// Set contrast.
+    P10Error set_contrast(int value);
+    /// Get current contrast.
+    P10Result<int> get_contrast() const;
+    /// Get the supported range for contrast.
+    P10Result<CameraControlRange> get_contrast_range() const;
+
+    /// Set saturation.
+    P10Error set_saturation(int value);
+    /// Get current saturation.
+    P10Result<int> get_saturation() const;
+    /// Get the supported range for saturation.
+    P10Result<CameraControlRange> get_saturation_range() const;
+
+    /// Set sensor gain.
+    P10Error set_gain(int value);
+    /// Get current sensor gain.
+    P10Result<int> get_gain() const;
+    /// Get the supported range for gain.
+    P10Result<CameraControlRange> get_gain_range() const;
+
+    /// Enable (true) or disable (false) automatic white balance.
+    P10Error set_auto_white_balance(bool enabled);
+    /// Check whether automatic white balance is enabled.
+    P10Result<bool> get_auto_white_balance() const;
+    /// Set the manual white balance color temperature (Kelvin). Only takes
+    /// effect with auto white balance off.
+    P10Error set_white_balance_temperature(int value);
+    /// Get the current white balance color temperature.
+    P10Result<int> get_white_balance_temperature() const;
+    /// Get the supported range for white balance color temperature.
+    P10Result<CameraControlRange> get_white_balance_temperature_range() const;
+
+    /// Set zoom.
+    P10Error set_zoom(int value);
+    /// Get current zoom.
+    P10Result<int> get_zoom() const;
+    /// Get the supported range for zoom.
+    P10Result<CameraControlRange> get_zoom_range() const;
 
   private:
     explicit MediaCapture(std::shared_ptr<Impl> impl) : impl_(std::move(impl)) {}

@@ -33,6 +33,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/text_streams.hpp
   ${_INCLUDE_DIR}/time/time.hpp
   ${_INCLUDE_DIR}/time/rational.hpp
+  ${_INCLUDE_DIR}/io/camera_control.hpp
   ${_INCLUDE_DIR}/io/media_capture.hpp
   ${_INCLUDE_DIR}/io/media_device.hpp
   ${_INCLUDE_DIR}/io/media_writer.hpp
@@ -52,6 +53,7 @@ target_sources(ptensor_media
     time/time.cpp
     io/media_device.cpp
     io/media_capture.cpp
+    io/camera_controls.hpp io/camera_controls.cpp
     io/text_streams.cpp
     # Common writer
     io/media_writer.impl.hpp

@@ -145,6 +145,61 @@ TEST_CASE("media::MediaCapture::WaitMode::Block never returns NotReady", "[media
     }
 }
 
+TEST_CASE(
+    "media::MediaCapture camera controls report NotImplemented for file captures",
+    "[media][capture]"
+) {
+    const std::string valid_file = "tests/data/video/file_example_MP4_480_1_5MG.mp4";
+    MediaCapture capture = MediaCapture::open_file(valid_file).expect("should open valid file");
+
+    REQUIRE_THAT(capture.set_auto_focus(true), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_auto_focus(), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.set_focus_distance(10), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_focus_distance(), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_focus_distance_range(), testing::is_error(P10Error::NotImplemented));
+
+    REQUIRE_THAT(capture.set_auto_exposure(true), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_auto_exposure(), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.set_exposure(10), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_exposure(), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_exposure_range(), testing::is_error(P10Error::NotImplemented));
+
+    REQUIRE_THAT(capture.set_brightness(10), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_brightness(), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_brightness_range(), testing::is_error(P10Error::NotImplemented));
+
+    REQUIRE_THAT(capture.set_contrast(10), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_contrast(), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_contrast_range(), testing::is_error(P10Error::NotImplemented));
+
+    REQUIRE_THAT(capture.set_saturation(10), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_saturation(), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_saturation_range(), testing::is_error(P10Error::NotImplemented));
+
+    REQUIRE_THAT(capture.set_gain(10), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_gain(), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_gain_range(), testing::is_error(P10Error::NotImplemented));
+
+    REQUIRE_THAT(capture.set_auto_white_balance(true), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_auto_white_balance(), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(
+        capture.set_white_balance_temperature(10),
+        testing::is_error(P10Error::NotImplemented)
+    );
+    REQUIRE_THAT(
+        capture.get_white_balance_temperature(),
+        testing::is_error(P10Error::NotImplemented)
+    );
+    REQUIRE_THAT(
+        capture.get_white_balance_temperature_range(),
+        testing::is_error(P10Error::NotImplemented)
+    );
+
+    REQUIRE_THAT(capture.set_zoom(10), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_zoom(), testing::is_error(P10Error::NotImplemented));
+    REQUIRE_THAT(capture.get_zoom_range(), testing::is_error(P10Error::NotImplemented));
+}
+
 TEST_CASE("media::MediaCapture::seek rewinds to beginning", "[media][capture]") {
     const std::string valid_file = "tests/data/video/file_example_MP4_480_1_5MG.mp4";
     MediaCapture capture = MediaCapture::open_file(valid_file).expect("should open valid file");

@@ -11,27 +11,45 @@
 #include <ptensor/op/blur.hpp>
 #include <ptensor/op/image_layout.hpp>
 #include <ptensor/tensor.hpp>
+#include <ptensor/testing/catch2_assertions.hpp>
+#include <ptensor/testing/compare_tensors.hpp>
 
 #include "testing.hpp"
 
 namespace p10::op {
-TEST_CASE("Op: Blur image", "[tensorop]") {
+TEST_CASE("Op: Blur image", "[tensorop][blur][integration]") {
     auto [sample_image, image_file] = testing::samples::image01();
     Tensor sample_tensor;
+    REQUIRE(op::image_to_tensor(sample_image, sample_tensor) == P10Error::Ok);
+    const auto test_output_path = testing::get_output_path("op/blur");
 
-    op::image_to_tensor(sample_image, sample_tensor);
     SECTION("Apply blur operator") {
         auto blur_op = GaussianBlur::create(25, 1.5f).unwrap();
         Tensor blurred_tensor;
-        blur_op.transform(sample_tensor, blurred_tensor).expect("Failed to blur image");
-
+        REQUIRE(blur_op.transform(sample_tensor, blurred_tensor).is_ok());
         REQUIRE(blurred_tensor.shape() == sample_tensor.shape());
 
         Tensor blurred_image;
-        op::image_from_tensor(blurred_tensor, blurred_image);
-        io::save_image(
-            (testing::get_output_path() / testing::suffixed(image_file, "blur")).string(),
-            blurred_image
+        REQUIRE(op::image_from_tensor(blurred_tensor, blurred_image) == P10Error::Ok);
+        REQUIRE(
+            io::save_image(
+                (test_output_path / testing::suffixed(image_file, "blur")).string(),
+                blurred_image
+            )
+                .is_ok()
+        );
+    }
+
+    SECTION("Blurring a constant image keeps the constant") {
+        // A normalized Gaussian kernel sums to 1 and edges are clamped, so a
+        // uniform image is unchanged by the blur.
+        const auto constant = Tensor::full(make_shape(3, 40, 40), 0.5).unwrap();
+        auto blur_op = GaussianBlur::create(9, 1.5f).unwrap();
+        Tensor blurred;
+        REQUIRE(blur_op.transform(constant, blurred).is_ok());
+        REQUIRE_THAT(
+            testing::compare_tensors(constant, blurred, testing::CompareOptions().tolerance(1e-4)),
+            testing::is_ok()
         );
     }
 

@@ -3,6 +3,10 @@
 #include <ptensor/io/image.hpp>
 #include <ptensor/op/image_layout.hpp>
 #include <ptensor/tensor.hpp>
+#include <ptensor/testing/catch2_assertions.hpp>
+#include <ptensor/testing/compare_tensors.hpp>
+
+#include "testing.hpp"
 
 namespace p10::op {
 
@@ -61,17 +65,19 @@ TEST_CASE("op::image::to tensor and back conversion", "[imageop]") {
         }
     }
 
-    // Convert to tensor (normalize to [0,1] so the inverse scaling in
-    // image_from_tensor recovers the original byte values).
+    // Convert to tensor, normalizing to [0,1]. Building the from-tensor options
+    // from these keeps the inverse scaling in sync, so the round trip recovers
+    // the original byte values.
+    const auto to_options = ImageToTensorOptions().normalize(true);
     Tensor float_tensor;
+    REQUIRE(image_to_tensor(original_image, float_tensor, to_options) == P10Error::Ok);
+
+    // Convert back to image with the mirrored options.
+    Tensor result_image;
     REQUIRE(
-        image_to_tensor(original_image, float_tensor, ImageToTensorOptions().normalize(true))
+        image_from_tensor(float_tensor, result_image, ImageFromTensorOptions(to_options))
         == P10Error::Ok
     );
-
-    // Convert back to image
-    Tensor result_image;
-    REQUIRE(image_from_tensor(float_tensor, result_image) == P10Error::Ok);
 
     // Verify dimensions
     REQUIRE(result_image.shape() == original_image.shape());
@@ -108,9 +114,12 @@ TEST_CASE("op::image::from tensor value clamping", "[imageop]") {
         }
     }
 
-    // Convert to image
+    // Convert to image, normalizing so the [0,1] values map onto [0,255].
     Tensor image_tensor;
-    REQUIRE(image_from_tensor(float_tensor, image_tensor) == P10Error::Ok);
+    REQUIRE(
+        image_from_tensor(float_tensor, image_tensor, ImageFromTensorOptions().normalize(true))
+        == P10Error::Ok
+    );
 
     auto image_span = image_tensor.as_accessor3d<uint8_t>().unwrap();
 
@@ -123,6 +132,46 @@ TEST_CASE("op::image::from tensor value clamping", "[imageop]") {
             REQUIRE(channel[2] == 255);  // 1.5 * 255 clamped to 255
         }
     }
+}
+
+// End-to-end: load a real image from disk, run it through the HWC->CHW->HWC
+// round trip, save the result for inspection, and assert the pixels survive.
+TEST_CASE("op::image layout disk round trip", "[imageop][integration]") {
+    const auto [original_image, image_file] = testing::samples::image01();
+    REQUIRE(original_image.dtype() == Dtype::Uint8);
+    REQUIRE(original_image.dims() == 3);
+
+    // HWC uint8 -> CHW float32 in [0, 1].
+    const auto to_options = ImageToTensorOptions().normalize(true);
+    Tensor float_tensor;
+    REQUIRE(image_to_tensor(original_image, float_tensor, to_options) == P10Error::Ok);
+    REQUIRE(float_tensor.dtype() == Dtype::Float32);
+    REQUIRE(float_tensor.shape(0).unwrap() == original_image.shape(2).unwrap());
+
+    // CHW float32 -> HWC uint8, mirroring the options so the scaling matches.
+    Tensor result_image;
+    REQUIRE(
+        image_from_tensor(float_tensor, result_image, ImageFromTensorOptions(to_options))
+        == P10Error::Ok
+    );
+
+    // Save for eyeballing next to the other op outputs.
+    REQUIRE(
+        io::save_image(
+            (testing::get_output_path("op/image_layout") / testing::suffixed(image_file, "layout-roundtrip"))
+                .string(),
+            result_image
+        )
+            .is_ok()
+    );
+
+    // The uint8 -> float -> uint8 round trip is bit-exact (float32 error is far
+    // under the 0.5 that rounding needs to recover each byte), so compare with
+    // no tolerance. compare_tensors also checks shape/stride/dtype.
+    REQUIRE_THAT(
+        testing::compare_tensors(original_image, result_image),
+        testing::is_ok()
+    );
 }
 
 }  // namespace p10::op

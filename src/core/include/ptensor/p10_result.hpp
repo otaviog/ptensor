@@ -85,8 +85,6 @@ class P10Result {
   private:
     std::variant<OkType, P10Error> value_;
 
-    friend class P10Result;
-
     template<typename T>
     friend struct OkTypeDeduct;
 

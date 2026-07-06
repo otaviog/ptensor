@@ -10,7 +10,9 @@
       "hidden": true,
       "generator": "Ninja",
 	  "cacheVariables": {
-		"CMAKE_INSTALL_PREFIX": "${sourceDir}/build/clang/installed"
+		"CMAKE_INSTALL_PREFIX": "${sourceDir}/build/clang/installed",
+		"CMAKE_C_COMPILER": "clang",
+		"CMAKE_CXX_COMPILER": "clang++"
 	  }
     },
     {

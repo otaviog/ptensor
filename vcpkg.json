@@ -20,7 +20,12 @@
 			"description": "Build tests (for development)",
 			"dependencies": [
 				"catch2",
-				"benchmark"
+				"benchmark",
+				"eigen3",
+				{
+					"name": "opencv4",
+					"default-features": false
+				}
 			]
 		},
 		"samples": {

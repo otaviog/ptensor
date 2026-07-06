@@ -6,6 +6,7 @@
 #include <ptensor/media/io/media_writer.hpp>
 #include <ptensor/media/video_frame.hpp>
 #include <ptensor/testing/catch2_assertions.hpp>
+#include <ptensor/testing/output_path.hpp>
 
 #include "catch2/catch_approx.hpp"
 #include "io/media_capture.hpp"
@@ -36,7 +37,8 @@ TEST_CASE("media::MediaWriter::error cases", "[media][writer]") {
 
 TEST_CASE("media::MediaWriter::basic functionality", "[media][writer]") {
     const std::string valid_file = "tests/data/video/file_example_MP4_480_1_5MG.mp4";
-    const std::string out_file = "tests/output/file_example_MP4_480_1_5MG_out.mp4";
+    const std::string out_file =
+        (testing::get_output_path("media/writer") / "file_example_MP4_480_1_5MG_out.mp4").string();
     const int total_frames = 100;
 
     SECTION("Should transcode a media correctly") {

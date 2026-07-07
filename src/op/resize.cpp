@@ -3,9 +3,9 @@
 #include <cstddef>
 #include <cstdint>
 
-#include <ptensor/dtype.hpp>
 #include <p10_internal/simd/compiler.hpp>
 #include <p10_internal/simd/cpuid.hpp>
+#include <ptensor/dtype.hpp>
 #include <ptensor/tensor.hpp>
 
 #if PTENSOR_HAS_INTRINSICS_H

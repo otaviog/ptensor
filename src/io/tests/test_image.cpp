@@ -79,6 +79,19 @@ TEST_CASE("io::image::save_image with RGBA tensor", "[io][image]") {
     std::filesystem::remove(filename);
 }
 
+TEST_CASE("io::image::save_image returns error for non-contiguous HWC tensor", "[io][image]") {
+    const std::string filename = "test_non_contiguous.png";
+    auto tensor = Tensor::zeros(
+                      make_shape(4, 4, 3),
+                      TensorOptions().dtype(Dtype::Uint8).stride(make_stride(16, 3, 1))
+    )
+                      .unwrap();
+
+    auto save_err = save_image(filename, tensor);
+    REQUIRE_THAT(save_err, p10::testing::is_error(P10Error::InvalidArgument));
+    REQUIRE_FALSE(std::filesystem::exists(filename));
+}
+
 TEST_CASE("io::image::load_image with non-existent file returns error", "[io][image]") {
     auto result = load_image("non_existent_image.png");
     REQUIRE(!result.is_ok());

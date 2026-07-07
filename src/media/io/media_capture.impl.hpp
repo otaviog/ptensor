@@ -4,6 +4,7 @@
 #include <ptensor/p10_result.hpp>
 
 #include "io/media_capture.hpp"
+#include "text_streams.hpp"
 
 namespace p10::media {
 class VideoFrame;
@@ -29,6 +30,10 @@ class MediaCapture::Impl {
     virtual P10Error get_video(VideoFrame& frame) = 0;
 
     virtual P10Error get_audio(AudioFrame& frame) = 0;
+
+    virtual P10Result<TextStreams> get_text_streams() const {
+        return Ok(TextStreams());
+    }
 
     virtual std::optional<double> duration() const = 0;
 

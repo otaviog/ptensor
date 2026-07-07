@@ -29,7 +29,7 @@ P10Error load_audio(const std::string& path, Tensor& tensor, int64_t& sample_rat
 
         for (size_t channel_idx = 0; channel_idx < num_channels; ++channel_idx) {
             auto channel_data = audio_file.samples[channel_idx];
-            auto tensor_row = tensor_s.row(channel_idx);
+            auto tensor_row = tensor_s[channel_idx];
             for (size_t s = 0; s < num_samples; ++s) {
                 tensor_row[s] = channel_data[s];
             }
@@ -48,8 +48,8 @@ P10Error save_audio(const std::string& path, const Tensor& tensor, int64_t sampl
             return P10Error::InvalidArgument << "Tensor must be 2D for audio saving.";
         }
 
-        size_t const num_samples = span.unwrap().width();
-        size_t const num_channels = span.unwrap().height();
+        size_t const num_samples = span.unwrap().cols();
+        size_t const num_channels = span.unwrap().rows();
 
         AudioFile<scalar_t> audio_file;
         audio_file.setNumChannels(static_cast<int>(num_channels));
@@ -58,7 +58,7 @@ P10Error save_audio(const std::string& path, const Tensor& tensor, int64_t sampl
 
         for (size_t channel_idx = 0; channel_idx < num_channels; ++channel_idx) {
             std::vector<scalar_t> channel_data(num_samples);
-            auto tensor_row = span.unwrap().row(channel_idx);
+            auto tensor_row = span.unwrap()[channel_idx];
             for (size_t s = 0; s < num_samples; ++s) {
                 channel_data[s] = tensor_row[s];
             }

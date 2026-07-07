@@ -1,151 +1,16 @@
 #include "tensor.hpp"
 
 #include <cstdint>
+#include <utility>
 
-#include <p10_internal/simd/compiler.hpp>
-#include <p10_internal/simd/cpuid.hpp>
-
-#if PTENSOR_HAS_INTRINSICS_H
-    #include <immintrin.h>
-#endif
+#include <p10_internal/simd/tile2d.hpp>
 
 #include "p10_error.hpp"
+#include "tensor.transpose.avx2.hpp"
+#include "tensor.transpose.neon.hpp"
+#include "tensor.transpose.portable.hpp"
 
 namespace p10 {
-namespace {
-
-    template<typename ScalarT>
-    void transpose_generic(
-        int64_t rows,
-        int64_t cols,
-        const ScalarT* src,
-        size_t src_stride,
-        ScalarT* dst,
-        size_t dst_stride
-    ) {
-        for (int i = 0; i < rows; ++i) {
-            for (int j = 0; j < cols; ++j) {
-                dst[(j * dst_stride) + i] = src[(i * src_stride) + j];
-            }
-        }
-    }
-
-    template<typename ScalarT>
-    void
-    transpose_8x8_generic(const ScalarT* src, size_t src_stride, ScalarT* dst, size_t dst_stride) {
-        for (int i = 0; i < 8; ++i) {
-            for (int j = 0; j < 8; ++j) {
-                dst[(j * dst_stride) + i] = src[(i * src_stride) + j];
-            }
-        }
-    }
-
-}  // namespace
-
-#if PTENSOR_HAS_INTRINSICS_H
-PTENSOR_AVX2 void
-transpose_avx2_8x8_32(int32_t const* src, size_t src_stride, int32_t* dst, size_t dst_stride) {
-    __m256i row0 = _mm256_loadu_si256((__m256i const*)src);
-    __m256i row1 = _mm256_loadu_si256((__m256i const*)(src + src_stride));
-    __m256i row2 = _mm256_loadu_si256((__m256i const*)(src + 2 * src_stride));
-    __m256i row3 = _mm256_loadu_si256((__m256i const*)(src + 3 * src_stride));
-    __m256i row4 = _mm256_loadu_si256((__m256i const*)(src + 4 * src_stride));
-    __m256i row5 = _mm256_loadu_si256((__m256i const*)(src + 5 * src_stride));
-    __m256i row6 = _mm256_loadu_si256((__m256i const*)(src + 6 * src_stride));
-    __m256i row7 = _mm256_loadu_si256((__m256i const*)(src + 7 * src_stride));
-    /* Starts with
-       r0 = 00 01 02 03 | 04 05 06 07
-       r1 = 08 09 10 11 | 12 13 14 15
-       r2 = 16 17 18 19 | 20 21 22 23
-       r3 = 24 25 26 27 | 28 29 30 31
-       r4 = 32 33 34 35 | 36 37 38 39
-       r5 = 40 41 42 43 | 44 45 46 47
-       r6 = 48 49 50 51 | 52 53 54 55
-       r7 = 56 57 58 59 | 60 61 62 63
-    */
-
-    __m256i t0a = _mm256_unpacklo_epi32(row0, row1);
-    __m256i t0b = _mm256_unpackhi_epi32(row0, row1);
-
-    __m256i t2a = _mm256_unpacklo_epi32(row2, row3);
-    __m256i t2b = _mm256_unpackhi_epi32(row2, row3);
-
-    __m256i t4a = _mm256_unpacklo_epi32(row4, row5);
-    __m256i t4b = _mm256_unpackhi_epi32(row4, row5);
-
-    __m256i t6a = _mm256_unpacklo_epi32(row6, row7);
-    __m256i t6b = _mm256_unpackhi_epi32(row6, row7);
-    /* Transposed the first 2x2 matrices
-       t0a = [00 08; 01 09] | [04 12; 05 13]
-       t0b = [02 10; 03 11] | [06 14; 07 15]
-
-       t2a = [16 24; 17 25] | [20 28; 21 29]
-       t2b = [18 26; 19 27] | [22 30; 23 31]
-        
-       t4a = [32 40; 33 41] | [36 44; 37 45]
-       t4b = [34 42; 35 43] | [38 46; 39 47]
-
-       t6a = [48 56; 49 57] | [52 60; 53 61]
-       t6b = [50 58; 51 59] | [54 62; 55 63]
-    */
-
-    __m256i s0 = _mm256_unpacklo_epi64(t0a, t2a);
-    __m256i s1 = _mm256_unpackhi_epi64(t0a, t2a);
-
-    __m256i s2 = _mm256_unpacklo_epi64(t0b, t2b);
-    __m256i s3 = _mm256_unpackhi_epi64(t0b, t2b);
-
-    __m256i s4 = _mm256_unpacklo_epi64(t4a, t6a);
-    __m256i s5 = _mm256_unpackhi_epi64(t4a, t6a);
-
-    __m256i s6 = _mm256_unpacklo_epi64(t4b, t6b);
-    __m256i s7 = _mm256_unpackhi_epi64(t4b, t6b);
-
-    /* Now unites the 4x4 blocks into 8x8 blocks
-       s0 = [00 08 16 24] | [04 12 20 28]
-       s1 = [01 09 17 25] | [05 13 21 29]
-
-       s2 = [02 10 18 26] | [06 14 22 30]
-       s3 = [03 11 19 27] | [07 15 23 31]
-
-       s4 = [32 40 48 56] | [36 44 52 60]
-       s5 = [33 41 49 57] | [37 45 53 61]
-
-       s6 = [34 42 50 58] | [38 46 54 62]
-       s7 = [35 43 51 59] | [39 47 55 63]
-    */
-
-    constexpr int PERMUTE_MASK_LOW_128bits = 0x20;
-    constexpr int PERMUTE_MASK_HIGH_128bits = 0x31;
-    __m256i row0t = _mm256_permute2f128_si256(s0, s4, PERMUTE_MASK_LOW_128bits);
-    __m256i row1t = _mm256_permute2f128_si256(s1, s5, PERMUTE_MASK_LOW_128bits);
-    __m256i row2t = _mm256_permute2f128_si256(s2, s6, PERMUTE_MASK_LOW_128bits);
-    __m256i row3t = _mm256_permute2f128_si256(s3, s7, PERMUTE_MASK_LOW_128bits);
-    __m256i row4t = _mm256_permute2f128_si256(s0, s4, PERMUTE_MASK_HIGH_128bits);
-    __m256i row5t = _mm256_permute2f128_si256(s1, s5, PERMUTE_MASK_HIGH_128bits);
-    __m256i row6t = _mm256_permute2f128_si256(s2, s6, PERMUTE_MASK_HIGH_128bits);
-    __m256i row7t = _mm256_permute2f128_si256(s3, s7, PERMUTE_MASK_HIGH_128bits);
-
-    _mm256_storeu_si256((__m256i*)(dst + 0 * dst_stride), row0t);
-    _mm256_storeu_si256((__m256i*)(dst + 1 * dst_stride), row1t);
-    _mm256_storeu_si256((__m256i*)(dst + 2 * dst_stride), row2t);
-    _mm256_storeu_si256((__m256i*)(dst + 3 * dst_stride), row3t);
-    _mm256_storeu_si256((__m256i*)(dst + 4 * dst_stride), row4t);
-    _mm256_storeu_si256((__m256i*)(dst + 5 * dst_stride), row5t);
-    _mm256_storeu_si256((__m256i*)(dst + 6 * dst_stride), row6t);
-    _mm256_storeu_si256((__m256i*)(dst + 7 * dst_stride), row7t);
-}
-#endif  // x86
-
-namespace {
-
-    template<size_t B>
-    constexpr size_t bitwise_modulo(size_t a) {
-        static_assert((B & (B - 1)) == 0, "B must be a power of two");
-        return a & (B - 1);
-    }
-
-}  // namespace
 
 P10Error Tensor::transpose(Tensor& other) const {
     if (blob_.device() != Device::Cpu) {
@@ -156,6 +21,15 @@ P10Error Tensor::transpose(Tensor& other) const {
         return P10Error::NotImplemented << "Transpose is only implemented for contiguous tensors";
     }
 
+    // Transposing into self would realloc this tensor's blob while the kernels
+    // still read its old storage. Route through a temporary, then move it back.
+    if (&other == this) {
+        Tensor result;
+        P10_RETURN_IF_ERROR(transpose(result));
+        other = std::move(result);
+        return P10Error::Ok;
+    }
+
     return visit([this, &other](auto type_span) -> P10Error {
         using ScalarT = std::remove_const_t<typename decltype(type_span)::element_type>;
 
@@ -164,79 +38,65 @@ P10Error Tensor::transpose(Tensor& other) const {
             return src_span_res.error();
         }
         auto src_span = src_span_res.unwrap();
-        P10_RETURN_IF_ERROR(other.create(make_shape(src_span.width(), src_span.height()), dtype()));
-        auto dest_span = other.as_span2d<ScalarT>().unwrap();
+        P10_RETURN_IF_ERROR(other.create(make_shape(src_span.cols(), src_span.rows()), dtype()));
+        auto dest_span_res = other.as_span2d<ScalarT>();
+        if (dest_span_res.is_error()) {
+            return dest_span_res.error();
+        }
+        auto dest_span = dest_span_res.unwrap();
 
-        const size_t rows = src_span.height();
-        const size_t cols = src_span.width();
+        const int64_t rows = src_span.rows();
+        const int64_t cols = src_span.cols();
 
-        const size_t src_stride = src_span.width();
-        const size_t dst_stride = dest_span.width();
+        const int64_t src_stride = src_span.cols();
+        const int64_t dst_stride = dest_span.cols();
 
-        constexpr size_t CACHE_BLOCK = 64;
         constexpr size_t SIMD_BLOCK = 8;
 
-        if (rows < CACHE_BLOCK || cols < CACHE_BLOCK) {
-            // Fallback to generic transpose for small tensors
-            transpose_generic(
+        // A src tile at (row, col) transposes into the dst tile at (col, row).
+        const auto src_block = [&](const Region2D& region) {
+            return &src_span[region.row][region.col];
+        };
+        const auto dst_block = [&](const Region2D& region) {
+            return &dest_span[region.col][region.row];
+        };
+
+        auto edge = make_transpose_border<ScalarT>(src_block, dst_block, src_stride, dst_stride);
+        auto portable = make_portable_transpose<SIMD_BLOCK, ScalarT>(
+            src_block,
+            dst_block,
+            src_stride,
+            dst_stride
+        );
+
+        // tile2d picks the first kernel the running CPU supports (via cpuid),
+        // otherwise the next, and the edge kernel always handles the borders.
+        // The SIMD 8x8 kernels move 32-bit lanes, so they also serve float32
+        // (the bit pattern is shuffled untouched); larger types fall to scalar.
+        // Transpose has no stencil halo, so the tile border is empty.
+        if constexpr (sizeof(ScalarT) == sizeof(int32_t)) {
+            simd::tile2d<ScalarT>(
                 rows,
                 cols,
-                src_span.row(0),
-                src_stride,
-                dest_span.row(0),
-                dst_stride
+                simd::TileBorder {},
+                edge,
+                make_avx2_transpose<SIMD_BLOCK, ScalarT>(
+                    src_block,
+                    dst_block,
+                    src_stride,
+                    dst_stride
+                ),
+                make_neon_transpose<SIMD_BLOCK, ScalarT>(
+                    src_block,
+                    dst_block,
+                    src_stride,
+                    dst_stride
+                ),
+                portable
             );
             return P10Error::Ok;
         }
-
-        const size_t aligned_max_rows = rows - bitwise_modulo<CACHE_BLOCK>(rows);
-        const size_t aligned_max_cols = cols - bitwise_modulo<CACHE_BLOCK>(cols);
-        [[maybe_unused]] const bool avx2_supported = simd::is_supported(simd::SimdSet::AVX2);
-
-        for (size_t block_row = 0; block_row < aligned_max_rows; block_row += CACHE_BLOCK) {
-            for (size_t block_col = 0; block_col < aligned_max_cols; block_col += CACHE_BLOCK) {
-                for (size_t simd_row = block_row; simd_row < block_row + CACHE_BLOCK;
-                     simd_row += SIMD_BLOCK) {
-                    const auto src_row = src_span.row(simd_row);
-
-                    for (size_t simd_col = block_col; simd_col < block_col + CACHE_BLOCK;
-                         simd_col += SIMD_BLOCK) {
-                        const ScalarT* src_block = &src_row[simd_col];
-                        ScalarT* dest_block = &dest_span.row(simd_col)[simd_row];
-
-#if PTENSOR_HAS_INTRINSICS_H
-                        if constexpr (sizeof(ScalarT) == sizeof(int32_t)) {
-                            if (avx2_supported) {
-                                transpose_avx2_8x8_32(
-                                    reinterpret_cast<const int32_t*>(src_block),
-                                    src_stride,
-                                    reinterpret_cast<int32_t*>(dest_block),
-                                    dst_stride
-                                );
-                                continue;
-                            }
-                        }
-#endif
-
-                        transpose_8x8_generic(src_block, src_stride, dest_block, dst_stride);
-                    }
-                }
-            }
-
-            for (size_t rr = block_row; rr < block_row + CACHE_BLOCK; rr++) {
-                const auto src_row = src_span.row(rr);
-                for (size_t c = aligned_max_cols; c < cols; c++) {
-                    dest_span.row(c)[rr] = src_row[c];
-                }
-            }
-        }
-
-        for (size_t r = aligned_max_rows; r < rows; r++) {
-            const auto src_row = src_span.row(r);
-            for (size_t c = 0; c < cols; c++) {
-                dest_span.row(c)[r] = src_row[c];
-            }
-        }
+        simd::tile2d<ScalarT>(rows, cols, simd::TileBorder {}, edge, portable);
         return P10Error::Ok;
     });
 }

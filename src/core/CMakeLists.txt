@@ -4,12 +4,14 @@ add_library(ptensor STATIC)
 ##
 # Public Headers
 set(PUBLIC_HEADERS
+  ${_INCLUDE_DIR}/initialize.hpp
   ${_INCLUDE_DIR}/p10_error.hpp
   ${_INCLUDE_DIR}/p10_result.hpp
   ${_INCLUDE_DIR}/device.hpp
   ${_INCLUDE_DIR}/dtype.hpp
   ${_INCLUDE_DIR}/shape.hpp
   ${_INCLUDE_DIR}/stride.hpp
+  ${_INCLUDE_DIR}/region2d.hpp
   ${_INCLUDE_DIR}/accessor1d.hpp
   ${_INCLUDE_DIR}/accessor2d.hpp
   ${_INCLUDE_DIR}/accessor3d.hpp
@@ -20,6 +22,9 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/tensor.hpp
   ${_INCLUDE_DIR}/tensor_options.hpp
   ${_INCLUDE_DIR}/tensor_print.hpp
+  ${_INCLUDE_DIR}/map/opencv2.hpp
+  ${_INCLUDE_DIR}/map/eigen.hpp
+  ${_INCLUDE_DIR}/map/rerun.hpp
   ${_INCLUDE_DIR}/detail/blob.hpp
   ${_INCLUDE_DIR}/detail/string.hpp
   ${_INCLUDE_DIR}/detail/panic.hpp
@@ -38,11 +43,14 @@ set_source_files_properties(${PUBLIC_HEADERS} PROPERTIES VS_FOLDER "Public Heade
 ##
 # Source to public headers
 target_sources(ptensor
-    PRIVATE
+  PRIVATE
+    initialize.cpp
     p10_error.cpp
     stride.cpp
     tensor.cpp
     tensor.transpose.cpp
+    tensor.transpose.avx2.hpp
+    tensor.transpose.neon.hpp
     tensor_print.cpp
     detail/blob.cpp
     dtype.cpp
@@ -83,6 +91,7 @@ endif()
 
 if(BUILD_TESTS)
   add_subdirectory(tests)
+  add_subdirectory(benchmarks)
 endif()
 
 #### Installation

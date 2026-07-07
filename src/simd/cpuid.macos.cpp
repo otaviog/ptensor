@@ -2,26 +2,25 @@
     #include <cpuid.h>
 #endif
 
-#include <sys/sysctl.h>
-
 #include <p10_internal/simd/cpuid.hpp>
+#include <sys/sysctl.h>
 
 namespace p10::simd {
 
 namespace {
-size_t sysctl_size(const char* name) {
-    size_t value = 0;
-    size_t len = sizeof(value);
-    sysctlbyname(name, &value, &len, nullptr, 0);
-    return value;
-}
+    size_t sysctl_size(const char* name) {
+        size_t value = 0;
+        size_t len = sizeof(value);
+        sysctlbyname(name, &value, &len, nullptr, 0);
+        return value;
+    }
 
-bool sysctl_bool(const char* name) {
-    int value = 0;
-    size_t len = sizeof(value);
-    sysctlbyname(name, &value, &len, nullptr, 0);
-    return value != 0;
-}
+    bool sysctl_bool(const char* name) {
+        int value = 0;
+        size_t len = sizeof(value);
+        sysctlbyname(name, &value, &len, nullptr, 0);
+        return value != 0;
+    }
 }  // namespace
 
 bool is_supported(SimdSet set) {
@@ -38,9 +37,14 @@ bool is_supported(SimdSet set) {
         false;
 #endif
     switch (set) {
-    case SimdSet::AVX2: return AVX2;
-    case SimdSet::WASM: return false;
-    case SimdSet::AdvSIMD: return ADV_SIMD;
+        case SimdSet::AVX2:
+            return AVX2;
+        case SimdSet::WASM:
+            return false;
+        case SimdSet::AdvSIMD:
+            return ADV_SIMD;
+        case SimdSet::NONE:
+            return true;
     }
     return false;
 }

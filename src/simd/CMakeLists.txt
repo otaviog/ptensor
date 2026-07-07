@@ -20,6 +20,8 @@ target_sources(ptensor_simd_
         ${_INCLUDE_DIR}/bitwise_math.hpp
         ${_INCLUDE_DIR}/compiler.hpp
         ${_INCLUDE_DIR}/cpuid.hpp
+        ${_INCLUDE_DIR}/tile1d.hpp
+        ${_INCLUDE_DIR}/tile2d.hpp
     PRIVATE
         ${_CPUID_IMPL}
 )
@@ -29,6 +31,13 @@ target_include_directories(ptensor_simd_ PUBLIC
 )
 
 ptensor_target_options(ptensor_simd_ "Core")
+
+# PUBLIC so the OpenMP flag reaches every TU that compiles the tile2d pragma,
+# including consumers that link this lib PRIVATE (the flag is a build-time usage
+# requirement, applied to their own compilation).
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(ptensor_simd_ PUBLIC OpenMP::OpenMP_CXX)
+endif()
 
 if (BUILD_TESTS)
     add_subdirectory(tests)

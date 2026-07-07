@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <utility>
+
 #include <ptensor/ptensor_error.h>
 
 #include "detail/panic.hpp"
@@ -64,7 +65,7 @@ class P10Error {
     }
 
     template<typename F>
-    P10Error& map_error(F &&func) {
+    P10Error& map_error(F&& func) {
         if (is_error()) {
             std::forward<F>(func)(*this);
         }

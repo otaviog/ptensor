@@ -10,6 +10,7 @@
 namespace p10::media {
 class VideoFrame;
 class AudioFrame;
+class Text;
 
 /// Media file writer for video and audio.
 class MediaWriter {
@@ -29,6 +30,12 @@ class MediaWriter {
 
     /// Write an audio frame.
     P10Error write_audio(const AudioFrame& frame);
+
+    /// Write a text entry to the text stream at `stream_index`.
+    ///
+    /// The text streams must have been declared via MediaParameters before
+    /// open_file(); `stream_index` selects among them in declaration order.
+    P10Error write_text(size_t stream_index, const Text& text);
 
   private:
     explicit MediaWriter(std::shared_ptr<Impl> impl) : impl_(std::move(impl)) {}

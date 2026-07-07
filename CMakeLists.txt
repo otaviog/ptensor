@@ -18,6 +18,27 @@ include(GNUInstallDirs)
 include("./cmake/export_compile_commands.cmake")
 include("./cmake/ptensor_target_options.cmake")
 
+# OpenMP powers TileExecution::PARALLEL in the simd tiler. Apple clang does not
+# ship an OpenMP runtime, so point FindOpenMP at brew's libomp before probing.
+if(APPLE AND NOT DEFINED OpenMP_CXX_FLAGS)
+    execute_process(
+        COMMAND brew --prefix libomp
+        OUTPUT_VARIABLE LIBOMP_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+    if(LIBOMP_PREFIX AND EXISTS "${LIBOMP_PREFIX}/lib/libomp.dylib")
+        set(OpenMP_CXX_FLAGS "-Xclang -fopenmp -I${LIBOMP_PREFIX}/include")
+        set(OpenMP_CXX_LIB_NAMES "omp")
+        set(OpenMP_omp_LIBRARY "${LIBOMP_PREFIX}/lib/libomp.dylib")
+    endif()
+endif()
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    message(STATUS "OpenMP enabled for parallel tiling")
+else()
+    message(STATUS "OpenMP not found; TileExecution::PARALLEL runs sequentially")
+endif()
+
 set(BUILD_TESTS OFF CACHE BOOL "Build tests")
 if(BUILD_TESTS)
     find_package(Catch2 CONFIG REQUIRED)

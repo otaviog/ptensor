@@ -2,8 +2,8 @@
 
 #include <ptensor/p10_error.hpp>
 
-#include "image_texture.hpp"
 #include "../texture_stager.hpp"
+#include "image_texture.hpp"
 
 namespace p10 {
 class Tensor;
@@ -12,7 +12,7 @@ class Tensor;
 namespace p10::viz {
 
 struct ImageTextureMetalContext {
-    void* device;         // id<MTLDevice> — not retained here, owned by GuiApp::Impl
+    void* device;  // id<MTLDevice> — not retained here, owned by GuiApp::Impl
     void* command_queue;  // id<MTLCommandQueue> — not retained here, owned by GuiApp::Impl
 };
 

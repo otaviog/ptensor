@@ -9,6 +9,13 @@ target_sources(unit_tests_all PRIVATE
 
 target_link_libraries(unit_tests_all PRIVATE Catch2::Catch2WithMain ptensor_log)
 
+# unit_tests_core objects may reference OpenCV symbols (map adapter tests);
+# object libraries do not propagate their link deps through TARGET_OBJECTS.
+find_package(OpenCV CONFIG QUIET)
+if(OpenCV_FOUND)
+    target_link_libraries(unit_tests_all PRIVATE ${OpenCV_LIBS})
+endif()
+
 if (WITH_IO)
     target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_io>)
     target_link_libraries(unit_tests_all PRIVATE ptensor_io)

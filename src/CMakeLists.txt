@@ -85,7 +85,12 @@ target_include_directories(ptensor_shared PUBLIC
 )
 
 if(APPLE)
+    # Build with the install rpath directly so the install step performs no rpath
+    # rewrite (that rewrite is not idempotent and errors on incremental installs).
+    # Executables linking ptensor carry the onnxruntime rpath themselves, so the
+    # @rpath/libonnxruntime dependency still resolves in the build tree.
     set_target_properties(ptensor_shared PROPERTIES
+        BUILD_WITH_INSTALL_RPATH TRUE
         INSTALL_RPATH "@loader_path")
 endif()
 

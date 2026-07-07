@@ -336,6 +336,22 @@ P10Result<Tensor> Tensor::as_reshape(const Shape& new_shape) const {
     return Ok(Tensor(blob_.view(), new_shape, options().stride(new_stride)));
 }
 
+P10Result<Tensor> Tensor::ravel() const {
+    const Shape flat = make_shape(shape().count());
+
+    // A flat view only preserves element order when the data is contiguous.
+    if (is_contiguous()) {
+        return as_reshape(flat);
+    }
+
+    // Otherwise fall back to a contiguous copy, which can always be flattened.
+    auto contiguous = to_contiguous();
+    if (contiguous.is_error()) {
+        return contiguous;
+    }
+    return contiguous.unwrap().as_reshape(flat);
+}
+
 P10Error Tensor::fill(double value) {
     if (device() != Device::Cpu) {
         return P10Error::NotImplemented << "Fill is only implemented for CPU tensors";

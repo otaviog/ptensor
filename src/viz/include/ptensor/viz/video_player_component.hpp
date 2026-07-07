@@ -20,7 +20,7 @@ struct ToComponentSpace {
     ImVec2 operator()(int x, int y) const {
         return {
             pos.x + (x / frame_size.x) * component_size.x,
-                pos.y + (y / frame_size.y) * component_size.y,
+            pos.y + (y / frame_size.y) * component_size.y,
         };
     }
 };

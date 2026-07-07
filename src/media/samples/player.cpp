@@ -14,11 +14,11 @@
 namespace {
 
 struct PlayerCli {
-    std::optional<std::string> file; ///< Path to media file (mutually exclusive with use_device).
-    bool use_device = false;         ///< Capture from a live device instead of a file.
-    int video_index = 0;             ///< Device index for video capture.
-    int audio_index = -1;            ///< Device index for audio capture (-1 = none).
-    bool list_devices = false;       ///< Print available devices and exit.
+    std::optional<std::string> file;  ///< Path to media file (mutually exclusive with use_device).
+    bool use_device = false;  ///< Capture from a live device instead of a file.
+    int video_index = 0;  ///< Device index for video capture.
+    int audio_index = -1;  ///< Device index for audio capture (-1 = none).
+    bool list_devices = false;  ///< Print available devices and exit.
 };
 
 PlayerCli parse_args(int argc, char** argv);

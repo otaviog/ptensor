@@ -29,6 +29,8 @@ add_library(ptensor_media STATIC)
 set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/video_frame.hpp
   ${_INCLUDE_DIR}/audio_frame.hpp
+  ${_INCLUDE_DIR}/text.hpp
+  ${_INCLUDE_DIR}/text_streams.hpp
   ${_INCLUDE_DIR}/time/time.hpp
   ${_INCLUDE_DIR}/time/rational.hpp
   ${_INCLUDE_DIR}/io/media_capture.hpp
@@ -37,6 +39,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/media_parameters.hpp
   ${_INCLUDE_DIR}/audio_parameters.hpp
   ${_INCLUDE_DIR}/video_parameters.hpp
+  ${_INCLUDE_DIR}/text_parameters.hpp
 )
 
 target_sources(ptensor_media
@@ -49,11 +52,13 @@ target_sources(ptensor_media
     time/time.cpp
     io/media_device.cpp
     io/media_capture.cpp
+    io/text_streams.cpp
     # Common writer
     io/media_writer.impl.hpp
     io/media_writer.cpp
     # FFMPEG utils
     io/ffmpeg/ffmpeg_memory.hpp
+    io/ffmpeg/ffmpeg_init.hpp io/ffmpeg/ffmpeg_init.cpp
     # FFMPEG data and processing
     io/ffmpeg/ffmpeg_audio_fifo.hpp io/ffmpeg/ffmpeg_audio_fifo.cpp
     io/ffmpeg/ffmpeg_sws.hpp io/ffmpeg/ffmpeg_sws.cpp
@@ -64,10 +69,12 @@ target_sources(ptensor_media
     io/ffmpeg/ffmpeg_device_media_capture.hpp io/ffmpeg/ffmpeg_device_media_capture.cpp
     io/ffmpeg/ffmpeg_device_enum.cpp
     io/ffmpeg/ffmpeg_video_decoder.hpp io/ffmpeg/ffmpeg_video_decoder.cpp
+    io/ffmpeg/ffmpeg_text_decoder.hpp io/ffmpeg/ffmpeg_text_decoder.cpp
     # FFMPEG writer
     io/ffmpeg/ffmpeg_media_writer.hpp io/ffmpeg/ffmpeg_media_writer.cpp
     io/ffmpeg/ffmpeg_video_encoder.hpp io/ffmpeg/ffmpeg_video_encoder.cpp
     io/ffmpeg/ffmpeg_audio_encoder.hpp io/ffmpeg/ffmpeg_audio_encoder.cpp
+    io/ffmpeg/ffmpeg_text_encoder.hpp io/ffmpeg/ffmpeg_text_encoder.cpp
 )
 
 target_include_directories(ptensor_media

@@ -33,8 +33,10 @@ set_source_files_properties(${PUBLIC_HEADERS} PROPERTIES VS_FOLDER "Public Heade
 # Source to public headers
 target_sources(ptensor_op
     PRIVATE
-    accumulator_traits.hpp
     blur.cpp
+    blur.hblur.hpp
+    blur.hblur.avx2.hpp
+    blur.hblur.neon.hpp
     crop.cpp
     elemwise.cpp
     tensor_scalar.cpp

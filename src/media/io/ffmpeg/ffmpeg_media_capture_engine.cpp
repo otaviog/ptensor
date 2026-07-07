@@ -4,12 +4,14 @@
 #include <memory>
 
 #include "ffmpeg_audio_decoder.hpp"
+#include "ffmpeg_init.hpp"
 #include "ffmpeg_memory.hpp"
 #include "ffmpeg_video_decoder.hpp"
 #include "ffmpeg_wrap_error.hpp"
 #include "media_parameters.hpp"
 
 extern "C" {
+#include <libavcodec/avcodec.h>
 #include <libavcodec/packet.h>
 #include <libavformat/avformat.h>
 }
@@ -43,6 +45,10 @@ MediaParameters FfmpegMediaCaptureEngine::get_parameters() const {
     }
     // TODO: Get audio parameters
     // params.audio_parameters(audio_decoder_->get_audio_parameters());
+
+    for (const auto& text_params : text_decoder_.describe(format_ctx_)) {
+        params.add_text_stream(text_params);
+    }
     return params;
 }
 
@@ -85,6 +91,17 @@ P10Error FfmpegMediaCaptureEngine::get_audio(AudioFrame& /*frame*/) {
     return P10Error::NotImplemented;
 }
 
+P10Result<TextStreams> FfmpegMediaCaptureEngine::get_text_streams() const {
+    return text_decoder_.get_text_streams();
+}
+
+void FfmpegMediaCaptureEngine::set_text_source(
+    std::string url,
+    std::vector<int> text_stream_indices
+) {
+    text_decoder_.set_source(std::move(url), std::move(text_stream_indices));
+}
+
 void FfmpegMediaCaptureEngine::start_decoding_thread() {
     if (status_ == CaptureStatus::Stopped && is_open()) {
         if (decode_thread_.joinable()) {
@@ -100,6 +117,8 @@ P10Result<FfmpegMediaCaptureEngine::OpenResult> FfmpegMediaCaptureEngine::open_f
     const AVInputFormat* fmt,
     AVDictionary** options
 ) {
+    ffmpeg_init();
+
     AVFormatContext* format_ctx = nullptr;
     const P10Error open_error =
         wrap_ffmpeg_error(avformat_open_input(&format_ctx, url.c_str(), fmt, options));
@@ -146,6 +165,12 @@ P10Result<FfmpegMediaCaptureEngine::OpenResult> FfmpegMediaCaptureEngine::open_f
 
         result.audio_decoder =
             std::make_shared<FfmpegAudioDecoder>(audio_codec_ctx, audio_stream_idx);
+    }
+
+    for (unsigned int stream_idx = 0; stream_idx < format_ctx->nb_streams; ++stream_idx) {
+        if (format_ctx->streams[stream_idx]->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+            result.text_stream_indices.push_back(static_cast<int>(stream_idx));
+        }
     }
 
     return Ok(std::move(result));

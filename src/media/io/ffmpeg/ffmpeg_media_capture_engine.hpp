@@ -4,10 +4,14 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 #include "../media_capture.impl.hpp"
+#include "ffmpeg_text_decoder.hpp"
+#include "text_streams.hpp"
 #include "video_frame.hpp"
 
 extern "C" {
@@ -50,6 +54,8 @@ class FfmpegMediaCaptureEngine: public MediaCapture::Impl {
 
     P10Error get_audio(AudioFrame& frame) override;
 
+    P10Result<TextStreams> get_text_streams() const override;
+
     bool is_open() const {
         return format_ctx_ != nullptr;
     }
@@ -72,10 +78,16 @@ class FfmpegMediaCaptureEngine: public MediaCapture::Impl {
         AVFormatContext* format_ctx = nullptr;
         std::shared_ptr<FfmpegAudioDecoder> audio_decoder;
         std::shared_ptr<FfmpegVideoDecoder> video_decoder;
+        std::vector<int> text_stream_indices;
     };
 
     static P10Result<OpenResult>
     open_format(const std::string& url, const AVInputFormat* fmt, AVDictionary** options);
+
+    /// Register a re-openable source for lazy text-cue scanning. `url` must be a
+    /// seekable file (live devices carry no text and should not call this).
+    /// Scanning is deferred to the first get_text() so the open path stays cheap.
+    void set_text_source(std::string url, std::vector<int> text_stream_indices);
 
     void start_decoding_thread();
 
@@ -109,6 +121,9 @@ class FfmpegMediaCaptureEngine: public MediaCapture::Impl {
     VideoQueue video_queue_ {30};
     std::optional<VideoFrame> current_frame_;
     P10Error last_error_;
+
+    // Subtitle/text streams, discovered at open and decoded on demand.
+    FfmpegTextDecoder text_decoder_;
 };
 
 }  // namespace p10::media

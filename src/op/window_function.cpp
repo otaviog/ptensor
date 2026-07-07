@@ -26,12 +26,12 @@ P10Error WindowFunction::transform(const Tensor& input, Tensor& output) {
         auto output_span = output.as_span2d<scalar_t>().unwrap();
         auto window_span = window_->as_span1d<scalar_t>().unwrap();
 
-        const auto num_signals = input_span.height();
-        const auto num_samples = input_span.width();
+        const auto num_signals = input_span.rows();
+        const auto num_samples = input_span.cols();
 
-        for (size_t signal_idx = 0; signal_idx < num_signals; ++signal_idx) {
-            auto out_row = output_span.row(signal_idx);
-            const auto in_row = input_span.row(signal_idx);
+        for (int64_t signal_idx = 0; signal_idx < num_signals; ++signal_idx) {
+            auto out_row = output_span[signal_idx].data();
+            const auto in_row = input_span[signal_idx].data();
             std::transform(
                 in_row,
                 in_row + num_samples,
@@ -64,12 +64,12 @@ WindowFunction::transform_borders(const Tensor& input, Tensor& output, size_t bo
         auto output_span = output.as_span2d<scalar_t>().unwrap();
         auto window_span = window_->as_span1d<scalar_t>().unwrap();
 
-        const auto num_signals = input_span.height();
-        const auto num_samples = input_span.width();
+        const auto num_signals = input_span.rows();
+        const auto num_samples = input_span.cols();
 
-        for (size_t signal_idx = 0; signal_idx < num_signals; ++signal_idx) {
-            auto out_row = output_span.row(signal_idx);
-            const auto in_row = input_span.row(signal_idx);
+        for (int64_t signal_idx = 0; signal_idx < num_signals; ++signal_idx) {
+            auto out_row = output_span[signal_idx].data();
+            const auto in_row = input_span[signal_idx].data();
 
             // Center part
             std::ranges::copy(

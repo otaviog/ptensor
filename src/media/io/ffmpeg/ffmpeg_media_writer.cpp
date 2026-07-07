@@ -3,6 +3,7 @@
 #include <ptensor/p10_error.hpp>
 
 #include "ffmpeg_audio_encoder.hpp"
+#include "ffmpeg_init.hpp"
 #include "ffmpeg_wrap_error.hpp"
 
 extern "C" {
@@ -14,6 +15,7 @@ extern "C" {
 
 #include "../logging.hpp"
 #include "audio_frame.hpp"
+#include "text.hpp"
 #include "video_frame.hpp"
 
 namespace p10::media {
@@ -22,12 +24,14 @@ FfmpegMediaWriter::FfmpegMediaWriter(
     AVFormatContext* format_context,
     MediaParameters params,
     std::unique_ptr<FfmpegVideoEncoder> video_encoder,
-    std::unique_ptr<FfmpegAudioEncoder> audio_encoder
+    std::unique_ptr<FfmpegAudioEncoder> audio_encoder,
+    std::vector<std::unique_ptr<FfmpegTextEncoder>> text_encoders
 ) :
     format_context_(format_context),
     params_(std::move(params)),
     video_encoder_(std::move(video_encoder)),
-    audio_encoder_(std::move(audio_encoder)) {}
+    audio_encoder_(std::move(audio_encoder)),
+    text_encoders_(std::move(text_encoders)) {}
 
 FfmpegMediaWriter::~FfmpegMediaWriter() {
     try {
@@ -39,32 +43,52 @@ FfmpegMediaWriter::~FfmpegMediaWriter() {
 
 P10Result<std::shared_ptr<FfmpegMediaWriter>>
 FfmpegMediaWriter::create(const std::string& path, const MediaParameters& params) {
+    ffmpeg_init();
+
     AVFormatContext* format_ctx = nullptr;
     // Allocate output format context
     P10_RETURN_ERR_IF_ERROR(wrap_ffmpeg_error(
         avformat_alloc_output_context2(&format_ctx, nullptr, nullptr, path.c_str())
     ));
 
-    // Video encoder part
+    // Video encoder part. Skipped when no frame size is configured so that
+    // text-only outputs (e.g. metadata sidecars) can be produced.
     const auto& video_params = params.video_parameters();
-    auto video_encoder = std::make_unique<FfmpegVideoEncoder>();
-    P10Error error = video_encoder->create(video_params, format_ctx);
-    if (error.is_error()) {
-        avformat_free_context(format_ctx);
-        format_ctx = nullptr;
-        return Err(error);
+    std::unique_ptr<FfmpegVideoEncoder> video_encoder;
+    if (video_params.width() > 0 && video_params.height() > 0) {
+        video_encoder = std::make_unique<FfmpegVideoEncoder>();
+        P10Error error = video_encoder->create(video_params, format_ctx);
+        if (error.is_error()) {
+            avformat_free_context(format_ctx);
+            format_ctx = nullptr;
+            return Err(error);
+        }
     }
 
     // TODO: audio encoder not yet wired up
     std::unique_ptr<FfmpegAudioEncoder> audio_encoder = nullptr;
 
+    // Text streams must be declared before the header is written.
+    std::vector<std::unique_ptr<FfmpegTextEncoder>> text_encoders;
+    for (const auto& text_params : params.text_parameters()) {
+        auto text_encoder = std::make_unique<FfmpegTextEncoder>();
+        P10Error error = text_encoder->create(text_params, format_ctx);
+        if (error.is_error()) {
+            avformat_free_context(format_ctx);
+            format_ctx = nullptr;
+            return Err(error);
+        }
+        text_encoders.push_back(std::move(text_encoder));
+    }
+
     // Open output file
+    P10Error error;
     if ((format_ctx->oformat->flags & AVFMT_NOFILE) == 0) {
         error = wrap_ffmpeg_error(avio_open(&format_ctx->pb, path.c_str(), AVIO_FLAG_WRITE));
         if (error.is_error()) {
             avformat_free_context(format_ctx);
             format_ctx = nullptr;
-            return Err(wrap_ffmpeg_error(error));
+            return Err(error);
         }
     }
 
@@ -76,14 +100,15 @@ FfmpegMediaWriter::create(const std::string& path, const MediaParameters& params
         }
         avformat_free_context(format_ctx);
         format_ctx = nullptr;
-        return Err(wrap_ffmpeg_error(error));
+        return Err(error);
     }
 
     auto writer = std::shared_ptr<FfmpegMediaWriter>(new FfmpegMediaWriter(
         format_ctx,
         params,
         std::move(video_encoder),
-        std::move(audio_encoder)
+        std::move(audio_encoder),
+        std::move(text_encoders)
     ));
     writer->header_written_ = true;
     return Ok(std::move(writer));
@@ -250,6 +275,27 @@ P10Error FfmpegMediaWriter::write_audio(const AudioFrame& frame) {
         }
     }
 
+    return P10Error::Ok;
+}
+
+P10Error FfmpegMediaWriter::write_text(size_t stream_index, const Text& text) {
+    if (format_context_ == nullptr) {
+        return P10Error::InvalidOperation << "Writer is closed";
+    }
+    if (stream_index >= text_encoders_.size()) {
+        return P10Error::InvalidArgument << "No text stream at the given index";
+    }
+
+    auto packet_result = text_encoders_[stream_index]->encode(text);
+    if (packet_result.is_error()) {
+        return packet_result.error();
+    }
+    UniqueAvPacket pkt = packet_result.unwrap();
+
+    int const ret = av_interleaved_write_frame(format_context_, pkt.get());
+    if (ret < 0) {
+        return wrap_ffmpeg_error(ret, "Failed to write text packet");
+    }
     return P10Error::Ok;
 }
 

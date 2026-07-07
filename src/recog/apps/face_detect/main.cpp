@@ -47,10 +47,12 @@ bool is_video(const std::string& path);
 P10Error run_on_video(IFaceDetector& detector, const std::string& path);
 P10Error run_on_video_gui(IFaceDetector& detector, const std::string& path);
 
-class FaceDetectApp : public p10::viz::GuiApp {
+class FaceDetectApp: public p10::viz::GuiApp {
   public:
     FaceDetectApp(MediaCapture capture, IFaceDetector& detector, std::string title) :
-        player_(std::move(capture), *this), detector_(detector), title_(std::move(title)) {}
+        player_(std::move(capture), *this),
+        detector_(detector),
+        title_(std::move(title)) {}
 
   protected:
     void on_initialize() override {
@@ -70,7 +72,12 @@ class FaceDetectApp : public p10::viz::GuiApp {
         frame_w_ = static_cast<int>(frame.width());
         frame_h_ = static_cast<int>(frame.height());
         Tensor nchw;
-        if (op::image_to_tensor(frame.image(), nchw, op::ImageToTensorOptions().target_dtype(Dtype::Uint8).unsqueeze(true)).is_error()) {
+        if (op::image_to_tensor(
+                frame.image(),
+                nchw,
+                op::ImageToTensorOptions().target_dtype(Dtype::Uint8).unsqueeze(true)
+            )
+                .is_error()) {
             return;
         }
         std::array<FaceDetection, 1> dets;
@@ -79,7 +86,7 @@ class FaceDetectApp : public p10::viz::GuiApp {
             return;
         }
         std::cout << "===============\n";
-        for (const auto &det : dets) {
+        for (const auto& det : dets) {
             std::cout << p10::recog::to_string(det);
         }
         current_dets_ = dets[0];
@@ -96,9 +103,8 @@ class FaceDetectApp : public p10::viz::GuiApp {
             draw_list->AddText({tl.x + 2, tl.y + 2}, IM_COL32(0, 255, 0, 255), label.c_str());
             if (i < current_dets_.landmarks.size()) {
                 for (const auto& pt : current_dets_.landmarks[i]) {
-                    draw_list->AddCircleFilled(
-                        to_screen(pt.x, pt.y), 3.0f, IM_COL32(255, 80, 80, 255)
-                    );
+                    draw_list
+                        ->AddCircleFilled(to_screen(pt.x, pt.y), 3.0f, IM_COL32(255, 80, 80, 255));
                 }
             }
         }

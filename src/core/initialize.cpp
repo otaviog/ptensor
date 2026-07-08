@@ -2,7 +2,7 @@
 
 namespace p10 {
 namespace {
-std::string g_log_directory = "./ptensor-logs";
+    std::string g_log_directory = "./ptensor-logs";
 }
 
 std::string get_log_directory() {

@@ -134,11 +134,13 @@ namespace {
             if (ioctl(fd_, VIDIOC_QUERYCTRL, &query) < 0) {
                 return Err(errno_error("Failed to query camera control range"));
             }
-            return Ok(CameraControlRange {}
-                          .min(query.minimum)
-                          .max(query.maximum)
-                          .step(query.step)
-                          .default_value(query.default_value));
+            return Ok(
+                CameraControlRange {}
+                    .min(query.minimum)
+                    .max(query.maximum)
+                    .step(query.step)
+                    .default_value(query.default_value)
+            );
         }
 
         int fd_ = -1;

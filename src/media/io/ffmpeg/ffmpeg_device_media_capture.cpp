@@ -100,8 +100,8 @@ P10Error FfmpegDeviceMediaCapture::set_camera_control(CameraControlId id, int va
     return camera_controls_->set(id, value);
 }
 
-P10Result<CameraControlRange> FfmpegDeviceMediaCapture::get_camera_control_range(CameraControlId id
-) const {
+P10Result<CameraControlRange>
+FfmpegDeviceMediaCapture::get_camera_control_range(CameraControlId id) const {
     if (!camera_controls_) {
         return Err(
             P10Error::NotImplemented << "Camera controls not supported on this platform/device"

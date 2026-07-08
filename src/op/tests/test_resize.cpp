@@ -58,13 +58,8 @@ TEST_CASE("Tensorop: Resize", "[tensorop][resize][integration]") {
         // Nearest-neighbor at a 1:1 ratio maps every output pixel to the same
         // source pixel, so the result is bit-identical to the input.
         Tensor resized_tensor;
-        REQUIRE(
-            resize(sample_tensor, resized_tensor, source_width, source_height).is_ok()
-        );
-        REQUIRE_THAT(
-            testing::compare_tensors(sample_tensor, resized_tensor),
-            testing::is_ok()
-        );
+        REQUIRE(resize(sample_tensor, resized_tensor, source_width, source_height).is_ok());
+        REQUIRE_THAT(testing::compare_tensors(sample_tensor, resized_tensor), testing::is_ok());
     }
 
     SECTION("Resizing a constant image keeps the constant") {
@@ -76,10 +71,7 @@ TEST_CASE("Tensorop: Resize", "[tensorop][resize][integration]") {
         REQUIRE(resized_tensor.shape() == make_shape(3, 48, 64));
 
         const auto expected = Tensor::full(make_shape(3, 48, 64), 0.5).unwrap();
-        REQUIRE_THAT(
-            testing::compare_tensors(expected, resized_tensor),
-            testing::is_ok()
-        );
+        REQUIRE_THAT(testing::compare_tensors(expected, resized_tensor), testing::is_ok());
     }
 }
 

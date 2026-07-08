@@ -138,8 +138,7 @@ TEST_CASE("media::text stream write/read roundtrip", "[media][text]") {
         MediaParameters params;
         params.add_text_stream(TextParameters().language("eng"));
 
-        auto result =
-            MediaWriter::open_file((output_dir / "text_roundtrip.mp4").string(), params);
+        auto result = MediaWriter::open_file((output_dir / "text_roundtrip.mp4").string(), params);
         REQUIRE_THAT(result, testing::is_error(P10Error::InvalidArgument));
     }
 

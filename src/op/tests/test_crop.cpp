@@ -36,13 +36,8 @@ TEST_CASE("Op: Crop image", "[tensorop][crop][integration]") {
     SECTION("Cropping the whole image is an exact copy") {
         // A full-extent crop copies every pixel unchanged.
         Tensor cropped_tensor;
-        REQUIRE(
-            op::crop(sample_tensor, 0, 0, source_width, source_height, cropped_tensor).is_ok()
-        );
-        REQUIRE_THAT(
-            testing::compare_tensors(sample_tensor, cropped_tensor),
-            testing::is_ok()
-        );
+        REQUIRE(op::crop(sample_tensor, 0, 0, source_width, source_height, cropped_tensor).is_ok());
+        REQUIRE_THAT(testing::compare_tensors(sample_tensor, cropped_tensor), testing::is_ok());
     }
 
     SECTION("Should fail with invalid crop parameters") {

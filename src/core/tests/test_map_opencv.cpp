@@ -5,28 +5,29 @@
 #include <ptensor/testing/catch2_assertions.hpp>
 
 namespace p10 {
-
-TEST_CASE("core::map::opencv depth conversion round trips", "[map][opencv]") {
-    auto dtype = GENERATE(
-        Dtype(Dtype::Uint8),
-        Dtype(Dtype::Int8),
-        Dtype(Dtype::Uint16),
-        Dtype(Dtype::Int16),
-        Dtype(Dtype::Int32),
-        Dtype(Dtype::Float32),
-        Dtype(Dtype::Float64)
-    );
-    DYNAMIC_SECTION("Testing with dtype " << to_string(dtype.value)) {
-        auto depth = to_opencv_depth(dtype).unwrap();
-        REQUIRE(from_opencv_depth(depth).unwrap() == dtype);
+namespace detail {
+    TEST_CASE("core::map::opencv depth conversion round trips", "[map][opencv]") {
+        auto dtype = GENERATE(
+            Dtype(Dtype::Uint8),
+            Dtype(Dtype::Int8),
+            Dtype(Dtype::Uint16),
+            Dtype(Dtype::Int16),
+            Dtype(Dtype::Int32),
+            Dtype(Dtype::Float32),
+            Dtype(Dtype::Float64)
+        );
+        DYNAMIC_SECTION("Testing with dtype " << to_string(dtype.value)) {
+            auto depth = to_opencv_depth(dtype).unwrap();
+            REQUIRE(from_opencv_depth(depth).unwrap() == dtype);
+        }
     }
-}
 
-TEST_CASE("core::map::opencv depth conversion rejects unsupported types", "[map][opencv]") {
-    REQUIRE_THAT(to_opencv_depth(Dtype::Uint32), testing::is_error(P10Error::InvalidArgument));
-    REQUIRE_THAT(to_opencv_depth(Dtype::Int64), testing::is_error(P10Error::InvalidArgument));
-    REQUIRE_THAT(from_opencv_depth(-1), testing::is_error(P10Error::InvalidArgument));
-}
+    TEST_CASE("core::map::opencv depth conversion rejects unsupported types", "[map][opencv]") {
+        REQUIRE_THAT(to_opencv_depth(Dtype::Uint32), testing::is_error(P10Error::InvalidArgument));
+        REQUIRE_THAT(to_opencv_depth(Dtype::Int64), testing::is_error(P10Error::InvalidArgument));
+        REQUIRE_THAT(from_opencv_depth(-1), testing::is_error(P10Error::InvalidArgument));
+    }
+}  // namespace detail
 
 TEST_CASE("core::map::from_opencv copies a 3-channel mat", "[map][opencv]") {
     cv::Mat mat(4, 6, CV_8UC3);

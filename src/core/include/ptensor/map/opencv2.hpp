@@ -15,55 +15,56 @@
 
 namespace p10 {
 
-// Helper conversions (kept in namespace p10 so unit tests can call them)
-/// Converts a dtype to an OpenCV depth (CV_8U, CV_32F, ...).
-inline P10Result<int> to_opencv_depth(Dtype dtype) {
-    switch (dtype.value) {
-        case Dtype::Uint8:
-            return Ok(CV_8U);
-        case Dtype::Int8:
-            return Ok(CV_8S);
-        case Dtype::Uint16:
-            return Ok(CV_16U);
-        case Dtype::Int16:
-            return Ok(CV_16S);
-        case Dtype::Int32:
-            return Ok(CV_32S);
-        case Dtype::Float16:
-            return Ok(CV_16F);
-        case Dtype::Float32:
-            return Ok(CV_32F);
-        case Dtype::Float64:
-            return Ok(CV_64F);
-        default:
-            return Err(P10Error::InvalidArgument << "Dtype has no OpenCV depth equivalent");
+namespace detail {
+    // Helper conversions (kept in namespace p10 so unit tests can call them)
+    /// Converts a dtype to an OpenCV depth (CV_8U, CV_32F, ...).
+    inline P10Result<int> to_opencv_depth(Dtype dtype) {
+        switch (dtype.value) {
+            case Dtype::Uint8:
+                return Ok(CV_8U);
+            case Dtype::Int8:
+                return Ok(CV_8S);
+            case Dtype::Uint16:
+                return Ok(CV_16U);
+            case Dtype::Int16:
+                return Ok(CV_16S);
+            case Dtype::Int32:
+                return Ok(CV_32S);
+            case Dtype::Float16:
+                return Ok(CV_16F);
+            case Dtype::Float32:
+                return Ok(CV_32F);
+            case Dtype::Float64:
+                return Ok(CV_64F);
+            default:
+                return Err(P10Error::InvalidArgument << "Dtype has no OpenCV depth equivalent");
+        }
     }
-}
 
-/// Converts an OpenCV depth (CV_8U, CV_32F, ...) to a dtype.
-inline P10Result<Dtype> from_opencv_depth(int depth) {
-    switch (depth) {
-        case CV_8U:
-            return Ok(Dtype(Dtype::Uint8));
-        case CV_8S:
-            return Ok(Dtype(Dtype::Int8));
-        case CV_16U:
-            return Ok(Dtype(Dtype::Uint16));
-        case CV_16S:
-            return Ok(Dtype(Dtype::Int16));
-        case CV_32S:
-            return Ok(Dtype(Dtype::Int32));
-        case CV_16F:
-            return Ok(Dtype(Dtype::Float16));
-        case CV_32F:
-            return Ok(Dtype(Dtype::Float32));
-        case CV_64F:
-            return Ok(Dtype(Dtype::Float64));
-        default:
-            return Err(P10Error::InvalidArgument << "OpenCV depth has no dtype equivalent");
+    /// Converts an OpenCV depth (CV_8U, CV_32F, ...) to a dtype.
+    inline P10Result<Dtype> from_opencv_depth(int depth) {
+        switch (depth) {
+            case CV_8U:
+                return Ok(Dtype(Dtype::Uint8));
+            case CV_8S:
+                return Ok(Dtype(Dtype::Int8));
+            case CV_16U:
+                return Ok(Dtype(Dtype::Uint16));
+            case CV_16S:
+                return Ok(Dtype(Dtype::Int16));
+            case CV_32S:
+                return Ok(Dtype(Dtype::Int32));
+            case CV_16F:
+                return Ok(Dtype(Dtype::Float16));
+            case CV_32F:
+                return Ok(Dtype(Dtype::Float32));
+            case CV_64F:
+                return Ok(Dtype(Dtype::Float64));
+            default:
+                return Err(P10Error::InvalidArgument << "OpenCV depth has no dtype equivalent");
+        }
     }
-}
-}
+}  // namespace detail
 
 /// Copies a 2D `cv::Mat` into `tensor`, allocating it as `[H, W]`
 /// (single channel) or `[H, W, C]` with `Usage::Image`. Handles
@@ -75,7 +76,7 @@ inline P10Error from_opencv(const cv::Mat& mat, Tensor& tensor) {
     if (mat.dims != 2) {
         return P10Error::NotImplemented << "Only 2D mats are supported";
     }
-    auto dtype_res = from_opencv_depth(mat.depth());
+    auto dtype_res = detail::from_opencv_depth(mat.depth());
     if (dtype_res.is_error()) {
         return dtype_res.error();
     }
@@ -107,7 +108,7 @@ inline P10Result<Tensor> from_opencv_view(cv::Mat& mat) {
     if (mat.dims != 2) {
         return Err(P10Error::NotImplemented << "Only 2D mats are supported");
     }
-    auto dtype_res = from_opencv_depth(mat.depth());
+    auto dtype_res = detail::from_opencv_depth(mat.depth());
     if (dtype_res.is_error()) {
         return Err(dtype_res.error());
     }
@@ -145,7 +146,7 @@ inline P10Error to_opencv(const Tensor& tensor, cv::Mat& mat) {
     if (channels > CV_CN_MAX) {
         return P10Error::InvalidArgument << "Tensor has too many channels for OpenCV";
     }
-    auto depth_res = to_opencv_depth(tensor.dtype());
+    auto depth_res = detail::to_opencv_depth(tensor.dtype());
     if (depth_res.is_error()) {
         return depth_res.error();
     }
@@ -209,7 +210,7 @@ inline P10Result<cv::Mat> to_opencv_view(Tensor& tensor) {
     if (!packed_pixels) {
         return Err(P10Error::InvalidArgument << "Tensor pixels must be packed for a Mat view");
     }
-    auto depth_res = to_opencv_depth(tensor.dtype());
+    auto depth_res = detail::to_opencv_depth(tensor.dtype());
     if (depth_res.is_error()) {
         return Err(depth_res.error());
     }

@@ -91,7 +91,7 @@ TEST_CASE(
     "media::VideoDeviceInfo::match_closest returns default for empty capabilities",
     "[media][capture]"
 ) {
-    VideoDeviceInfo info;
+    VideoDeviceInfo const info;
     const VideoParameters result = info.match_closest(1920, 1080, {30, 1});
     REQUIRE(result.width() == 0);
     REQUIRE(result.height() == 0);

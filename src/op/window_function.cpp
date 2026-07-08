@@ -99,7 +99,7 @@ P10Error WindowFunction::generate_window(size_t size, Dtype type) {
         using scalar_t = decltype(out_span)::value_type;
 
         for (size_t n = 0; n < size; ++n) {
-            scalar_t value = scalar_t(1.0);
+            auto value = scalar_t(1.0);
             switch (func_) {
                 case Function::Hanning:
                     value = static_cast<scalar_t>(

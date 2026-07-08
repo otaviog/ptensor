@@ -16,7 +16,7 @@ FfmpegFileMediaCapture::open(const std::string& path) {
     if (open_result.is_error()) {
         return Err(open_result.error());
     }
-    OpenResult opened = open_result.unwrap();
+    OpenResult const opened = open_result.unwrap();
 
     auto capture = std::shared_ptr<FfmpegFileMediaCapture>(
         new FfmpegFileMediaCapture(opened.format_ctx, opened.audio_decoder, opened.video_decoder)

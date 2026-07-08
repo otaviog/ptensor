@@ -69,7 +69,7 @@ P10Error FfmpegSws::transform(const VideoFrame& src, AVFrame** dst) {
 
     const auto& src_bytes = src.as_bytes();
 
-    uint8_t const* src_data[1] = {const_cast<uint8_t*>(src_bytes.data())};
+    uint8_t const const* src_data[1] = {const_cast<uint8_t*>(src_bytes.data())};
     int src_linesize[1] = {static_cast<int>(src.stride().byte_stride(src.dtype(), 0).unwrap())};
 
     int const result = sws_scale(

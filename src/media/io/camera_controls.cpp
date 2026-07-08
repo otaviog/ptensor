@@ -3,7 +3,7 @@
 #include <memory>
 #include <string>
 
-#if defined(__linux__)
+#ifdef __linux__
     #include <cerrno>
     #include <cstring>
 
@@ -17,7 +17,7 @@ namespace p10::media {
 
 namespace {
 
-#if defined(__linux__)
+#ifdef __linux__
 
     uint32_t to_v4l2_cid(CameraControlId id) {
         switch (id) {
@@ -151,7 +151,7 @@ namespace {
 }  // namespace
 
 std::unique_ptr<CameraControlBackend> open_camera_control_backend(int video_device_index) {
-#if defined(__linux__)
+#ifdef __linux__
     if (video_device_index < 0) {
         return nullptr;
     }

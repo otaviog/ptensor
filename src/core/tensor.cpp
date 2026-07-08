@@ -388,7 +388,8 @@ P10Error Tensor::convert_from(const Tensor& source, const TensorOptions options)
                 source.shape().as_span(),
                 source.stride().as_span()
             );
-            dest_scalar_t* dest_ptr = dest_span.data();
+            dest_scalar_t* dest_ptr =
+                dest_span.data();
             while (src_it.has_next()) {
                 *dest_ptr++ = static_cast<dest_scalar_t>(src_it.next().first);
             }

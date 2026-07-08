@@ -1,4 +1,5 @@
 #include <iostream>
+#include <utility>
 
 #include <ptensor/io/image.hpp>
 #include <ptensor/media/io/media_capture.hpp>
@@ -9,7 +10,7 @@
 
 class VideoApp: public p10::viz::GuiApp {
   public:
-    VideoApp(p10::media::MediaCapture capture) : video_player_ {capture, *this} {}
+    VideoApp(p10::media::MediaCapture capture) : video_player_ {std::move(capture), *this} {}
 
   protected:
     void on_initialize() override {
@@ -28,11 +29,11 @@ class VideoApp: public p10::viz::GuiApp {
 
 int main(int argc, char** argv) {
     const char* path = argc > 1 ? argv[1] : "tests/data/video/test_video.mp4";
-    p10::media::MediaCapture capture =
+    p10::media::MediaCapture const capture =
         p10::media::MediaCapture::open_file(path).expect("Unable to open test video");
     VideoApp app {capture};
     if (auto status = run_app(app, p10::viz::GuiAppParameters()); status.is_error()) {
-        std::cout << status.to_string() << std::endl;
+        std::cout << status.to_string() << '\n';
     }
 
     return 0;

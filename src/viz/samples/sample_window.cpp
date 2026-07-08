@@ -37,7 +37,7 @@ int main(int /*argc*/, char** /*argv*/) {
     WindowApp app;
 
     if (auto status = run_app(app, p10::viz::GuiAppParameters()); status.is_error()) {
-        std::cout << status.to_string() << std::endl;
+        std::cout << status.to_string() << '\n';
     }
 
     return 0;

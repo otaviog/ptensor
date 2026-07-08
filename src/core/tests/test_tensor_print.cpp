@@ -84,7 +84,7 @@ TEST_CASE("Tensor stats debug helpers", "[tensor][debug][stats]") {
     REQUIRE(tensor_max_debug(tensor) == Catch::Approx(5.0));
     REQUIRE(tensor_mean_debug(tensor) == Catch::Approx(2.5));
 
-    Tensor empty;
+    Tensor const empty;
     REQUIRE(std::isnan(tensor_min_debug(empty)));
     REQUIRE(std::isnan(tensor_max_debug(empty)));
     REQUIRE(std::isnan(tensor_mean_debug(empty)));

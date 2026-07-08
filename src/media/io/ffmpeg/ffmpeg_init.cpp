@@ -21,7 +21,7 @@ namespace {
 void ffmpeg_init() {
     static std::once_flag flag;
     std::call_once(flag, [] {
-        std::filesystem::path log_dir(get_log_directory());
+        std::filesystem::path const log_dir(get_log_directory());
         std::error_code ec;
         std::filesystem::create_directories(log_dir, ec);
 
@@ -42,7 +42,7 @@ namespace {
             return;
         }
 
-        std::lock_guard<std::mutex> guard(g_log_mutex);
+        std::scoped_lock const guard(g_log_mutex);
         if (g_log_file != nullptr) {
             static_cast<void>(std::vfprintf(g_log_file, fmt, args));
             static_cast<void>(std::fflush(g_log_file));

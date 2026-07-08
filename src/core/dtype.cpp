@@ -9,7 +9,8 @@ P10Result<Dtype> Dtype::from(const std::string& type_str) {
     }
     if (type_str == "uint16") {
         return Ok<Dtype>(Dtype::Uint16);
-    } else if (type_str == "uint32") {
+    }
+    if (type_str == "uint32") {
         return Ok<Dtype>(Dtype::Uint32);
     } else if (type_str == "int8") {
         return Ok<Dtype>(Dtype::Int8);

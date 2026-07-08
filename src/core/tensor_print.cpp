@@ -116,7 +116,7 @@ namespace {
 
     template<typename Reduce>
     double reduce_to_double(const Tensor& tensor, Reduce&& reduce) {
-        if (tensor.empty() || tensor.size() == 0) {
+        if (tensor.empty()) {
             return std::numeric_limits<double>::quiet_NaN();
         }
         return tensor.visit([&](auto span) -> double {

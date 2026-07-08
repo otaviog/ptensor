@@ -40,7 +40,11 @@ P10Result<float> BfPreprocessing::process(Tensor& images, Tensor& preprocessed) 
 
     bool new_allocated = false;
     preprocessed.create(
-        make_shape(num_images * int64_t(BF_INPUT_CHANNELS), int64_t(padded_h), int64_t(padded_w)),
+        make_shape(
+            num_images * static_cast<int64_t>(BF_INPUT_CHANNELS),
+            static_cast<int64_t>(padded_h),
+            static_cast<int64_t>(padded_w)
+        ),
         Dtype::Float32,
         new_allocated
     );
@@ -73,10 +77,12 @@ namespace {
              1.0f}
         );
 
-        const auto resize_width =
-            static_cast<size_t>(std::round(float(input_width) * original_to_resize_ratio));
-        const auto resize_height =
-            static_cast<size_t>(std::round(float(input_height) * original_to_resize_ratio));
+        const auto resize_width = static_cast<size_t>(
+            std::round(static_cast<float>(input_width) * original_to_resize_ratio)
+        );
+        const auto resize_height = static_cast<size_t>(
+            std::round(static_cast<float>(input_height) * original_to_resize_ratio)
+        );
 
         Tensor n_by_c_input_images = input_images.as_view();
         n_by_c_input_images.reshape(
@@ -90,12 +96,12 @@ namespace {
 
     std::tuple<size_t, size_t, size_t, size_t>
     calculate_padding(size_t target_size, size_t width, size_t height) {
-        const float x_pad = float((target_size - width) % 16) * 0.5f;
-        const float y_pad = float((target_size - height) % 16) * 0.5f;
-        const auto left = size_t(std::round(x_pad - 0.1));
-        const auto right = size_t(std::round(x_pad + 0.1));
-        const auto top = size_t(std::round(y_pad - 0.1));
-        const auto bottom = size_t(std::round(y_pad + 0.1));
+        const float x_pad = static_cast<float>((target_size - width) % 16) * 0.5f;
+        const float y_pad = static_cast<float>((target_size - height) % 16) * 0.5f;
+        const auto left = static_cast<size_t>(std::round(x_pad - 0.1));
+        const auto right = static_cast<size_t>(std::round(x_pad + 0.1));
+        const auto top = static_cast<size_t>(std::round(y_pad - 0.1));
+        const auto bottom = static_cast<size_t>(std::round(y_pad + 0.1));
         return std::make_tuple(left, right, top, bottom);
     }
 
@@ -125,9 +131,9 @@ namespace {
                 auto dst_row_2 = dst_2[top + row].as_span();
 
                 for (size_t col = 0; col < src_r.cols(); ++col) {
-                    dst_row_0[left + col] = float(src_b[row][col]) - BF_BGR_MEAN[0];
-                    dst_row_1[left + col] = float(src_g[row][col]) - BF_BGR_MEAN[1];
-                    dst_row_2[left + col] = float(src_r[row][col]) - BF_BGR_MEAN[2];
+                    dst_row_0[left + col] = static_cast<float>(src_b[row][col]) - BF_BGR_MEAN[0];
+                    dst_row_1[left + col] = static_cast<float>(src_g[row][col]) - BF_BGR_MEAN[1];
+                    dst_row_2[left + col] = static_cast<float>(src_r[row][col]) - BF_BGR_MEAN[2];
                 }
             }
         }

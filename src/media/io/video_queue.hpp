@@ -56,7 +56,7 @@ class VideoQueue {
     }
 
     void flush() {
-        std::unique_lock lock(mutex_);
+        std::unique_lock const lock(mutex_);
         while (!queue_.empty()) {
             queue_.pop();
         }

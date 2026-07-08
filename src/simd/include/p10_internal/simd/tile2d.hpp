@@ -46,20 +46,20 @@ void tile2d_blocked(
 
     constexpr int64_t CACHE = CACHE_BLOCK;
     constexpr int64_t SIMD = SIMD_BLOCK;
-    const int64_t BORDER_V = border.vertical;
-    const int64_t BORDER_H = border.horizontal;
+    const int64_t border_v = border.vertical;
+    const int64_t border_h = border.horizontal;
 
     // SIMD walks the interior inset by the halo, aligned down to whole cache
     // blocks; everything outside is the edge frame plus the alignment remainder.
-    const int64_t interior_rows = rows - (2 * BORDER_V);
-    const int64_t interior_cols = cols - (2 * BORDER_H);
+    const int64_t interior_rows = rows - (2 * border_v);
+    const int64_t interior_cols = cols - (2 * border_h);
     const int64_t tiled_rows =
         interior_rows > 0 ? interior_rows - bitwise_modulo<CACHE_BLOCK>(interior_rows) : 0;
     const int64_t tiled_cols =
         interior_cols > 0 ? interior_cols - bitwise_modulo<CACHE_BLOCK>(interior_cols) : 0;
 
-    const int64_t row_begin = BORDER_V;
-    const int64_t col_begin = BORDER_H;
+    const int64_t row_begin = border_v;
+    const int64_t col_begin = border_h;
     const int64_t row_end = row_begin + tiled_rows;  // first row past the SIMD area
     const int64_t col_end = col_begin + tiled_cols;  // first col past the SIMD area
 

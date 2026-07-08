@@ -22,8 +22,8 @@ std::string to_base64(std::span<const std::byte> bytes) {
     size_t i = 0;
 
     while (i + 3 <= input_size) {
-        const uint32_t triple =
-            (uint32_t(in[i]) << 16) | (uint32_t(in[i + 1]) << 8) | uint32_t(in[i + 2]);
+        const uint32_t triple = (static_cast<uint32_t>(in[i]) << 16)
+            | (static_cast<uint32_t>(in[i + 1]) << 8) | static_cast<uint32_t>(in[i + 2]);
         out[o++] = BASE64_ALPHABET[(triple >> 18) & 0x3F];
         out[o++] = BASE64_ALPHABET[(triple >> 12) & 0x3F];
         out[o++] = BASE64_ALPHABET[(triple >> 6) & 0x3F];
@@ -32,13 +32,14 @@ std::string to_base64(std::span<const std::byte> bytes) {
     }
 
     if (const size_t remaining = input_size - i; remaining == 1) {
-        const uint32_t triple = uint32_t(in[i]) << 16;
+        const uint32_t triple = static_cast<uint32_t>(in[i]) << 16;
         out[o++] = BASE64_ALPHABET[(triple >> 18) & 0x3F];
         out[o++] = BASE64_ALPHABET[(triple >> 12) & 0x3F];
         out[o++] = '=';
         out[o++] = '=';
     } else if (remaining == 2) {
-        const uint32_t triple = (uint32_t(in[i]) << 16) | (uint32_t(in[i + 1]) << 8);
+        const uint32_t triple =
+            (static_cast<uint32_t>(in[i]) << 16) | (static_cast<uint32_t>(in[i + 1]) << 8);
         out[o++] = BASE64_ALPHABET[(triple >> 18) & 0x3F];
         out[o++] = BASE64_ALPHABET[(triple >> 12) & 0x3F];
         out[o++] = BASE64_ALPHABET[(triple >> 6) & 0x3F];

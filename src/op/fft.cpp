@@ -32,7 +32,7 @@ Fft::Fft(const FftOptions& options) :
     direction_(options.direction()),
     normalize_(options.normalize()) {}
 
-Fft::~Fft() {}
+Fft::~Fft() = default;
 
 P10Error Fft::transform(const Tensor& input, Tensor& output) const {
     switch (direction_) {
@@ -196,14 +196,14 @@ namespace {
             return Err(err);
         }
 
-        int64_t num_signals = frequency.shape(0).unwrap();
+        int64_t const num_signals = frequency.shape(0).unwrap();
         if (frequency.shape(2).unwrap() != 2) {
             return Err(
                 P10Error::InvalidArgument
                 << "Input tensor last dimension must be 2 (real and imaginary)"
             );
         }
-        return Ok(std::move(num_signals));
+        return Ok(num_signals);
     }
 
     P10Error check_input_device_and_dtype(const Tensor& tensor) {

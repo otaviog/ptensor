@@ -66,7 +66,7 @@ inline P10MediaWriter wrap_writer(MediaWriter* p) {
 // ------------------------------------------------------------------ //
 
 inline P10Rational to_c(const Rational& r) {
-    return P10Rational {r.num(), r.den()};
+    return P10Rational {.num = r.num(), .den = r.den()};
 }
 
 inline Rational from_c(P10Rational r) {
@@ -74,7 +74,7 @@ inline Rational from_c(P10Rational r) {
 }
 
 inline P10Time to_c(const Time& t) {
-    return P10Time {to_c(t.base()), t.stamp()};
+    return P10Time {.base = to_c(t.base()), .stamp = t.stamp()};
 }
 
 inline Time from_c(P10Time t) {

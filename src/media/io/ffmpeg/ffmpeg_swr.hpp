@@ -54,7 +54,7 @@ class FfmpegSwr {
     );
 
     SwrContext* swr_ = nullptr;
-    AVChannelLayout target_channel_layout_;
+    AVChannelLayout target_channel_layout_ {};
     AVSampleFormat target_sample_format_ = AV_SAMPLE_FMT_FLTP;
     int target_sample_rate_ = 48000;
 };

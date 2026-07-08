@@ -44,7 +44,7 @@ P10Result<TextStreams> FfmpegTextDecoder::get_text_streams() const {
 }
 
 P10Error FfmpegTextDecoder::ensure_scanned() const {
-    const std::lock_guard<std::mutex> guard(mutex_);
+    const std::scoped_lock guard(mutex_);
     if (scanned_) {
         return P10Error::Ok;
     }

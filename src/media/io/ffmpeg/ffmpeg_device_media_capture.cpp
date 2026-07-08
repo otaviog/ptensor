@@ -13,7 +13,7 @@ namespace p10::media {
 
 namespace {
 
-#if defined(__APPLE__)
+#ifdef __APPLE__
     constexpr const char* DEVICE_INPUT_FORMAT = "avfoundation";
 #elif defined(__linux__)
     constexpr const char* DEVICE_INPUT_FORMAT = "v4l2";
@@ -59,7 +59,7 @@ P10Result<std::shared_ptr<FfmpegDeviceMediaCapture>> FfmpegDeviceMediaCapture::o
     if (video.has_value()) {
         apply_video_options(video->second, &options);
     } else if (video_device_index >= 0) {
-#if defined(__APPLE__)
+#ifdef __APPLE__
         av_dict_set(&options, "framerate", "30", 0);
 #endif
     }
@@ -72,7 +72,7 @@ P10Result<std::shared_ptr<FfmpegDeviceMediaCapture>> FfmpegDeviceMediaCapture::o
     if (open_result.is_error()) {
         return Err(open_result.error());
     }
-    OpenResult opened = open_result.unwrap();
+    OpenResult const opened = open_result.unwrap();
 
     auto capture = std::shared_ptr<FfmpegDeviceMediaCapture>(new FfmpegDeviceMediaCapture(
         opened.format_ctx,
@@ -128,10 +128,10 @@ P10Error FfmpegDeviceMediaCapture::set_camera_auto_control(CameraAutoControlId i
 
 namespace {
     std::string build_device_url(int video_index, int audio_index) {
-#if defined(__APPLE__)
+#ifdef __APPLE__
         // avfoundation URL: "<video>:<audio>", empty string for absent device.
-        std::string video = video_index >= 0 ? std::to_string(video_index) : "";
-        std::string audio = audio_index >= 0 ? std::to_string(audio_index) : "";
+        std::string const video = video_index >= 0 ? std::to_string(video_index) : "";
+        std::string const audio = audio_index >= 0 ? std::to_string(audio_index) : "";
         return video + ":" + audio;
 #elif defined(_WIN32)
         (void)audio_index;
@@ -153,7 +153,7 @@ namespace {
                 + std::to_string(params.frame_rate().den());
             av_dict_set(options, "framerate", rate.c_str(), 0);
         } else {
-#if defined(__APPLE__)
+#ifdef __APPLE__
             // avfoundation defaults to 29.97 which most cameras don't support; 30 matches
             // the ~30fps modes avfoundation typically advertises (e.g. 30.000030fps).
             av_dict_set(options, "framerate", "30", 0);

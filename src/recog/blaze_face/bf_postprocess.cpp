@@ -23,8 +23,8 @@ void BfPostprocess::process(
 
     assert(static_cast<size_t>(out_boxes.channels()) == detections.size());
 
-    const float box_scale_x = float(input_width) / preprocess_scale_ratio;
-    const float box_scale_y = float(input_height) / preprocess_scale_ratio;
+    const float box_scale_x = static_cast<float>(input_width) / preprocess_scale_ratio;
+    const float box_scale_y = static_cast<float>(input_height) / preprocess_scale_ratio;
 
     for (size_t img_idx = 0; img_idx < detections.size(); ++img_idx) {
         rect_buffer_.clear();
@@ -34,7 +34,7 @@ void BfPostprocess::process(
         const auto boxes = out_boxes[img_idx];
         const auto scores = out_scores[img_idx];
         const auto landmks = out_landmarks[img_idx];
-        for (size_t row_idx = 0; row_idx < size_t(boxes.rows()); ++row_idx) {
+        for (size_t row_idx = 0; row_idx < static_cast<size_t>(boxes.rows()); ++row_idx) {
             const float conf = scores[row_idx][1];
             if (conf > conf_threshold_) {
                 const auto& anchor = anchors[row_idx];
@@ -55,7 +55,7 @@ void BfPostprocess::process(
         result.confidences.reserve(selected_.size());
         result.landmarks.reserve(selected_.size());
 
-        const size_t num_landmark_points = size_t(landmks.cols()) / 2;
+        const size_t num_landmark_points = static_cast<size_t>(landmks.cols()) / 2;
         landmark_buffer_.resize(num_landmark_points);
 
         for (const size_t selected_idx : selected_) {
@@ -68,13 +68,13 @@ void BfPostprocess::process(
             anchor_decoder
                 .decode_landmarks(landmks[anchor_row].as_span(), anchor, landmark_buffer_);
 
-            result.landmarks.push_back({});
+            result.landmarks.emplace_back();
             auto& face_landmarks = result.landmarks.back();
             face_landmarks.reserve(num_landmark_points);
             for (const auto& pt : landmark_buffer_) {
                 face_landmarks.emplace_back(
-                    int(std::round(pt.x * box_scale_x)),
-                    int(std::round(pt.y * box_scale_y))
+                    static_cast<int>(std::round(pt.x * box_scale_x)),
+                    static_cast<int>(std::round(pt.y * box_scale_y))
                 );
             }
         }

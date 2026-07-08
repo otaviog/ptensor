@@ -23,12 +23,12 @@ TEST_CASE("recog::FaceDetection::to_string empty", "[recog][to_string]") {
 
 TEST_CASE("recog::FaceDetection::to_string populated", "[recog][to_string]") {
     FaceDetection det;
-    det.faces.push_back(Rect2i {Point2i {0, 0}, Point2i {10, 10}});
-    det.faces.push_back(Rect2i {Point2i {5, 5}, Point2i {15, 15}});
+    det.faces.emplace_back(Point2i {0, 0}, Point2i {10, 10});
+    det.faces.emplace_back(Point2i {5, 5}, Point2i {15, 15});
     det.confidences.push_back(0.9f);
     det.confidences.push_back(0.5f);
     det.landmarks.push_back({Point2i {1, 2}, Point2i {3, 4}});
-    det.landmarks.push_back({});
+    det.landmarks.emplace_back();
 
     REQUIRE(
         to_string(det)

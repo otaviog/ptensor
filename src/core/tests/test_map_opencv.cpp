@@ -86,7 +86,7 @@ TEST_CASE("core::map::from_opencv copies a non-continuous ROI", "[map][opencv]")
             full.at<uchar>(row, col) = static_cast<uchar>(row * 8 + col);
         }
     }
-    cv::Mat roi = full(cv::Rect(2, 1, 4, 3));
+    cv::Mat const roi = full(cv::Rect(2, 1, 4, 3));
     REQUIRE(!roi.isContinuous());
 
     Tensor tensor;

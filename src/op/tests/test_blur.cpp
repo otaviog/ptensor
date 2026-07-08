@@ -86,7 +86,7 @@ TEST_CASE("Op: Blur float32 plane", "[tensorop][blur]") {
     const auto kernel_size = GENERATE(3, 5, 7, 9);
 
     DYNAMIC_SECTION("kernel size " << kernel_size) {
-        std::mt19937_64 rng(123);
+        std::mt19937_64 const rng(123);
         const Tensor input = Tensor::from_random(
                                  make_shape(height, width),
                                  rng,

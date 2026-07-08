@@ -17,7 +17,7 @@ class OrtInfer: public IInfer {
     }
 
   private:
-    OrtInfer(const std::string& onnx_model_path, Ort::Env&& env);
+    OrtInfer(std::string onnx_model_path, Ort::Env&& env);
     void collect_input_output_names();
 
     std::string model_path_;

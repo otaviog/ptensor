@@ -11,7 +11,7 @@ namespace {
     constexpr double NAN_VALUE = std::numeric_limits<double>::quiet_NaN();
 
     bool is_empty(const Tensor& tensor) {
-        return tensor.empty() || tensor.size() == 0;
+        return tensor.empty() || tensor.empty();
     }
 }  // namespace
 

@@ -16,7 +16,7 @@ namespace p10::media {
 
 namespace {
 
-#if defined(__APPLE__)
+#ifdef __APPLE__
     constexpr const char* DEVICE_INPUT_FORMAT = "avfoundation";
 #elif defined(__linux__)
     constexpr const char* DEVICE_INPUT_FORMAT = "v4l2";

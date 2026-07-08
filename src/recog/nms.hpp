@@ -14,7 +14,7 @@ class Nms {
         std::span<const Rect2f> rects,
         std::span<const float> scores,
         std::vector<size_t>& selected
-    );
+    ) const;
 
   private:
     float iou_threshold_;

@@ -271,7 +271,7 @@ P10Error run_on_video(IFaceDetector& detector, const std::string& path) {
 
     Tensor nchw;
     while (true) {
-        if (auto has_frame = cap.next_frame(); has_frame.is_error() || !has_frame.unwrap()) {
+        if (auto has_frame = cap.next_frame(); has_frame.is_error() || (has_frame.unwrap() == 0u)) {
             break;
         }
 

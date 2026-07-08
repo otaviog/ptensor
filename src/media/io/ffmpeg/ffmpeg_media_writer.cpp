@@ -57,7 +57,7 @@ FfmpegMediaWriter::create(const std::string& path, const MediaParameters& params
     std::unique_ptr<FfmpegVideoEncoder> video_encoder;
     if (video_params.width() > 0 && video_params.height() > 0) {
         video_encoder = std::make_unique<FfmpegVideoEncoder>();
-        P10Error error = video_encoder->create(video_params, format_ctx);
+        P10Error const error = video_encoder->create(video_params, format_ctx);
         if (error.is_error()) {
             avformat_free_context(format_ctx);
             format_ctx = nullptr;
@@ -72,7 +72,7 @@ FfmpegMediaWriter::create(const std::string& path, const MediaParameters& params
     std::vector<std::unique_ptr<FfmpegTextEncoder>> text_encoders;
     for (const auto& text_params : params.text_parameters()) {
         auto text_encoder = std::make_unique<FfmpegTextEncoder>();
-        P10Error error = text_encoder->create(text_params, format_ctx);
+        P10Error const error = text_encoder->create(text_params, format_ctx);
         if (error.is_error()) {
             avformat_free_context(format_ctx);
             format_ctx = nullptr;
@@ -290,7 +290,7 @@ P10Error FfmpegMediaWriter::write_text(size_t stream_index, const Text& text) {
     if (packet_result.is_error()) {
         return packet_result.error();
     }
-    UniqueAvPacket pkt = packet_result.unwrap();
+    UniqueAvPacket const pkt = packet_result.unwrap();
 
     int const ret = av_interleaved_write_frame(format_context_, pkt.get());
     if (ret < 0) {

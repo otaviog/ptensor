@@ -10,7 +10,7 @@ void Nms::filter_nms(
     std::span<const Rect2f> rects,
     std::span<const float> confidences,
     std::vector<size_t>& selected
-) {
+) const {
     const auto rect_count = rects.size();
     assert(rect_count == confidences.size());
 
@@ -22,11 +22,11 @@ void Nms::filter_nms(
     const auto confidence_compare = [&](size_t lfs, size_t rhs) {
         return confidences[lfs] < confidences[rhs];
     };
-    std::make_heap(rect_indices_heap.begin(), rect_indices_heap.end(), confidence_compare);
+    std::ranges::make_heap(rect_indices_heap, confidence_compare);
 
     selected.clear();
     while (!rect_indices_heap.empty()) {
-        std::pop_heap(rect_indices_heap.begin(), rect_indices_heap.end(), confidence_compare);
+        std::ranges::pop_heap(rect_indices_heap, confidence_compare);
         auto selected_index = rect_indices_heap.back();
         rect_indices_heap.pop_back();
 

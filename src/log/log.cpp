@@ -27,7 +27,7 @@ void log_debug(std::string_view msg) {
 namespace {
     std::shared_ptr<spdlog::logger>& logger() {
         static std::shared_ptr<spdlog::logger> instance = [] {
-            std::filesystem::path log_dir(get_log_directory());
+            std::filesystem::path const log_dir(get_log_directory());
             if (!std::filesystem::exists(log_dir)) {
                 std::filesystem::create_directory(log_dir);
             }

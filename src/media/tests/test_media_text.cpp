@@ -31,9 +31,9 @@ TEST_CASE("media::text stream write/read roundtrip", "[media][text]") {
     };
 
     const std::vector<Cue> cues = {
-        {"hr=72", 0, 1000},
-        {R"({"bbox":[10,20,30,40]})", 1000, 2500},
-        {"hr=75", 2500, 4000},
+        {.text = "hr=72", .begin_ms = 0, .end_ms = 1000},
+        {.text = R"({"bbox":[10,20,30,40]})", .begin_ms = 1000, .end_ms = 2500},
+        {.text = "hr=75", .begin_ms = 2500, .end_ms = 4000},
     };
 
     SECTION("write entries and read them back") {
@@ -53,7 +53,7 @@ TEST_CASE("media::text stream write/read roundtrip", "[media][text]") {
         }
         writer.close();
 
-        MediaCapture capture =
+        MediaCapture const capture =
             MediaCapture::open_file(out_file).expect("should reopen text output file");
         const TextStreams text_streams =
             capture.get_text_streams().expect("should read text streams");
@@ -91,7 +91,7 @@ TEST_CASE("media::text stream write/read roundtrip", "[media][text]") {
         }
         writer.close();
 
-        MediaCapture capture =
+        MediaCapture const capture =
             MediaCapture::open_file(out_file).expect("should reopen text output file");
         const TextStreams text_streams =
             capture.get_text_streams().expect("should read text streams");
@@ -124,7 +124,7 @@ TEST_CASE("media::text stream write/read roundtrip", "[media][text]") {
         writer.write_text(0, Text(cues[0].text, Time {time_base, 0}, Time {time_base, 1000}));
         writer.close();
 
-        MediaCapture capture =
+        MediaCapture const capture =
             MediaCapture::open_file(out_file).expect("should reopen text output file");
 
         const MediaParameters read_params = capture.get_parameters();
@@ -163,7 +163,7 @@ TEST_CASE("media::text stream write/read roundtrip", "[media][text]") {
 
         const std::string no_text_file = "tests/data/video/file_example_MP4_480_1_5MG.mp4";
         if (std::filesystem::exists(no_text_file)) {
-            MediaCapture capture =
+            MediaCapture const capture =
                 MediaCapture::open_file(no_text_file).expect("should open sample video");
             const TextStreams text_streams =
                 capture.get_text_streams().expect("should read text streams");

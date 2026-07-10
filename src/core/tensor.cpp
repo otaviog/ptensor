@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
-#include <new>
 #include <random>
 
 #include <type_traits>
@@ -43,7 +42,7 @@ P10Result<Tensor> Tensor::full(const Shape& shape, double value, const TensorOpt
 }
 
 P10Result<Tensor>
-Tensor::from_range(const Shape& shape, const TensorOptions& options, int64_t start) {
+Tensor::from_range(const Shape& shape, const TensorOptions& options, int64_t start, int64_t step) {
     auto result_res = Tensor::zeros(shape, options);
     if (result_res.is_error()) {
         return Err(result_res);
@@ -55,7 +54,7 @@ Tensor::from_range(const Shape& shape, const TensorOptions& options, int64_t sta
         [&](auto span) {
             using SpanType = decltype(span)::value_type;
             for (auto i = 0; i < total_size; i++) {
-                span[i] = SpanType(start + i);
+                span[i] = SpanType(start + i * step);
             }
         },
         result.as_bytes()
@@ -388,8 +387,7 @@ P10Error Tensor::convert_from(const Tensor& source, const TensorOptions options)
                 source.shape().as_span(),
                 source.stride().as_span()
             );
-            dest_scalar_t* dest_ptr =
-                dest_span.data();
+            dest_scalar_t* dest_ptr = dest_span.data();
             while (src_it.has_next()) {
                 *dest_ptr++ = static_cast<dest_scalar_t>(src_it.next().first);
             }
@@ -397,6 +395,19 @@ P10Error Tensor::convert_from(const Tensor& source, const TensorOptions options)
     });
 
     return P10Error::Ok;
+}
+
+void Tensor::apply_slice(int64_t axis, const Slice& slice) {
+    auto shape = shape_.as_span();
+    auto stride = stride_.as_span();
+
+    // `slice` is already resolved by Slice::abs: 0 <= start < end <= size and
+    // step > 0.
+    blob_ = blob_.view(slice.start * stride[axis] * dtype_.size_bytes());
+
+    shape[axis] = (slice.end - slice.start + slice.step - 1) / slice.step;
+    stride[axis] *= slice.step;
+    is_contiguous_ = is_stride_contiguous(stride_, shape_);
 }
 
 namespace {
@@ -414,13 +425,17 @@ namespace {
     }
 
     bool is_stride_contiguous(const Stride& stride, const Shape& shape) {
-        if (shape.dims() < 2) {
-            return true;
-        }
-        for (int i = (static_cast<int>(shape.dims())) - 2; i >= 0; --i) {
-            if (stride[i].unwrap() != shape[i + 1].unwrap() * stride[i + 1].unwrap()) {
+        int64_t expected = 1;
+        for (int i = static_cast<int>(shape.dims()) - 1; i >= 0; --i) {
+            // A size-1 dimension is always indexed at 0, so its stride never
+            // affects addressing.
+            if (shape[i].unwrap() == 1) {
+                continue;
+            }
+            if (stride[i].unwrap() != expected) {
                 return false;
             }
+            expected *= shape[i].unwrap();
         }
         return true;
     }

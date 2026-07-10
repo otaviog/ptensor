@@ -36,7 +36,7 @@
 	  "name": "media/transcoder",
 	  "type": "lldb-dap",
 	  "request": "launch",
-	  "program": "${workspaceFolder}/build/clang/debug/src/media/samples/sample_transcoder",
+	  "program": "${workspaceFolder}/build/clang/debug/src/media/apps/transcoder",
 	  "args": [
 		"${input:videoPath}"
 	  ],
@@ -52,7 +52,7 @@
 	  "name": "media/player/file",
 	  "type": "lldb-dap",
 	  "request": "launch",
-	  "program": "${workspaceFolder}/build/clang/debug/src/media/samples/sample_media_player",
+	  "program": "${workspaceFolder}/build/clang/debug/src/media/apps/media_player",
 	  "args": [
 		"${input:videoPath}"
 	  ],
@@ -68,9 +68,41 @@
 	  "name": "media/player/device",
 	  "type": "lldb-dap",
 	  "request": "launch",
-	  "program": "${workspaceFolder}/build/clang/debug/src/media/samples/sample_media_player",
+	  "program": "${workspaceFolder}/build/clang/debug/src/media/apps/media_player",
 	  "args": [
 		"--device", "--video", "0"
+	  ],
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "externalConsole": false,
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
+	},
+	{
+	  "name": "media/camera_controller/list",
+	  "type": "lldb-dap",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/src/media/apps/camera_controller",
+	  "args": [
+		"--list-devices"
+	  ],
+	  "stopAtEntry": false,
+	  "cwd": "${workspaceFolder}",
+	  "externalConsole": false,
+	  "MIMode": "lldb",
+	  "initCommands": [
+		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
+	  ]
+	},
+	{
+	  "name": "media/camera_controller/device",
+	  "type": "lldb-dap",
+	  "request": "launch",
+	  "program": "${workspaceFolder}/build/clang/debug/src/media/apps/camera_controller",
+	  "args": [
+		"0"
 	  ],
 	  "stopAtEntry": false,
 	  "cwd": "${workspaceFolder}",

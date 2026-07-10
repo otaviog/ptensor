@@ -50,8 +50,8 @@ if(BUILD_TESTS)
     find_package(benchmark CONFIG REQUIRED)
 endif()
 
-set(BUILD_SAMPLES OFF CACHE BOOL "Build samples and apps")
-if (BUILD_SAMPLES)
+set(BUILD_APPS OFF CACHE BOOL "Build applications")
+if (BUILD_APPS)
   find_package(CLI11 CONFIG REQUIRED)
 endif()
 

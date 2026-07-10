@@ -15,6 +15,11 @@
 
 namespace p10::media {
 
+#ifdef __APPLE__
+// Defined in camera_controls_avf.mm (Objective-C++, AVFoundation).
+std::unique_ptr<CameraControlBackend> open_avf_camera_control_backend(int video_device_index);
+#endif
+
 namespace {
 
 #ifdef __linux__
@@ -161,10 +166,12 @@ std::unique_ptr<CameraControlBackend> open_camera_control_backend(int video_devi
         return nullptr;
     }
     return std::make_unique<V4l2CameraControlBackend>(fd);
+#elif defined(__APPLE__)
+    return open_avf_camera_control_backend(video_device_index);
 #else
-    // TODO: implement for macOS (AVCaptureDevice) and Windows (DirectShow
-    // IAMCameraControl / IAMVideoProcAmp). Until then camera property calls
-    // report NotImplemented on those platforms.
+    // TODO: implement for Windows (DirectShow IAMCameraControl /
+    // IAMVideoProcAmp). Until then camera property calls report
+    // NotImplemented on that platform.
     (void)video_device_index;
     return nullptr;
 #endif

@@ -25,7 +25,7 @@
                 "WITH_MEDIA": "ON",
                 "WITH_VIZ": "ON",
               "BUILD_TESTS": "ON",
-			  "BUILD_SAMPLES": "ON"
+			  "BUILD_APPS": "ON"
             }
         },
         {

@@ -99,10 +99,6 @@ if (BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
-if (BUILD_SAMPLES)
-  add_subdirectory(samples)
-endif()
-
 install(TARGETS ptensor_viz
     ARCHIVE EXCLUDE_FROM_ALL
     FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}

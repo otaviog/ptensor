@@ -79,6 +79,17 @@ target_sources(ptensor_media
     io/ffmpeg/ffmpeg_text_encoder.hpp io/ffmpeg/ffmpeg_text_encoder.cpp
 )
 
+# macOS camera controls go through AVFoundation (Objective-C++).
+if(APPLE)
+  target_sources(ptensor_media PRIVATE io/camera_controls_avf.mm)
+  set_source_files_properties(io/camera_controls_avf.mm PROPERTIES
+    COMPILE_FLAGS "-fno-objc-arc")
+  target_link_libraries(ptensor_media PRIVATE
+    "-framework AVFoundation"
+    "-framework CoreMedia"
+    "-framework Foundation")
+endif()
+
 target_include_directories(ptensor_media
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -103,7 +114,10 @@ ptensor_target_options(ptensor_media "Media")
 
 if(BUILD_TESTS)
   add_subdirectory(tests)
-  add_subdirectory(samples)
+endif()
+
+if(BUILD_APPS)
+  add_subdirectory(apps)
 endif()
 
 # Install the library and headers

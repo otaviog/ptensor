@@ -19,8 +19,8 @@ P10Error WindowFunction::transform(const Tensor& input, Tensor& output) {
 
     P10_RETURN_IF_ERROR(generate_window(input.shape(0).unwrap(), input.dtype()));
 
-    return input.dtype().match([&](auto scalar) -> P10Error {
-        using scalar_t = decltype(scalar)::type;
+    return input.dtype().match([&](auto type_tag) -> P10Error {
+        using scalar_t = decltype(type_tag)::type;
 
         auto input_span = input.as_span2d<scalar_t>().unwrap();
         auto output_span = output.as_span2d<scalar_t>().unwrap();

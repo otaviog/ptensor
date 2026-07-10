@@ -11,7 +11,7 @@
 #include <ptensor/tensor.hpp>
 
 namespace p10::io {
-static P10Error
+P10Error
 load_audio(const std::string& path, Tensor& tensor, int64_t& sample_rate, Dtype dtype) {
     return dtype.match([&path, &sample_rate, &tensor, dtype](auto scalar) -> P10Error {
         using scalar_t = decltype(scalar)::type;

@@ -27,7 +27,7 @@ CLANG_TIDY_EXTRA := if os() == "macos" { "--extra-arg=-isysroot" + ` xcrun --sho
 # Lint only files that are in the active build (compile_commands.json).
 # Skips modules disabled by the preset (infer/recog) and orphans.
 _clang_tidy_files:
-    @jq -r '.[].file' {{ CLANG_TIDY_BUILD }}/compile_commands.json | grep "/src/" | grep -v "/lib/" | grep -v "imgui_impl" | sort -u
+    @jq -r '.[].file' {{ CLANG_TIDY_BUILD }}/compile_commands.json | grep "/src/" | grep -v "/build/" | grep -v "/lib/" | grep -v "imgui_impl" | sort -u
 
 clang-tidy:
     just _clang_tidy_files | xargs -n 1 -P "$(sysctl -n hw.ncpu 2>/dev/null || nproc)" clang-tidy --quiet -p {{ CLANG_TIDY_BUILD }} {{ CLANG_TIDY_EXTRA }}

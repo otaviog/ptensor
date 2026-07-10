@@ -20,7 +20,7 @@ imgui.ini
 vcpkg/
 settings.local.json
 .projectile
-Testing
+./Testing
 tests/data/video/*.mp4
 .DS_Store
 /ptensor-logs

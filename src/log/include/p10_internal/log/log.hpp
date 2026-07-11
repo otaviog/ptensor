@@ -11,6 +11,7 @@
 namespace p10::log::detail {
 
 void log_info(std::string_view msg);
+void log_warn(std::string_view msg);
 void log_error(std::string_view msg);
 void log_debug(std::string_view msg);
 
@@ -24,6 +25,11 @@ struct ScopedLogger {
     template<typename... Args>
     void info(std::format_string<Args...> fmt, Args&&... args) const {
         detail::log_info(scope + ": " + std::format(fmt, std::forward<Args>(args)...));
+    }
+
+    template<typename... Args>
+    void warn(std::format_string<Args...> fmt, Args&&... args) const {
+        detail::log_warn(scope + ": " + std::format(fmt, std::forward<Args>(args)...));
     }
 
     template<typename... Args>
@@ -50,6 +56,7 @@ struct ScopedLogger {
     void debug(std::format_string<Args...> fmt, Args&&... args) const {
         detail::log_debug(scope + ": " + std::format(fmt, std::forward<Args>(args)...));
     }
+
 
     std::string scope;
 };

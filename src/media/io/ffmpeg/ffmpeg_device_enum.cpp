@@ -3,6 +3,7 @@
 
 #include <ptensor/media/io/media_device.hpp>
 
+#include "../logging.hpp"
 #include "ffmpeg_init.hpp"
 #include "ffmpeg_wrap_error.hpp"
 
@@ -13,6 +14,13 @@ extern "C" {
 }
 
 namespace p10::media {
+
+#ifdef __APPLE__
+// Defined in camera_controls_avf.mm (Objective-C++, AVFoundation). FFmpeg's
+// avfoundation demuxer does not implement avdevice_list_input_sources(), so
+// video enumeration goes through AVFoundation directly.
+P10Result<std::vector<VideoDeviceInfo>> list_avf_video_devices();
+#endif
 
 namespace {
 
@@ -40,6 +48,9 @@ namespace {
 }  // namespace
 
 P10Result<std::vector<VideoDeviceInfo>> list_video_devices() {
+#ifdef __APPLE__
+    return list_avf_video_devices();
+#else
     auto raw = enumerate_raw();
     if (raw.is_error()) {
         return Err(raw.error());
@@ -56,6 +67,7 @@ P10Result<std::vector<VideoDeviceInfo>> list_video_devices() {
         result.push_back(std::move(info));
     }
     return Ok(std::move(result));
+#endif
 }
 
 P10Result<std::vector<AudioDeviceInfo>> list_audio_devices() {
@@ -135,6 +147,7 @@ namespace {
             // source listing and return ENOSYS. Surface an empty list rather than
             // an error so callers can still attempt to open known indices.
             if (count == AVERROR(ENOSYS)) {
+                LOGGER.warn("Device enumeration not supported by backend: {}", DEVICE_INPUT_FORMAT);
                 if (list != nullptr) {
                     avdevice_free_list_devices(&list);
                 }

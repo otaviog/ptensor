@@ -16,6 +16,10 @@ void log_info(std::string_view msg) {
     logger()->info("{}", msg);
 }
 
+void log_warn(std::string_view msg) {
+    logger()->warn("{}", msg);
+}
+
 void log_error(std::string_view msg) {
     logger()->error("{}", msg);
 }

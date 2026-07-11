@@ -1,8 +1,10 @@
 #include <memory>
 #include <string>
+#include <vector>
 
 #import <AVFoundation/AVFoundation.h>
 #import <Foundation/Foundation.h>
+#include <ptensor/media/io/media_device.hpp>
 
 #include "camera_controls.hpp"
 
@@ -153,6 +155,26 @@ namespace {
     };
 
 }  // namespace
+
+/// Enumerate video devices natively: FFmpeg's avfoundation demuxer does not
+/// implement avdevice_list_input_sources(), so device listing must go through
+/// AVFoundation directly. Indices match what the demuxer expects in its
+/// "<video>:<audio>" URL because discover_video_devices() replicates its
+/// discovery-session ordering.
+P10Result<std::vector<VideoDeviceInfo>> list_avf_video_devices() {
+    @autoreleasepool {
+        std::vector<VideoDeviceInfo> result;
+        int idx = 0;
+        for (AVCaptureDevice* device in discover_video_devices()) {
+            const char* name = device.localizedName.UTF8String;
+            VideoDeviceInfo info;
+            info.index(idx).name(name != nullptr ? name : "").url(std::to_string(idx));
+            result.push_back(std::move(info));
+            ++idx;
+        }
+        return Ok(std::move(result));
+    }
+}
 
 std::unique_ptr<CameraControlBackend> open_avf_camera_control_backend(int video_device_index) {
     if (video_device_index < 0) {

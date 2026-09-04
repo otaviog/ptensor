@@ -1,12 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#include <format>
 #include <string>
 #include <utility>
 
 #include <ptensor/ptensor_error.h>
 
-#include "detail/panic.hpp"
+#include <string_view>
 
 namespace p10 {
 
@@ -31,6 +32,8 @@ class P10Error {
 #ifdef PTENSOR_HAS_WINDOWS_H
     static P10Error from_win32_error(unsigned long error_code);
 #endif
+
+    static P10Error current_os_error();
 
     P10Error() = default;
 
@@ -58,11 +61,7 @@ class P10Error {
         return !is_ok();
     }
 
-    void expect(const std::string& message) const {
-        if (is_error()) {
-            detail::panic(message + " - " + to_string());
-        }
-    }
+    void expect(const std::string& message) const;
 
     template<typename F>
     P10Error& map_error(F&& func) {
@@ -81,6 +80,15 @@ inline P10Error operator<<(P10Error::Code code, std::string_view message) {
     return {code, message};
 }
 }  // namespace p10
+
+/// Formats an error through `P10Error::to_string()`, accepting the same
+/// specifiers as a string: `std::format("{:>20}", error)`.
+template<>
+struct std::formatter<p10::P10Error>: std::formatter<std::string> {
+    auto format(const p10::P10Error& error, std::format_context& ctx) const {
+        return std::formatter<std::string>::format(error.to_string(), ctx);
+    }
+};
 
 #define P10_RETURN_IF_ERROR(expr) \
     if (auto err = (expr); !err.is_error()) { \

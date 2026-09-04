@@ -1,5 +1,7 @@
 #include "p10_error.hpp"
 
+#include "detail/panic.hpp"
+
 #ifdef PTENSOR_HAS_WINDOWS_H
     #include <Windows.h>
 
@@ -24,6 +26,14 @@ P10Error P10Error::from_win32_error(unsigned long error_code) {
     return P10Error::OsError << ec.message();
 }
 #endif
+
+P10Error P10Error::current_os_error() {
+#ifdef PTENSOR_HAS_WINDOWS_H
+    return from_win32_error(GetLastError());
+#else
+    return P10Error::OsError << std::strerror(errno);
+#endif
+}
 
 std::string P10Error::to_string() const {
     std::string str;
@@ -68,6 +78,12 @@ std::string P10Error::to_string() const {
     }
 
     return str + ": " + message_;
+}
+
+void P10Error::expect(const std::string& message) const {
+    if (is_error()) {
+        detail::panic(message + " - " + to_string());
+    }
 }
 
 }  // namespace p10

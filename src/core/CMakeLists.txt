@@ -22,6 +22,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/tensor.hpp
   ${_INCLUDE_DIR}/tensor_options.hpp
   ${_INCLUDE_DIR}/tensor_print.hpp
+  ${_INCLUDE_DIR}/json.hpp
   ${_INCLUDE_DIR}/map/opencv2.hpp
   ${_INCLUDE_DIR}/map/eigen.hpp
   ${_INCLUDE_DIR}/map/rerun.hpp
@@ -55,6 +56,8 @@ target_sources(ptensor
     detail/blob.cpp
     dtype.cpp
     base64.cpp
+    compress_staging.cpp
+    json.cpp
 )
 
 if(WIN32)
@@ -70,7 +73,7 @@ target_include_directories(ptensor
     PRIVATE
         ${_INCLUDE_DIR})
 
-target_link_libraries(ptensor PRIVATE $<BUILD_INTERFACE:ptensor_simd_>)
+target_link_libraries(ptensor PRIVATE $<BUILD_INTERFACE:ptensor_simd_> zstd::libzstd)
 # Add C API headers that are referenced by C++ headers
 install(FILES
     ${CMAKE_SOURCE_DIR}/src/c/include/ptensor/config.h

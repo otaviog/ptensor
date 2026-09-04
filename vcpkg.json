@@ -1,103 +1,111 @@
 {
-	"name": "ptensor",
-	"version": "1.0.0",
-	"description": "A portable tensor library for C++",
-	"homepage": "https://github.com/yourusername/ptensor",
-	"license": "MIT",
-	"dependencies": [
+  "name": "ptensor",
+  "version": "1.0.0",
+  "description": "A portable tensor library for C++",
+  "homepage": "https://github.com/yourusername/ptensor",
+  "license": "MIT",
+  "dependencies": [
+	{
+	  "name": "vcpkg-cmake",
+	  "host": true
+	},
+	{
+	  "name": "vcpkg-cmake-config",
+	  "host": true
+	},
+	"spdlog",
+	"zstd"
+  ],
+  "features": {
+	"tests": {
+	  "description": "Build tests (for development)",
+	  "dependencies": [
+		"catch2",
+		"trompeloeil",
+		"benchmark",
+		"eigen3",
 		{
-			"name": "vcpkg-cmake",
-			"host": true
-		},
-		{
-			"name": "vcpkg-cmake-config",
-			"host": true
-		},
-	  "spdlog"
-	],
-	"features": {
-		"tests": {
-			"description": "Build tests (for development)",
-			"dependencies": [
-				"catch2",
-				"benchmark",
-				"eigen3",
-				{
-					"name": "opencv4",
-					"default-features": false
-				}
-			]
-		},
-		"samples": {
-			"description": "Build samples (for development)",
-			"dependencies": [
-				"cli11"
-			]
-		},
-		"io": {
-			"description": "Enable I/O functionality for image and numpy file support",
-			"dependencies": [
-				"zlib",
-				"stb",
-				"audiofile"
-			]
-		},
-		"op": {
-			"description": "Enable additional tensor operations",
-			"dependencies": [
-				"pocketfft"
-			]
-		},
-		"media": {
-			"description": "Enable FFmpeg support for media processing",
-			"dependencies": [
-				{
-					"name": "ffmpeg",
-					"features": [
-						"ffmpeg",
-						"webp",
-						"x265",
-						"swscale",
-						"swresample",
-						"avcodec",
-						"avdevice"
-					]
-				}
-			]
-		},
-		"infer": {
-			"description": "Inference support",
-			"dependencies": [
-				"curl"
-			]
-		},
-		"viz": {
-			"description": "Enable GUI/visualization support (ImGui + SDL2)",
-			"dependencies": [
-				"imgui",
-				{
-					"name": "sdl2",
-					"default-features": false,
-					"features": [
-						"vulkan"
-					],
-					"platform": "!linux"
-				},
-				{
-					"name": "sdl2",
-					"default-features": false,
-					"features": [
-						"vulkan",
-						"x11",
-						"wayland"
-					],
-					"platform": "linux"
-				},
-				{
-					"name": "vulkan",
-					"platform": "windows | linux"
-				}
-			]
+		  "name": "opencv4",
+		  "default-features": false
 		}
-	}
+	  ]
+	},
+	"samples": {
+	  "description": "Build samples (for development)",
+	  "dependencies": [
+		"cli11"
+	  ]
+	},
+	"io": {
+	  "description": "Enable I/O functionality for image and numpy file support",
+	  "dependencies": [
+		"zlib",
+		"stb",
+		"audiofile"
+	  ]
+	},
+	"op": {
+	  "description": "Enable additional tensor operations",
+	  "dependencies": [
+		"pocketfft"
+	  ]
+	},
+	"media": {
+	  "description": "Enable FFmpeg support for media processing",
+	  "dependencies": [
+		{
+		  "name": "ffmpeg",
+		  "features": [
+			"ffmpeg",
+			"webp",
+			"x265",
+			"swscale",
+			"swresample",
+			"avcodec",
+			"avdevice"
+		  ]
+		}
+	  ]
+	},
+	"infer": {
+	  "description": "Inference support",
+	  "dependencies": [
+		"curl"
+	  ]
+	},
+	"viz": {
+	  "description": "Enable GUI/visualization support (ImGui + SDL2)",
+	  "dependencies": [
+		"imgui",
+		{
+		  "name": "sdl2",
+		  "default-features": false,
+		  "features": [
+			"vulkan"
+		  ],
+		  "platform": "!linux"
+		},
+		{
+		  "name": "sdl2",
+		  "default-features": false,
+		  "features": [
+			"vulkan",
+			"x11",
+			"wayland"
+		  ],
+		  "platform": "linux"
+		},
+		{
+		  "name": "vulkan",
+		  "platform": "windows | linux"
+		}
+	  ]
+	},
+	"tlog": {
+	  "description": "Enables Tensor Log (TLog) client",
+	  "dependencies": [
+		"stduuid"
+	  ]
+	}	
+  }
 }

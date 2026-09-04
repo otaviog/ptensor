@@ -14,8 +14,11 @@ target_include_directories(ptensor_testing INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
+# trompeloeil is a development only dependency, so it is kept out of the
+# installed interface.
 target_link_libraries(ptensor_testing INTERFACE
     $<BUILD_INTERFACE:ptensor>
+    $<BUILD_INTERFACE:trompeloeil::trompeloeil>
     $<INSTALL_INTERFACE:p10::ptensor_shared>
 )
 

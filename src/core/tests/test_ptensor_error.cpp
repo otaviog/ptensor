@@ -1,3 +1,6 @@
+#include <format>
+#include <string>
+
 #include <catch2/catch_test_macros.hpp>
 #include <ptensor/p10_error.hpp>
 #include <ptensor/p10_result.hpp>
@@ -40,6 +43,35 @@ TEST_CASE("core::P110Result::(Ok and Err)", "[result]") {
     err = Err(P10Error::InvalidOperation, "invalid operation");
     REQUIRE(!err.is_ok());
     REQUIRE(err.unwrap_err().code() == P10Error::InvalidOperation);
+}
+
+TEST_CASE("core::P10Error formats through to_string()", "[error]") {
+    SECTION("A plain code") {
+        const P10Error error = P10Error::InvalidArgument;
+
+        REQUIRE(std::format("{}", error) == error.to_string());
+        REQUIRE(std::format("{}", error) == "Invalid argument");
+    }
+
+    SECTION("A code with a message") {
+        const P10Error error = P10Error::IoError << "Socket is not connected";
+
+        REQUIRE(std::format("{}", error) == error.to_string());
+        REQUIRE(std::format("{}", error).find("Socket is not connected") != std::string::npos);
+    }
+
+    SECTION("Inside a wider format string") {
+        const P10Error error = P10Error::Ok;
+
+        REQUIRE(std::format("[{}]", error) == "[" + error.to_string() + "]");
+    }
+
+    SECTION("With a string format specifier") {
+        const P10Error error = P10Error::OutOfMemory;
+
+        // "Out of memory" is 13 characters, so it gets 3 padding spaces.
+        REQUIRE(std::format("{:>16}", error) == "   Out of memory");
+    }
 }
 
 }  // namespace p10

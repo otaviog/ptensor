@@ -20,3 +20,6 @@ export {
   tensorFromJson,
   tensorToJson,
 } from './tensor';
+export {
+  P10Error
+} from './p10error';

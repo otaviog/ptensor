@@ -1,3 +1,5 @@
+import { P10Error } from "./p10error";
+
 /**
  * The wire format emitted by `p10::to_json_debug` and by binaries that print a
  * tensor to stdout: `{dtype, shape, stride, blob}` where `blob` is the raw
@@ -53,4 +55,28 @@ export function parseTensorJson(rawResult: string): TensorJson {
     stride: (o.stride as unknown[]).map((n) => Number(n)),
     blob: o.blob,
   };
+}
+
+export function validateTensorJson(value: unknown): TensorJson {
+  if (typeof value !== 'object' || value === null) {
+    throw new P10Error(`Tensor JSON is not an object: ${String(value)}`);
+  }
+
+  const valueDict = value as Record<string, unknown>;
+  if (typeof valueDict.dtype !== 'string') {
+    throw new P10Error(`Tensor JSON is missing 'dtype' field or it is not a string: ${String(value)}`);
+  }
+  if (!Array.isArray(valueDict.shape)) {
+    throw new P10Error(`Tensor JSON is missing 'shape' field or it is not an array: ${String(value)}`);
+  }
+
+  if (!Array.isArray(valueDict.stride)) {
+    throw new P10Error(`Tensor JSON is missing 'stride' field or it is not an array: ${String(value)}`);
+  }
+
+  if (typeof valueDict.blob !== 'string') {
+    throw new P10Error(`Tensor JSON is missing 'blob' field or it is not a string: ${String(value)}`);
+  }
+
+  return value as TensorJson;
 }

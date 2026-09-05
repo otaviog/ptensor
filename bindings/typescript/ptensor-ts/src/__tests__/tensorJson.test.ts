@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { dtypeSizeBytes } from '../dtype';
-import { parseTensorJson } from '../tensorJson';
+import { parseTensorJson, validateTensorJson } from '../tensorJson';
+import { P10Error } from '../p10error';
 import {
   contiguousStride,
   numElements,
@@ -50,5 +51,78 @@ describe('ptensor-ts', () => {
 
   it('rejects an unknown dtype', () => {
     expect(() => tensorFromJson({ dtype: 'bogus', shape: [1], stride: [1], blob: '' })).toThrow();
+  });
+});
+
+describe('validateTensorJson', () => {
+  const valid = {
+    dtype: 'float32',
+    shape: [2, 3],
+    stride: [3, 1],
+    blob: 'AAAAAA==',
+  };
+
+  it('accepts a well-formed object and returns the same reference', () => {
+    const result = validateTensorJson(valid);
+    expect(result).toBe(valid as unknown as ReturnType<typeof validateTensorJson>);
+    expect(result.dtype).toBe('float32');
+    expect(result.shape).toEqual([2, 3]);
+    expect(result.stride).toEqual([3, 1]);
+    expect(result.blob).toBe('AAAAAA==');
+  });
+
+  it('keeps extra fields untouched', () => {
+    const extra = { ...valid, extra: 42 };
+    expect(validateTensorJson(extra) as unknown as Record<string, unknown>).toEqual(extra);
+  });
+
+  it('accepts empty shape and stride (scalar tensor)', () => {
+    expect(validateTensorJson({ ...valid, shape: [], stride: [] }).shape).toEqual([]);
+  });
+
+  const nonObjects: [string, unknown][] = [
+    ['null', null],
+    ['undefined', undefined],
+    ['a string', '{"dtype":"float32"}'],
+    ['a number', 3],
+    ['a boolean', true],
+    ['a function', () => valid],
+  ];
+  for (const [label, value] of nonObjects) {
+    it(`rejects ${label}`, () => {
+      expect(() => validateTensorJson(value)).toThrow(P10Error);
+      expect(() => validateTensorJson(value)).toThrow(/is not an object/);
+    });
+  }
+
+  const badFields: [string, unknown, RegExp][] = [
+    ['dtype missing', { shape: [1], stride: [1], blob: '' }, /'dtype'/],
+    ['dtype not a string', { ...valid, dtype: 7 }, /'dtype'/],
+    ['shape missing', { dtype: 'float32', stride: [1], blob: '' }, /'shape'/],
+    ['shape not an array', { ...valid, shape: '2,3' }, /'shape'/],
+    ['stride missing', { dtype: 'float32', shape: [1], blob: '' }, /'stride'/],
+    ['stride not an array', { ...valid, stride: 3 }, /'stride'/],
+    ['blob missing', { dtype: 'float32', shape: [1], stride: [1] }, /'blob'/],
+    ['blob not a string', { ...valid, blob: [1, 2, 3] }, /'blob'/],
+  ];
+  for (const [label, value, message] of badFields) {
+    it(`rejects when ${label}`, () => {
+      expect(() => validateTensorJson(value)).toThrow(P10Error);
+      expect(() => validateTensorJson(value)).toThrow(message);
+    });
+  }
+
+  it('reports the first invalid field when several are wrong', () => {
+    expect(() => validateTensorJson({})).toThrow(/'dtype'/);
+  });
+
+  it('rejects an array (not a tensor object)', () => {
+    expect(() => validateTensorJson([1, 2, 3])).toThrow(P10Error);
+  });
+
+  it('validates the output of parseTensorJson', () => {
+    const src = new Float32Array([1, 2, 3]);
+    const parsed = parseTensorJson(makeJson('float32', [3], src));
+    expect(validateTensorJson(parsed)).toBe(parsed);
   });
 });

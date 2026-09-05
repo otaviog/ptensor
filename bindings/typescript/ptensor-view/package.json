@@ -11,7 +11,8 @@
         ".": {
             "types": "./dist/index.d.ts",
             "import": "./dist/tensor-view.js"
-        }
+        },
+        "./styles.css": "./src/styles.css"
     },
     "files": ["dist", "src"],
     "scripts": {

@@ -44,3 +44,8 @@ bun run build           # both
 
 `dist/webview.js` is loaded by the `ptensor-vscode` extension: it mounts the
 panel, posts a `ready` message, and renders the tensor the host posts back.
+
+`dist/tensor-view.js` is what `../ptensor-desktop` (the Electrobun app that
+streams tensors in over a local socket) imports; its stylesheet is exported
+separately as `@ptensor/tensor-view/styles.css`, since the lib build does not
+bundle CSS.

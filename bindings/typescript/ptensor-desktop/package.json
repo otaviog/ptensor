@@ -1,0 +1,32 @@
+{
+    "name": "@ptensor/tensor-desktop",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Desktop app for displaying tensors streamed by p10::tlog module.",
+    "scripts": {
+        "dev": "electrobun dev",
+        "start": "electrobun run",
+        "build": "electrobun build",
+        "typecheck": "bun scripts/typecheck.ts",
+        "test": "bun test",
+        "smoke": "bun scripts/smoke-view.ts",
+        "send": "bun scripts/send-tensor.ts"
+    },
+    "dependencies": {
+        "@logtape/file": "^2.3.3",
+        "@logtape/logtape": "^2.3.3",
+        "@ptensor/tensor-view": "file:../ptensor-view",
+        "electrobun": "1.18.1",
+        "ptensor-ts": "file:../ptensor-ts",
+        "react": "^19.1.0",
+        "react-dom": "^19.1.0"
+    },
+    "devDependencies": {
+        "@happy-dom/global-registrator": "^20.12.0",
+        "@types/bun": "^1.3.8",
+        "@types/react": "^19.1.0",
+        "@types/react-dom": "^19.1.0",
+        "typescript": "^5.9.3"
+    }
+}

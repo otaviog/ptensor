@@ -127,7 +127,6 @@ export class TensorPanel {
             this.disposables.pop()?.dispose();
         }
     }
-    }
 }
 
 /** Current table threshold setting, spread into outgoing messages. */

@@ -1,24 +1,23 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { TensorView } from '@ptensor/tensor-view';
+import type { Tensor } from '@ptensor/tensor-view';
 import type { ServerInfo, TensorPayload } from '../../shared/rpc';
 
 // The real TensorViewer is stubbed: `@ptensor/tensor-view` is a `file:` link
 // with its own React copy, and only the bundler dedupes those (see
 // src/build/dedupeReact.ts) — under `bun test` two Reacts would collide. What
 // is under test here is App's own wiring: session list, follow mode, selection.
-// `fromTensorJson` is stubbed with it, so no base64 is decoded here either.
+// `tensorFromJson` is stubbed with it, so no base64 is decoded here either.
 mock.module('@ptensor/tensor-view', () => ({
-    TensorViewer: ({ tensor }: { tensor: TensorView }) => (
-        <div className="ptv-root">{tensor.name}</div>
+    TensorViewer: ({ name }: { tensor: Tensor; name?: string }) => (
+        <div className="ptv-root">{name}</div>
     ),
-    fromTensorJson: (_json: unknown, name: string): TensorView => ({
-        name,
+    tensorFromJson: (): Tensor => ({
         dtype: 'float32',
-        shape: [2n, 2n],
-        stride: [2n, 1n],
-        array: new Float32Array([0, 0.25, 0.5, 1]),
+        shape: [2, 2],
+        stride: [2, 1],
+        data: new Float32Array([0, 0.25, 0.5, 1]),
     }),
 }));
 

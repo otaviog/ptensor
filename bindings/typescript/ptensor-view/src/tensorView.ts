@@ -1,4 +1,10 @@
-import { asDType, base64ToBytes, type TensorJson, viewNumericArray } from 'ptensor-ts';
+import {
+    asDType,
+    base64ToBytes,
+    decodeTensorBlob,
+    type TensorJson,
+    viewNumericArray,
+} from 'ptensor-ts';
 import { type DTypeString, type NumericArray, type TensorView } from './types';
 
 // The transport form (`TensorJson` = `{dtype, shape, stride, size_bytes,
@@ -14,19 +20,14 @@ export function fromTensorJson(json: TensorJson, name?: string): TensorView {
     if (!dtype) {
         throw new Error(`Unknown dtype '${json.dtype}' in tensor JSON.`);
     }
-    // A compressed blob would base64-decode into zstd frame bytes and render as
-    // noise, so refuse it rather than show a plausible-looking wrong tensor.
-    if (json.encoding !== 'base64') {
-        throw new Error(
-            `Cannot decode tensor blob with encoding '${json.encoding}': only 'base64' is supported.`,
-        );
-    }
+    // `decodeTensorBlob` undoes the encoding, zstd included. `.slice()` copies
+    // into a zero-offset buffer, which a typed-array view needs.
     return {
         name,
         dtype,
         shape: json.shape.map(BigInt),
         stride: json.stride.map(BigInt),
-        array: bytesToTyped(base64ToArrayBuffer(json.blob), dtype),
+        array: bytesToTyped(decodeTensorBlob(json).slice().buffer, dtype),
     };
 }
 

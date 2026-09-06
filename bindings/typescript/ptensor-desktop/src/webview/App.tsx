@@ -1,10 +1,12 @@
 // The panel. Tensors arrive one push at a time and are kept here, grouped by
 // the session their producer announced; the bun process stores nothing. Only
-// the selected tensor is decoded into a TensorView.
+// the selected tensor is decoded into a Tensor.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { TensorViewer, fromTensorJson, type TensorView } from '@ptensor/tensor-view';
+import { TensorViewer, tensorFromJson, type Tensor } from '@ptensor/tensor-view';
 import type { ServerInfo, TensorPayload } from '../shared/rpc';
+import { ReceivedTensor, Session, Selection } from './types';
+import { SessionGroup } from './SessionGroup';
 
 /** Cap used until `getServerInfo` answers with the one the app was started with. */
 const DEFAULT_HISTORY = 100;
@@ -18,22 +20,6 @@ export interface AppProps {
     maxTensorsPerSession?: number;
 }
 
-interface ReceivedTensor {
-    id: string;
-    payload: TensorPayload;
-}
-
-interface Session {
-    id: string;
-    tensors: ReceivedTensor[];
-    updatedAt: number;
-    totalReceived: number;
-}
-
-interface Selection {
-    sessionId: string;
-    tensorId: string;
-}
 
 export function App({ subscribe, getServerInfo, maxTensorsPerSession }: AppProps) {
     const [sessions, setSessions] = useState<Session[]>([]);
@@ -94,13 +80,33 @@ export function App({ subscribe, getServerInfo, maxTensorsPerSession }: AppProps
     );
 
     // Decoding is deferred to selection: the history holds base64 blobs only.
-    const tensor = useMemo<TensorView | null>(() => {
+    // It can fail on a tensor the panel cannot read -- a compressed blob, an
+    // unknown dtype -- and a throw from a render would take the whole window
+    // down, so the message goes to the panel instead.
+    const decoded = useMemo<{
+        view: Tensor | null;
+        name: string | undefined;
+        error: string | null;
+    }>(() => {
         const entry = activeSession?.tensors.find((item) => item.id === selected?.tensorId);
         if (!entry) {
-            return null;
+            return { view: null, name: undefined, error: null };
         }
-        return fromTensorJson(entry.payload.tensor, entry.payload.name);
+        try {
+            return {
+                view: tensorFromJson(entry.payload.tensor),
+                name: entry.payload.name,
+                error: null,
+            };
+        } catch (err: unknown) {
+            return {
+                view: null,
+                name: entry.payload.name,
+                error: err instanceof Error ? err.message : String(err),
+            };
+        }
     }, [activeSession, selected]);
+    const tensor = decoded.view;
 
     const onSelect = useCallback((sessionId: string, tensorId: string) => {
         setSelected({ sessionId, tensorId });
@@ -159,10 +165,10 @@ export function App({ subscribe, getServerInfo, maxTensorsPerSession }: AppProps
             </aside>
             <main className="panel">
                 {tensor ? (
-                    <TensorViewer tensor={tensor} />
+                    <TensorViewer tensor={tensor} name={decoded.name} />
                 ) : (
                     <div className="placeholder">
-                        {error ?? 'Select a tensor on the left.'}
+                        {decoded.error ?? error ?? 'Select a tensor on the left.'}
                     </div>
                 )}
                 {activeSession && tensor && (
@@ -177,54 +183,6 @@ export function App({ subscribe, getServerInfo, maxTensorsPerSession }: AppProps
     );
 }
 
-function SessionGroup({
-    session,
-    selected,
-    onSelect,
-    onClear,
-}: {
-    session: Session;
-    selected: Selection | null;
-    onSelect: (sessionId: string, tensorId: string) => void;
-    onClear: () => void;
-}) {
-    return (
-        <section className="session">
-            <header className="session-head">
-                <span className="session-id" title={session.id}>
-                    {session.id}
-                </span>
-                <button type="button" className="session-clear" onClick={onClear}>
-                    ✕
-                </button>
-            </header>
-            <ul className="tensor-list">
-                {[...session.tensors].reverse().map((entry) => {
-                    const active =
-                        selected?.sessionId === session.id && selected.tensorId === entry.id;
-                    return (
-                        <li key={entry.id}>
-                            <button
-                                type="button"
-                                className={`tensor-item${active ? ' active' : ''}`}
-                                onClick={() => onSelect(session.id, entry.id)}
-                            >
-                                <span className="tensor-name">{entry.payload.name}</span>
-                                <span className="tensor-meta">
-                                    {entry.payload.tensor.dtype} [
-                                    {entry.payload.tensor.shape.join('×')}]
-                                </span>
-                                <span className="tensor-time">
-                                    {new Date(entry.payload.receivedAt).toLocaleTimeString()}
-                                </span>
-                            </button>
-                        </li>
-                    );
-                })}
-            </ul>
-        </section>
-    );
-}
 
 function StatusDot({ info }: { info: ServerInfo | null }) {
     const state = !info ? 'pending' : info.listening ? 'up' : 'down';

@@ -1,4 +1,4 @@
-import type { TensorView } from './types';
+import type { Tensor } from 'ptensor-ts';
 
 /**
  * Synthetic tensors used by the dev playground and the in-editor demo command.
@@ -8,19 +8,8 @@ import type { TensorView } from './types';
  * driver so the offline and live paths exercise the same panel code.
  */
 
-function view(
-    name: string,
-    shape: number[],
-    dtype: TensorView['dtype'],
-    array: TensorView['array']
-): TensorView {
-    return {
-        name,
-        shape: shape.map(BigInt),
-        stride: contiguousStride(shape).map(BigInt),
-        dtype,
-        array,
-    };
+function view(shape: number[], dtype: Tensor['dtype'], data: Tensor['data']): Tensor {
+    return { shape, stride: contiguousStride(shape), dtype, data };
 }
 
 function contiguousStride(shape: number[]): number[] {
@@ -101,15 +90,19 @@ function batchNhwc(n: number, h: number, w: number): Uint8Array {
     return d;
 }
 
-export const SAMPLES: TensorView[] = [
-    view('scalar', [1], 'float32', new Float32Array([3.14159])),
-    view('vec8', [8], 'float32', Float32Array.from({ length: 8 }, (_, i) => i * 1.5)),
-    view('mat4x5', [4, 5], 'float32', Float32Array.from({ length: 20 }, (_, i) => i - 7.5)),
-    view('mat_i64', [2, 3], 'int64', BigInt64Array.from([1n, 2n, 3n, 4n, 5n, 6n])),
-    view('gray', [64, 64], 'float32', grayGradient(64, 64)),
-    view('rgb_hwc', [48, 64, 3], 'uint8', rgbInterleaved(48, 64)),
-    view('rgb_chw', [3, 48, 64], 'float32', rgbPlanar(48, 64)),
-    view('batch_nchw', [2, 3, 32, 32], 'float32', batchNchw(2, 32, 32)),
-    view('batch_nhwc', [2, 32, 32, 3], 'uint8', batchNhwc(2, 32, 32)),
-    view('large_1d', [1024], 'float32', Float32Array.from({ length: 1024 }, (_, i) => Math.sin(i / 16))),
-];
+export const SAMPLES: Record<string, Tensor> = {
+    scalar: view([1], 'float32', new Float32Array([3.14159])),
+    vec8: view([8], 'float32', Float32Array.from({ length: 8 }, (_, i) => i * 1.5)),
+    mat4x5: view([4, 5], 'float32', Float32Array.from({ length: 20 }, (_, i) => i - 7.5)),
+    mat_i64: view([2, 3], 'int64', BigInt64Array.from([1n, 2n, 3n, 4n, 5n, 6n])),
+    gray: view([64, 64], 'float32', grayGradient(64, 64)),
+    rgb_hwc: view([48, 64, 3], 'uint8', rgbInterleaved(48, 64)),
+    rgb_chw: view([3, 48, 64], 'float32', rgbPlanar(48, 64)),
+    batch_nchw: view([2, 3, 32, 32], 'float32', batchNchw(2, 32, 32)),
+    batch_nhwc: view([2, 32, 32, 3], 'uint8', batchNhwc(2, 32, 32)),
+    large_1d: view(
+        [1024],
+        'float32',
+        Float32Array.from({ length: 1024 }, (_, i) => Math.sin(i / 16))
+    ),
+};

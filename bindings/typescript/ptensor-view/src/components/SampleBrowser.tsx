@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { TensorView } from '../types';
+import type { Tensor } from 'ptensor-ts';
 import { TensorViewer } from './TensorViewer';
 
 /** Sidebar of tensors + the viewer for the selected one. Shared by the dev
@@ -8,27 +8,35 @@ export function SampleBrowser({
     samples,
     tableThreshold,
 }: {
-    samples: TensorView[];
+    samples: Record<string, Tensor>;
     tableThreshold?: number;
 }) {
+    const entries = Object.entries(samples);
     const [index, setIndex] = useState(0);
+    const [name, tensor] = entries[index] ?? ['', undefined];
     return (
         <div className="ptv-browser">
             <nav className="ptv-browser-nav">
                 <h3>samples</h3>
-                {samples.map((s, i) => (
+                {entries.map(([sampleName, sample], i) => (
                     <button
-                        key={s.name ?? i}
+                        key={sampleName}
                         type="button"
                         className={i === index ? 'active' : ''}
                         onClick={() => setIndex(i)}
                     >
-                        {s.name} [{s.shape.map(Number).join(', ')}]
+                        {sampleName} [{sample.shape.join(', ')}]
                     </button>
                 ))}
             </nav>
             <main className="ptv-browser-main">
-                <TensorViewer tensor={samples[index]} tableThreshold={tableThreshold} />
+                {tensor && (
+                    <TensorViewer
+                        tensor={tensor}
+                        name={name}
+                        tableThreshold={tableThreshold}
+                    />
+                )}
             </main>
         </div>
     );

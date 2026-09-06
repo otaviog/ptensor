@@ -8,7 +8,7 @@ import { SampleBrowser } from '../components/SampleBrowser';
 import { TensorViewer } from '../components/TensorViewer';
 import { SAMPLES } from '../samples';
 import { type TensorJson } from 'ptensor-ts';
-import { fromTensorJson } from '../tensorView';
+import { tensorFromJson } from 'ptensor-ts';
 // Inlined so the whole webview ships as a single self-contained JS bundle.
 import css from '../styles.css?inline';
 
@@ -69,7 +69,8 @@ function render(msg: HostMessage): void {
             <SampleBrowser samples={SAMPLES} tableThreshold={msg.tableThreshold} />
         ) : (
             <TensorViewer
-                tensor={fromTensorJson(msg.tensor, msg.name)}
+                tensor={tensorFromJson(msg.tensor)}
+                name={msg.name}
                 tableThreshold={msg.tableThreshold}
                 onRefresh={
                     msg.canRefresh && vscode

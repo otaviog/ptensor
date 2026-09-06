@@ -56,7 +56,7 @@ export function handleMessage(connectionInfo: ConnectionInfo, onTensor: TensorSi
     },
     onConnectionClose: (): void => {
       logger.info('Client ({connection}) closed connection for session {sessionId}.', {
-        connectionInfo, sessionId
+        connection: connectionInfo.clientAddress, sessionId
       })
     }
   }

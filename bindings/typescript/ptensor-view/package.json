@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "type": "module",
-    "description": "Framework-agnostic TensorView type and React viewer for ptensor tensors.",
+    "description": "React tensor viewer for ptensor: tables, images and batched image tabs.",
     "main": "./dist/tensor-view.js",
     "module": "./dist/tensor-view.js",
     "types": "./dist/index.d.ts",
@@ -14,7 +14,10 @@
         },
         "./styles.css": "./src/styles.css"
     },
-    "files": ["dist", "src"],
+    "files": [
+        "dist",
+        "src"
+    ],
     "scripts": {
         "dev": "vite",
         "build": "vite build && vite build --config vite.lib.config.ts",

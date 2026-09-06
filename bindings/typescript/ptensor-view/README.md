@@ -1,27 +1,37 @@
 # @ptensor/tensor-view
 
-Framework-agnostic tensor visualization for ptensor. Owns the shared
-`TensorView` type and a React panel that renders a tensor as a table, an image
-(grayscale / RGB, planar or interleaved), or batched image tabs.
+Framework-agnostic tensor visualization for ptensor: a React panel that renders
+a tensor as a table, an image (grayscale / RGB, planar or interleaved), or
+batched image tabs.
 
 Pure: no native / FFI dependency, so the same code runs in a VS Code webview,
 the Electron pilot, and a plain browser playground.
 
-## TensorView
+## The tensor
+
+This package owns no tensor vocabulary at all: the type, its dtypes and the
+helpers for reading one (`elementAt`, `isFloatDtype`, `dtypeSizeBytes`) are
+ptensor-ts', re-exported from this entry so the panel and what it takes are one
+import. The panel renders the same decoded, plain-data tensor the rest of the TS
+side passes around:
 
 ```ts
-interface TensorView {
-    array: NumericArray;   // decoded; float16 -> Float32Array, int64 -> BigInt64Array
-    stride: bigint[];
-    shape: bigint[];
+interface Tensor {
     dtype: DTypeString;
-    name?: string;
+    shape: number[];
+    stride: number[];   // element counts
+    data: NumericArray; // int64 -> BigInt64Array
 }
 ```
 
 Tensors cross process boundaries as `TensorJson` (`{dtype, shape, stride, blob}`,
-the exact shape `p10::to_json_debug` emits, with `blob` base64); `fromTensorJson`
-decodes it — including float16 — into a `TensorView`.
+the exact shape `p10::to_json_debug` emits, with `blob` base64 or base64+zstd).
+Decoding it is ptensor-ts' job -- `tensorFromJson`, re-exported here so the
+panel and its transport are one import. A float16 payload comes back as a
+`Float32Array`, since readers want numbers rather than raw bits, while `dtype`
+keeps saying `float16`.
+
+The header label is a prop, not a field: `<TensorViewer tensor={t} name="input" />`.
 
 ## Develop
 

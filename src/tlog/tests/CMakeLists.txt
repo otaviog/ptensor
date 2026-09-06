@@ -11,3 +11,5 @@ target_link_libraries(unit_tests_tlog
 
 # The session and connection tests exercise the module private headers.
 target_include_directories(unit_tests_tlog PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
+
+add_subdirectory(utils)

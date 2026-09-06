@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import type { ImagePlane } from '../resolveView';
 import { imageMapping, planeToRgba } from '../imageData';
 import type { TensorStats } from '../stats';
-import type { TensorView } from '../types';
+import type { Tensor } from 'ptensor-ts';
 
 interface Props {
-    tensor: TensorView;
+    tensor: Tensor;
     plane: ImagePlane;
     batch: number;
     stats: TensorStats;
@@ -41,7 +41,7 @@ function ImageCanvas({
     index,
     stats,
 }: {
-    tensor: TensorView;
+    tensor: Tensor;
     plane: ImagePlane;
     index: number;
     stats: TensorStats;
@@ -59,7 +59,7 @@ function ImageCanvas({
         }
         const planeElements = plane.width * plane.height * plane.channels;
         const rgba = planeToRgba(
-            tensor.array,
+            tensor.data,
             index * planeElements,
             plane,
             imageMapping(tensor.dtype, stats)

@@ -59,6 +59,11 @@ let ready = false;
 const pending: TensorPayload[] = [];
 
 function pushTensor(payload: TensorPayload): void {
+    log.info('Tensor {name} for session {sessionId} ({state}).', {
+        name: payload.name,
+        sessionId: payload.sessionId,
+        state: ready ? 'pushed to the window' : 'held until the window is up',
+    });
     if (!ready) {
         pending.push(payload);
         if (pending.length > PENDING_LIMIT) {
@@ -75,15 +80,25 @@ const server = new TensorServer({
     onTensor: pushTensor,
 });
 
+// With a Vite dev server up (`bun run dev:ui`), the window loads the panel from
+// it and picks up UI edits without restarting this process, so the feed and the
+// tensors it already received survive. Unset, the window loads the bundle
+// electrobun built.
+const devUrl = process.env.PTENSOR_VIEW_DEV_URL;
+if (devUrl !== undefined) {
+    log.info('Loading the window from the dev server at {devUrl}.', { devUrl });
+}
+
 const mainWindow = new BrowserWindow({
     title: 'ptensor View',
-    url: 'views://webview/index.html',
+    url: devUrl ?? 'views://webview/index.html',
     frame: { x: 120, y: 120, width: 1280, height: 860 },
     rpc,
 });
 
 mainWindow.webview.on('dom-ready', () => {
     ready = true;
+    log.info('Window is up, flushing {pending} held tensors.', { pending: pending.length });
     for (const payload of pending.splice(0)) {
         mainWindow.webview.rpc?.send.newTensor(payload);
     }

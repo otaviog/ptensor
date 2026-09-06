@@ -1,7 +1,7 @@
 import type { ImagePlane } from './resolveView';
-import { elementAt, type NumericArray } from './types';
+import { elementAt, type NumericArray } from 'ptensor-ts';
 import type { TensorStats } from './stats';
-import { isFloatDtype, type DTypeString } from './types';
+import { isFloatDtype, type DTypeString } from 'ptensor-ts';
 
 export interface ImageMapping {
     lo: number;

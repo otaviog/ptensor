@@ -23,7 +23,7 @@ TEST_CASE("tlog::log streams tensors to the server", "[.tlog][.integration]") {
 
     // The stream starts with the handshake, the entry follows it.
     const std::string handshake = server.wait_for(1);
-    REQUIRE(handshake.starts_with(R"({"session": ")"));
+    REQUIRE(handshake.starts_with(R"({"sessionId":")"));
 
     const std::string first = server.wait_for(handshake.size() + 1);
     REQUIRE(first.find(R"("name":"zeros")") != std::string::npos);

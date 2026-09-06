@@ -1,4 +1,4 @@
-import { elementAt, type NumericArray } from './types';
+import { elementAt, type NumericArray } from 'ptensor-ts';
 
 export interface TensorStats {
     min: number;

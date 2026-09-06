@@ -1,9 +1,10 @@
+import { decompress } from 'fzstd';
+
 import { P10Error } from './p10error';
-import { Tensor } from './tensor';
+import { bytesToTyped, Tensor } from './tensor';
 
 import { base64ToBytes, bytesToBase64 } from './base64';
 import { asDType, dtypeSizeBytes } from './dtype';
-import { viewNumericArray } from './numericArray';
 
 /**
  * How `blob` is encoded. `base64` is the raw little-endian element bytes;
@@ -105,22 +106,31 @@ export function validateTensorJson(value: unknown): TensorJson {
   return value as TensorJson;
 }
 
+/** Undoes `encoding`, returning the raw little-endian element bytes. */
+export function decodeTensorBlob(json: TensorJson): Uint8Array {
+  const bytes = base64ToBytes(json.blob);
+  if (json.encoding !== 'base64+zstd') {
+    return bytes;
+  }
+  try {
+    return decompress(bytes);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new P10Error(`Could not zstd-decompress the tensor blob: ${msg}`);
+  }
+}
+
 /**
- * Decodes a `TensorJson` (base64 blob) into a materialized `Tensor`. Only the
- * plain `base64` encoding can be decoded here: this package has no
- * dependencies, so it carries no zstd decoder.
+ * Decodes a `TensorJson` into a materialized `Tensor`, undoing both the base64
+ * and, for `base64+zstd`, the compression. A float16 payload is widened to a
+ * `Float32Array` (see `bytesToTyped`) while `dtype` keeps saying `float16`.
  */
 export function tensorFromJson(json: TensorJson): Tensor {
   const dtype = asDType(json.dtype);
   if (!dtype) {
     throw new P10Error(`Unknown dtype '${json.dtype}' in tensor JSON.`);
   }
-  if (json.encoding !== 'base64') {
-    throw new P10Error(
-      `Cannot decode tensor blob with encoding '${json.encoding}': only 'base64' is supported.`,
-    );
-  }
-  const bytes = base64ToBytes(json.blob);
+  const bytes = decodeTensorBlob(json);
   if (bytes.byteLength !== json.size_bytes) {
     throw new P10Error(
       `Blob decodes to ${bytes.byteLength} bytes but 'size_bytes' says ${json.size_bytes}.`,
@@ -132,10 +142,9 @@ export function tensorFromJson(json: TensorJson): Tensor {
       `Blob length ${bytes.byteLength} is not a multiple of ${elemSize} for dtype '${dtype}'.`,
     );
   }
-  // Copy into a fresh, element-aligned buffer: the base64 bytes may be offset
+  // Copy into a fresh, element-aligned buffer: the decoded bytes may be offset
   // inside a larger Buffer, which a typed-array view can't straddle safely.
-  const aligned = bytes.slice();
-  const data = viewNumericArray(dtype, aligned.buffer, aligned.byteOffset, bytes.byteLength / elemSize);
+  const data = bytesToTyped(bytes.slice().buffer, dtype);
   return { dtype, shape: json.shape, stride: json.stride, data };
 }
 

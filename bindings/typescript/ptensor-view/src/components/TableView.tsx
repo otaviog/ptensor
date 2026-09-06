@@ -1,10 +1,10 @@
 import { formatNumber } from '../format';
-import { elementAt, type TensorView } from '../types';
+import { elementAt, type Tensor } from 'ptensor-ts';
 
 /** Renders the tensor as a 2D grid using the last dim as columns. */
-export function TableView({ tensor }: { tensor: TensorView }) {
+export function TableView({ tensor }: { tensor: Tensor }) {
     const shape = tensor.shape.map(Number);
-    const data = tensor.array;
+    const data = tensor.data;
     const n = data.length;
 
     if (shape.length === 0 || n === 1) {
@@ -37,8 +37,8 @@ export function TableView({ tensor }: { tensor: TensorView }) {
 }
 
 /** Truncated single-row preview for large, non-image tensors. */
-export function LargeTablePreview({ tensor }: { tensor: TensorView }) {
-    const data = tensor.array;
+export function LargeTablePreview({ tensor }: { tensor: Tensor }) {
+    const data = tensor.data;
     const count = Math.min(256, data.length);
     return (
         <>

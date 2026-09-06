@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import { dtypeSizeBytes } from '../dtype';
 import { P10Error } from '../p10error';
 import {
+  decodeTensorBlob,
   parse,
   parseTensorJson,
   type TensorJson,
@@ -79,10 +80,44 @@ describe('ptensor-ts', () => {
     ).toThrow(P10Error);
   });
 
-  it('rejects a zstd-compressed blob (no decoder in this package)', () => {
+  it('decodes a zstd-compressed blob', () => {
+    const data = new Float32Array([1.5, -2.5, 3.5, 4.5]);
+    const raw = new Uint8Array(data.buffer);
+    const json = makeJsonObject('float32', [4], data);
+    // `size_bytes` stays the uncompressed count, as the C++ encoder writes it.
+    json.encoding = 'base64+zstd';
+    json.blob = Buffer.from(Bun.zstdCompressSync(raw)).toString('base64');
+
+    const tensor = tensorFromJson(json);
+    expect(Array.from(tensor.data)).toEqual([1.5, -2.5, 3.5, 4.5]);
+  });
+
+  it('widens a float16 payload to Float32Array', () => {
+    // 1.0, -2.0, 0.5 as IEEE 754 half.
+    const halves = new Uint16Array([0x3c00, 0xc000, 0x3800]);
+    const json = makeJsonObject('float16', [3], halves);
+
+    const tensor = tensorFromJson(json);
+    expect(tensor.dtype).toBe('float16');
+    expect(tensor.data).toBeInstanceOf(Float32Array);
+    expect(Array.from(tensor.data)).toEqual([1, -2, 0.5]);
+  });
+
+  it('rejects a zstd-compressed blob that does not decompress', () => {
     const json = { ...makeJsonObject('uint8', [3], new Uint8Array([1, 2, 3])) };
     json.encoding = 'base64+zstd';
-    expect(() => tensorFromJson(json)).toThrow(/only 'base64' is supported/);
+    expect(() => tensorFromJson(json)).toThrow(/Could not zstd-decompress/);
+  });
+
+  it('exposes the raw bytes of either encoding', () => {
+    const raw = new Uint8Array([9, 8, 7, 6]);
+    const plain = makeJsonObject('uint8', [4], raw);
+    expect(Array.from(decodeTensorBlob(plain))).toEqual([9, 8, 7, 6]);
+
+    const compressed = { ...plain };
+    compressed.encoding = 'base64+zstd';
+    compressed.blob = Buffer.from(Bun.zstdCompressSync(raw)).toString('base64');
+    expect(Array.from(decodeTensorBlob(compressed))).toEqual([9, 8, 7, 6]);
   });
 
   it("rejects a blob whose length disagrees with 'size_bytes'", () => {

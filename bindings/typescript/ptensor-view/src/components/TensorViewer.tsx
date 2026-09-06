@@ -1,13 +1,15 @@
 import { useMemo } from 'react';
 import { computeStats } from '../stats';
 import { resolveView } from '../resolveView';
-import type { TensorView } from '../types';
+import type { Tensor } from 'ptensor-ts';
 import { StatsBar } from './StatsBar';
 import { ImageView } from './ImageView';
 import { LargeTablePreview, TableView } from './TableView';
 
 export interface TensorViewerProps {
-    tensor: TensorView;
+    tensor: Tensor;
+    /** Label for the panel header (e.g. the debugger expression, a log entry). */
+    name?: string;
     /** Element count at or below which the tensor renders as a full table. */
     tableThreshold?: number;
     /** When set, a refresh button is shown that re-reads the tensor from its source. */
@@ -15,14 +17,14 @@ export interface TensorViewerProps {
 }
 
 /** Row-major (C-contiguous) layout: each stride is the product of the trailing dims. */
-function isContiguous(shape: bigint[], stride: bigint[]): boolean {
+function isContiguous(shape: number[], stride: number[]): boolean {
     if (shape.length !== stride.length) {
         return false;
     }
-    let expected = 1n;
+    let expected = 1;
     for (let i = shape.length - 1; i >= 0; i--) {
         // A length-0/1 dim's stride is irrelevant to the layout; skip it.
-        if (shape[i] > 1n && stride[i] !== expected) {
+        if (shape[i] > 1 && stride[i] !== expected) {
             return false;
         }
         expected *= shape[i];
@@ -31,20 +33,21 @@ function isContiguous(shape: bigint[], stride: bigint[]): boolean {
 }
 
 /** Top-level panel: header + stats + the resolved table/image body. */
-export function TensorViewer({ tensor, tableThreshold = 256, onRefresh }: TensorViewerProps) {
-    const shape = useMemo(() => tensor.shape.map(Number), [tensor.shape]);
-    const stride = useMemo(() => tensor.stride.map(Number), [tensor.stride]);
-    const contiguous = useMemo(
-        () => isContiguous(tensor.shape, tensor.stride),
-        [tensor.shape, tensor.stride]
-    );
-    const stats = useMemo(() => computeStats(tensor.array), [tensor.array]);
+export function TensorViewer({
+    tensor,
+    name,
+    tableThreshold = 256,
+    onRefresh,
+}: TensorViewerProps) {
+    const { shape, stride } = tensor;
+    const contiguous = useMemo(() => isContiguous(shape, stride), [shape, stride]);
+    const stats = useMemo(() => computeStats(tensor.data), [tensor.data]);
     const view = useMemo(() => resolveView(shape, tableThreshold), [shape, tableThreshold]);
 
     return (
         <div className="ptv-root">
             <div className="ptv-header">
-                <h2 className="ptv-title">{tensor.name ?? 'tensor'}</h2>
+                <h2 className="ptv-title">{name ?? 'tensor'}</h2>
                 {onRefresh && (
                     <button type="button" className="ptv-refresh" onClick={onRefresh}>
                         ↻ Refresh

@@ -53,12 +53,13 @@ TEST_CASE("tlog::Session::start connects and announces the session", "[tlog][ses
 
     REQUIRE_THAT(fixture.session->start(ADDRESS), testing::is_ok());
 
-    REQUIRE(handshake.starts_with(R"({"session": ")"));
-    REQUIRE(handshake.ends_with(R"("})"));
+    REQUIRE(handshake.starts_with(R"({"sessionId":")"));
+    // Newline delimited like the entries, so the server can read it as a line.
+    REQUIRE(handshake.ends_with("\"}\n"));
 
     // A version 4 UUID: 32 hexadecimal digits plus 4 dashes.
-    const size_t id_start = std::string(R"({"session": ")").size();
-    REQUIRE(handshake.size() == id_start + 36 + 2);
+    const size_t id_start = std::string(R"({"sessionId":")").size();
+    REQUIRE(handshake.size() == id_start + 36 + 3);
 }
 
 TEST_CASE("tlog::Session::start uses a fresh session id", "[tlog][session]") {

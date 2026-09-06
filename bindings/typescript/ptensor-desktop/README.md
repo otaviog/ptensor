@@ -24,7 +24,72 @@ bun run start          # runs that app
 bun run send -- --session demo --count 20 --interval 200 --kind rgb
 ```
 
-`bun run dev` does the same through Electrobun's dev loop (rebuild on change).
+`bun run dev` does the same through Electrobun's dev loop: it bundles the app
+and launches it, and every change needs another run.
+
+### Working on the UI
+
+```bash
+bun run dev/ui         # vite on :5174, plus the app pointed at it
+```
+
+The window loads from the Vite dev server instead of the bundle, so edits to the
+webview -- this package's `src/webview`, and ptensor-view's sources, which are
+aliased to source rather than its `dist` -- land in the open window through
+React Fast Refresh. The bun process is not restarted, so the socket keeps
+listening and the tensors already in the window stay there.
+
+The window keeps its tensor history in React state, so an edit that adds or
+removes a hook remounts the component and clears the list -- send the tensors
+again. Edits that leave the hooks alone keep it.
+
+It is the dev server that decides this, not the script: the app loads whatever
+`PTENSOR_VIEW_DEV_URL` names, and the bundled view -- the one that ships -- when
+it is unset. Set it yourself to point the app at a server on another port.
+`scripts/devUi.ts` only waits for Vite before starting the app (the window loads
+its URL once and does not retry) and stops it afterwards (the port is
+`strictPort`, so a stray server breaks the next run).
+
+Only the window is served this way -- a change to `src/bun` still needs a
+restart, and `bunx electrobun dev --watch` covers that by rebuilding and
+relaunching the whole app on every change.
+
+### App icon
+
+`icon.iconset/` is the bundle icon, built from `docs/icon-light.png` (the light
+one: a macOS `.icns` has no dark variant, and the mark carries its own
+background). Electrobun runs `iconutil` over the folder at build time. To
+regenerate it, or to switch to `icon-dark.png`:
+
+```bash
+for size in "16 16x16" "32 16x16@2x" "32 32x32" "64 32x32@2x" "128 128x128" \
+            "256 128x128@2x" "256 256x256" "512 256x256@2x" "512 512x512" \
+            "1024 512x512@2x"; do
+  set -- $size
+  sips -z $1 $1 ../../../docs/icon-light.png --out "icon.iconset/icon_$2.png"
+done
+```
+
+Windows and Linux take a single file each, cut from the same source:
+`icon.ico` (16/24/32/48/64/128/256, built with the `png-to-ico` that ships
+inside electrobun) and `icon.png` (512). Windows gets a real `.ico` rather than
+a `.png`: electrobun converts a PNG when it embeds the icon into `launcher.exe`,
+but copies it to `Resources/app.ico` unconverted.
+
+```bash
+sips -z 512 512 ../../../docs/icon-light.png --out icon.png
+for s in 16 24 32 48 64 128 256; do
+  sips -z $s $s ../../../docs/icon-light.png --out "/tmp/ico/$s.png"
+done
+bun -e "import p from 'png-to-ico'; import {writeFileSync} from 'node:fs';
+        writeFileSync('icon.ico', new Uint8Array(await p([16,24,32,48,64,128,256].map(s => \`/tmp/ico/\${s}.png\`))))"
+```
+
+The source is 250x251, so anything above 256 -- the two largest iconset entries
+and `icon.png` -- is upscaled. Replace them if a larger original turns up.
+
+Only the macOS icon is verified here: the Windows and Linux ones are wired in
+the config but need a build on those platforms to see.
 
 The first build downloads Electrobun's platform binaries (~28 MB) into
 `node_modules/electrobun`.

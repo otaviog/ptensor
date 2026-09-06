@@ -30,7 +30,9 @@ P10Error Session::start(const std::string& address) {
 
     const auto session_id = generate_random_uuid();
     P10_RETURN_IF_ERROR(conn_->connect(address));
-    return conn_->send(std::format(R"({{"session": "{}"}})", session_id));
+    // Newline delimited, like the entries: the server reads the stream a line
+    // at a time, so a handshake without one glues onto the first entry.
+    return conn_->send(std::format("{{\"sessionId\":\"{}\"}}\n", session_id));
 }
 
 P10Error Session::log_sync(const std::string& name, const Tensor& tensor) {
@@ -53,7 +55,7 @@ namespace {
     std::string generate_random_uuid() {
         std::random_device rd;
         std::array<int, std::mt19937::state_size> seed_data {};
-        std::ranges::generate(seed_data,, std::ref(rd));
+        std::ranges::generate(seed_data, std::ref(rd));
         std::seed_seq seq(seed_data.begin(), seed_data.end());
         std::mt19937 engine(seq);
 

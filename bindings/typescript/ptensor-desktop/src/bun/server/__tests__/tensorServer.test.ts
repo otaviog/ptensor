@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { bytesToBase64 } from 'ptensor-ts';
 import type { TensorPayload } from '../../../shared/rpc';
-import { DEFAULT_SESSION } from '../constants';
+import { DEFAULT_SESSION } from 'ptensor-tlog';
 import { TensorServer } from '../tensorServer';
 
 function tensorLine(name: string, values: number[]): string {

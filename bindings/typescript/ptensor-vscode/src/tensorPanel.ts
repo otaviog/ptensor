@@ -1,11 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { NamedTensorJson } from './readTensor';
+import type { TensorPayload } from './tensorFeed';
 
 /**
- * Hosts the tensor-view webview bundle (built from src/ptensor-view) and feeds
- * it tensors as `TensorJson`. All rendering — tables, images, stats — and all
+ * Hosts the tensor-view webview bundle (built from ../ptensor-view) and feeds
+ * it the tensors that arrive on the feed, as `TensorJson`. All rendering — tables, images, stats — and all
  * dtype decoding live in that bundle; this class only manages the panel
  * lifecycle and the host<->webview message handshake.
  */
@@ -18,16 +18,31 @@ export class TensorPanel {
     private readonly disposables: vscode.Disposable[] = [];
     private pending: unknown;
     private ready = false;
-    // Re-reads the tensor from its source; undefined for demo (sample) panels.
-    private refresh?: () => Promise<NamedTensorJson>;
+    // Asks the debuggee to push the tensor again; undefined for demo panels.
+    private refresh?: () => Promise<void>;
 
-    /** Opens (or reuses) a tab to view a single tensor. */
-    static show(
+    /**
+     * Opens (or reuses) a tab for `name`, waiting on the tensor. The panel is
+     * shown before the tensor arrives -- it comes over the feed, after the
+     * debugger has made the call -- and `showTensor` fills it in.
+     */
+    static showPending(
         context: vscode.ExtensionContext,
-        tensor: NamedTensorJson,
-        refresh?: () => Promise<NamedTensorJson>
+        name: string,
+        refresh?: () => Promise<void>
     ) {
-        TensorPanel.open(context, `Tensor: ${tensor.name}`, tensorMessage(tensor, !!refresh), refresh);
+        TensorPanel.open(context, `Tensor: ${name}`, { type: 'pending', name, ...threshold() }, refresh);
+    }
+
+    /** Fills the tab for `payload.name`, if one is open, with the tensor. */
+    static showTensor(payload: TensorPayload): boolean {
+        const panel = TensorPanel.panels.get(`Tensor: ${payload.name}`);
+        if (!panel) {
+            return false;
+        }
+        panel.update(`Tensor: ${payload.name}`, tensorMessage(payload, !!panel.refresh));
+        panel.panel.reveal(panel.panel.viewColumn, true);
+        return true;
     }
 
     /** Opens (or reuses) a tab in demo mode: the built-in sample tensors. */
@@ -39,7 +54,7 @@ export class TensorPanel {
         context: vscode.ExtensionContext,
         title: string,
         message: unknown,
-        refresh?: () => Promise<NamedTensorJson>
+        refresh?: () => Promise<void>
     ) {
         const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.Beside;
         const existing = TensorPanel.panels.get(title);
@@ -63,7 +78,7 @@ export class TensorPanel {
         panel: vscode.WebviewPanel,
         title: string,
         message: unknown,
-        refresh?: () => Promise<NamedTensorJson>
+        refresh?: () => Promise<void>
     ) {
         this.key = title;
         this.panel = panel;
@@ -88,14 +103,16 @@ export class TensorPanel {
         this.panel.webview.html = renderHtml(context, this.panel.webview, message);
     }
 
-    /** Re-reads the tensor and pushes the fresh data to the webview. */
+    /**
+     * Asks for the tensor again. The fresh one arrives on the feed and lands
+     * through `showTensor`, so there is nothing to paint here.
+     */
     private async doRefresh() {
         if (!this.refresh) {
             return;
         }
         try {
-            const tensor = await this.refresh();
-            this.update(`Tensor: ${tensor.name}`, tensorMessage(tensor, true));
+            await this.refresh();
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             vscode.window.showErrorMessage(`ptensor: ${msg}`);
@@ -138,13 +155,19 @@ function threshold(): { tableThreshold: number } {
     };
 }
 
-function tensorMessage(tensor: NamedTensorJson, canRefresh: boolean) {
-    return { type: 'tensor', name: tensor.name, tensor: tensor.json, canRefresh, ...threshold() };
+function tensorMessage(payload: TensorPayload, canRefresh: boolean) {
+    return {
+        type: 'tensor',
+        name: payload.name,
+        tensor: payload.tensor,
+        canRefresh,
+        ...threshold(),
+    };
 }
 
 /**
  * Resolves the built webview bundle. Copied into the extension's `media/` at
- * build time (see `copy:viewer` script) so it ships inside the .vsix; falls
+ * build time (see the `copy/assets` script) so it ships inside the .vsix; falls
  * back to the sibling ptensor-view build for an un-copied dev checkout.
  */
 function webviewBundlePath(context: vscode.ExtensionContext): string {
@@ -152,16 +175,7 @@ function webviewBundlePath(context: vscode.ExtensionContext): string {
     if (fs.existsSync(packaged)) {
         return packaged;
     }
-    return path.join(
-        context.extensionPath,
-        '..',
-        '..',
-        'bindings',
-        'typescript',
-        'ptensor-view',
-        'dist',
-        'webview.js'
-    );
+    return path.join(context.extensionPath, '..', 'ptensor-view', 'dist', 'webview.js');
 }
 
 function renderHtml(
@@ -178,7 +192,7 @@ function renderHtml(
             <h3>ptensor viewer bundle not found</h3>
             <p>Expected build artifact at:</p>
             <pre>${escapeHtml(bundlePath)}</pre>
-            <p>Build it with: <code>npm run build:viewer</code> in src/ptensor-vscode.</p>
+            <p>Build it with: <code>npm run build/assets</code> in bindings/typescript/ptensor-vscode.</p>
         </body></html>`;
     }
 

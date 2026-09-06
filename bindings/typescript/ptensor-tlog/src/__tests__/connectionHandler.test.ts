@@ -1,9 +1,6 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
-import { configureSync, getConsoleSink, type LogRecord } from '@logtape/logtape';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import type { TensorJson } from 'ptensor-ts';
-import { configureLogging } from '../../../shared/logging';
-import type { TensorPayload } from '../../../shared/rpc';
-import { handleMessage } from '../connectionHandler';
+import { handleMessage, type TensorPayload } from '../connectionHandler';
 import { DEFAULT_SESSION } from '../constants';
 
 const tensor: TensorJson = {
@@ -15,9 +12,20 @@ const tensor: TensorJson = {
     blob: 'AAAAAA==',
 };
 
+/** Everything the handler reported, newest last. */
+const logged: string[] = [];
+const logger = {
+    info: (message: string) => logged.push(message),
+    warn: (message: string) => logged.push(message),
+};
+
+beforeEach(() => {
+    logged.length = 0;
+});
+
 /** A fresh connection's handler, with its tensors collected in `received`. */
 function handler(received: TensorPayload[]) {
-    return handleMessage({ clientAddress: '127.0.0.1' }, (payload) => received.push(payload));
+    return handleMessage({ clientAddress: '127.0.0.1' }, (payload) => received.push(payload), logger);
 }
 
 /** Just its message pump, for the tests that do not care about the close log. */
@@ -25,41 +33,8 @@ function messagePump(received: TensorPayload[]) {
     return handler(received).onMessage;
 }
 
-const records: LogRecord[] = [];
-
-beforeAll(() => {
-    // Closing a connection only logs, so capture the records rather than the
-    // console. `configureLogging` runs first to claim the module's one-shot
-    // flag, otherwise the handler's own `getAppLogger` would reset the sinks
-    // back to the console on the first log line.
-    configureLogging();
-    configureSync({
-        sinks: { capture: (record: LogRecord) => records.push(record) },
-        loggers: [
-            { category: 'ptensor-desktop', sinks: ['capture'], lowestLevel: 'debug' },
-            { category: ['logtape', 'meta'], sinks: ['capture'], lowestLevel: 'warning' },
-        ],
-        reset: true,
-    });
-});
-
-afterAll(() => {
-    configureSync({
-        sinks: { console: getConsoleSink() },
-        loggers: [
-            { category: 'ptensor-desktop', sinks: ['console'], lowestLevel: 'info' },
-            { category: ['logtape', 'meta'], sinks: ['console'], lowestLevel: 'warning' },
-        ],
-        reset: true,
-    });
-});
-
-beforeEach(() => {
-    records.length = 0;
-});
-
-function closeRecords(): LogRecord[] {
-    return records.filter((record) => record.rawMessage.includes('closed connection'));
+function closeMessages(): string[] {
+    return logged.filter((message) => message.includes('closed connection'));
 }
 
 describe('handleMessage', () => {
@@ -109,19 +84,35 @@ describe('handleMessage', () => {
         onMessage({ kind: 'session-message', sessionId: 'run-a' });
         onConnectionClose();
 
-        const [record] = closeRecords();
-        expect(closeRecords()).toHaveLength(1);
-        expect(record.properties.sessionId).toBe('run-a');
-        expect(record.properties.connection).toBe('127.0.0.1');
+        expect(closeMessages()).toHaveLength(1);
+        expect(closeMessages()[0]).toContain('run-a');
+        expect(closeMessages()[0]).toContain('127.0.0.1');
     });
 
     test('logs the close of a connection that announced no session', () => {
         const received: TensorPayload[] = [];
         handler(received).onConnectionClose();
 
-        const [record] = closeRecords();
-        expect(closeRecords()).toHaveLength(1);
-        expect(record.properties.sessionId).toBeUndefined();
-        expect(record.properties.connection).toBe('127.0.0.1');
+        expect(closeMessages()).toHaveLength(1);
+        expect(closeMessages()[0]).toContain('undefined');
+    });
+
+    test('reports a producer that tries to change its session', () => {
+        const handle = messagePump([]);
+
+        handle({ kind: 'session-message', sessionId: 'run-a' });
+        handle({ kind: 'session-message', sessionId: 'run-b' });
+
+        expect(logged.some((m) => m.includes('attempted to change session ID'))).toBe(true);
+    });
+
+    test('works with no logger at all', () => {
+        const received: TensorPayload[] = [];
+        const handler = handleMessage({ clientAddress: '127.0.0.1' }, (p) => received.push(p));
+
+        handler.onMessage({ kind: 'tensor-message', name: 'first', tensor });
+        handler.onConnectionClose();
+
+        expect(received).toHaveLength(1);
     });
 });

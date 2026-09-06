@@ -41,7 +41,18 @@ interface DemoMessage {
     tableThreshold?: number;
 }
 
-type HostMessage = TensorMessage | DemoMessage;
+/**
+ * The tab is open and the tensor is on its way: the host has asked the debuggee
+ * to push it, and it arrives over a socket rather than with this message.
+ */
+interface PendingMessage {
+    type: 'pending';
+    name?: string;
+}
+
+type HostMessage = TensorMessage | DemoMessage | PendingMessage;
+
+const KINDS = new Set(['tensor', 'demo', 'pending']);
 
 function injectStyles(): void {
     const style = document.createElement('style');
@@ -60,12 +71,26 @@ function mount(): Root {
     return createRoot(el);
 }
 
+/** Placeholder shown between asking for a tensor and it arriving. */
+function Waiting({ name }: { name?: string }) {
+    return (
+        <div className="ptv-root">
+            <div className="ptv-header">
+                <h2 className="ptv-title">{name ?? 'tensor'}</h2>
+            </div>
+            <div className="ptv-meta">waiting for the debuggee to send it…</div>
+        </div>
+    );
+}
+
 const root = mount();
 const vscode = window.acquireVsCodeApi?.();
 
 function render(msg: HostMessage): void {
     const body =
-        msg.type === 'demo' ? (
+        msg.type === 'pending' ? (
+            <Waiting name={msg.name} />
+        ) : msg.type === 'demo' ? (
             <SampleBrowser samples={SAMPLES} tableThreshold={msg.tableThreshold} />
         ) : (
             <TensorViewer
@@ -84,14 +109,14 @@ function render(msg: HostMessage): void {
 
 window.addEventListener('message', (event: MessageEvent) => {
     const msg = event.data as HostMessage | undefined;
-    if (msg?.type === 'tensor' || msg?.type === 'demo') {
+    if (msg && KINDS.has(msg.type)) {
         render(msg);
     }
 });
 
 // First paint from the embedded init message (no round-trip).
 const initial = window.__PTENSOR_INIT__;
-if (initial && (initial.type === 'tensor' || initial.type === 'demo')) {
+if (initial && KINDS.has(initial.type)) {
     render(initial);
 }
 

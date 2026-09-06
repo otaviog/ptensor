@@ -1,6 +1,9 @@
 #include "tlog.hpp"
 
 #include <cstdlib>
+#include <map>
+#include <memory>
+#include <mutex>
 #include <string>
 
 #include "logging.hpp"
@@ -19,6 +22,9 @@ namespace {
     // The process wide session, started on the first log call.
     Session& session();
 
+    // The session for one explicit address, started on its first use.
+    Session& session_for(const std::string& address);
+
 }  // namespace
 
 void log(const std::string& entry, const Tensor& tensor) {
@@ -28,13 +34,20 @@ void log(const std::string& entry, const Tensor& tensor) {
     }
 }
 
+void log_to(const char* address, const char* entry, const Tensor& tensor) {
+    if (address == nullptr || entry == nullptr) {
+        LOGGER.error("log_to needs both an address and an entry name.");
+        return;
+    }
+    if (auto err = session_for(address).log_sync(entry, tensor); err.is_error()) {
+        LOGGER.error("Could not log '{}' to {}. {}", entry, address, err);
+    }
+}
+
 namespace {
 
     struct SessionHolder {
-        SessionHolder() {
-            const char* address = std::getenv(ADDRESS_ENV_VAR);
-            const std::string endpoint = address != nullptr ? address : DEFAULT_ADDRESS;
-
+        explicit SessionHolder(const std::string& endpoint) {
             if (auto err = session.start(endpoint); err.is_error()) {
                 LOGGER.error("Could not start the session on {}. {}", endpoint, err);
             } else {
@@ -46,8 +59,25 @@ namespace {
     };
 
     Session& session() {
-        static SessionHolder holder;
+        static SessionHolder holder([] {
+            const char* address = std::getenv(ADDRESS_ENV_VAR);
+            return address != nullptr ? std::string(address) : std::string(DEFAULT_ADDRESS);
+        }());
         return holder.session;
+    }
+
+    Session& session_for(const std::string& address) {
+        // Held for the life of the process: a caller that logs to an address
+        // once usually logs to it again, and a Session is one socket.
+        static std::mutex lock;
+        static std::map<std::string, std::unique_ptr<SessionHolder>> sessions;
+
+        const std::lock_guard<std::mutex> guard(lock);
+        auto& holder = sessions[address];
+        if (holder == nullptr) {
+            holder = std::make_unique<SessionHolder>(address);
+        }
+        return holder->session;
     }
 
 }  // namespace

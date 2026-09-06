@@ -1,7 +1,7 @@
 {
   "name": "ptensor-vscode",
   "displayName": "ptensor Tensor Viewer",
-  "description": "Debugger helper that visualizes ptensor Tensor contents during a debug session.",
+  "description": "Debugger helper that visualizes ptensor Tensor contents during a debug session: the debuggee pushes the tensor over a socket into a viewer tab.",
   "version": "0.0.1",
   "publisher": "ptensor",
   "license": "MIT",
@@ -59,42 +59,38 @@
           "type": "number",
           "default": 256,
           "description": "Maximum element count to render as a table; larger tensors are rendered as an image when the shape allows."
-        },
-        "ptensor.maxBytes": {
-          "type": "number",
-          "default": 67108864,
-          "description": "Hard cap on bytes read from the debuggee per tensor (default 64 MiB)."
         }
       }
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run build:viewer && npm run bundle",
+    "vscode:prepublish": "npm run build/assets && npm run bundle",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "check-types": "tsc -p ./ --noEmit",
     "bundle": "npm run check-types && node ./scripts/esbuild.mjs",
-    "build:viewer:bundle": "cd ../../bindings/typescript/ptensor-view && bun run build:webview",
-    "copy:viewer": "node ./scripts/copy-viewer.mjs",
-    "build:viewer": "npm run build:viewer:bundle && npm run copy:viewer",
+    "build/viewer": "cd ../ptensor-view && bun run build",
+    "copy/assets": "node ./scripts/copy-assets.mjs",
+    "build/assets": "npm run build/viewer && npm run copy/assets",
     "package": "vsce package --no-dependencies",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
   },
   "dependencies": {
-    "ptensor-ts": "file:../../bindings/typescript/ptensor-ts"
+    "ptensor-tlog": "file:../ptensor-tlog",
+    "ptensor-ts": "file:../ptensor-ts"
   },
   "devDependencies": {
-    "@types/vscode": "^1.120.0",
     "@types/mocha": "^10.0.10",
-    "esbuild": "^0.25.0",
     "@types/node": "22.x",
-    "typescript-eslint": "^8.56.1",
-    "eslint": "^9.39.3",
-    "typescript": "^5.9.3",
+    "@types/vscode": "^1.120.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.2.1"
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.39.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1"
   }
 }

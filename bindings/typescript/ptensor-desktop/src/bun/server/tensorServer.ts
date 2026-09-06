@@ -1,16 +1,21 @@
-// Local TCP feed. Producers connect to 127.0.0.1 and write newline-delimited
-// JSON: a session line naming the session, then the tensors. Each connection
-// keeps its own handler (see ./connectionHandler), accepted tensors leave
-// through `onTensor`. Nothing is executed from the wire, and a line that
-// exceeds the size cap drops the connection instead of growing the buffer
-// forever.
+// Local TCP feed: the Bun socket that drives ptensor-tlog's framing and
+// protocol. Producers connect to 127.0.0.1 and write newline-delimited JSON, a
+// session line naming the session then the tensors; each connection keeps its
+// own handler and accepted tensors leave through `onTensor`. Nothing is
+// executed from the wire, and a line that exceeds the size cap drops the
+// connection instead of growing the buffer forever.
 
+import {
+  DEFAULT_PORT,
+  handleMessage,
+  lineSplitter,
+  type LineSplitter,
+  type MessageHandler,
+  parseIncoming,
+  type TensorSink,
+} from 'ptensor-tlog';
 import { getAppLogger } from '../../shared/logging';
-import { lineSplitter, LineSplitter } from './lineSplitter';
-import { DEFAULT_PORT } from './constants';
 import { FeedInfo } from '../../shared/rpc';
-import { parseIncoming } from './protocol';
-import { MessageHandler, handleMessage, TensorSink } from './connectionHandler';
 
 export interface TensorServerOptions {
   port?: number;
@@ -85,10 +90,10 @@ export class TensorServer {
   private onConnectionOpen(socket: Socket) {
     socket.data = {
       splitter: lineSplitter(this.maxLineBytes),
-      handler: handleMessage(
-        { clientAddress: socket.remoteAddress },
-        this.options.onTensor
-      ),
+      handler: handleMessage({ clientAddress: socket.remoteAddress }, this.options.onTensor, {
+        info: (message) => this.log.info(message),
+        warn: (message) => this.log.warn(message),
+      }),
     };
   }
   private onData(socket: Socket, chunk: Buffer<ArrayBufferLike>) {

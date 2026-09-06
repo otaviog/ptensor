@@ -38,4 +38,34 @@ TEST_CASE("tlog::log streams tensors to the server", "[.tlog][.integration]") {
     REQUIRE(second.ends_with('\n'));
 }
 
+// Not hidden: log_to takes its endpoint per call, so it needs no process wide
+// state and cannot collide with another case.
+TEST_CASE("tlog::log_to streams tensors to the given address", "[tlog][integration]") {
+    testing::LoopbackServer server;
+    REQUIRE(server.is_listening());
+
+    log_to(server.address().c_str(), "zeros", Tensor::zeros(make_shape(2, 3)).expect("tensor"));
+
+    const std::string handshake = server.wait_for(1);
+    REQUIRE(handshake.starts_with(R"({"sessionId":")"));
+
+    const std::string entry = server.wait_for(handshake.size() + 1);
+    REQUIRE(entry.find(R"("name":"zeros")") != std::string::npos);
+    REQUIRE(entry.ends_with('\n'));
+
+    // The address keeps its session, so the second entry reuses the connection
+    // rather than announcing a second one.
+    log_to(server.address().c_str(), "ones", Tensor::zeros(make_shape(1)).expect("tensor"));
+
+    const std::string both = server.wait_for(entry.size() + 1);
+    REQUIRE(both.find(R"("name":"ones")") != std::string::npos);
+    REQUIRE(both.find(R"({"sessionId":")") == both.rfind(R"({"sessionId":")"));
+}
+
+// An unreachable endpoint is logged and swallowed: logging must not change the
+// caller's flow.
+TEST_CASE("tlog::log_to survives an address nothing listens on", "[tlog]") {
+    log_to("127.0.0.1:1", "zeros", Tensor::zeros(make_shape(2)).expect("tensor"));
+}
+
 }  // namespace p10::tlog

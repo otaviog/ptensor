@@ -1,14 +1,15 @@
 // Manual test driver for the ptensor VS Code tensor viewer.
 //
-// Build this target (see CMakeLists.txt in this folder), launch it under the
-// LLDB debugger from VS Code, and when it self-traps at `debug_break()` every
-// tensor below is in scope. Use the "ptensor: View Tensor" command (or the
-// context-menu entry on a variable) to visualize any of them. Internally the
-// extension evaluates `p10::to_json_debug(<expr>)`, so anything reachable from
-// the stopped frame works.
+// Build this target, launch it under the debugger from VS Code, and when it
+// self-traps at `debug_break()` every tensor below is in scope. Use the
+// "ptensor: Visualize Tensor" command (or the context-menu entry on a variable)
+// to see one: the extension evaluates `p10::tlog::log_to(<its port>, ...)` in
+// this frame, so the tensor travels over a socket rather than through the
+// debugger's expression printer.
 //
-// The set of tensors mirrors `src/ptensor-vscode/src/sampleTensors.ts` so the
-// live path exercises the same panel branches the offline samples do: scalar,
+// The set mirrors `test_tlog_live.cpp` next door and ptensor-view's
+// `src/samples.ts`, so the debugger, socket and offline paths all exercise the
+// same panel branches: scalar,
 // vector, 2D tables, grayscale/RGB images (planar and interleaved), batched
 // NCHW/NHWC, and a large 1D buffer.
 
@@ -19,7 +20,7 @@
 #include <ptensor/dtype.hpp>
 #include <ptensor/shape.hpp>
 #include <ptensor/tensor.hpp>
-#include <ptensor/tensor_print.hpp>
+#include <ptensor/tlog/tlog.hpp>
 
 namespace {
 
@@ -169,12 +170,13 @@ int main() {
     Tensor batch_nhwc = batch_nhwc_u8();
     Tensor large_1d = large_1d_f32();
 
-    std::printf("ptensor viewer demo: %d tensors ready.\n", 11);
-    // Using the result of to_json_debug forces the linker to pull tensor_print.o
-    // out of the static ptensor lib, so the symbol exists in the binary and the
-    // debugger's expression evaluator can call p10::to_json_debug(<tensor>).
-    std::printf("scalar as json: %s\n", p10::to_json_debug(scalar));
-    std::printf("Stopping for the debugger; view a tensor with 'ptensor: View Tensor'.\n");
+    std::printf("ptensor viewer demo: 10 tensors ready.\n");
+    // Referencing log_to keeps the linker from dropping p10::tlog out of this
+    // binary, so the debugger's expression evaluator can call it. The address
+    // is one nothing listens on: the call is here for the linker, and tlog
+    // swallows the failure.
+    p10::tlog::log_to("127.0.0.1:1", "linker-anchor", scalar);
+    std::printf("Stopping for the debugger; view a tensor with 'ptensor: Visualize Tensor'.\n");
 
     // >>> Debugger stops here. All tensors above are live in this frame. <<<
     debug_break();

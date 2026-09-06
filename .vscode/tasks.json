@@ -33,7 +33,7 @@
             "type": "shell",
             "command": "npm run build:viewer",
             "options": {
-                "cwd": "${workspaceFolder}/src/ptensor-vscode"
+                "cwd": "${workspaceFolder}/bindings/typescript/ptensor-vscode"
             },
             "problemMatcher": []
         }

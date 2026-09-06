@@ -49,4 +49,4 @@ devcontainer-shell: devcontainer-build
 # Package the VS Code extension into build/ptensor-vscode.vsix.
 vscode-package:
     mkdir -p build
-    cd src/ptensor-vscode && npx @vscode/vsce package --no-dependencies --out "{{ justfile_directory() }}/build/ptensor-vscode.vsix"
+    cd bindings/typescript/ptensor-vscode && npx @vscode/vsce package --no-dependencies --out "{{ justfile_directory() }}/build/ptensor-vscode.vsix"

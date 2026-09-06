@@ -7,18 +7,11 @@
 // declares what it answers.
 
 import type { RPCSchema } from 'electrobun';
-import type { TensorJson } from 'ptensor-ts';
+import type { TensorPayload } from 'ptensor-tlog';
 
-
-/** One tensor as it left the feed, on its way to the panel. */
-export type TensorPayload = {
-  /** Session the producing connection announced, or the default one. */
-  sessionId: string
-  /** Label shown in the tensor list. */
-  name: string;
-  tensor: TensorJson;
-  receivedAt: number;
-}
+// What crosses the feed is ptensor-tlog's payload; re-exported so the window
+// side has one import for the RPC contract.
+export type { TensorPayload };
 
 /** Where the feed listens, and whether it came up. Owned by the feed itself. */
 export interface FeedInfo {

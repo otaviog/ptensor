@@ -4,9 +4,9 @@
 //
 //   test_tlog_live --address localhost:8791 --interval 200
 //
-// The set mirrors `src/ptensor-vscode/cpp/viewer_demo.cpp` (which in turn
-// mirrors `src/ptensor-vscode/src/sampleTensors.ts`), so the live path hits the
-// same viewer branches the debugger and offline paths do: scalar, vector, 2D
+// The set mirrors `viewer_demo.cpp` next door (which in turn mirrors
+// ptensor-view's `src/samples.ts`), so the live path hits the same viewer
+// branches the debugger and offline paths do: scalar, vector, 2D
 // tables, grayscale/RGB images (planar and interleaved), batched NCHW/NHWC, and
 // a large 1D buffer.
 //

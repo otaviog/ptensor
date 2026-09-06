@@ -4,7 +4,7 @@
 
 import Electrobun, { BrowserView, BrowserWindow } from 'electrobun/bun';
 import { configureLogging, disposeLogging, getAppLogger } from '../shared/logging';
-import { DEFAULT_PORT } from './server/constants';
+import { DEFAULT_PORT } from 'ptensor-tlog';
 import type { TensorPayload, ViewerRPC } from '../shared/rpc';
 import { TensorServer } from './server/tensorServer';
 import { openLogFile } from './logFile';

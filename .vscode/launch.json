@@ -145,12 +145,12 @@
 		"command script import ${workspaceFolder}/src/core/ptensor_lldb.py"
 	  ]
 	},
-	/// VS Code tensor viewer manual driver (build with -DWITH_VSCODE_VIEWER_DEMO=ON)
+	/// VS Code tensor viewer manual driver: tensors in scope at a breakpoint.
 	{
 	  "name": "ptensor-vscode/viewer-demo",
 	  "type": "lldb-dap",
 	  "request": "launch",
-	  "program": "${workspaceFolder}/build/clang/debug/src/ptensor-vscode/cpp/vscode_viewer_demo",
+	  "program": "${workspaceFolder}/build/clang/debug/src/tlog/tests/utils/viewer_demo",
 	  "stopAtEntry": false,
 	  "cwd": "${workspaceFolder}",
 	  "externalConsole": false,

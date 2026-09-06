@@ -4,8 +4,7 @@
 
 import { Command, EnumType } from '@cliffy/command';
 import { bytesToBase64 } from 'ptensor-ts';
-import { DEFAULT_PORT } from '../src/bun/server/constants';
-import type { SessionMessage, TensorMessage } from '../src/bun/server/protocol';
+import { DEFAULT_PORT, type SessionMessage, type TensorMessage } from 'ptensor-tlog';
 
 const kindType = new EnumType(['rgb', 'gray', 'table'] as const);
 

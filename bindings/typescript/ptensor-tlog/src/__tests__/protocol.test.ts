@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { bytesToBase64, type TensorJson } from 'ptensor-ts';
-import { parseIncoming } from '../protocol';
-import { PdError } from '../../../shared/pdError';
+import { parseIncoming, TlogProtocolError } from '../protocol';
 
 function tensorJson(values: number[]): TensorJson {
     const data = new Float32Array(values);
@@ -19,7 +18,7 @@ function tensorJson(values: number[]): TensorJson {
 describe('parseIncoming', () => {
     test('rejects anything that is not a JSON object', () => {
         for (const value of [null, undefined, 42, 'hello', true]) {
-            expect(() => parseIncoming(value)).toThrow(PdError);
+            expect(() => parseIncoming(value)).toThrow(TlogProtocolError);
         }
         expect(() => parseIncoming(null)).toThrow('message is not a JSON object');
     });
@@ -49,7 +48,7 @@ describe('parseIncoming', () => {
 
     test('rejects a tensor message with a missing or non-string name', () => {
         const tensor = tensorJson([1]);
-        expect(() => parseIncoming({ tensor })).toThrow(PdError);
+        expect(() => parseIncoming({ tensor })).toThrow(TlogProtocolError);
         expect(() => parseIncoming({ name: 7, tensor })).toThrow(
             'message is neither a session message nor a tensor message',
         );
@@ -61,9 +60,9 @@ describe('parseIncoming', () => {
         );
     });
 
-    test('wraps a tensor validation failure in a PdError', () => {
+    test('wraps a tensor validation failure in a TlogProtocolError', () => {
         // `typeof null === 'object'`, so this reaches validateTensorJson.
-        expect(() => parseIncoming({ name: 'first', tensor: null })).toThrow(PdError);
+        expect(() => parseIncoming({ name: 'first', tensor: null })).toThrow(TlogProtocolError);
 
         const { dtype, ...noDtype } = tensorJson([1]);
         expect(() => parseIncoming({ name: 'first', tensor: noDtype })).toThrow(

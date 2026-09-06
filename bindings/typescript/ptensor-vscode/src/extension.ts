@@ -1,10 +1,30 @@
 import * as vscode from 'vscode';
-import { readTensor } from './readTensor';
+import { pushTensor } from './pushTensor';
+import { TensorFeed } from './tensorFeed';
 import { TensorPanel } from './tensorPanel';
 import { registerDebugTracker } from './debugTracker';
 
+let feed: TensorFeed | undefined;
+
 export function activate(context: vscode.ExtensionContext) {
     registerDebugTracker(context);
+
+    const channel = vscode.window.createOutputChannel('ptensor');
+    context.subscriptions.push(channel);
+
+    // Tensors arrive here, pushed by the debuggee, and land in the tab that
+    // asked for them. One that nothing is waiting for is noted, not dropped
+    // silently: it usually means the tab was closed mid-flight.
+    feed = new TensorFeed({
+        onTensor: (payload) => {
+            channel.appendLine(`Received '${payload.name}' (${payload.tensor.dtype}).`);
+            if (!TensorPanel.showTensor(payload)) {
+                channel.appendLine(`No open tab for '${payload.name}', ignoring it.`);
+            }
+        },
+        log: (message) => channel.appendLine(message),
+    });
+    context.subscriptions.push({ dispose: () => feed?.dispose() });
 
     context.subscriptions.push(
         vscode.commands.registerCommand('ptensor.previewSamples', () => {
@@ -19,10 +39,10 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
             try {
-                const tensor = await loadTensor(expression);
-                // Re-read from the *current* frame each time (the user may have
-                // stepped since the panel opened).
-                TensorPanel.show(context, tensor, () => loadTensor(expression));
+                // The tab opens first and waits: the tensor comes over the feed
+                // once the debugger has made the call.
+                TensorPanel.showPending(context, expression, () => requestTensor(expression));
+                await requestTensor(expression);
             } catch (err) {
                 const msg = err instanceof Error ? err.message : String(err);
                 vscode.window.showErrorMessage(`ptensor: ${msg}`);
@@ -31,8 +51,11 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-/** Evaluates `expression` in the active debug session's current frame into a tensor. */
-async function loadTensor(expression: string) {
+/**
+ * Asks the debuggee to push `expression` into our feed. Returns once the call
+ * has been made; the tensor itself lands on the socket.
+ */
+async function requestTensor(expression: string): Promise<void> {
     const session = vscode.debug.activeDebugSession;
     if (!session) {
         throw new Error('no active debug session.');
@@ -41,10 +64,16 @@ async function loadTensor(expression: string) {
     if (frameId === undefined) {
         throw new Error('could not determine the active stack frame.');
     }
-    return readTensor(session, frameId, expression);
+    if (!feed) {
+        throw new Error('the tensor feed is not running.');
+    }
+    await pushTensor(session, frameId, await feed.address(), expression);
 }
 
-export function deactivate() {}
+export function deactivate() {
+    feed?.dispose();
+    feed = undefined;
+}
 
 async function resolveExpression(variable: unknown): Promise<string | undefined> {
     if (variable && typeof variable === 'object') {

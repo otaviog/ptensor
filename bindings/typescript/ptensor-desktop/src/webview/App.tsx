@@ -1,14 +1,33 @@
+// The panel. Tensors arrive one push at a time and are kept here, grouped by
+// the session their producer announced; the bun process stores nothing. Only
+// the selected tensor is decoded into a TensorView.
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { TensorViewer, type TensorView } from '@ptensor/tensor-view';
-import type { ServerInfo, SessionSummary } from '../shared/protocol';
+import { TensorViewer, fromTensorJson, type TensorView } from '@ptensor/tensor-view';
+import type { ServerInfo, TensorPayload } from '../shared/rpc';
+
+/** Cap used until `getServerInfo` answers with the one the app was started with. */
+const DEFAULT_HISTORY = 100;
 
 export interface AppProps {
-    /** Fetches a tensor payload from the bun process. */
-    loadTensor: (sessionId: string, tensorId: string) => Promise<TensorView | null>;
-    /** Clears one session, or every session when the id is omitted. */
-    clearSession: (sessionId?: string) => void;
-    /** Subscribes to session pushes; returns the current list synchronously. */
-    subscribe: (onSessions: (s: SessionSummary[]) => void, onInfo: (i: ServerInfo) => void) => void;
+    /** Subscribes to the feed. Called once, on mount. */
+    subscribe: (onTensor: (payload: TensorPayload) => void) => void;
+    /** Asks the bun process for the feed state and the history cap. */
+    getServerInfo: () => Promise<ServerInfo>;
+    /** Overrides the cap the bun process reports. Mostly for tests. */
+    maxTensorsPerSession?: number;
+}
+
+interface ReceivedTensor {
+    id: string;
+    payload: TensorPayload;
+}
+
+interface Session {
+    id: string;
+    tensors: ReceivedTensor[];
+    updatedAt: number;
+    totalReceived: number;
 }
 
 interface Selection {
@@ -16,59 +35,86 @@ interface Selection {
     tensorId: string;
 }
 
-export function App({ loadTensor, clearSession, subscribe }: AppProps) {
-    const [sessions, setSessions] = useState<SessionSummary[]>([]);
+export function App({ subscribe, getServerInfo, maxTensorsPerSession }: AppProps) {
+    const [sessions, setSessions] = useState<Session[]>([]);
     const [info, setInfo] = useState<ServerInfo | null>(null);
     const [selected, setSelected] = useState<Selection | null>(null);
-    const [tensor, setTensor] = useState<TensorView | null>(null);
     const [error, setError] = useState<string | null>(null);
     // Follow mode keeps the newest tensor of the active session on screen.
     const [follow, setFollow] = useState(true);
     const followRef = useRef(follow);
     followRef.current = follow;
+    // PTENSOR_VIEW_HISTORY lives in the bun process' environment and reaches the
+    // window with the server info, so the first pushes may use the default cap.
+    const history = maxTensorsPerSession ?? info?.maxTensorsPerSession ?? DEFAULT_HISTORY;
+    const historyRef = useRef(history);
+    historyRef.current = history;
 
     useEffect(() => {
-        subscribe(
-            (next) => {
-                setSessions(next);
-                setSelected((current) => reselect(current, next, followRef.current));
-            },
-            (next) => setInfo(next)
-        );
+        let nextId = 1;
+        subscribe((payload) => {
+            const entry: ReceivedTensor = { id: `t${nextId++}`, payload };
+            setSessions((current) => append(current, entry, historyRef.current));
+            setSelected((current) => reselect(current, entry, followRef.current));
+        });
     }, [subscribe]);
 
     useEffect(() => {
-        if (!selected) {
-            setTensor(null);
-            return;
-        }
         let cancelled = false;
-        loadTensor(selected.sessionId, selected.tensorId)
+        getServerInfo()
             .then((next) => {
-                if (cancelled) {
-                    return;
+                if (!cancelled) {
+                    setInfo(next);
                 }
-                setTensor(next);
-                setError(next ? null : 'Tensor is no longer in the session history.');
             })
             .catch((err: unknown) => {
                 if (!cancelled) {
-                    setTensor(null);
                     setError(err instanceof Error ? err.message : String(err));
                 }
             });
         return () => {
             cancelled = true;
         };
-    }, [selected, loadTensor]);
+    }, [getServerInfo]);
+
+    // A cap that arrives (or shrinks) after tensors did applies to them too.
+    useEffect(() => {
+        setSessions((current) =>
+            current.map((session) =>
+                session.tensors.length <= history
+                    ? session
+                    : { ...session, tensors: session.tensors.slice(-history) }
+            )
+        );
+    }, [history]);
 
     const activeSession = useMemo(
         () => sessions.find((session) => session.id === selected?.sessionId) ?? null,
         [sessions, selected]
     );
 
+    // Decoding is deferred to selection: the history holds base64 blobs only.
+    const tensor = useMemo<TensorView | null>(() => {
+        const entry = activeSession?.tensors.find((item) => item.id === selected?.tensorId);
+        if (!entry) {
+            return null;
+        }
+        return fromTensorJson(entry.payload.tensor, entry.payload.name);
+    }, [activeSession, selected]);
+
     const onSelect = useCallback((sessionId: string, tensorId: string) => {
         setSelected({ sessionId, tensorId });
+    }, []);
+
+    const clearSession = useCallback((sessionId?: string) => {
+        setSessions((current) =>
+            sessionId === undefined
+                ? []
+                : current.filter((session) => session.id !== sessionId)
+        );
+        setSelected((current) =>
+            sessionId === undefined || current?.sessionId === sessionId ? null : current
+        );
     }, []);
 
     return (
@@ -137,7 +183,7 @@ function SessionGroup({
     onSelect,
     onClear,
 }: {
-    session: SessionSummary;
+    session: Session;
     selected: Selection | null;
     onSelect: (sessionId: string, tensorId: string) => void;
     onClear: () => void;
@@ -163,12 +209,13 @@ function SessionGroup({
                                 className={`tensor-item${active ? ' active' : ''}`}
                                 onClick={() => onSelect(session.id, entry.id)}
                             >
-                                <span className="tensor-name">{entry.name}</span>
+                                <span className="tensor-name">{entry.payload.name}</span>
                                 <span className="tensor-meta">
-                                    {entry.dtype} [{entry.shape.join('×')}]
+                                    {entry.payload.tensor.dtype} [
+                                    {entry.payload.tensor.shape.join('×')}]
                                 </span>
                                 <span className="tensor-time">
-                                    {new Date(entry.receivedAt).toLocaleTimeString()}
+                                    {new Date(entry.payload.receivedAt).toLocaleTimeString()}
                                 </span>
                             </button>
                         </li>
@@ -194,32 +241,34 @@ function describeFeed(info: ServerInfo | null): string {
     return `listening on ${info.host}:${info.port}`;
 }
 
+/** Files one received tensor under its session, newest session first. */
+function append(sessions: Session[], entry: ReceivedTensor, maxTensors: number): Session[] {
+    const { sessionId, receivedAt } = entry.payload;
+    const current =
+        sessions.find((session) => session.id === sessionId) ??
+        ({ id: sessionId, tensors: [], updatedAt: receivedAt, totalReceived: 0 } as Session);
+    const tensors = [...current.tensors, entry];
+    const next: Session = {
+        id: sessionId,
+        tensors: tensors.slice(Math.max(0, tensors.length - maxTensors)),
+        updatedAt: receivedAt,
+        totalReceived: current.totalReceived + 1,
+    };
+    return [next, ...sessions.filter((session) => session.id !== sessionId)];
+}
+
 /**
- * Keeps the selection valid across pushes: in follow mode the newest tensor of
- * the active session wins; otherwise the current one is kept while it exists.
+ * Keeps the selection valid as tensors arrive: in follow mode the new tensor
+ * wins, otherwise the current one is kept and the first tensor seeds an empty
+ * panel.
  */
 function reselect(
     current: Selection | null,
-    sessions: SessionSummary[],
+    entry: ReceivedTensor,
     follow: boolean
 ): Selection | null {
-    if (sessions.length === 0) {
-        return null;
-    }
-    const session =
-        sessions.find((candidate) => candidate.id === current?.sessionId) ?? sessions[0];
-    if (session.tensors.length === 0) {
-        return null;
-    }
-    if (!follow && current) {
-        const stillThere = session.tensors.some((entry) => entry.id === current.tensorId);
-        if (stillThere) {
-            return current;
-        }
-    }
-    const newest = session.tensors[session.tensors.length - 1];
-    if (current && current.sessionId === session.id && current.tensorId === newest.id) {
+    if (current !== null && !follow) {
         return current;
     }
-    return { sessionId: session.id, tensorId: newest.id };
+    return { sessionId: entry.payload.sessionId, tensorId: entry.id };
 }

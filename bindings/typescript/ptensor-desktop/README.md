@@ -6,9 +6,12 @@ incoming tensors by session: pick a session on the left, pick a tensor, and the
 `ptensor-view` panel renders it (table / grayscale / RGB / batched images).
 
 ```
-producer ──TCP 127.0.0.1:8791, newline-delimited JSON──▶ bun process ──RPC──▶ webview
-   (C++ / Python / TS)                                   session store        TensorViewer
+producer ──TCP 127.0.0.1:8791, newline-delimited JSON──▶ bun process ──RPC push──▶ webview
+   (C++ / Python / TS)                                   socket + framing        history + TensorViewer
 ```
+
+The bun process stores nothing: it validates each line and pushes the tensor to
+the window, which keeps the history it shows.
 
 ## Run it
 
@@ -29,27 +32,33 @@ The first build downloads Electrobun's platform binaries (~28 MB) into
 ## Wire protocol
 
 Connect to `127.0.0.1:8791` and write one JSON object per line (`\n`
-terminated). Many tensors per connection are fine, and a connection can stay
-open for the life of a run.
+terminated). Two kinds of line are accepted, told apart by their fields.
+
+A session line names the session everything after it lands in. Send it once,
+first:
 
 ```json
-{"session": "eulerian", "name": "frame 12", "tensor": {"dtype": "uint8", "shape": [96,128,3], "stride": [384,3,1], "blob": "<base64>"}}
+{"sessionId": "eulerian"}
 ```
 
-- `session` — session id the tensor lands in (`sessionId` is accepted as an
-  alias). Missing or empty means the `default` session.
-- `name` — label in the tensor list. Optional.
+The id is fixed for the life of the connection: a second session line is
+logged and ignored, and a connection that sends none files its tensors under
+`default`. Use another connection for another session.
+
+A tensor line carries one tensor:
+
+```json
+{"name": "frame 12", "tensor": {"dtype": "uint8", "shape": [96,128,3], "stride": [384,3,1], "blob": "<base64>"}}
+```
+
+- `name` — label in the tensor list.
 - `tensor` — exactly what `p10::to_json_debug` emits: `{dtype, shape, stride,
   blob}` with `blob` the raw little-endian element bytes, base64-encoded. So a
   C++ producer can write `to_json_debug(tensor)` straight into the line.
 
-To drop history:
-
-```json
-{"type": "clear", "session": "eulerian"}
-```
-
-Omitting `session` in a clear message drops every session.
+Many tensors per connection are fine, and a connection can stay open for the
+life of a run. History is dropped from the window itself (the ✕ on a session,
+or `Clear all sessions`).
 
 Lines that are not valid JSON, or that fail validation, are logged and skipped —
 the connection stays up. A single line over 256 MiB closes the connection.
@@ -61,18 +70,21 @@ import base64, json, socket
 import numpy as np
 
 img = (np.random.rand(96, 128, 3) * 255).astype(np.uint8)
-msg = {
-    "session": "py-demo",
-    "name": "noise",
-    "tensor": {
-        "dtype": "uint8",
-        "shape": list(img.shape),
-        "stride": [s // img.itemsize for s in img.strides],
-        "blob": base64.b64encode(img.tobytes()).decode(),
+lines = [
+    {"sessionId": "py-demo"},
+    {
+        "name": "noise",
+        "tensor": {
+            "dtype": "uint8",
+            "shape": list(img.shape),
+            "stride": [s // img.itemsize for s in img.strides],
+            "blob": base64.b64encode(img.tobytes()).decode(),
+        },
     },
-}
+]
 with socket.create_connection(("127.0.0.1", 8791)) as sock:
-    sock.sendall((json.dumps(msg) + "\n").encode())
+    for line in lines:
+        sock.sendall((json.dumps(line) + "\n").encode())
 ```
 
 ## Configuration
@@ -104,23 +116,30 @@ the file.
 
 ## Layout
 
-- `src/bun/` — main process: `tensorServer.ts` (socket + framing),
-  `sessionStore.ts` (history per session), `index.ts` (window, RPC handlers).
-- `src/mainview/` — webview: `App.tsx` (sessions, selection, follow mode),
-  `index.tsx` (RPC wiring, style injection).
-- `src/shared/` — `protocol.ts` (wire types, shared with producers),
-  `rpc.ts` (the bun ⇄ webview contract) and `logging.ts` (LogTape setup).
+The directories are named after electrobun's two sides, `bun` and `webview`,
+which are also the keys of the RPC schema.
+
+- `src/bun/` — main process: `index.ts` (window, RPC handlers, pushes) and
+  `logFile.ts` (rotating log file).
+- `src/bun/server/` — the feed: `tensorServer.ts` (socket), `lineSplitter.ts`
+  (framing), `protocol.ts` (wire types + validation, shared with producers),
+  `connectionHandler.ts` (per-connection session state).
+- `src/webview/` — the window: `App.tsx` (history, grouping, selection, follow
+  mode), `index.tsx` (RPC wiring, style injection).
+- `src/shared/` — `rpc.ts` (the bun ⇄ webview contract) and `logging.ts`
+  (LogTape setup).
 - `scripts/send-tensor.ts` — synthetic producer used for manual testing.
 
-Tensor payloads stay in the bun process; the webview receives summaries and
-pulls one payload when you select it, so a fast producer does not push
-megabytes through the RPC channel.
+The window keeps the history and decodes only the selected tensor, so a fast
+producer costs base64 text, not decoded buffers. `PTENSOR_VIEW_HISTORY` is read
+by the main process and travels to the window in the `getServerInfo` answer;
+until that answer lands the window uses 100, then trims to what was reported.
 
 ## Checks
 
 ```bash
 bun run typecheck   # tsc over the app sources
-bun test            # socket framing, session store, App behaviour
+bun test            # framing, protocol, connection handling, App behaviour
 bun run smoke       # builds the real view bundle and drives it headlessly
 ```
 

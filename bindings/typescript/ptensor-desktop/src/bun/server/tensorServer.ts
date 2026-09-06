@@ -1,22 +1,24 @@
 // Local TCP feed. Producers connect to 127.0.0.1 and write newline-delimited
-// JSON; each accepted line either stores a tensor under its session id or
-// clears a session. Nothing is executed from the wire, and a line that exceeds
-// the size cap drops the connection instead of growing the buffer forever.
+// JSON: a session line naming the session, then the tensors. Each connection
+// keeps its own handler (see ./connectionHandler), accepted tensors leave
+// through `onTensor`. Nothing is executed from the wire, and a line that
+// exceeds the size cap drops the connection instead of growing the buffer
+// forever.
 
-import { getAppLogger } from '../shared/logging';
+import { getAppLogger } from '../../shared/logging';
 import { lineSplitter, LineSplitter } from './lineSplitter';
 import { DEFAULT_PORT } from './constants';
-import { ServerInfo } from '../shared/rpc';
-import { IncomingMessage, parseIncoming } from './protocol';
-import { MessageHandler, handleMessage } from './connectionHandler';
+import { FeedInfo } from '../../shared/rpc';
+import { parseIncoming } from './protocol';
+import { MessageHandler, handleMessage, TensorSink } from './connectionHandler';
 
 export interface TensorServerOptions {
   port?: number;
   hostname?: string;
   /** Largest single JSON line accepted, in bytes. Default 256 MiB. */
   maxLineBytes?: number;
-  /** Called after a batch of lines has been applied to the store. */
-  onChange: () => void;
+  /** Called once per accepted tensor, in arrival order. */
+  onTensor: TensorSink;
 }
 
 interface ConnectionState {
@@ -24,11 +26,13 @@ interface ConnectionState {
   handler: MessageHandler;
 }
 
+type Socket = Bun.Socket<ConnectionState>;
+
 /** Owns the listening socket and applies incoming messages to the store. */
 export class TensorServer {
   private readonly log = getAppLogger('tensor-feed');
   private server: Bun.TCPSocketListener<ConnectionState> | null = null;
-  private info: ServerInfo;
+  private info: FeedInfo;
   private readonly maxLineBytes: number;
 
   constructor(
@@ -43,39 +47,16 @@ export class TensorServer {
   }
 
   /** Starts listening. A bind failure is reported through `serverInfo()`. */
-  start(): ServerInfo {
+  start(): FeedInfo {
     try {
       this.server = Bun.listen<ConnectionState>({
         hostname: this.info.host,
         port: this.info.port,
         socket: {
-          open: (socket) => {
-            socket.data = {
-              splitter: lineSplitter(this.maxLineBytes),
-              handler: handleMessage({ clientAddress: socket.remoteAddress }),
-            };
-          },
-          data: (socket, chunk) => {
-            const lines = socket.data.splitter(chunk);
-            if (lines === 'overflow') {
-              this.log.error(
-                'Line over {maxLineBytes} bytes, closing connection.',
-                { maxLineBytes: this.maxLineBytes }
-              );
-              socket.end();
-              return;
-            }
-            if (lines.length === 0) {
-              return;
-            }
-            for (const line of lines) {
-              this.apply(line);
-            }
-            this.options.onChange();
-          },
-          error: (_socket, error) => {
-            this.log.error('Socket error: {message}', { message: error.message });
-          },
+          open: (socket) => this.onConnectionOpen(socket),
+          data: (socket, chunk) => this.onData(socket, chunk),
+          error: (_socket, error) => this.log.error('Socket error: {message}', { message: error.message }),
+          close: (socket) => socket.data.handler.onConnectionClose()
         },
       });
       this.info = { ...this.info, listening: true, error: undefined };
@@ -97,14 +78,41 @@ export class TensorServer {
     this.info = { ...this.info, listening: false };
   }
 
-  serverInfo(): ServerInfo {
+  serverInfo(): FeedInfo {
     return this.info;
   }
 
+  private onConnectionOpen(socket: Socket) {
+    socket.data = {
+      splitter: lineSplitter(this.maxLineBytes),
+      handler: handleMessage(
+        { clientAddress: socket.remoteAddress },
+        this.options.onTensor
+      ),
+    };
+  }
+  private onData(socket: Socket, chunk: Buffer<ArrayBufferLike>) {
+    const lines = socket.data.splitter(chunk);
+    this.log.info(`Received ${chunk.byteLength} bytes from ${socket.remoteAddress}`);
+
+    if (lines === 'overflow') {
+      this.log.error(
+        'Line over {maxLineBytes} bytes, closing connection.',
+        { maxLineBytes: this.maxLineBytes }
+      );
+      socket.end();
+      return;
+    }
+    for (const line of lines) {
+      this.decodeLine(line, socket.data.handler);
+    }
+  }
+
   /** Decodes and applies one line. Bad lines are logged and skipped. */
-  private apply(line: string, handler: MessageHandler): void {
+  private decodeLine(line: string, handler: MessageHandler): void {
     let decoded: unknown;
     try {
+      this.log.info(`Decoding line with size ${line.length}`);
       decoded = JSON.parse(line);
     } catch (error) {
       this.log.error('Bad formed line: {message}', {
@@ -114,7 +122,7 @@ export class TensorServer {
     }
 
     try {
-      handler(parseIncoming(decoded));
+      handler.onMessage(parseIncoming(decoded));
     } catch (error) {
       this.log.error('Invalid message: {decoded}', {
         decoded,

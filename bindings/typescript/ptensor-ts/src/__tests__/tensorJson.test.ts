@@ -1,19 +1,34 @@
 import { describe, expect, it } from 'bun:test';
 import { dtypeSizeBytes } from '../dtype';
-import { parseTensorJson, validateTensorJson } from '../tensorJson';
 import { P10Error } from '../p10error';
 import {
-  contiguousStride,
-  numElements,
   parse,
+  parseTensorJson,
+  type TensorJson,
   tensorFromJson,
   tensorToJson,
-} from '../tensor';
+  validateTensorJson,
+} from '../tensorJson';
+import { contiguousStride, numElements } from '../tensor';
+
+function makeJsonObject(
+  dtype: string,
+  shape: number[],
+  data: ArrayBufferView,
+): TensorJson {
+  const bytes = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+  return {
+    dtype,
+    shape,
+    stride: contiguousStride(shape),
+    size_bytes: bytes.byteLength,
+    encoding: 'base64',
+    blob: Buffer.from(bytes).toString('base64'),
+  };
+}
 
 function makeJson(dtype: string, shape: number[], data: ArrayBufferView): string {
-  const bytes = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-  const blob = Buffer.from(bytes).toString('base64');
-  return JSON.stringify({ dtype, shape, stride: contiguousStride(shape), blob });
+  return JSON.stringify(makeJsonObject(dtype, shape, data));
 }
 
 describe('ptensor-ts', () => {
@@ -26,6 +41,8 @@ describe('ptensor-ts', () => {
     expect(Array.from(t.data as Float32Array)).toEqual([1, 2, 3, 4, 5, 6]);
 
     const back = tensorToJson(t);
+    expect(back.encoding).toBe('base64');
+    expect(back.size_bytes).toBe(24);
     expect(parseTensorJson(JSON.stringify(back)).blob).toBe(JSON.parse(raw).blob);
   });
 
@@ -50,25 +67,72 @@ describe('ptensor-ts', () => {
   });
 
   it('rejects an unknown dtype', () => {
-    expect(() => tensorFromJson({ dtype: 'bogus', shape: [1], stride: [1], blob: '' })).toThrow();
+    expect(() =>
+      tensorFromJson({
+        dtype: 'bogus',
+        shape: [1],
+        stride: [1],
+        size_bytes: 0,
+        encoding: 'base64',
+        blob: '',
+      }),
+    ).toThrow(P10Error);
+  });
+
+  it('rejects a zstd-compressed blob (no decoder in this package)', () => {
+    const json = { ...makeJsonObject('uint8', [3], new Uint8Array([1, 2, 3])) };
+    json.encoding = 'base64+zstd';
+    expect(() => tensorFromJson(json)).toThrow(/only 'base64' is supported/);
+  });
+
+  it("rejects a blob whose length disagrees with 'size_bytes'", () => {
+    const json = { ...makeJsonObject('uint8', [3], new Uint8Array([1, 2, 3])) };
+    json.size_bytes = 4;
+    expect(() => tensorFromJson(json)).toThrow(/'size_bytes' says 4/);
+  });
+
+  it('rejects a blob that is not a whole number of elements', () => {
+    const json = makeJsonObject('float32', [1], new Uint8Array([1, 2, 3]));
+    expect(() => tensorFromJson(json)).toThrow(/not a multiple of 4/);
+  });
+
+  it('reports a missing JSON object and malformed JSON', () => {
+    expect(() => parseTensorJson('no object here')).toThrow(/Could not find a JSON object/);
+    expect(() => parseTensorJson('{not json}')).toThrow(/Could not parse tensor JSON/);
+  });
+
+  it('coerces stringified shape and stride numbers', () => {
+    const json = parseTensorJson(
+      '{"dtype":"uint8","shape":["2","2"],"stride":["2","1"],"size_bytes":4,"encoding":"base64","blob":"AQIDBA=="}',
+    );
+    expect(json.shape).toEqual([2, 2]);
+    expect(json.stride).toEqual([2, 1]);
   });
 });
 
 describe('validateTensorJson', () => {
-  const valid = {
+  const valid: TensorJson = {
     dtype: 'float32',
     shape: [2, 3],
     stride: [3, 1],
+    size_bytes: 24,
+    encoding: 'base64',
     blob: 'AAAAAA==',
   };
 
   it('accepts a well-formed object and returns the same reference', () => {
     const result = validateTensorJson(valid);
-    expect(result).toBe(valid as unknown as ReturnType<typeof validateTensorJson>);
+    expect(result).toBe(valid);
     expect(result.dtype).toBe('float32');
     expect(result.shape).toEqual([2, 3]);
     expect(result.stride).toEqual([3, 1]);
+    expect(result.size_bytes).toBe(24);
+    expect(result.encoding).toBe('base64');
     expect(result.blob).toBe('AAAAAA==');
+  });
+
+  it('accepts the compressed encoding', () => {
+    expect(validateTensorJson({ ...valid, encoding: 'base64+zstd' }).encoding).toBe('base64+zstd');
   });
 
   it('keeps extra fields untouched', () => {
@@ -78,6 +142,10 @@ describe('validateTensorJson', () => {
 
   it('accepts empty shape and stride (scalar tensor)', () => {
     expect(validateTensorJson({ ...valid, shape: [], stride: [] }).shape).toEqual([]);
+  });
+
+  it('accepts a zero-byte tensor', () => {
+    expect(validateTensorJson({ ...valid, size_bytes: 0, blob: '' }).size_bytes).toBe(0);
   });
 
   const nonObjects: [string, unknown][] = [
@@ -96,13 +164,19 @@ describe('validateTensorJson', () => {
   }
 
   const badFields: [string, unknown, RegExp][] = [
-    ['dtype missing', { shape: [1], stride: [1], blob: '' }, /'dtype'/],
+    ['dtype missing', { ...valid, dtype: undefined }, /'dtype'/],
     ['dtype not a string', { ...valid, dtype: 7 }, /'dtype'/],
-    ['shape missing', { dtype: 'float32', stride: [1], blob: '' }, /'shape'/],
+    ['shape missing', { ...valid, shape: undefined }, /'shape'/],
     ['shape not an array', { ...valid, shape: '2,3' }, /'shape'/],
-    ['stride missing', { dtype: 'float32', shape: [1], blob: '' }, /'stride'/],
+    ['stride missing', { ...valid, stride: undefined }, /'stride'/],
     ['stride not an array', { ...valid, stride: 3 }, /'stride'/],
-    ['blob missing', { dtype: 'float32', shape: [1], stride: [1] }, /'blob'/],
+    ['size_bytes missing', { ...valid, size_bytes: undefined }, /'size_bytes'/],
+    ['size_bytes not a number', { ...valid, size_bytes: '24' }, /'size_bytes'/],
+    ['size_bytes fractional', { ...valid, size_bytes: 1.5 }, /'size_bytes'/],
+    ['size_bytes negative', { ...valid, size_bytes: -1 }, /'size_bytes'/],
+    ['encoding missing', { ...valid, encoding: undefined }, /'encoding'/],
+    ['encoding unknown', { ...valid, encoding: 'base64+lz4' }, /'encoding'/],
+    ['blob missing', { ...valid, blob: undefined }, /'blob'/],
     ['blob not a string', { ...valid, blob: [1, 2, 3] }, /'blob'/],
   ];
   for (const [label, value, message] of badFields) {

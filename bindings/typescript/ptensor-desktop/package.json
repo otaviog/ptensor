@@ -11,9 +11,10 @@
         "typecheck": "bun scripts/typecheck.ts",
         "test": "bun test",
         "smoke": "bun scripts/smoke-view.ts",
-        "send": "bun scripts/send-tensor.ts"
+        "send": "bun scripts/sendTensor.ts"
     },
     "dependencies": {
+        "@cliffy/command": "npm:@jsr/cliffy__command",
         "@logtape/file": "^2.3.3",
         "@logtape/logtape": "^2.3.3",
         "@ptensor/tensor-view": "file:../ptensor-view",

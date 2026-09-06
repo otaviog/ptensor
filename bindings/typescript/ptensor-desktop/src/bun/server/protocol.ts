@@ -1,7 +1,6 @@
-import { TensorJson, P10Error } from "ptensor-ts";
-import { PdError } from "../shared/pdError";
-import { getAppLogger } from "../shared/logging";
-import { validateTensorJson } from "../../../ptensor-ts/dist/esm/tensorJson";
+import { TensorJson, P10Error, validateTensorJson } from "ptensor-ts";
+import { PdError } from "../../shared/pdError";
+import { getAppLogger } from "../../shared/logging";
 
 export type SessionMessage = {
   sessionId: string;

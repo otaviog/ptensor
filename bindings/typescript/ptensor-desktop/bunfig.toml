@@ -1,2 +1,2 @@
 [test]
-preload = ["./src/renderer/__tests__/happydom.ts"]
+preload = ["./src/webview/__tests__/happydom.ts"]

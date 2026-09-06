@@ -1,7 +1,5 @@
-import { base64ToBytes, bytesToBase64 } from './base64';
-import { asDType, type DTypeString, dtypeSizeBytes } from './dtype';
-import { type NumericArray, viewNumericArray } from './numericArray';
-import { parseTensorJson, type TensorJson } from './tensorJson';
+import { type DTypeString } from './dtype';
+import { type NumericArray } from './numericArray';
 
 /**
  * A materialized, JS-owned tensor: plain data with no native handle. This is
@@ -30,44 +28,4 @@ export function contiguousStride(shape: number[]): number[] {
 /** Element count for a shape. */
 export function numElements(shape: number[]): number {
   return shape.reduce((a, b) => a * b, 1);
-}
-
-/** Decodes a `TensorJson` (base64 blob) into a materialized `Tensor`. */
-export function tensorFromJson(json: TensorJson): Tensor {
-  const dtype = asDType(json.dtype);
-  if (!dtype) {
-    throw new Error(`Unknown dtype '${json.dtype}' in tensor JSON.`);
-  }
-  const bytes = base64ToBytes(json.blob);
-  const elemSize = dtypeSizeBytes[dtype];
-  if (bytes.byteLength % elemSize !== 0) {
-    throw new Error(
-      `Blob length ${bytes.byteLength} is not a multiple of ${elemSize} for dtype '${dtype}'.`,
-    );
-  }
-  // Copy into a fresh, element-aligned buffer: the base64 bytes may be offset
-  // inside a larger Buffer, which a typed-array view can't straddle safely.
-  const aligned = bytes.slice();
-  const data = viewNumericArray(dtype, aligned.buffer, aligned.byteOffset, bytes.byteLength / elemSize);
-  return { dtype, shape: json.shape, stride: json.stride, data };
-}
-
-/** Parses raw debugger/stdout text straight into a materialized `Tensor`. */
-export function parse(rawResult: string): Tensor {
-  return tensorFromJson(parseTensorJson(rawResult));
-}
-
-/** Encodes a materialized `Tensor` back to the `TensorJson` wire format. */
-export function tensorToJson(tensor: Tensor): TensorJson {
-  const bytes = new Uint8Array(
-    tensor.data.buffer,
-    tensor.data.byteOffset,
-    tensor.data.byteLength,
-  );
-  return {
-    dtype: tensor.dtype,
-    shape: tensor.shape,
-    stride: tensor.stride,
-    blob: bytesToBase64(bytes),
-  };
 }

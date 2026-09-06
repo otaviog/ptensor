@@ -13,13 +13,13 @@ export default {
             entrypoint: 'src/bun/index.ts',
         },
         views: {
-            mainview: {
-                entrypoint: 'src/mainview/index.tsx',
+            webview: {
+                entrypoint: 'src/webview/index.tsx',
                 plugins: [dedupeReact],
             },
         },
         copy: {
-            'src/mainview/index.html': 'views/mainview/index.html',
+            'src/webview/index.html': 'views/webview/index.html',
         },
         mac: {
             // System WebKit: no CEF download, and the panel needs nothing extra.

@@ -1,9 +1,9 @@
 import { asDType, base64ToBytes, type TensorJson, viewNumericArray } from 'ptensor-ts';
 import { type DTypeString, type NumericArray, type TensorView } from './types';
 
-// The transport form (`TensorJson` = `{dtype, shape, stride, blob}`, identical
-// to what `p10::to_json_debug` emits) and the raw byte decode are owned by
-// ptensor-ts. This module owns only the view-specific concerns: assembling a
+// The transport form (`TensorJson` = `{dtype, shape, stride, size_bytes,
+// encoding, blob}`, identical to what `p10::to_json_debug` emits) and the raw
+// byte decode are owned by ptensor-ts. This module owns only the view-specific concerns: assembling a
 // renderable `TensorView` (bigint shapes) and decoding float16 -> Float32 for
 // display (there is no native float16 typed array).
 
@@ -13,6 +13,13 @@ export function fromTensorJson(json: TensorJson, name?: string): TensorView {
     const dtype = asDType(json.dtype);
     if (!dtype) {
         throw new Error(`Unknown dtype '${json.dtype}' in tensor JSON.`);
+    }
+    // A compressed blob would base64-decode into zstd frame bytes and render as
+    // noise, so refuse it rather than show a plausible-looking wrong tensor.
+    if (json.encoding !== 'base64') {
+        throw new Error(
+            `Cannot decode tensor blob with encoding '${json.encoding}': only 'base64' is supported.`,
+        );
     }
     return {
         name,

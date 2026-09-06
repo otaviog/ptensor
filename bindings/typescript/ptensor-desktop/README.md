@@ -56,37 +56,25 @@ relaunching the whole app on every change.
 
 ### App icon
 
-`icon.iconset/` is the bundle icon, built from `docs/icon-light.png` (the light
-one: a macOS `.icns` has no dark variant, and the mark carries its own
-background). Electrobun runs `iconutil` over the folder at build time. To
-regenerate it, or to switch to `icon-dark.png`:
+There is one icon in the repo, `docs/icon-light.png`. This package keeps no copy
+of it: `scripts/makeIcons.ts` cuts every size the three platforms need into
+`.icons/`, which is git-ignored, and `bun run dev` / `bun run build` /
+`bun run dev/ui` run it first. It skips the work when the output is newer than
+the source; `bun run icons -- --force` re-cuts anyway.
 
-```bash
-for size in "16 16x16" "32 16x16@2x" "32 32x32" "64 32x32@2x" "128 128x128" \
-            "256 128x128@2x" "256 256x256" "512 256x256@2x" "512 512x512" \
-            "1024 512x512@2x"; do
-  set -- $size
-  sips -z $1 $1 ../../../docs/icon-light.png --out "icon.iconset/icon_$2.png"
-done
-```
+| platform | file | how it is used |
+| --- | --- | --- |
+| macOS | `.icons/icon.iconset/` (10 PNGs, 16-1024) | `iconutil` compiles it into the bundle's `AppIcon.icns` |
+| Windows | `.icons/icon.ico` (16/24/32/48/64/128/256) | embedded in `launcher.exe`, copied to `Resources/app.ico` |
+| Linux | `.icons/icon.png` (512) | copied to `Resources/appIcon.png` |
 
-Windows and Linux take a single file each, cut from the same source:
-`icon.ico` (16/24/32/48/64/128/256, built with the `png-to-ico` that ships
-inside electrobun) and `icon.png` (512). Windows gets a real `.ico` rather than
-a `.png`: electrobun converts a PNG when it embeds the icon into `launcher.exe`,
-but copies it to `Resources/app.ico` unconverted.
+The cutting is pure JS (`pngjs`, plus png-to-ico's bicubic resize), not `sips`
+and `iconutil`, so the Windows and Linux icons can be cut on those platforms;
+only the macOS `.iconset` -> `.icns` step needs macOS. To use `icon-dark.png`
+instead, point `SOURCE` in the script at it.
 
-```bash
-sips -z 512 512 ../../../docs/icon-light.png --out icon.png
-for s in 16 24 32 48 64 128 256; do
-  sips -z $s $s ../../../docs/icon-light.png --out "/tmp/ico/$s.png"
-done
-bun -e "import p from 'png-to-ico'; import {writeFileSync} from 'node:fs';
-        writeFileSync('icon.ico', new Uint8Array(await p([16,24,32,48,64,128,256].map(s => \`/tmp/ico/\${s}.png\`))))"
-```
-
-The source is 250x251, so anything above 256 -- the two largest iconset entries
-and `icon.png` -- is upscaled. Replace them if a larger original turns up.
+The source is 250x251 -- squared onto a transparent canvas before resizing --
+so anything above 256 is upscaled. Replace it if a larger original turns up.
 
 Only the macOS icon is verified here: the Windows and Linux ones are wired in
 the config but need a build on those platforms to see.

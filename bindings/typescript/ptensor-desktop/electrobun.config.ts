@@ -22,11 +22,23 @@ export default {
             'src/webview/index.html': 'views/webview/index.html',
         },
         mac: {
+            // Cut from docs/icon-light.png by scripts/makeIcons.ts, which the
+            // build scripts run first. iconutil turns the folder into the
+            // bundle's AppIcon.icns.
+            icons: '.icons/icon.iconset',
             // System WebKit: no CEF download, and the panel needs nothing extra.
             bundleCEF: false,
             codesign: false,
             notarize: false,
             createDmg: false,
+        },
+        win: {
+            // Multi-size .ico, so the launcher.exe embed and the taskbar both
+            // have a size to pick; a bare .png reaches Resources unconverted.
+            icon: '.icons/icon.ico',
+        },
+        linux: {
+            icon: '.icons/icon.png',
         },
     },
 } satisfies ElectrobunConfig;

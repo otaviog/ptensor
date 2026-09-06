@@ -32,6 +32,9 @@ async function waitForViteServer(timeoutMs: number): Promise<boolean> {
     return false;
 }
 
+// The app bundle needs its icons cut before electrobun packages it.
+await run(['bun', 'scripts/makeIcons.ts']).exited;
+
 const vite = run(['bun', 'x', 'vite']);
 if (!(await waitForViteServer(20_000))) {
     console.error(`the vite dev server did not come up at ${DEV_URL}`);

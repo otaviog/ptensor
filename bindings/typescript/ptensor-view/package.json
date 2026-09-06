@@ -1,45 +1,21 @@
 {
-    "name": "@ptensor/tensor-view",
+    "name": "ptensor-view-workspace",
     "version": "0.1.0",
     "private": true,
     "type": "module",
-    "description": "React tensor viewer for ptensor: tables, images and batched image tabs.",
-    "main": "./dist/tensor-view.js",
-    "module": "./dist/tensor-view.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/tensor-view.js"
-        },
-        "./styles.css": "./src/styles.css"
-    },
-    "files": [
-        "dist",
-        "src"
+    "description": "The ptensor viewer family: the React panel, the tlog server it is fed by, and the two apps that host it (desktop and VS Code).",
+    "workspaces": [
+        "packages/*"
     ],
     "scripts": {
-        "dev": "vite",
-        "build": "vite build && vite build --config vite.lib.config.ts",
-        "build:webview": "vite build",
-        "build:lib": "vite build --config vite.lib.config.ts",
-        "typecheck": "tsc --noEmit",
-        "smoke": "node scripts/smoke-webview.mjs",
-        "preview": "vite preview"
-    },
-    "dependencies": {
-        "ptensor-ts": "file:../ptensor-ts",
-        "react": "^19.1.0",
-        "react-dom": "^19.1.0"
+        "build": "bun run build/ts && bun install && bun run build/view && bun run build/tlog",
+        "build/ts": "cd ../ptensor-ts && bun run build",
+        "build/view": "bun --filter='@ptensor/tensor-view' run build",
+        "build/tlog": "bun --filter='ptensor-tlog' run build",
+        "typecheck": "bun --filter='*' run typecheck",
+        "test": "bun --filter='*' run test"
     },
     "devDependencies": {
-        "@types/jsdom": "^28.0.3",
-        "@types/react": "^19.1.0",
-        "@types/react-dom": "^19.1.0",
-        "@vitejs/plugin-react": "^4.3.4",
-        "jsdom": "^29.1.1",
-        "typescript": "^5.9.3",
-        "vite": "^6.0.7",
-        "vite-plugin-dts": "^4.5.0"
+        "typescript": "^5.9.3"
     }
 }

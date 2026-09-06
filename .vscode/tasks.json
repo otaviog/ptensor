@@ -7,7 +7,7 @@
             "type": "shell",
             "command": "bun run dev",
             "options": {
-                "cwd": "${workspaceFolder}/bindings/typescript/ptensor-view"
+                "cwd": "${workspaceFolder}/bindings/typescript/ptensor-view/packages/view"
             },
             "isBackground": true,
             "problemMatcher": [],
@@ -19,7 +19,7 @@
         },
         {
             "label": "ptensor-view: build",
-            "detail": "Build the webview bundle + library artifacts.",
+            "detail": "Build every package in the viewer workspace, in order.",
             "type": "shell",
             "command": "bun run build",
             "options": {
@@ -28,12 +28,12 @@
             "problemMatcher": []
         },
         {
-            "label": "ptensor-vscode: build:viewer",
+            "label": "ptensor-vscode: build/assets",
             "detail": "Build the viewer bundle and copy it into the extension's media/.",
             "type": "shell",
-            "command": "npm run build:viewer",
+            "command": "npm run build/assets",
             "options": {
-                "cwd": "${workspaceFolder}/bindings/typescript/ptensor-vscode"
+                "cwd": "${workspaceFolder}/bindings/typescript/ptensor-view/packages/vscode"
             },
             "problemMatcher": []
         }

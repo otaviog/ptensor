@@ -1,7 +1,10 @@
-add_library(unit_tests_core OBJECT test_tensor.cpp test_ptensor_error.cpp test_shape.cpp test_stride.cpp test_dtype.cpp test_tensor_print.cpp)
+add_library(unit_tests_core OBJECT test_tensor.cpp test_ptensor_error.cpp test_shape.cpp test_stride.cpp test_dtype.cpp test_tensor_print.cpp test_base64.cpp test_json.cpp)
 ptensor_target_options(unit_tests_core Core)
 target_link_libraries(unit_tests_core
     PUBLIC ptensor PRIVATE Catch2::Catch2 ptensor_testing)
+
+# test_base64.cpp reaches for the module private headers under src/core.
+target_include_directories(unit_tests_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 # Optional map adapters: tests are built only when the third-party library is
 # available. The headers themselves compile to nothing without it.

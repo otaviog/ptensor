@@ -1661,4 +1661,239 @@ TEST_CASE("core::Tensor::convert_from converts dtype", "[tensor][convert]") {
     }
 }
 
+// ============================================================================
+// Tensor::as_slice
+// ============================================================================
+
+TEST_CASE("core::Tensor::as_slice", "[tensor][slice]") {
+    SECTION("Forward slicing 1D") {
+        auto source = Tensor::from_range(make_shape(10), Dtype::Int32).unwrap();
+
+        REQUIRE_THAT(
+            testing::compare_tensors(
+                source.as_slice(Slice {0, 10}).unwrap(),
+                Tensor::from_range(make_shape(10), Dtype::Int32).unwrap()
+            ),
+            testing::is_ok()
+        );
+
+        REQUIRE_THAT(
+            testing::compare_tensors(
+                source.as_slice(Slice {2, 5}).unwrap(),
+                Tensor::from_range(make_shape(3), Dtype::Int32, 2).unwrap()
+            ),
+            testing::is_ok()
+        );
+        auto slice = source.as_slice(Slice {2, 10, 2}).unwrap();
+        REQUIRE_FALSE(slice.is_contiguous());
+
+        REQUIRE_THAT(
+            testing::compare_tensors(
+                slice,
+                Tensor::from_range(make_shape(4), Dtype::Int32, 2, 2).unwrap()
+            ),
+            testing::is_ok()
+        );
+    }
+
+    SECTION("Negative indices count from the end") {
+        auto source = Tensor::from_range(make_shape(10), Dtype::Int32).unwrap();
+
+        REQUIRE_THAT(
+            testing::compare_tensors(
+                source.as_slice(Slice {-3}).unwrap(),
+                Tensor::from_range(make_shape(3), Dtype::Int32, 7).unwrap()
+            ),
+            testing::is_ok()
+        );
+
+        REQUIRE_THAT(
+            testing::compare_tensors(
+                source.as_slice(Slice {0, -1}).unwrap(),
+                Tensor::from_range(make_shape(9), Dtype::Int32).unwrap()
+            ),
+            testing::is_ok()
+        );
+    }
+
+    SECTION("Out-of-range slices are clamped") {
+        auto source = Tensor::from_range(make_shape(10), Dtype::Int32).unwrap();
+
+        REQUIRE_THAT(
+            testing::compare_tensors(
+                source.as_slice(Slice {5, 100}).unwrap(),
+                Tensor::from_range(make_shape(5), Dtype::Int32, 5).unwrap()
+            ),
+            testing::is_ok()
+        );
+    }
+
+    SECTION("2D slicing") {
+        auto source = Tensor::from_range(make_shape(4, 5), Dtype::Int32).unwrap();
+
+        SECTION("Both dimensions") {
+            auto sliced = source.as_slice(Slice {1, 3}, Slice {2, 4}).unwrap();
+            REQUIRE(sliced.shape() == make_shape(2, 2));
+            REQUIRE_FALSE(sliced.is_contiguous());
+
+            std::array<int32_t, 4> expected_data = {7, 8, 12, 13};
+            auto expected = Tensor::from_data(expected_data.data(), make_shape(2, 2));
+            REQUIRE_THAT(testing::compare_tensors(sliced, expected), testing::is_ok());
+        }
+
+        SECTION("SLICE_ALL keeps a dimension and advances to the next") {
+            auto sliced = source.as_slice(SLICE_ALL, Slice {2, 4}).unwrap();
+            REQUIRE(sliced.shape() == make_shape(4, 2));
+
+            std::array<int32_t, 8> expected_data = {2, 3, 7, 8, 12, 13, 17, 18};
+            auto expected = Tensor::from_data(expected_data.data(), make_shape(4, 2));
+            REQUIRE_THAT(testing::compare_tensors(sliced, expected), testing::is_ok());
+        }
+
+        SECTION("Leading rows stay contiguous") {
+            auto sliced = source.as_slice(Slice {1, 3}).unwrap();
+            REQUIRE(sliced.shape() == make_shape(2, 5));
+            REQUIRE(sliced.is_contiguous());
+
+            REQUIRE_THAT(
+                testing::compare_tensors(
+                    sliced,
+                    Tensor::from_range(make_shape(2, 5), Dtype::Int32, 5).unwrap()
+                ),
+                testing::is_ok()
+            );
+        }
+    }
+
+    SECTION("3D slicing") {
+        // Element (i, j, k) of a [2, 3, 4] range tensor holds i*12 + j*4 + k.
+        auto source = Tensor::from_range(make_shape(2, 3, 4), Dtype::Int32).unwrap();
+
+        SECTION("All dimensions") {
+            auto sliced = source.as_slice(Slice {1, 2}, Slice {0, 2}, Slice {1, 4, 2}).unwrap();
+            REQUIRE(sliced.shape() == make_shape(1, 2, 2));
+            REQUIRE_FALSE(sliced.is_contiguous());
+
+            std::array<int32_t, 4> expected_data = {13, 15, 17, 19};
+            auto expected = Tensor::from_data(expected_data.data(), make_shape(1, 2, 2));
+            REQUIRE_THAT(testing::compare_tensors(sliced, expected), testing::is_ok());
+        }
+
+        SECTION("SLICE_ALL in the middle dimension") {
+            auto sliced = source.as_slice(Slice {1, 2}, SLICE_ALL, Slice {0, 2}).unwrap();
+            REQUIRE(sliced.shape() == make_shape(1, 3, 2));
+
+            std::array<int32_t, 6> expected_data = {12, 13, 16, 17, 20, 21};
+            auto expected = Tensor::from_data(expected_data.data(), make_shape(1, 3, 2));
+            REQUIRE_THAT(testing::compare_tensors(sliced, expected), testing::is_ok());
+        }
+
+        SECTION("Leading dimension only stays contiguous") {
+            auto sliced = source.as_slice(Slice {1, 2}).unwrap();
+            REQUIRE(sliced.shape() == make_shape(1, 3, 4));
+            REQUIRE(sliced.is_contiguous());
+
+            REQUIRE_THAT(
+                testing::compare_tensors(
+                    sliced,
+                    Tensor::from_range(make_shape(1, 3, 4), Dtype::Int32, 12).unwrap()
+                ),
+                testing::is_ok()
+            );
+        }
+    }
+
+    SECTION("4D slicing") {
+        // Element (i, j, k, l) of a [2, 3, 4, 5] range tensor holds
+        // i*60 + j*20 + k*5 + l.
+        auto source = Tensor::from_range(make_shape(2, 3, 4, 5), Dtype::Int32).unwrap();
+
+        SECTION("All dimensions") {
+            auto sliced =
+                source.as_slice(Slice {1, 2}, Slice {1, 3}, Slice {2, 4}, Slice {1, 5, 2}).unwrap();
+            REQUIRE(sliced.shape() == make_shape(1, 2, 2, 2));
+            REQUIRE_FALSE(sliced.is_contiguous());
+
+            std::array<int32_t, 8> expected_data = {91, 93, 96, 98, 111, 113, 116, 118};
+            auto expected = Tensor::from_data(expected_data.data(), make_shape(1, 2, 2, 2));
+            REQUIRE_THAT(testing::compare_tensors(sliced, expected), testing::is_ok());
+        }
+
+        SECTION("Trailing dimensions kept whole") {
+            auto sliced = source.as_slice(Slice {0, 1}, Slice {2, 3}).unwrap();
+            REQUIRE(sliced.shape() == make_shape(1, 1, 4, 5));
+            REQUIRE(sliced.is_contiguous());
+
+            REQUIRE_THAT(
+                testing::compare_tensors(
+                    sliced,
+                    Tensor::from_range(make_shape(1, 1, 4, 5), Dtype::Int32, 40).unwrap()
+                ),
+                testing::is_ok()
+            );
+        }
+
+        SECTION("Negative indices in inner dimensions") {
+            auto sliced = source.as_slice(SLICE_ALL, SLICE_ALL, Slice {-1}, Slice {-2}).unwrap();
+            REQUIRE(sliced.shape() == make_shape(2, 3, 1, 2));
+
+            // Last row (k = 3), last two columns (l = 3, 4) of every (i, j).
+            std::array<int32_t, 12> expected_data =
+                {18, 19, 38, 39, 58, 59, 78, 79, 98, 99, 118, 119};
+            auto expected = Tensor::from_data(expected_data.data(), make_shape(2, 3, 1, 2));
+            REQUIRE_THAT(testing::compare_tensors(sliced, expected), testing::is_ok());
+        }
+    }
+
+    SECTION("Slice of slice") {
+        auto source = Tensor::from_range(make_shape(10), Dtype::Int32).unwrap();
+        auto sliced = source.as_slice(Slice {2, 10, 2}).unwrap();  // 2, 4, 6, 8
+
+        REQUIRE_THAT(
+            testing::compare_tensors(
+                sliced.as_slice(Slice {1, 3}).unwrap(),
+                Tensor::from_range(make_shape(2), Dtype::Int32, 4, 2).unwrap()
+            ),
+            testing::is_ok()
+        );
+    }
+
+    SECTION("Non-positive step is rejected") {
+        auto source = Tensor::from_range(make_shape(10), Dtype::Int32).unwrap();
+
+        REQUIRE_THAT(
+            source.as_slice(Slice {0, 10, -1}),
+            testing::is_error(P10Error::InvalidArgument)
+        );
+        REQUIRE_THAT(
+            source.as_slice(Slice {0, 10, 0}),
+            testing::is_error(P10Error::InvalidArgument)
+        );
+    }
+
+    SECTION("Empty range is rejected") {
+        auto source = Tensor::from_range(make_shape(10), Dtype::Int32).unwrap();
+
+        REQUIRE_THAT(source.as_slice(Slice {5, 5}), testing::is_error(P10Error::InvalidArgument));
+        REQUIRE_THAT(source.as_slice(Slice {7, 3}), testing::is_error(P10Error::InvalidArgument));
+    }
+
+    SECTION("More slices than dimensions is rejected") {
+        auto source = Tensor::from_range(make_shape(10), Dtype::Int32).unwrap();
+
+        REQUIRE_THAT(
+            source.as_slice(Slice {0, 5}, Slice {0, 5}),
+            testing::is_error(P10Error::InvalidArgument)
+        );
+    }
+
+    SECTION("Sliced view shares data with the source") {
+        auto source = Tensor::from_range(make_shape(10), Dtype::Int32).unwrap();
+        auto sliced = source.as_slice(Slice {2, 5}).unwrap();
+
+        source.as_span1d<int32_t>().unwrap()[3] = 42;
+        REQUIRE(sliced.as_accessor1d<int32_t>().unwrap()[1] == 42);
+    }
+}
+
 }  // namespace p10

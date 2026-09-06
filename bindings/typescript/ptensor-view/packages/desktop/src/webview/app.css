@@ -1,0 +1,221 @@
+/* App chrome for the desktop window, plus fallbacks for the --vscode-* theme
+ * variables that ptensor-view's stylesheet reads (it was written for a VS Code
+ * webview; outside one nothing defines them). */
+
+:root {
+    --vscode-font-family: system-ui, -apple-system, sans-serif;
+    --vscode-foreground: #e0e0e0;
+    --vscode-descriptionForeground: #9a9a9a;
+    --vscode-editorWidget-background: #252526;
+    --vscode-editor-font-family: 'SF Mono', Menlo, monospace;
+    --vscode-panel-border: #3a3a3a;
+    --vscode-button-background: #0e639c;
+    --vscode-button-foreground: #ffffff;
+    --vscode-button-hoverBackground: #1177bb;
+    --vscode-button-secondaryBackground: #3a3d41;
+    --vscode-button-secondaryForeground: #ffffff;
+    --vscode-badge-background: #4d4d4d;
+    --vscode-badge-foreground: #ffffff;
+    --vscode-editorWarning-foreground: #cca700;
+    --vscode-testing-iconPassed: #73c991;
+    --vscode-testing-iconQueued: #cca700;
+    --vscode-list-hoverBackground: #2a2d2e;
+
+    --sidebar-width: 268px;
+    --bg: #1e1e1e;
+    --bg-raised: #252526;
+    --accent: #0e639c;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--vscode-foreground);
+    font-family: var(--vscode-font-family);
+    overflow: hidden;
+}
+
+.app {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    height: 100vh;
+}
+
+.sidebar {
+    border-right: 1px solid var(--vscode-panel-border);
+    background: var(--bg-raised);
+    overflow-y: auto;
+    padding: 12px 10px 24px;
+}
+
+.sidebar-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.app-name {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--vscode-testing-iconQueued);
+}
+
+.status-up {
+    background: var(--vscode-testing-iconPassed);
+}
+
+.status-down {
+    background: #f14c4c;
+}
+
+.feed-line {
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    font-family: var(--vscode-editor-font-family);
+    margin-bottom: 10px;
+    word-break: break-all;
+}
+
+.follow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    margin-bottom: 12px;
+}
+
+.empty {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.5;
+}
+
+.session {
+    margin-bottom: 14px;
+}
+
+.session-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 2px 4px;
+}
+
+.session-id {
+    font-size: 12px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.session-clear {
+    background: none;
+    border: none;
+    color: var(--vscode-descriptionForeground);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 4px;
+}
+
+.session-clear:hover {
+    color: var(--vscode-foreground);
+}
+
+.tensor-list {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+}
+
+.tensor-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 8px;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-left: 2px solid transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 5px 6px;
+    font-family: inherit;
+}
+
+.tensor-item:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+
+.tensor-item.active {
+    background: var(--vscode-list-hoverBackground);
+    border-left-color: var(--accent);
+}
+
+.tensor-name {
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tensor-time {
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    font-variant-numeric: tabular-nums;
+}
+
+.tensor-meta {
+    grid-column: 1 / -1;
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    font-family: var(--vscode-editor-font-family);
+}
+
+.clear-all {
+    width: 100%;
+    margin-top: 8px;
+    padding: 6px;
+    font-size: 11px;
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.panel > .ptv-root {
+    flex: 1;
+}
+
+.placeholder {
+    margin: auto;
+    color: var(--vscode-descriptionForeground);
+    font-size: 13px;
+}
+
+.panel-foot {
+    border-top: 1px solid var(--vscode-panel-border);
+    padding: 6px 12px;
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+}

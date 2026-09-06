@@ -26,6 +26,11 @@ if (WITH_OP)
     target_link_libraries(unit_tests_all PRIVATE ptensor_op)
 endif()
 
+if (WITH_TLOG)
+    target_sources(unit_tests_all PRIVATE $<TARGET_OBJECTS:unit_tests_tlog>)
+    target_link_libraries(unit_tests_all PRIVATE ptensor_tlog)
+endif()
+
 if (WITH_MEDIA)
     target_link_libraries(unit_tests_all PRIVATE unit_tests_media)
 endif()

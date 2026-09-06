@@ -166,7 +166,7 @@ PTENSOR_API P10ErrorEnum p10_media_capture_next_frame(P10MediaCapture capture, i
     if (result.is_error()) {
         return p10::update_error_state(result.unwrap_err());
     }
-    *has_frame = result.unwrap() ? 1 : 0;
+    *has_frame = (result.unwrap() != 0u) ? 1 : 0;
     return P10_OK;
 }
 
@@ -349,7 +349,7 @@ PTENSOR_API P10ErrorEnum p10_media_writer_open_ffi(
     double audio_sample_rate_hz,
     size_t audio_channels
 ) {
-    P10Rational fr {frame_rate_num, frame_rate_den};
+    P10Rational const fr {.num = frame_rate_num, .den = frame_rate_den};
     return p10_media_writer_open(
         writer,
         path,

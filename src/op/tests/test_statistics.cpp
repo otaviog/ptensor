@@ -72,7 +72,7 @@ TEST_CASE("statistics::mean over an axis of a 3D tensor", "[op][statistics]") {
 TEST_CASE("statistics::min and max return value+index", "[op][statistics]") {
     auto tensor = Tensor::from_range(make_shape(4), Dtype::Float32).unwrap();
     tensor.visit([](auto span) {
-        using scalar_t = typename decltype(span)::value_type;
+        using scalar_t = decltype(span)::value_type;
         span[0] = scalar_t(3);
         span[1] = scalar_t(-1);
         span[2] = scalar_t(7);
@@ -89,7 +89,7 @@ TEST_CASE("statistics::min and max return value+index", "[op][statistics]") {
 }
 
 TEST_CASE("statistics on empty tensor returns NaN", "[op][statistics]") {
-    Tensor empty;
+    Tensor const empty;
     REQUIRE(std::isnan(mean(empty)));
     REQUIRE(std::isnan(min(empty).first));
     REQUIRE(std::isnan(max(empty).first));

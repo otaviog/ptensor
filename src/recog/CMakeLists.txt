@@ -52,7 +52,7 @@ if(BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
-if (BUILD_SAMPLES)
+if (BUILD_APPS)
   add_subdirectory(apps/face_detect)
 endif()
 

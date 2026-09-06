@@ -4,9 +4,11 @@
 #include <memory>
 
 #include <p10_internal/log/log.hpp>
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
     #include <ptensor/detail/string.hpp>
 #endif
+#include <utility>
+
 #include <ptensor/tensor.hpp>
 
 #include "ort_conversions.hpp"
@@ -23,20 +25,20 @@ P10Result<std::unique_ptr<IInfer>> OrtInfer::create(const std::string& onnx_path
     }
 }
 
-OrtInfer::OrtInfer(const std::string& model_path, Ort::Env&& env) :
-    model_path_(model_path),
+OrtInfer::OrtInfer(std::string model_path, Ort::Env&& env) :
+    model_path_(std::move(model_path)),
     env_(std::move(env)) {
     session_options_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
-    session_.reset(new Ort::Session(
+    session_ = std::make_unique<Ort::Session>(
         env_,
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
         p10::detail::string_to_wstring(model_path_).unwrap().c_str(),
 #else
         model_path_.c_str(),
 #endif
         session_options_
-    ));
+    );
 
     collect_input_output_names();
 }
@@ -70,9 +72,9 @@ P10Error OrtInfer::infer(std::span<Tensor> input_tensors, std::span<Tensor> outp
         }
 
         // Setup memory info for tensors
-        Ort::MemoryInfo memory_info =
+        Ort::MemoryInfo const memory_info =
             Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
-        Ort::AllocatorWithDefaultOptions allocator;
+        Ort::AllocatorWithDefaultOptions const allocator;
 
         input_ort_tensors_.clear();
         // Create input tensors if not already created
@@ -103,7 +105,7 @@ P10Error OrtInfer::infer(std::span<Tensor> input_tensors, std::span<Tensor> outp
 
             const auto& type_and_shape_info = result_ort_value.GetTensorTypeAndShapeInfo();
             const auto output_shape = type_and_shape_info.GetShape();
-            const auto output_data = result_ort_value.GetTensorData<uint8_t>();
+            const auto* const output_data = result_ort_value.GetTensorData<uint8_t>();
 
             auto err = ort_to_p10_dtype(type_and_shape_info.GetElementType());
             if (!err.is_ok()) {

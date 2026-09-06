@@ -1,46 +1,28 @@
-# @ptensor/tensor-view
+# ptensor viewer workspace
 
-Framework-agnostic tensor visualization for ptensor. Owns the shared
-`TensorView` type and a React panel that renders a tensor as a table, an image
-(grayscale / RGB, planar or interleaved), or batched image tabs.
+One install, one lockfile, four packages:
 
-Pure: no native / FFI dependency, so the same code runs in a VS Code webview,
-the Electron pilot, and a plain browser playground.
+| package | what it is |
+| --- | --- |
+| `packages/view` (`@ptensor/tensor-view`) | the React panel: tables, images, batched image tabs |
+| `packages/tlog` (`ptensor-tlog`) | the `p10::tlog` wire protocol and the sockets that serve it: `ptensor-tlog` is framing and parsing with no runtime, `ptensor-tlog/bun` and `ptensor-tlog/node` are the two servers |
+| `packages/desktop` (`ptensor-desktop`) | the Electrobun app: a window fed by a local socket |
+| `packages/vscode` (`ptensor-vscode`) | the extension: a viewer tab fed by the debuggee |
 
-## TensorView
-
-```ts
-interface TensorView {
-    array: NumericArray;   // decoded; float16 -> Float32Array, int64 -> BigInt64Array
-    stride: bigint[];
-    shape: bigint[];
-    dtype: DTypeString;
-    name?: string;
-}
-```
-
-Tensors cross process boundaries as `TensorJson` (`{dtype, shape, stride, blob}`,
-the exact shape `p10::to_json_debug` emits, with `blob` base64); `fromTensorJson`
-decodes it — including float16 — into a `TensorView`.
-
-## Develop
+`ptensor-ts` and `ptensor-ffi` stay their own projects, one directory up. That
+is why `bun run build` starts by building `ptensor-ts` and reinstalling: a
+`file:` dependency outside the workspace is snapshotted at install time, so its
+`dist` would otherwise be whatever it was when you last installed. The four
+packages here are symlinked to each other, so they never have that problem.
 
 ```bash
-bun install
-bun run dev          # Vite playground with mock tensors + HMR (src/ptensor-view/dev)
+bun install          # once, at this root
+bun run build        # ptensor-ts, then view and tlog (the apps consume their dist)
 bun run typecheck
+bun run test
 ```
 
-The playground (`dev/`) renders every `resolveView` branch from `dev/samples.ts`,
-which mirror the C++ `vscode_viewer_demo` driver and the live debugger path.
-
-## Build
-
-```bash
-bun run build:webview   # dist/webview.js — single self-contained IIFE (React + CSS inlined)
-bun run build:lib       # dist/tensor-view.js + index.d.ts — reusable component/type API
-bun run build           # both
-```
-
-`dist/webview.js` is loaded by the `ptensor-vscode` extension: it mounts the
-panel, posts a `ready` message, and renders the tensor the host posts back.
+Package order matters for the first build: `desktop` and `vscode` typecheck
+against `view`'s and `tlog`'s build output, so `bun run build` before either.
+Within the workspace the packages are symlinked, so a rebuild is picked up
+without reinstalling.

@@ -13,7 +13,7 @@ namespace p10::infer {
 namespace {
 
     std::string get_user_app_dir() {
-#if defined(_WIN32)
+#ifdef _WIN32
         const char* appdata = std::getenv("APPDATA");
         if (appdata) {
             return std::string(appdata);
@@ -21,7 +21,7 @@ namespace {
         return ".";
 #elif defined(__APPLE__)
         const char* home = std::getenv("HOME");
-        if (home) {
+        if (home != nullptr) {
             return std::string(home) + "/Library/Application Support";
         }
         return ".";
@@ -56,7 +56,7 @@ namespace {
         }
 
         CURL* curl = curl_easy_init();
-        if (!curl) {
+        if (curl == nullptr) {
             return Err(P10Error::UnknownError << "Failed to initialize libcurl");
         }
 
@@ -83,7 +83,7 @@ namespace {
 }  // namespace
 
 bool is_url(const std::string& path) {
-    return path.rfind("http://", 0) == 0 || path.rfind("https://", 0) == 0;
+    return path.starts_with("http://") || path.starts_with("https://");
 }
 
 P10Result<std::string> resolve_model_path(const std::string& path) {

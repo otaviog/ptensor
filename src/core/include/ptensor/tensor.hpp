@@ -18,6 +18,7 @@
 #include "p10_error.hpp"
 #include "p10_result.hpp"
 #include "shape.hpp"
+#include "slice.hpp"
 #include "span2d.hpp"
 #include "span3d.hpp"
 #include "span4d.hpp"
@@ -106,7 +107,8 @@ class Tensor {
     static P10Result<Tensor> from_range(
         const Shape& shape,
         const TensorOptions& options = TensorOptions(),
-        int64_t start = 0
+        int64_t start = 0,
+        int64_t step = 1
     );
 
     static P10Result<Tensor> from_random(
@@ -192,6 +194,50 @@ class Tensor {
 
     Tensor as_view() const {
         return Tensor(blob_.view(), shape(), options());
+    }
+
+    /// Returns a view of the tensor restricted to the given per-dimension
+    /// slices, sharing the same data. Slices are applied to the leading
+    /// dimensions in order; remaining dimensions are kept whole (use
+    /// `SLICE_ALL` to skip a dimension explicitly).
+    template<Sliceable... Slices>
+    P10Result<Tensor> as_slice(const Slices&... slices) const {
+        constexpr auto NUM_SLICES = sizeof...(slices);
+
+        if (NUM_SLICES > dims()) {
+            return Err(
+                P10Error::InvalidArgument << "Cannot slice tensor with " + std::to_string(dims())
+                    + " dimensions using " + std::to_string(NUM_SLICES) + " slices"
+            );
+        }
+
+        Tensor view = as_view();
+        const auto shape = shape_.as_span();
+        P10Error last_error = P10Error::Ok;
+        size_t current_dim = 0;
+
+        const auto apply_slice_fn = [&](const auto& relative_slice) {
+            const auto axis = current_dim++;
+            if (relative_slice.is_all()) {
+                return true;
+            }
+
+            auto slice_res = relative_slice.resolve(shape[axis]);
+            if (slice_res.is_error()) {
+                last_error = slice_res.error();
+                return false;
+            }
+
+            view.apply_slice(static_cast<int64_t>(axis), slice_res.unwrap());
+            return true;
+        };
+
+        (apply_slice_fn(slices) && ...);
+
+        if (last_error.is_error()) {
+            return Err(last_error);
+        }
+        return Ok(std::move(view));
     }
 
     /// Returns a copy of the tensor options.
@@ -628,6 +674,9 @@ class Tensor {
         return Ok(std::make_pair(out_shape, out_stride));
     }
 
+    void apply_slice(int64_t axis, const Slice& slice);
+
+    // TODO: reorder to improve padding
     Blob blob_;
     Dtype dtype_;
     Shape shape_;

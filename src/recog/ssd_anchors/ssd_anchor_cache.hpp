@@ -11,7 +11,7 @@ namespace p10::recog {
 
 class SsdAnchorCache {
   public:
-    explicit SsdAnchorCache(const SsdAnchorParameters params) : params_(params) {}
+    explicit SsdAnchorCache(SsdAnchorParameters params) : params_(std::move(params)) {}
 
     std::span<const SsdAnchorRect> get_anchors(size_t image_width, size_t image_height);
 

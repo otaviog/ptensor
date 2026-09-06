@@ -48,12 +48,6 @@ compare_tensors(const Tensor& t1, const Tensor& t2, const CompareOptions& option
                 + "\nShape 2: " + to_string(t2.shape()));
     }
 
-    if (t1.stride() != t2.stride()) {
-        return P10Error::AssertionError
-            << (std::string("Strides are different") + "Stride 1: " + to_string(t1.stride())
-                + "\nStride 2: " + to_string(t2.stride()));
-    }
-
     if (t1.dtype() != t2.dtype()) {
         return P10Error::AssertionError
             << (std::string("Data types are different") + "Data type 1: " + to_string(t1.dtype())
@@ -67,24 +61,24 @@ compare_tensors(const Tensor& t1, const Tensor& t2, const CompareOptions& option
     }
 
     detail::Compare compare(options);
-    const auto match_count = t1.visit([&t2, compare](auto data1) {
-        using scalar_t = decltype(data1)::value_type;
-        const auto data2 = t2.as_span1d<scalar_t>().unwrap();
-
+    const auto match_count = t1.dtype().match([&](auto type_tag) -> size_t {
+        using scalar_t = decltype(type_tag)::type;
+        auto it1 = t1.iterator<scalar_t>().unwrap();
+        auto it2 = t2.iterator<scalar_t>().unwrap();
         size_t match_count = 0;
-        auto it1 = data1.begin();
-        auto it2 = data2.begin();
-
-        while (it1 != data1.end()) {
-            if (compare.equal(*it1, *it2)) {
+        
+        while(it1.has_next()) {
+            
+            const auto [val1, _1] = it1.next();
+            const auto [val2, _2] = it2.next();
+            if (compare.equal(val1, val2)) {
                 ++match_count;
             }
-            ++it1;
-            ++it2;
+            
         }
         return match_count;
     });
-
+    
     if (match_count != t1.size()) {
         return P10Error::AssertionError << "Data are different"
                                         << std::string("Match rate is ")

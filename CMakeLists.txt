@@ -39,9 +39,12 @@ else()
     message(STATUS "OpenMP not found; TileExecution::PARALLEL runs sequentially")
 endif()
 
+find_package(zstd CONFIG REQUIRED)
+  
 set(BUILD_TESTS OFF CACHE BOOL "Build tests")
 if(BUILD_TESTS)
     find_package(Catch2 CONFIG REQUIRED)
+    find_package(trompeloeil CONFIG REQUIRED)
     include(CTest)
     include(Catch)
     enable_testing()
@@ -50,8 +53,8 @@ if(BUILD_TESTS)
     find_package(benchmark CONFIG REQUIRED)
 endif()
 
-set(BUILD_SAMPLES OFF CACHE BOOL "Build samples and apps")
-if (BUILD_SAMPLES)
+set(BUILD_APPS OFF CACHE BOOL "Build applications")
+if (BUILD_APPS)
   find_package(CLI11 CONFIG REQUIRED)
 endif()
 

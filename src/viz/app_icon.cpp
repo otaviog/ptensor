@@ -8,11 +8,11 @@ namespace p10::viz {
 
 namespace {
 
-    constexpr int kIconWidth = 64;
-    constexpr int kIconHeight = 64;
+    constexpr int K_ICON_WIDTH = 64;
+    constexpr int K_ICON_HEIGHT = 64;
 
     // Row-major RGBA8, 64*64*4 bytes.
-    constexpr unsigned char kIconRgba[] = {
+    constexpr unsigned char K_ICON_RGBA[] = {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0xaa, 0xaa, 0xaa, 0x06, 0xff, 0xff, 0xff, 0x04, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x66, 0x66, 0x66, 0x14, 0x96, 0x96, 0x96, 0x31, 0x9c,
@@ -1117,11 +1117,11 @@ void set_app_icon(SDL_Window* window) {
     // SDL copies the pixels into its own icon, so the const data outliving the
     // surface is fine and we can free it right after.
     SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom(
-        const_cast<unsigned char*>(kIconRgba),
-        kIconWidth,
-        kIconHeight,
+        const_cast<unsigned char*>(K_ICON_RGBA),
+        K_ICON_WIDTH,
+        K_ICON_HEIGHT,
         32,
-        kIconWidth * 4,
+        K_ICON_WIDTH * 4,
         SDL_PIXELFORMAT_RGBA32
     );
     if (surface == nullptr) {

@@ -1,15 +1,15 @@
 if(PROJECT_IS_TOP_LEVEL)
-  if(WIN32)
+  if (WIN32) 
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_BINARY_DIR}/compile_commands.json
       ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json
     )
-  else()
+  else ()
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E create_symlink
       ${CMAKE_BINARY_DIR}/compile_commands.json
       ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json
     )
-  endif()
+  endif (WIN32)
 endif()

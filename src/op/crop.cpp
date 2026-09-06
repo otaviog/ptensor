@@ -38,8 +38,11 @@ P10Error crop(const Tensor& image, size_t x, size_t y, size_t w, size_t h, Tenso
             for (int64_t c = 0; c < num_channels; ++c) {
                 auto plane_src = src[c];
                 auto plane_dst = dst[c];
-                for (int64_t row = 0; row < int64_t(h); ++row) {
-                    auto row_src = plane_src[int64_t(y) + row].subspan(int64_t(x), int64_t(w));
+                for (int64_t row = 0; row < static_cast<int64_t>(h); ++row) {
+                    auto row_src = plane_src[static_cast<int64_t>(y) + row].subspan(
+                        static_cast<int64_t>(x),
+                        static_cast<int64_t>(w)
+                    );
                     auto row_dst = plane_dst[row];
                     std::copy(row_src.begin(), row_src.end(), row_dst.begin());
                 }
@@ -60,11 +63,11 @@ P10Error crop(const Tensor& image, size_t x, size_t y, size_t w, size_t h, Tenso
         for (int64_t c = 0; c < num_channels; ++c) {
             auto plane_src = src[c];
             auto plane_dst = dst[c];
-            for (int64_t row = 0; row < int64_t(h); ++row) {
-                auto row_src = plane_src[int64_t(y) + row];
+            for (int64_t row = 0; row < static_cast<int64_t>(h); ++row) {
+                auto row_src = plane_src[static_cast<int64_t>(y) + row];
                 auto row_dst = plane_dst[row];
-                for (int64_t col = 0; col < int64_t(w); ++col) {
-                    row_dst[col] = row_src[int64_t(x) + col];
+                for (int64_t col = 0; col < static_cast<int64_t>(w); ++col) {
+                    row_dst[col] = row_src[static_cast<int64_t>(x) + col];
                 }
             }
         }

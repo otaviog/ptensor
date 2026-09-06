@@ -70,7 +70,7 @@ TEST_CASE("core::map::from_eigen copies an expression", "[map][eigen]") {
 TEST_CASE("core::map::eigen round trip preserves values", "[map][eigen]") {
     auto source = Tensor::from_range(make_shape(4, 5)).unwrap();
 
-    Eigen::MatrixXf matrix = to_eigen_map<float>(source).unwrap();
+    Eigen::MatrixXf const matrix = to_eigen_map<float>(source).unwrap();
     Tensor round_trip;
     REQUIRE_THAT(from_eigen(matrix, round_trip), testing::is_ok());
 

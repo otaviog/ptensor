@@ -39,9 +39,8 @@ FfmpegTextEncoder::create(const TextParameters& text_params, AVFormatContext* ou
         const char* container = output_format->oformat->name != nullptr
             ? output_format->oformat->name
             : "this container";
-        return P10Error::InvalidArgument
-            << std::string("Container '") + container + "' does not support "
-            + text_params.codec().to_string()
+        return P10Error::InvalidArgument << std::string("Container '") + container
+            + "' does not support " + text_params.codec().to_string()
             + " text streams. Use a Matroska (.mkv) output for text streams.";
     }
 

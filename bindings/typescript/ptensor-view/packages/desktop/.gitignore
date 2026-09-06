@@ -1,0 +1,6 @@
+node_modules
+build
+artifacts
+*.tsbuildinfo
+# Cut from docs/icon-light.png by scripts/makeIcons.ts.
+.icons

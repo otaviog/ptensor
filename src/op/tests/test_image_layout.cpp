@@ -158,7 +158,8 @@ TEST_CASE("op::image layout disk round trip", "[imageop][integration]") {
     // Save for eyeballing next to the other op outputs.
     REQUIRE(
         io::save_image(
-            (testing::get_output_path("op/image_layout") / testing::suffixed(image_file, "layout-roundtrip"))
+            (testing::get_output_path("op/image_layout")
+             / testing::suffixed(image_file, "layout-roundtrip"))
                 .string(),
             result_image
         )
@@ -168,10 +169,7 @@ TEST_CASE("op::image layout disk round trip", "[imageop][integration]") {
     // The uint8 -> float -> uint8 round trip is bit-exact (float32 error is far
     // under the 0.5 that rounding needs to recover each byte), so compare with
     // no tolerance. compare_tensors also checks shape/stride/dtype.
-    REQUIRE_THAT(
-        testing::compare_tensors(original_image, result_image),
-        testing::is_ok()
-    );
+    REQUIRE_THAT(testing::compare_tensors(original_image, result_image), testing::is_ok());
 }
 
 }  // namespace p10::op

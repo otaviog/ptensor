@@ -43,7 +43,7 @@ void GuiApp::on_render() {
     // Generate samples and plot them
     float samples[100];
     for (int n = 0; n < 100; n++) {
-        samples[n] = sinf(n * 0.2f + float(ImGui::GetTime()) * 1.5f);
+        samples[n] = sinf(n * 0.2f + static_cast<float>(ImGui::GetTime()) * 1.5f);
     }
     ImGui::PlotLines("Samples", samples, 100);
 

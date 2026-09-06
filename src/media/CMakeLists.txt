@@ -33,6 +33,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/text_streams.hpp
   ${_INCLUDE_DIR}/time/time.hpp
   ${_INCLUDE_DIR}/time/rational.hpp
+  ${_INCLUDE_DIR}/io/camera_control.hpp
   ${_INCLUDE_DIR}/io/media_capture.hpp
   ${_INCLUDE_DIR}/io/media_device.hpp
   ${_INCLUDE_DIR}/io/media_writer.hpp
@@ -52,6 +53,7 @@ target_sources(ptensor_media
     time/time.cpp
     io/media_device.cpp
     io/media_capture.cpp
+    io/camera_controls.hpp io/camera_controls.cpp
     io/text_streams.cpp
     # Common writer
     io/media_writer.impl.hpp
@@ -77,6 +79,17 @@ target_sources(ptensor_media
     io/ffmpeg/ffmpeg_text_encoder.hpp io/ffmpeg/ffmpeg_text_encoder.cpp
 )
 
+# macOS camera controls go through AVFoundation (Objective-C++).
+if(APPLE)
+  target_sources(ptensor_media PRIVATE io/camera_controls_avf.mm)
+  set_source_files_properties(io/camera_controls_avf.mm PROPERTIES
+    COMPILE_FLAGS "-fno-objc-arc")
+  target_link_libraries(ptensor_media PRIVATE
+    "-framework AVFoundation"
+    "-framework CoreMedia"
+    "-framework Foundation")
+endif()
+
 target_include_directories(ptensor_media
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -101,7 +114,10 @@ ptensor_target_options(ptensor_media "Media")
 
 if(BUILD_TESTS)
   add_subdirectory(tests)
-  add_subdirectory(samples)
+endif()
+
+if(BUILD_APPS)
+  add_subdirectory(apps)
 endif()
 
 # Install the library and headers

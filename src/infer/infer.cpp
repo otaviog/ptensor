@@ -5,7 +5,7 @@
 #include "ort_infer.hpp"
 #include "ptensor/p10_error.hpp"
 
-#if defined(__APPLE__)
+#ifdef __APPLE__
     #include "coreml_infer.hpp"
 #endif
 
@@ -22,7 +22,7 @@ IInfer::from_onnx(const std::string& onnx_model_path, const InferConfig& config)
 
 P10Result<std::unique_ptr<IInfer>>
 IInfer::from_coreml(const std::string& coreml_model_path, const InferConfig& config) {
-#if defined(__APPLE__)
+#ifdef __APPLE__
     return CoreMLInfer::create(coreml_model_path, config);
 #else
     (void)coreml_model_path;

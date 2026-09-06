@@ -86,7 +86,7 @@ inline P10Result<EigenConstMap<scalar_t>> to_eigen_map(const Tensor& tensor) {
 /// `[rows, cols]` with the matrix's scalar dtype.
 template<typename derived_t>
 inline P10Error from_eigen(const Eigen::MatrixBase<derived_t>& matrix, Tensor& tensor) {
-    using Scalar = typename derived_t::Scalar;
+    using Scalar = derived_t::Scalar;
 
     if (matrix.rows() == 0 || matrix.cols() == 0) {
         return P10Error::InvalidArgument << "Eigen matrix is empty";

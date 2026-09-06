@@ -54,6 +54,7 @@ P10Result<TensorMap> load_npz(const std::string& filename) {
             Tensor tensor;
 
             std::vector<int64_t> shape;
+            shape.reserve(array.shape.size());
             for (auto dim : array.shape) {
                 shape.push_back(static_cast<int64_t>(dim));
             }

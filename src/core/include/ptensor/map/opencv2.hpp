@@ -64,7 +64,7 @@ namespace detail {
                 return Err(P10Error::InvalidArgument << "OpenCV depth has no dtype equivalent");
         }
     }
-}  // namespace detail
+}
 
 /// Copies a 2D `cv::Mat` into `tensor`, allocating it as `[H, W]`
 /// (single channel) or `[H, W, C]` with `Usage::Image`. Handles
@@ -84,8 +84,7 @@ inline P10Error from_opencv(const cv::Mat& mat, Tensor& tensor) {
     const int64_t channels = mat.channels();
     const Shape shape =
         channels == 1 ? make_shape(mat.rows, mat.cols) : make_shape(mat.rows, mat.cols, channels);
-    P10_RETURN_IF_ERROR(
-        tensor.create(shape, TensorOptions(dtype_res.unwrap()).usage(Usage::Image))
+    P10_RETURN_IF_ERROR(tensor.create(shape, TensorOptions(dtype_res.unwrap()).usage(Usage::Image))
     );
 
     const size_t row_bytes = static_cast<size_t>(mat.cols) * mat.elemSize();
@@ -119,13 +118,11 @@ inline P10Result<Tensor> from_opencv_view(cv::Mat& mat) {
         channels == 1 ? make_shape(mat.rows, mat.cols) : make_shape(mat.rows, mat.cols, channels);
     const Stride stride =
         channels == 1 ? make_stride(row_stride, 1) : make_stride(row_stride, channels, 1);
-    return Ok(
-        Tensor::from_data(
-            static_cast<void*>(mat.data),
-            shape,
-            TensorOptions(dtype_res.unwrap()).stride(stride).usage(Usage::Image)
-        )
-    );
+    return Ok(Tensor::from_data(
+        static_cast<void*>(mat.data),
+        shape,
+        TensorOptions(dtype_res.unwrap()).stride(stride).usage(Usage::Image)
+    ));
 }
 
 /// Copies a `[H, W]` or `[H, W, C]` tensor into `mat`, allocating it if
@@ -216,15 +213,13 @@ inline P10Result<cv::Mat> to_opencv_view(Tensor& tensor) {
     }
 
     const size_t step_bytes = static_cast<size_t>(stride[0]) * tensor.dtype().size_bytes();
-    return Ok(
-        cv::Mat(
-            static_cast<int>(shape[0]),
-            static_cast<int>(shape[1]),
-            CV_MAKETYPE(depth_res.unwrap(), static_cast<int>(channels)),
-            tensor.as_bytes().data(),
-            step_bytes
-        )
-    );
+    return Ok(cv::Mat(
+        static_cast<int>(shape[0]),
+        static_cast<int>(shape[1]),
+        CV_MAKETYPE(depth_res.unwrap(), static_cast<int>(channels)),
+        tensor.as_bytes().data(),
+        step_bytes
+    ));
 }
 
 }  // namespace p10

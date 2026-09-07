@@ -73,8 +73,10 @@ P10Error LaplacianPyramid::reconstruct(std::span<const Tensor> pyramid, Tensor& 
         const size_t height = ll.shape(1).unwrap();
         const size_t width = ll.shape(2).unwrap();
 
-        assert(resize(output, upsample_buffer, width, height).is_ok());
-        assert(add_elemwise(ll, upsample_buffer, output).is_ok());
+        // Not assert(): NDEBUG drops the whole expression, so a release build
+        // would skip the work and hand back the coarsest level untouched.
+        P10_RETURN_IF_ERROR(resize(output, upsample_buffer, width, height));
+        P10_RETURN_IF_ERROR(add_elemwise(ll, upsample_buffer, output));
     }
     return P10Error::Ok;
 }

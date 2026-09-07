@@ -1,4 +1,18 @@
 cmake_minimum_required(VERSION 3.27)
+
+# vcpkg reads its macOS triplet from CMAKE_OSX_ARCHITECTURES while the toolchain
+# runs inside project(). Left empty it cannot tell arm64 from x86_64, warns
+# "Unable to determine target architecture" and continues *without vcpkg*, so
+# every dependency (Catch2 first) then fails to be found. Default it to the
+# host's architecture; an explicit -DCMAKE_OSX_ARCHITECTURES still wins.
+if(CMAKE_HOST_APPLE AND NOT CMAKE_OSX_ARCHITECTURES)
+  # OS_PLATFORM, not CMAKE_HOST_SYSTEM_PROCESSOR: the latter is only filled in
+  # by project(), which is exactly what we are ahead of here.
+  cmake_host_system_information(RESULT _host_arch QUERY OS_PLATFORM)
+  set(CMAKE_OSX_ARCHITECTURES "${_host_arch}"
+      CACHE STRING "Architectures to build for on macOS" FORCE)
+endif()
+
 project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
 
 if(APPLE)

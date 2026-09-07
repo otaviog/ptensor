@@ -16,6 +16,7 @@ set(PUBLIC_HEADERS
   ${_INCLUDE_DIR}/accessor2d.hpp
   ${_INCLUDE_DIR}/accessor3d.hpp
   ${_INCLUDE_DIR}/iterator.hpp
+  ${_INCLUDE_DIR}/slice.hpp
   ${_INCLUDE_DIR}/span2d.hpp
   ${_INCLUDE_DIR}/span3d.hpp
   ${_INCLUDE_DIR}/span4d.hpp

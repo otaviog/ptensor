@@ -11,3 +11,8 @@ export { DEFAULT_PORT } from './constants';
 export type { FeedInfo } from './feedInfo';
 export type { SessionMessage, TensorMessage } from './protocol';
 export type { TensorPayload, TensorSink } from './connectionHandler';
+
+// What a host keeps between the feed and its viewer: the tensors, as the JSON
+// they arrived as, under a byte budget.
+export { DEFAULT_BUDGET_BYTES, TensorStore } from './store';
+export type { AddResult, StoreLogger, TensorMeta, TensorStoreOptions } from './store';

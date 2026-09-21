@@ -4,7 +4,6 @@
 #include <array>
 #include <format>
 #include <functional>
-#include <iterator>
 #include <mutex>
 #include <random>
 
@@ -38,14 +37,15 @@ P10Error Session::start(const std::string& address) {
 P10Error Session::log_sync(const std::string& name, const Tensor& tensor) {
     const std::lock_guard<SpinLock> guard(lock_);
 
-    // The buffer is a member so repeated logs reuse its capacity.
+    // The buffer is a member so repeated logs reuse its capacity. The entry is
+    // assembled by hand rather than formatted: the tensor is most of the line
+    // and append_json writes it straight into the buffer.
     json_buffer_.clear();
-    std::format_to(
-        std::back_inserter(json_buffer_),
-        "{{\"name\":\"{}\",\"tensor\":{}}}\n",
-        name,
-        json_stage_.get_encoder(tensor, JsonEncodeMode::Base64Compressed)
-    );
+    json_buffer_ += R"({"name":")";
+    json_buffer_ += name;
+    json_buffer_ += R"(","tensor":)";
+    append_json(json_stage_.get_encoder(tensor, JsonEncodeMode::Base64Compressed), json_buffer_);
+    json_buffer_ += "}\n";
 
     return conn_->send(json_buffer_);
 }

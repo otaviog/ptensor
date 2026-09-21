@@ -39,6 +39,7 @@ ptensor_target_options(ptensor_tlog "TLog")
 
 if(BUILD_TESTS)
   add_subdirectory(tests)
+  add_subdirectory(benchmarks)
 endif()
 
 # Install the library and headers. Like the other modules, the archive itself

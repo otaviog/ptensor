@@ -1,6 +1,5 @@
 import type { Selection, Session } from './types';
 
-
 export function SessionGroup({
     session,
     selected,
@@ -23,23 +22,22 @@ export function SessionGroup({
                 </button>
             </header>
             <ul className="tensor-list">
-                {[...session.tensors].reverse().map((entry) => {
+                {[...session.tensors].reverse().map((meta) => {
                     const active =
-                        selected?.sessionId === session.id && selected.tensorId === entry.id;
+                        selected?.sessionId === session.id && selected.tensorId === meta.id;
                     return (
-                        <li key={entry.id}>
+                        <li key={meta.id}>
                             <button
                                 type="button"
                                 className={`tensor-item${active ? ' active' : ''}`}
-                                onClick={() => onSelect(session.id, entry.id)}
+                                onClick={() => onSelect(session.id, meta.id)}
                             >
-                                <span className="tensor-name">{entry.payload.name}</span>
+                                <span className="tensor-name">{meta.name}</span>
                                 <span className="tensor-meta">
-                                    {entry.payload.tensor.dtype} [
-                                    {entry.payload.tensor.shape.join('×')}]
+                                    {meta.dtype} [{meta.shape.join('×')}]
                                 </span>
                                 <span className="tensor-time">
-                                    {new Date(entry.payload.receivedAt).toLocaleTimeString()}
+                                    {new Date(meta.receivedAt).toLocaleTimeString()}
                                 </span>
                             </button>
                         </li>

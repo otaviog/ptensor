@@ -74,7 +74,8 @@ export class TensorFeed {
         });
 
         socket.on('data', (chunk: Buffer) => {
-            const lines = split(new Uint8Array(chunk));
+            // A Buffer is already a Uint8Array; wrapping it would copy the chunk.
+            const lines = split(chunk);
             if (lines === 'overflow') {
                 this.options.log?.(
                     `Line over ${MAX_LINE_BYTES} bytes from ${clientAddress}, closing connection.`

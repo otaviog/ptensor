@@ -106,7 +106,16 @@ export function validateTensorJson(value: unknown): TensorJson {
   return value as TensorJson;
 }
 
-/** Undoes `encoding`, returning the raw little-endian element bytes. */
+/**
+ * Undoes `encoding`, returning the raw little-endian element bytes.
+ *
+ * `decompress` is deliberately called without an output buffer. Passing one
+ * would have it return that whole buffer rather than the written slice, so a
+ * frame that decompresses short would come back zero-padded and slip past the
+ * `size_bytes` check in `tensorFromJson`. It buys nothing either: a single
+ * frame that declares its content size -- what zstd writes by default -- is
+ * already decompressed straight into one exactly-sized buffer.
+ */
 export function decodeTensorBlob(json: TensorJson): Uint8Array {
   const bytes = base64ToBytes(json.blob);
   if (json.encoding !== 'base64+zstd') {
@@ -142,9 +151,11 @@ export function tensorFromJson(json: TensorJson): Tensor {
       `Blob length ${bytes.byteLength} is not a multiple of ${elemSize} for dtype '${dtype}'.`,
     );
   }
-  // Copy into a fresh, element-aligned buffer: the decoded bytes may be offset
-  // inside a larger Buffer, which a typed-array view can't straddle safely.
-  const data = bytesToTyped(bytes.slice().buffer, dtype);
+  // A typed-array view can only be taken over a buffer the bytes cover exactly
+  // and from the start -- `Buffer.from` hands back a view into a pooled, larger
+  // one. Copy only then: at tensor sizes this is hundreds of megabytes.
+  const exact = bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength;
+  const data = bytesToTyped(exact ? (bytes.buffer as ArrayBuffer) : bytes.slice().buffer, dtype);
   return { dtype, shape: json.shape, stride: json.stride, data };
 }
 

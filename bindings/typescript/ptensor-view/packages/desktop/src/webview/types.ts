@@ -1,15 +1,16 @@
-import { TensorPayload } from "../shared/rpc";
+import type { TensorMeta } from '../shared/feed';
 
-export interface ReceivedTensor {
-    id: string;
-    payload: TensorPayload;
-}
-
+/**
+ * What the window knows about one producer's tensors. The tensors themselves
+ * stay in the bun process; this is the metadata the sidebar lists.
+ */
 export interface Session {
     id: string;
-    tensors: ReceivedTensor[];
+    /** Oldest first, the order they arrived in. The sidebar reverses it. */
+    tensors: TensorMeta[];
     updatedAt: number;
-    totalReceived: number;
+    /** JSON the store is holding for this session, summed. */
+    heldBytes: number;
 }
 
 export interface Selection {

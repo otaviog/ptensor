@@ -64,9 +64,9 @@ function ImageCanvas({
             plane,
             imageMapping(tensor.dtype, stats)
         );
-        const img = ctx.createImageData(plane.width, plane.height);
-        img.data.set(rgba);
-        ctx.putImageData(img, 0, 0);
+        // Wrapped, not copied into a `createImageData` buffer: the RGBA is
+        // already the right shape, and the copy doubled it.
+        ctx.putImageData(new ImageData(rgba, plane.width, plane.height), 0, 0);
     }, [tensor, plane, index, stats]);
 
     return <canvas className="ptv-canvas" width={plane.width} height={plane.height} ref={ref} />;

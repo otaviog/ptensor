@@ -75,6 +75,15 @@ target_include_directories(ptensor
         ${_INCLUDE_DIR})
 
 target_link_libraries(ptensor PRIVATE $<BUILD_INTERFACE:ptensor_simd_> zstd::libzstd)
+
+# tlog is used *from* debug builds, so the encode path has to be usable there.
+# Unoptimized it is ~3x slower: vcpkg's debug zstd archive accounts for half of
+# that and -O0 on the two encoders for the rest. Neither is code anyone steps
+# through, so a debug build links the release zstd and optimizes just those two
+# translation units; everything else keeps its debug info and -O0.
+set_target_properties(zstd::libzstd_static PROPERTIES MAP_IMPORTED_CONFIG_DEBUG Release)
+set_source_files_properties(base64.cpp compress_staging.cpp json.cpp
+    PROPERTIES COMPILE_OPTIONS "$<$<CONFIG:Debug>:-O3>")
 # Add C API headers that are referenced by C++ headers
 install(FILES
     ${CMAKE_SOURCE_DIR}/src/c/include/ptensor/config.h

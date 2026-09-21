@@ -31,35 +31,62 @@ export function planeToRgba(
     offset: number,
     plane: ImagePlane,
     mapping: ImageMapping
-): Uint8ClampedArray {
+): Uint8ClampedArray<ArrayBuffer> {
     const { width, height, channels, layout } = plane;
     const { lo, scale } = mapping;
-    const rgba = new Uint8ClampedArray(width * height * 4);
-    const planeSize = width * height;
+    const pixels = width * height;
+    const rgba = new Uint8ClampedArray(pixels * 4);
 
-    const chan = (x: number, y: number, c: number): number => {
-        const i = layout === 'interleaved'
-            ? offset + (y * width + x) * channels + c
-            : offset + c * planeSize + y * width + x;
-        return elementAt(array, i);
-    };
-    const map = (v: number) => Math.round((v - lo) * scale);
-
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            const idx = (y * width + x) * 4;
-            if (channels === 1) {
-                const v = map(chan(x, y, 0));
+    // The common case -- an interleaved uint8 image, whose mapping is the
+    // identity -- is a straight copy. Going through the generic path instead
+    // costs an `instanceof` test and a `Math.round` per channel, six times the
+    // time on a 720p frame.
+    const bytes =
+        array instanceof Uint8Array || array instanceof Uint8ClampedArray ? array : null;
+    if (bytes !== null && layout === 'interleaved' && lo === 0 && scale === 1) {
+        if (channels === 1) {
+            for (let i = 0, src = offset; i < pixels; i++, src++) {
+                const idx = i * 4;
+                const v = bytes[src];
                 rgba[idx] = v;
                 rgba[idx + 1] = v;
                 rgba[idx + 2] = v;
                 rgba[idx + 3] = 255;
-            } else {
-                rgba[idx] = map(chan(x, y, 0));
-                rgba[idx + 1] = map(chan(x, y, 1));
-                rgba[idx + 2] = map(chan(x, y, 2));
-                rgba[idx + 3] = channels === 4 ? map(chan(x, y, 3)) : 255;
             }
+            return rgba;
+        }
+        if (channels === 3 || channels === 4) {
+            for (let i = 0, src = offset; i < pixels; i++, src += channels) {
+                const idx = i * 4;
+                rgba[idx] = bytes[src];
+                rgba[idx + 1] = bytes[src + 1];
+                rgba[idx + 2] = bytes[src + 2];
+                rgba[idx + 3] = channels === 4 ? bytes[src + 3] : 255;
+            }
+            return rgba;
+        }
+    }
+
+    // Generic path: any dtype, any layout, and a mapping that stretches the
+    // values. The addressing is picked once, not per channel read.
+    const interleaved = layout === 'interleaved';
+    const chan = (pixel: number, c: number): number =>
+        elementAt(array, interleaved ? offset + pixel * channels + c : offset + c * pixels + pixel);
+    const map = (v: number) => Math.round((v - lo) * scale);
+
+    for (let i = 0; i < pixels; i++) {
+        const idx = i * 4;
+        if (channels === 1) {
+            const v = map(chan(i, 0));
+            rgba[idx] = v;
+            rgba[idx + 1] = v;
+            rgba[idx + 2] = v;
+            rgba[idx + 3] = 255;
+        } else {
+            rgba[idx] = map(chan(i, 0));
+            rgba[idx + 1] = map(chan(i, 1));
+            rgba[idx + 2] = map(chan(i, 2));
+            rgba[idx + 3] = channels === 4 ? map(chan(i, 3)) : 255;
         }
     }
     return rgba;

@@ -1,22 +1,20 @@
 // Main (bun) process: opens the viewer window, runs the local tensor feed, and
-// pushes every accepted tensor to the webview. Nothing is stored here -- the
-// webview keeps the history it shows.
+// holds what arrives.
+//
+// The tensors live here, as the JSON text the producer sent. The window reads
+// them over HTTP from the feed server (./feedServer) and gets a metadata push
+// per arrival, so nothing the size of a tensor is ever handed across as a
+// message. That also means a producer can start before the window: what it
+// sends is in the store, and the window picks it up when it connects.
 
-import Electrobun, { BrowserView, BrowserWindow } from 'electrobun/bun';
+import { randomBytes } from 'node:crypto';
+import Electrobun, { BrowserWindow } from 'electrobun/bun';
 import { configureLogging, disposeLogging, getAppLogger } from '../shared/logging';
-import { DEFAULT_PORT } from 'ptensor-tlog';
+import { DEFAULT_BUDGET_BYTES, DEFAULT_PORT, TensorStore } from 'ptensor-tlog';
 import { TensorServer } from 'ptensor-tlog/bun';
-import type { TensorPayload, ViewerRPC } from '../shared/rpc';
+import { FEED_GLOBAL, type FeedEndpoint } from '../shared/feed';
+import { FeedServer } from './feedServer';
 import { openLogFile } from './logFile';
-
-/**
- * Tensors that arrive before the webview is up wait here. Capped so a producer
- * that starts before the window cannot grow it without bound.
- */
-const PENDING_LIMIT = 32;
-
-/** Tensors the window keeps per session when PTENSOR_VIEW_HISTORY says nothing. */
-const DEFAULT_HISTORY = 100;
 
 /** Reads a positive integer from the environment, or falls back. */
 function positiveInt(value: string | undefined, fallback: number): number {
@@ -35,6 +33,7 @@ configureLogging({
 
 const log = getAppLogger('app');
 const feedLog = getAppLogger('tensor-feed');
+const httpLog = getAppLogger('feed-server');
 if (logFile === null) {
     log.warn('No writable log file location; logging to the console only.');
 } else {
@@ -43,42 +42,43 @@ if (logFile === null) {
 
 const port = positiveInt(process.env.PTENSOR_VIEW_PORT, DEFAULT_PORT);
 const hostname = process.env.PTENSOR_VIEW_HOST ?? '127.0.0.1';
-// The window keeps the history, so this setting has to travel to it over RPC.
-const maxTensorsPerSession = positiveInt(process.env.PTENSOR_VIEW_HISTORY, DEFAULT_HISTORY);
-log.info('Keeping {maxTensorsPerSession} tensors per session.', { maxTensorsPerSession });
+// A byte budget, not a tensor count: one batched float32 image is a couple of
+// hundred megabytes, so "keep the last 100" is not a thing that can be done.
+const budgetBytes = positiveInt(
+    process.env.PTENSOR_VIEW_BUDGET_MB,
+    DEFAULT_BUDGET_BYTES / (1024 * 1024)
+) * 1024 * 1024;
+log.info('Holding up to {budgetMb} MiB of tensors.', { budgetMb: budgetBytes / (1024 * 1024) });
 
-const rpc = BrowserView.defineRPC<ViewerRPC>({
-    handlers: {
-        requests: {
-            getServerInfo: () => ({ ...server.serverInfo(), maxTensorsPerSession }),
-        },
-        messages: {},
+// The line cap has to clear the largest tensor a producer will send, base64 of
+// zstd and all. Measured: a 30x3x570x1132 float32 tensor is 222 MiB raw, and
+// float mantissas barely compress (1.13x at zstd -1), so the line is ~262 MiB
+// -- over ptensor-tlog's 256 MiB default, which would close the connection
+// rather than show the tensor. 1 GiB by default, and a producer that needs
+// more can say so.
+const maxLineBytes = positiveInt(process.env.PTENSOR_VIEW_MAX_LINE_MB, 1024) * 1024 * 1024;
+
+const store = new TensorStore({
+    budgetBytes,
+    logger: {
+        info: (message) => feedLog.info(message),
+        warn: (message) => feedLog.warn(message),
     },
 });
-
-let ready = false;
-const pending: TensorPayload[] = [];
-
-function pushTensor(payload: TensorPayload): void {
-    log.info('Tensor {name} for session {sessionId} ({state}).', {
-        name: payload.name,
-        sessionId: payload.sessionId,
-        state: ready ? 'pushed to the window' : 'held until the window is up',
-    });
-    if (!ready) {
-        pending.push(payload);
-        if (pending.length > PENDING_LIMIT) {
-            pending.splice(0, pending.length - PENDING_LIMIT);
-        }
-        return;
-    }
-    mainWindow.webview.rpc?.send.newTensor(payload);
-}
 
 const server = new TensorServer({
     port,
     hostname,
-    onTensor: pushTensor,
+    maxLineBytes,
+    onTensor: (payload) => {
+        const added = store.add(payload);
+        log.info('Tensor {name} for session {sessionId} stored as {id}.', {
+            name: added.meta.name,
+            sessionId: added.meta.sessionId,
+            id: added.meta.id,
+        });
+        feedServer.announce(added);
+    },
     logger: {
         info: (message) => feedLog.info(message),
         warn: (message) => feedLog.warn(message),
@@ -86,32 +86,60 @@ const server = new TensorServer({
     },
 });
 
-// With a Vite dev server up (`bun run dev:ui`), the window loads the panel from
+// Started before the window: the window is told where to connect, so the
+// address has to exist first.
+const feedServer = new FeedServer({
+    store,
+    token: randomBytes(32).toString('hex'),
+    feedInfo: () => server.serverInfo(),
+    logger: httpLog,
+});
+const address = feedServer.start();
+const endpoint: FeedEndpoint = { origin: address.origin, token: feedServer.token };
+
+// With a Vite dev server up (`bun run dev/ui`), the window loads the panel from
 // it and picks up UI edits without restarting this process, so the feed and the
-// tensors it already received survive. Unset, the window loads the bundle
+// tensors already received survive. Unset, the window loads the bundle
 // electrobun built.
 const devUrl = process.env.PTENSOR_VIEW_DEV_URL;
 if (devUrl !== undefined) {
     log.info('Loading the window from the dev server at {devUrl}.', { devUrl });
 }
 
+/**
+ * The endpoint reaches the window through the preload script, which runs before
+ * the page's own scripts.
+ *
+ * The URL query is a fallback only for an http(s) window -- the Vite dev
+ * server. `views://` is served by a scheme handler that resolves the URL to a
+ * bundled file: given a query it looks for `index.html?feed=...`, finds
+ * nothing, and the window loads an empty response instead of the panel. So the
+ * bundled app gets a bare URL and the preload is the only channel.
+ */
+function windowUrl(base: string): string {
+    if (!base.startsWith('http://') && !base.startsWith('https://')) {
+        return base;
+    }
+    const url = new URL(base);
+    url.searchParams.set('feed', endpoint.origin);
+    url.searchParams.set('token', endpoint.token);
+    return url.toString();
+}
+
 const mainWindow = new BrowserWindow({
     title: 'ptensor View',
-    url: devUrl ?? 'views://webview/index.html',
+    url: windowUrl(devUrl ?? 'views://webview/index.html'),
     frame: { x: 120, y: 120, width: 1280, height: 860 },
-    rpc,
+    preload: `window.${FEED_GLOBAL} = ${JSON.stringify(endpoint)};`,
 });
 
 mainWindow.webview.on('dom-ready', () => {
-    ready = true;
-    log.info('Window is up, flushing {pending} held tensors.', { pending: pending.length });
-    for (const payload of pending.splice(0)) {
-        mainWindow.webview.rpc?.send.newTensor(payload);
-    }
+    log.info('Window is up; it reads the feed from {origin}.', { origin: endpoint.origin });
 });
 
 Electrobun.events.on('before-quit', () => {
     server.stop();
+    feedServer.stop();
     // Flushes and closes the log file.
     disposeLogging();
 });

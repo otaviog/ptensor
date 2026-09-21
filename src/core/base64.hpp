@@ -2,8 +2,17 @@
 #include <cstddef>
 #include <format>
 #include <span>
+#include <string>
 
 namespace p10 {
+
+/// Appends the base64 of `data` to `out`, growing it once.
+///
+/// Preferred over formatting a `Base64`: the formatter has to push one
+/// character at a time through the format output iterator, which costs about
+/// three times more than writing into a sized buffer.
+void base64_append(std::span<const std::byte> data, std::string& out);
+
 class Base64 {
   public:
     Base64(std::span<const std::byte> data) noexcept : data_(data) {}

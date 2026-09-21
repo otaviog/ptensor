@@ -6,12 +6,24 @@ incoming tensors by session: pick a session on the left, pick a tensor, and the
 `ptensor-view` panel renders it (table / grayscale / RGB / batched images).
 
 ```
-producer ──TCP 127.0.0.1:8791, newline-delimited JSON──▶ bun process ──RPC push──▶ webview
-   (C++ / Python / TS)                                   socket + framing        history + TensorViewer
+producer ──TCP 127.0.0.1:8791, newline-delimited JSON──▶ bun process ──metadata push (ws)──▶ webview
+   (C++ / Python / TS)                                   socket + framing       ◀──GET /tensor/<id>──  TensorViewer
+                                                         + the tensor store
 ```
 
-The bun process stores nothing: it validates each line and pushes the tensor to
-the window, which keeps the history it shows.
+The bun process holds each tensor as the `TensorJson` text it arrived as --
+still base64, still zstd-compressed -- and the window reads the one it is
+showing over HTTP. What crosses as a message is only metadata: a few hundred
+bytes saying a tensor exists.
+
+That split is not an optimisation, it is the difference between working and
+not. A batched float32 image (`30x3x570x1132`) is 232 MB of elements and some
+150 MB of base64, and every message channel between a host process and a
+webview stringifies. Electrobun's encrypted RPC decodes its base64 with
+`atob(s).split('').map(...)` in the webview preload, which costs ~17 bytes of
+heap per decoded byte: two of those tensors pushed as messages is 12 GB of
+webview memory and a frozen window. Over `fetch` the same base64 is one
+allocation and about 100 ms.
 
 ## Run it
 
@@ -39,9 +51,9 @@ aliased to source rather than its `dist` -- land in the open window through
 React Fast Refresh. The bun process is not restarted, so the socket keeps
 listening and the tensors already in the window stay there.
 
-The window keeps its tensor history in React state, so an edit that adds or
-removes a hook remounts the component and clears the list -- send the tensors
-again. Edits that leave the hooks alone keep it.
+The tensors live in the bun process, which is not restarted, so a remount --
+an edit that adds or removes a hook -- no longer loses them: the panel
+re-reads the listing when its socket reconnects.
 
 It is the dev server that decides this, not the script: the app loads whatever
 `PTENSOR_VIEW_DEV_URL` names, and the bundled view -- the one that ships -- when
@@ -110,11 +122,17 @@ A tensor line carries one tensor:
   C++ producer can write `to_json_debug(tensor)` straight into the line.
 
 Many tensors per connection are fine, and a connection can stay open for the
-life of a run. History is dropped from the window itself (the ✕ on a session,
-or `Clear all sessions`).
+life of a run. The ✕ on a session, or `Clear all sessions`, asks the bun
+process to drop them.
 
 Lines that are not valid JSON, or that fail validation, are logged and skipped —
-the connection stays up. A single line over 256 MiB closes the connection.
+the connection stays up. A line over `PTENSOR_VIEW_MAX_LINE_MB` (1 GiB) closes
+it.
+
+That default is not arbitrary. A `30x3x570x1132` float32 tensor is 222 MiB of
+elements, and float mantissas barely compress — 1.13x at zstd -1 — so its line
+is about 262 MiB, past the 256 MiB `ptensor-tlog` defaults to. At that cap the
+feed drops the connection instead of showing the tensor.
 
 A minimal Python producer:
 
@@ -146,7 +164,8 @@ with socket.create_connection(("127.0.0.1", 8791)) as sock:
 | --- | --- | --- |
 | `PTENSOR_VIEW_PORT` | `8791` | Port the feed listens on |
 | `PTENSOR_VIEW_HOST` | `127.0.0.1` | Interface the feed binds to |
-| `PTENSOR_VIEW_HISTORY` | `100` | Tensors kept per session (oldest dropped) |
+| `PTENSOR_VIEW_BUDGET_MB` | `2048` | Tensor JSON the bun process holds, in MiB (oldest dropped) |
+| `PTENSOR_VIEW_MAX_LINE_MB` | `1024` | Largest single wire line accepted, in MiB |
 | `PTENSOR_VIEW_LOG_LEVEL` | `info` | `debug`, `info`, `warning`, `error` or `fatal` |
 | `PTENSOR_VIEW_LOG_FILE` | platform default | Explicit log file path |
 
@@ -169,36 +188,62 @@ the file.
 
 ## Layout
 
-The directories are named after electrobun's two sides, `bun` and `webview`,
-which are also the keys of the RPC schema.
+The directories are named after electrobun's two sides, `bun` and `webview`.
 
-- `src/bun/` — main process: `index.ts` (window, RPC handlers, pushes) and
+- `src/bun/` — main process: `index.ts` (store, window, wiring),
+  `feedServer.ts` (the HTTP + WebSocket server the window reads) and
   `logFile.ts` (rotating log file).
-- `src/bun/server/` — the feed: `tensorServer.ts` (socket), `lineSplitter.ts`
-  (framing), `protocol.ts` (wire types + validation, shared with producers),
-  `connectionHandler.ts` (per-connection session state).
-- `src/webview/` — the window: `App.tsx` (history, grouping, selection, follow
-  mode), `index.tsx` (RPC wiring, style injection).
-- `src/shared/` — `rpc.ts` (the bun ⇄ webview contract) and `logging.ts`
+- `src/webview/` — the window: `App.tsx` (grouping, selection, follow mode),
+  `feedClient.ts` (socket + fetch + decode), `tensorCache.ts` (byte-capped
+  cache of decoded tensors), `index.tsx` (style injection).
+- `src/shared/` — `feed.ts` (the bun ⇄ webview contract) and `logging.ts`
   (LogTape setup).
-- `scripts/send-tensor.ts` — synthetic producer used for manual testing.
+- `scripts/sendTensor.ts` — synthetic producer used for manual testing.
 
-The window keeps the history and decodes only the selected tensor, so a fast
-producer costs base64 text, not decoded buffers. `PTENSOR_VIEW_HISTORY` is read
-by the main process and travels to the window in the `getServerInfo` answer;
-until that answer lands the window uses 100, then trims to what was reported.
+The feed and the framing live in `ptensor-tlog`, which also owns the store
+(`TensorStore`): the tensors, keyed by a URL-safe id derived from the
+producer's label, under a byte budget rather than a tensor count -- one batched
+image is a couple of hundred megabytes, so "keep the last 100" is not a thing
+that can be done.
+
+### Reading the feed
+
+Three routes, all on loopback with an OS-picked port, all carrying a `token`
+minted at startup:
+
+| Route | Answers |
+| --- | --- |
+| `GET /tensors` | every held tensor's metadata, newest first |
+| `GET /tensor/<id>` | that tensor's `TensorJson`, byte for byte as it arrived |
+| `ws /feed` | a `hello` with the feed state and the listing, then one event per arrival |
+
+The window finds the address on `window.__ptensorFeed`, injected by a preload
+script. Under `bun run dev/ui` the window URL's query carries it too, as a
+fallback; the bundled app cannot use that channel, because the `views://`
+scheme handler resolves a URL to a bundled file and `index.html?feed=...`
+matches none, which loads an empty window.
+
+Because it is plain HTTP, the feed is testable without electrobun and without a
+window (`src/bun/__tests__/feedServer.test.ts`), and the panel served by
+`bun run dev/ui` reads real tensors.
+
+The window decodes only the tensor it is showing and keeps the decoded ones in
+a 1 GiB LRU, so clicking back and forth through a session costs nothing and
+cannot grow without bound.
 
 ## Checks
 
 ```bash
 bun run typecheck   # tsc over the app sources
-bun test            # framing, protocol, connection handling, App behaviour
-bun run smoke       # builds the real view bundle and drives it headlessly
+bun test            # feed server, feed client, App behaviour, tensor cache
 ```
 
-`bun run smoke` is the one that catches bundling problems: it renders the
-shipped bundle in a DOM, answers its RPC with a fake host, and asserts the
-panel follows pushes.
+The feed server and client tests talk to a real socket, which took two things
+to make work in the same process as the panel tests: the DOM preload puts back
+the real `fetch` and `WebSocket` after happy-dom installs its emulations, and
+the panel's `mock.module` of `@ptensor/tensor-view` -- process-wide, like every
+`mock.module` -- carries the real `tensorFromJson` so the client test decodes a
+real blob.
 
 ## Note on React
 

@@ -2,6 +2,7 @@
 
 #include <format>
 #include <memory>
+#include <string>
 
 namespace p10 {
 namespace detail {
@@ -21,6 +22,8 @@ class JsonStaging;
 /// ```
 class Json {
   private:
+    friend void append_json(const Json& encoder, std::string& out);
+
     Json(const Tensor& tensor, detail::CompressStaging* compress_ = nullptr) noexcept :
         tensor_(tensor),
         compress_(compress_) {}
@@ -30,6 +33,13 @@ class Json {
     const Tensor& tensor_;
     detail::CompressStaging* compress_;
 };
+
+/// Appends the JSON object for `encoder`'s tensor to `out`.
+///
+/// The formatting equivalent (`std::format("{}", encoder)`) pushes the base64
+/// blob one character at a time through the format output iterator; this writes
+/// it into `out` directly, which is what the tlog send path wants.
+void append_json(const Json& encoder, std::string& out);
 
 class JsonStaging {
   public:

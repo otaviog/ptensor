@@ -6,7 +6,7 @@
 
 import type { TensorJson } from 'ptensor-ts';
 import { DEFAULT_SESSION } from './constants';
-import type { IncomingMessage } from './protocol';
+import type { IncomingMessage, SessionMessage } from './protocol';
 
 /** What the server knows about the peer, for the log lines. */
 export type ConnectionInfo = {
@@ -51,19 +51,7 @@ export function handleMessage(
     onMessage: (msg: IncomingMessage): void => {
       switch (msg.kind) {
         case 'session-message':
-          if (sessionId === undefined) {
-            sessionId = msg.sessionId;
-            logger.info?.(
-              `Client (${connectionInfo.clientAddress}) joined session ${sessionId}.`
-            );
-          } else if (sessionId !== msg.sessionId) {
-            // The id is fixed for the life of a connection: a producer that
-            // wants another session opens another connection.
-            logger.warn?.(
-              `Client (${connectionInfo.clientAddress}) attempted to change session ID ` +
-                `from ${sessionId} to ${msg.sessionId}`
-            );
-          }
+          onSessionMessage(msg);
           break;
         case 'tensor-message':
           onTensor({
@@ -81,4 +69,22 @@ export function handleMessage(
       );
     },
   };
+
+  function onSessionMessage(msg: SessionMessage) {
+    if (sessionId === undefined) {
+      sessionId = msg.sessionId;
+      logger.info?.(
+        `Client (${connectionInfo.clientAddress}) joined session ${sessionId}.`
+      );
+    } else if (sessionId !== msg.sessionId) {
+      // The id is fixed for the life of a connection: a producer that
+      // wants another session opens another connection.
+      logger.warn?.(
+        `Client (${connectionInfo.clientAddress}) attempted to change session ID ` +
+        `from ${sessionId} to ${msg.sessionId}`
+      );
+    }
+  };
+
 }
+

@@ -62,6 +62,30 @@ be read back as a JSON string from `p10::to_json_debug`, which LLDB truncates at
 `target.max-string-summary-length` and reads back a chunk at a time; a large
 tensor was slow at best.)
 
+### From the feed to the panel
+
+The extension does not post the tensor into the webview. It writes the
+`TensorJson` to a file under its own storage directory and sends the panel the
+webview URI to read it from; the panel fetches and decodes it in a worker
+(`@ptensor/tensor-view/decode`).
+
+A `postMessage` into a webview is a JSON stringify, an IPC hop and a parse, so
+posting the tensor means several full copies of it -- a batched float32 image
+(`30x3x570x1132`) is 222 MiB of elements and about 262 MiB of base64, through a
+channel not built for that. Decoding in a worker keeps the panel responsive: on
+the panel's own thread that decode is over a second of straight-line JS.
+
+The file lives in the panel's `localResourceRoots` and nowhere else, is deleted
+when the tab closes, and a later session sweeps anything a crash left behind.
+The filename is derived from the tensor's label, which the debuggee chose, so it
+is sanitized and hashed rather than trusted (`src/tensorFileName.ts`, tested in
+`src/test/extension.test.ts`).
+
+Two CSP directives carry this: `connect-src` for the fetch, and
+`worker-src blob:` for the decoder. Without the latter the worker is refused and
+the panel decodes on its own thread instead -- correct, but it freezes for the
+length of the decode.
+
 The tab opens immediately and fills in when the tensor lands, showing:
 
 - **min / max / mean / count** stats over all elements.

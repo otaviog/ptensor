@@ -73,6 +73,9 @@ async function requestTensor(expression: string): Promise<void> {
 export function deactivate() {
     feed?.dispose();
     feed = undefined;
+    // The staged tensors are worth hundreds of megabytes apiece; a later
+    // session sweeps whatever this misses.
+    void TensorPanel.discardFiles();
 }
 
 async function resolveExpression(variable: unknown): Promise<string | undefined> {

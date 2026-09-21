@@ -2,17 +2,25 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import type { TensorPayload } from 'ptensor-tlog';
+import { TensorFiles } from './tensorFiles';
 
 /**
- * Hosts the tensor-view webview bundle (built from ../ptensor-view) and feeds
- * it the tensors that arrive on the feed, as `TensorJson`. All rendering — tables, images, stats — and all
- * dtype decoding live in that bundle; this class only manages the panel
- * lifecycle and the host<->webview message handshake.
+ * Hosts the tensor-view webview bundle (built from ../view) and tells it where
+ * to read the tensors that arrive on the feed. All rendering — tables, images,
+ * stats — and all dtype decoding live in that bundle; this class only manages
+ * the panel lifecycle and the host<->webview messages.
+ *
+ * A tensor is written to a file and the panel is sent its webview URI, not the
+ * `TensorJson` itself: a batched float32 image is hundreds of megabytes of
+ * base64, and posting that means a stringify, an IPC hop and a parse of the
+ * whole thing.
  */
 export class TensorPanel {
     // One panel (tab) per title. Viewing a new tensor opens a new tab; viewing
     // one that's already open reuses and refreshes its tab.
     private static panels = new Map<string, TensorPanel>();
+    // One per extension host: the panels share the directory, a file each.
+    private static files: TensorFiles | undefined;
     private readonly key: string;
     private readonly panel: vscode.WebviewPanel;
     private readonly disposables: vscode.Disposable[] = [];
@@ -34,14 +42,18 @@ export class TensorPanel {
         TensorPanel.open(context, `Tensor: ${name}`, { type: 'pending', name, ...threshold() }, refresh);
     }
 
-    /** Fills the tab for `payload.name`, if one is open, with the tensor. */
+    /**
+     * Fills the tab for `payload.name`, if one is open, with the tensor.
+     * Returns whether a tab was waiting; writing the file and telling the panel
+     * about it happens after that answer, since the caller only wants to know
+     * whether the tensor was wanted.
+     */
     static showTensor(payload: TensorPayload): boolean {
         const panel = TensorPanel.panels.get(`Tensor: ${payload.name}`);
         if (!panel) {
             return false;
         }
-        panel.update(`Tensor: ${payload.name}`, tensorMessage(payload, !!panel.refresh));
-        panel.panel.reveal(panel.panel.viewColumn, true);
+        void panel.showTensorFile(payload);
         return true;
     }
 
@@ -68,13 +80,20 @@ export class TensorPanel {
             'ptensor.tensorView',
             title,
             column,
-            { enableScripts: true, retainContextWhenHidden: true }
+            {
+                enableScripts: true,
+                retainContextWhenHidden: true,
+                // The tensor files, and nothing else: the panel fetches its
+                // tensor from here, so this is what it has to be allowed to
+                // read.
+                localResourceRoots: [TensorPanel.fileStore(context).directory],
+            }
         );
         TensorPanel.panels.set(title, new TensorPanel(context, panel, title, message, refresh));
     }
 
     private constructor(
-        context: vscode.ExtensionContext,
+        private readonly context: vscode.ExtensionContext,
         panel: vscode.WebviewPanel,
         title: string,
         message: unknown,
@@ -101,6 +120,39 @@ export class TensorPanel {
             this.disposables
         );
         this.panel.webview.html = renderHtml(context, this.panel.webview, message);
+    }
+
+    /** The shared tensor-file store, created on first use. */
+    private static fileStore(context: vscode.ExtensionContext): TensorFiles {
+        TensorPanel.files ??= new TensorFiles(context);
+        return TensorPanel.files;
+    }
+
+    /** Drops every tensor file this session wrote. Called on deactivate. */
+    static async discardFiles(): Promise<void> {
+        await TensorPanel.files?.discardAll();
+    }
+
+    /**
+     * Writes the tensor out and points the panel at it. A failure here is the
+     * panel's problem to show, not something to throw at the feed.
+     */
+    private async showTensorFile(payload: TensorPayload): Promise<void> {
+        const title = `Tensor: ${payload.name}`;
+        try {
+            const file = await TensorPanel.fileStore(this.context).write(this.key, payload.tensor);
+            this.update(title, {
+                type: 'tensor',
+                name: payload.name,
+                url: this.panel.webview.asWebviewUri(file).toString(),
+                canRefresh: !!this.refresh,
+                ...threshold(),
+            });
+            this.panel.reveal(this.panel.viewColumn, true);
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            vscode.window.showErrorMessage(`ptensor: could not stage '${payload.name}': ${msg}`);
+        }
     }
 
     /**
@@ -140,6 +192,9 @@ export class TensorPanel {
         if (TensorPanel.panels.get(this.key) === this) {
             TensorPanel.panels.delete(this.key);
         }
+        // The tab is gone, so its tensor file is dead weight -- and these run
+        // to hundreds of megabytes.
+        void TensorPanel.files?.discard(this.key);
         while (this.disposables.length) {
             this.disposables.pop()?.dispose();
         }
@@ -152,16 +207,6 @@ function threshold(): { tableThreshold: number } {
         tableThreshold: vscode.workspace
             .getConfiguration('ptensor')
             .get<number>('tableElementThreshold', 256),
-    };
-}
-
-function tensorMessage(payload: TensorPayload, canRefresh: boolean) {
-    return {
-        type: 'tensor',
-        name: payload.name,
-        tensor: payload.tensor,
-        canRefresh,
-        ...threshold(),
     };
 }
 
@@ -202,6 +247,13 @@ function renderHtml(
         `img-src ${webview.cspSource} data:`,
         `style-src ${webview.cspSource} 'unsafe-inline'`,
         `script-src 'nonce-${nonce}'`,
+        // The panel fetches its tensor from a webview URI rather than being
+        // posted it.
+        `connect-src ${webview.cspSource}`,
+        // Decoding runs in a worker started from a blob URL. Without this the
+        // worker is refused and the panel decodes on its own thread instead --
+        // correct, but it freezes for as long as the decode takes.
+        `worker-src blob:`,
     ].join('; ');
 
     // Embed the first message so the webview renders on load (no handshake

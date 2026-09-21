@@ -1,9 +1,16 @@
 # @ptensor/tensor-desktop
 
 An [Electrobun](https://electrobun.dev) desktop app that shows tensors streamed
-to a local socket. Every tensor carries a session id, and the window groups the
-incoming tensors by session: pick a session on the left, pick a tensor, and the
+to a local socket. Every tensor carries a session id and a name, and the sidebar
+groups them by both: a session, then a row per name. Pick a name and the
 `ptensor-view` panel renders it (table / grayscale / RGB / batched images).
+
+A name that arrived more than once gets a slider across its arrivals, since a
+producer logging in a loop sends the same name over and over. Each name keeps
+its own position, so one can sit on an early frame while another tracks the
+newest. Scrubbing off the newest arrival turns **Follow newest** off -- the next
+tensor to land would otherwise yank the panel back to the end -- and turning it
+back on is the checkbox's business, not something scrubbing re-arms.
 
 ```
 producer ──TCP 127.0.0.1:8791, newline-delimited JSON──▶ bun process ──metadata push (ws)──▶ webview

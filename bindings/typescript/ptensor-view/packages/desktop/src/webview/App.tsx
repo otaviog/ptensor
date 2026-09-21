@@ -1,19 +1,29 @@
 // The panel. What it keeps is metadata -- what tensors exist, under which
-// session -- and it fetches the one tensor the user is looking at from the bun
+// session and name -- and it fetches the one tensor on screen from the bun
 // process, which holds them all.
 //
 // That split is the whole point: a tensor is hundreds of megabytes of base64,
 // and keeping a session's worth of them in window state, or passing them across
 // as messages, costs gigabytes. Decoded tensors are kept in a byte-capped cache
-// (./tensorCache) so clicking back and forth does not re-fetch, and does not
-// grow without bound either.
+// (./tensorCache) so moving back and forth does not re-fetch, and does not grow
+// without bound either.
+//
+// The sidebar is a row per name, not per arrival: a producer logging in a loop
+// sends one name many times, and what you want then is a slider over it.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TensorViewer, type Tensor } from '@ptensor/tensor-view';
 import type { FeedEvent, FeedInfo, TensorMeta } from '../shared/feed';
 import type { FeedClient } from './feedClient';
 import { TensorCache } from './tensorCache';
-import { Selection, Session } from './types';
+import {
+    positionKey,
+    shownTensor,
+    type NameGroup,
+    type Positions,
+    type Selection,
+    type Session,
+} from './types';
 import { SessionGroup } from './SessionGroup';
 
 export interface AppProps {
@@ -27,8 +37,10 @@ export function App({ client, cache }: AppProps) {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [info, setInfo] = useState<FeedInfo | null>(null);
     const [selected, setSelected] = useState<Selection | null>(null);
+    const [positions, setPositions] = useState<Positions>({});
     const [error, setError] = useState<string | null>(null);
-    // Follow mode keeps the newest tensor of the active session on screen.
+    // Follow mode keeps each group on its newest arrival, and moves the panel
+    // to whichever one just arrived.
     const [follow, setFollow] = useState(true);
     const followRef = useRef(follow);
     followRef.current = follow;
@@ -61,7 +73,21 @@ export function App({ client, cache }: AppProps) {
                 case 'tensor':
                     forget(event.dropped);
                     setSessions((current) => append(current, event.tensor, event.dropped));
-                    setSelected((current) => reselect(current, event.tensor, followRef.current));
+                    if (followRef.current) {
+                        // Unpinned, so the group tracks its newest arrival.
+                        setPositions((current) =>
+                            without(current, positionKey(event.tensor.sessionId, event.tensor.name))
+                        );
+                        setSelected({
+                            sessionId: event.tensor.sessionId,
+                            name: event.tensor.name,
+                        });
+                    } else {
+                        setSelected((current) => current ?? {
+                            sessionId: event.tensor.sessionId,
+                            name: event.tensor.name,
+                        });
+                    }
                     break;
                 case 'cleared':
                     forget(idsOf(sessionsRef.current, event.sessionId));
@@ -75,6 +101,7 @@ export function App({ client, cache }: AppProps) {
                             ? null
                             : current
                     );
+                    setPositions((current) => forSessions(current, event.sessionId));
                     break;
             }
         });
@@ -107,15 +134,25 @@ export function App({ client, cache }: AppProps) {
         () => sessions.find((session) => session.id === selected?.sessionId) ?? null,
         [sessions, selected]
     );
-    const activeTensor = useMemo(
-        () => activeSession?.tensors.find((meta) => meta.id === selected?.tensorId) ?? null,
+    const activeGroup = useMemo(
+        () => activeSession?.groups.find((entry) => entry.name === selected?.name) ?? null,
         [activeSession, selected]
     );
+    const activeTensor = useMemo(
+        () =>
+            activeGroup === null || selected === null
+                ? null
+                : shownTensor(
+                      activeGroup,
+                      positions[positionKey(selected.sessionId, activeGroup.name)]
+                  ),
+        [activeGroup, positions, selected]
+    );
 
-    // Fetching and decoding is deferred to selection. It can fail -- an evicted
-    // tensor, a blob the panel cannot read -- and a throw from a render would
-    // take the whole window down, so the message goes to the panel instead.
-    const selectedId = selected?.tensorId;
+    // Fetching and decoding is deferred to what is on screen. It can fail -- an
+    // evicted tensor, a blob the panel cannot read -- and a throw from a render
+    // would take the whole window down, so the message goes to the panel.
+    const selectedId = activeTensor?.id;
     useEffect(() => {
         if (selectedId === undefined) {
             setShown(null);
@@ -156,8 +193,28 @@ export function App({ client, cache }: AppProps) {
         };
     }, [client, decoded, selectedId]);
 
-    const onSelect = useCallback((sessionId: string, tensorId: string) => {
-        setSelected({ sessionId, tensorId });
+    const onSelect = useCallback((sessionId: string, name: string) => {
+        setSelected({ sessionId, name });
+    }, []);
+
+    /**
+     * Moves one group's slider. Scrubbing off the newest arrival turns follow
+     * off: otherwise the next tensor to land would yank the panel straight back
+     * to the end.
+     */
+    const onScrub = useCallback((sessionId: string, name: string, index: number) => {
+        const entry = sessionsRef.current
+            .find((session) => session.id === sessionId)
+            ?.groups.find((candidate) => candidate.name === name);
+        const target = entry?.tensors[index];
+        if (entry === undefined || target === undefined) {
+            return;
+        }
+        setSelected({ sessionId, name });
+        setPositions((held) => ({ ...held, [positionKey(sessionId, name)]: target.id }));
+        if (index < entry.tensors.length - 1) {
+            setFollow(false);
+        }
     }, []);
 
     // The store is the bun process', so clearing is a request. What it drops
@@ -197,7 +254,9 @@ export function App({ client, cache }: AppProps) {
                         key={session.id}
                         session={session}
                         selected={selected}
+                        positions={positions}
                         onSelect={onSelect}
+                        onScrub={onScrub}
                         onClear={() => clearSession(session.id)}
                     />
                 ))}
@@ -224,8 +283,8 @@ export function App({ client, cache }: AppProps) {
                 {activeSession && tensor && (
                     <div className="panel-foot">
                         session <strong>{activeSession.id}</strong> ·{' '}
-                        {activeSession.tensors.length} held ·{' '}
-                        {formatBytes(activeSession.heldBytes)} in the store
+                        {countOf(activeSession)} held · {formatBytes(activeSession.heldBytes)} in
+                        the store
                     </div>
                 )}
             </main>
@@ -252,6 +311,10 @@ function messageOf(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
 }
 
+function countOf(session: Session): number {
+    return session.groups.reduce((total, entry) => total + entry.tensors.length, 0);
+}
+
 /** Bytes as the sidebar shows them: no more precision than is readable. */
 function formatBytes(bytes: number): string {
     if (bytes < 1024) {
@@ -268,9 +331,9 @@ function formatBytes(bytes: number): string {
 }
 
 /**
- * Groups a listing into sessions, newest session first. The store lists newest
- * tensor first; within a session they are kept oldest first, the order pushes
- * arrive in.
+ * Groups a listing into sessions. The store lists newest tensor first; this
+ * walks it oldest-first so the arrivals within a name end up in the order they
+ * came, and the names in the order they first appeared.
  */
 function group(tensors: TensorMeta[]): Session[] {
     let sessions: Session[] = [];
@@ -280,37 +343,72 @@ function group(tensors: TensorMeta[]): Session[] {
     return sessions;
 }
 
-/** Files one tensor under its session, newest session first. */
+/** Files one tensor under its session and name, newest session first. */
 function append(sessions: Session[], meta: TensorMeta, dropped: string[]): Session[] {
     const gone = new Set(dropped);
     const current = sessions.find((session) => session.id === meta.sessionId);
-    const kept = (current?.tensors ?? []).filter((held) => !gone.has(held.id));
-    const tensors = [...kept, meta];
+    const groups = addToGroups(current?.groups ?? [], meta, gone);
     const next: Session = {
         id: meta.sessionId,
-        tensors,
+        groups,
         updatedAt: meta.receivedAt,
-        heldBytes: tensors.reduce((total, held) => total + held.storedBytes, 0),
+        heldBytes: groups.reduce((total, entry) => total + entry.heldBytes, 0),
     };
-    // A session the eviction emptied goes with it.
     const others = sessions
         .filter((session) => session.id !== meta.sessionId)
         .map((session) => withoutDropped(session, gone))
-        .filter((session) => session.tensors.length > 0);
+        .filter((session) => session.groups.length > 0);
     return [next, ...others];
+}
+
+/**
+ * Appends `meta` to its name's group, keeping the groups in the order their
+ * names first appeared -- a recency order would reshuffle the sidebar every
+ * time two producers alternated.
+ */
+function addToGroups(groups: NameGroup[], meta: TensorMeta, gone: Set<string>): NameGroup[] {
+    const pruned = groups
+        .map((entry) => withoutDroppedFromGroup(entry, gone))
+        .filter((entry) => entry.tensors.length > 0 || entry.name === meta.name);
+    const existing = pruned.find((entry) => entry.name === meta.name);
+    if (existing === undefined) {
+        return [...pruned, groupOf(meta.name, [meta])];
+    }
+    return pruned.map((entry) =>
+        entry.name === meta.name ? groupOf(entry.name, [...entry.tensors, meta]) : entry
+    );
+}
+
+function groupOf(name: string, tensors: TensorMeta[]): NameGroup {
+    return {
+        name,
+        tensors,
+        heldBytes: tensors.reduce((total, meta) => total + meta.storedBytes, 0),
+    };
+}
+
+function withoutDroppedFromGroup(entry: NameGroup, gone: Set<string>): NameGroup {
+    if (gone.size === 0) {
+        return entry;
+    }
+    const tensors = entry.tensors.filter((meta) => !gone.has(meta.id));
+    return tensors.length === entry.tensors.length ? entry : groupOf(entry.name, tensors);
 }
 
 function withoutDropped(session: Session, gone: Set<string>): Session {
     if (gone.size === 0) {
         return session;
     }
-    const tensors = session.tensors.filter((held) => !gone.has(held.id));
-    return tensors.length === session.tensors.length
+    const groups = session.groups
+        .map((entry) => withoutDroppedFromGroup(entry, gone))
+        .filter((entry) => entry.tensors.length > 0);
+    return groups.length === session.groups.length &&
+        groups.every((entry, at) => entry === session.groups[at])
         ? session
         : {
               ...session,
-              tensors,
-              heldBytes: tensors.reduce((total, held) => total + held.storedBytes, 0),
+              groups,
+              heldBytes: groups.reduce((total, entry) => total + entry.heldBytes, 0),
           };
 }
 
@@ -318,21 +416,25 @@ function withoutDropped(session: Session, gone: Set<string>): Session {
 function idsOf(sessions: Session[], sessionId?: string): string[] {
     return sessions
         .filter((session) => sessionId === undefined || session.id === sessionId)
-        .flatMap((session) => session.tensors.map((meta) => meta.id));
+        .flatMap((session) => session.groups.flatMap((entry) => entry.tensors.map((m) => m.id)));
 }
 
-/**
- * Keeps the selection valid as tensors arrive: in follow mode the new tensor
- * wins, otherwise the current one is kept and the first tensor seeds an empty
- * panel.
- */
-function reselect(
-    current: Selection | null,
-    meta: TensorMeta,
-    follow: boolean
-): Selection | null {
-    if (current !== null && !follow) {
-        return current;
+function without(positions: Positions, key: string): Positions {
+    if (!(key in positions)) {
+        return positions;
     }
-    return { sessionId: meta.sessionId, tensorId: meta.id };
+    const next = { ...positions };
+    delete next[key];
+    return next;
+}
+
+/** Drops the slider positions of one cleared session, or of all of them. */
+function forSessions(positions: Positions, sessionId: string | undefined): Positions {
+    if (sessionId === undefined) {
+        return {};
+    }
+    const prefix = `${sessionId}\n`;
+    return Object.fromEntries(
+        Object.entries(positions).filter(([key]) => !key.startsWith(prefix))
+    );
 }

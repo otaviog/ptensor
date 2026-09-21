@@ -15,8 +15,15 @@ import type { FeedClient } from '../feedClient';
 // to carry everything the other test files import from it at runtime. That is
 // only the panel: the decode path reaches ptensor-ts directly.
 mock.module('@ptensor/tensor-view', () => ({
-    TensorViewer: ({ name }: { tensor: Tensor; name?: string }) => (
-        <div className="ptv-root">{name}</div>
+    TensorViewer: ({ tensor, name }: { tensor: Tensor; name?: string }) => (
+        <div className="ptv-root">
+            {name}
+            {/* Which arrival is on screen. Every arrival of one name shares the
+                name, and the decoded-tensor cache means a re-selection reads
+                nothing, so the id the fake feed tagged the tensor with is the
+                only way to see what the panel is actually showing. */}
+            <span className="shown-id">{(tensor as TaggedTensor).id}</span>
+        </div>
     ),
 }));
 
@@ -26,12 +33,18 @@ const { TensorCache } = await import('../tensorCache');
 
 const INFO: FeedInfo = { host: '127.0.0.1', port: 8791, listening: true };
 
-const TENSOR: Tensor = {
-    dtype: 'float32',
-    shape: [2, 2],
-    stride: [2, 1],
-    data: new Float32Array([0, 0.25, 0.5, 1]),
-};
+/** A decoded tensor, tagged with the id it was read for. */
+type TaggedTensor = Tensor & { id?: string };
+
+function tensorFor(id: string): TaggedTensor {
+    return {
+        dtype: 'float32',
+        shape: [2, 2],
+        stride: [2, 1],
+        data: new Float32Array([0, 0.25, 0.5, 1]),
+        id,
+    };
+}
 
 function meta(id: string, name = id, sessionId = 'run-a'): TensorMeta {
     return {
@@ -70,7 +83,7 @@ function fakeFeed(options: { failLoad?: string } = {}) {
             if (options.failLoad !== undefined) {
                 throw new Error(options.failLoad);
             }
-            return TENSOR;
+            return tensorFor(id);
         },
         clear: async (sessionId) => {
             cleared.push(sessionId);
@@ -123,6 +136,22 @@ async function render(options: { failLoad?: string; cache?: InstanceType<typeof 
             });
             await flush();
         },
+        /**
+         * Drags one slider to `index`. React tracks the input's value itself,
+         * so the write has to go through the native setter for the change to
+         * be seen.
+         */
+        async scrub(slider: HTMLInputElement, index: number) {
+            const setValue = Object.getOwnPropertyDescriptor(
+                HTMLInputElement.prototype,
+                'value'
+            )?.set;
+            await act(async () => {
+                setValue?.call(slider, String(index));
+                slider.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+            await flush();
+        },
         async unmount() {
             await act(async () => root.unmount());
             container.remove();
@@ -152,30 +181,149 @@ describe('App', () => {
 
     test('fetches and shows a pushed tensor, and follows the newest', async () => {
         const view = await render();
-        await view.emit(hello([]), arrived(meta('first')));
+        await view.emit(hello([]));
+        await view.emit(arrived(meta('frame', 'frame')));
 
         expect(view.container.textContent).toContain('run-a');
         expect(view.container.textContent).toContain('listening on 127.0.0.1:8791');
-        expect(view.container.querySelector('.ptv-root')?.textContent).toBe('first');
-        expect(view.loads).toEqual(['first']);
+        expect(shownId(view)).toBe('frame');
+        expect(view.loads).toEqual(['frame']);
 
-        await view.emit(arrived(meta('second')));
+        await view.emit(arrived(meta('frame-2', 'frame')));
 
-        // Follow mode is on, so the panel moved to the newest tensor.
-        expect(view.container.querySelector('.ptv-root')?.textContent).toBe('second');
+        // Follow mode is on, so the panel moved to the newest arrival.
+        expect(shownId(view)).toBe('frame-2');
+        expect(view.loads).toEqual(['frame', 'frame-2']);
         expect(view.container.textContent).toContain('2 held');
-        expect(view.loads).toEqual(['first', 'second']);
+
+        await view.unmount();
+    });
+
+    test('lists one row per name, however many times it arrived', async () => {
+        const view = await render();
+        await view.emit(hello([]));
+        for (const id of ['frame', 'frame-2', 'frame-3']) {
+            await view.emit(arrived(meta(id, 'frame')));
+        }
+        await view.emit(arrived(meta('weights', 'weights')));
+
+        // Four arrivals, two names.
+        expect(names(view)).toEqual(['frame', 'weights']);
+        expect(view.container.textContent).toContain('4 held');
+
+        await view.unmount();
+    });
+
+    test('keeps the names in the order they first appeared', async () => {
+        const view = await render();
+        await view.emit(hello([]));
+        await view.emit(arrived(meta('a1', 'alpha')));
+        await view.emit(arrived(meta('b1', 'beta')));
+        // Alpha arrives again: a recency order would jump it back to the top,
+        // which makes the sidebar unusable on an alternating feed.
+        await view.emit(arrived(meta('a2', 'alpha')));
+
+        expect(names(view)).toEqual(['alpha', 'beta']);
+
+        await view.unmount();
+    });
+
+    test('offers a slider only once a name has arrived more than once', async () => {
+        const view = await render();
+        await view.emit(hello([]));
+        await view.emit(arrived(meta('frame', 'frame')));
+
+        expect(sliders(view)).toHaveLength(0);
+
+        await view.emit(arrived(meta('frame-2', 'frame')));
+
+        const [slider] = sliders(view);
+        expect(slider.max).toBe('1');
+        expect(slider.value).toBe('1');
+        expect(view.container.textContent).toContain('2/2');
+
+        await view.unmount();
+    });
+
+    test('scrubbing shows an older arrival and stops following', async () => {
+        const view = await render();
+        await view.emit(hello([]));
+        for (const id of ['frame', 'frame-2', 'frame-3']) {
+            await view.emit(arrived(meta(id, 'frame')));
+        }
+        expect(view.loads).toEqual(['frame', 'frame-2', 'frame-3']);
+
+        await view.scrub(sliders(view)[0], 0);
+
+        expect(shownId(view)).toBe('frame');
+        expect(view.container.textContent).toContain('1/3');
+        // Scrubbing off the newest turns follow off, so the next arrival cannot
+        // yank the panel back to the end.
+        expect(followBox(view).checked).toBe(false);
+
+        await view.emit(arrived(meta('frame-4', 'frame')));
+
+        // Still on the arrival that was pinned, and it was never re-read.
+        expect(shownId(view)).toBe('frame');
+        expect(view.container.textContent).toContain('1/4');
+        expect(view.loads).toEqual(['frame', 'frame-2', 'frame-3']);
+
+        await view.unmount();
+    });
+
+    test('scrubbing back to the newest leaves follow off until asked', async () => {
+        const view = await render();
+        await view.emit(hello([]));
+        await view.emit(arrived(meta('frame', 'frame')));
+        await view.emit(arrived(meta('frame-2', 'frame')));
+
+        await view.scrub(sliders(view)[0], 0);
+        expect(followBox(view).checked).toBe(false);
+
+        await view.scrub(sliders(view)[0], 1);
+
+        // Back at the end, but following is the checkbox's business: nothing
+        // should re-arm it behind the user's back.
+        expect(view.container.textContent).toContain('2/2');
+        expect(followBox(view).checked).toBe(false);
+
+        await view.unmount();
+    });
+
+    test('each name keeps its own slider position', async () => {
+        const view = await render();
+        await view.emit(hello([]));
+        for (const id of ['a1', 'a2', 'a3']) {
+            await view.emit(arrived(meta(id, 'alpha')));
+        }
+        for (const id of ['b1', 'b2', 'b3']) {
+            await view.emit(arrived(meta(id, 'beta')));
+        }
+
+        await view.scrub(sliders(view)[0], 0); // alpha -> first
+        await view.scrub(sliders(view)[1], 1); // beta  -> second
+
+        const shown = [...view.container.querySelectorAll('.tensor-pos')].map((n) => n.textContent);
+        expect(shown).toEqual(['1/3', '2/3']);
+
+        // Switching rows shows that row's position, not a shared one.
+        await view.click(view.container.querySelectorAll('.tensor-item')[0]);
+        expect(shownId(view)).toBe('a1');
+        await view.click(view.container.querySelectorAll('.tensor-item')[1]);
+        expect(shownId(view)).toBe('b2');
 
         await view.unmount();
     });
 
     test('catches up on what the store already holds when it connects', async () => {
         const view = await render();
-        await view.emit(hello([meta('third'), meta('second'), meta('first')]));
+        // Newest first, the order the store lists them in.
+        await view.emit(
+            hello([meta('a3', 'alpha'), meta('b1', 'beta'), meta('a2', 'alpha'), meta('a1', 'alpha')])
+        );
 
-        // The store lists newest first; the sidebar shows them the same way.
-        const names = [...view.container.querySelectorAll('.tensor-name')].map((n) => n.textContent);
-        expect(names).toEqual(['third', 'second', 'first']);
+        expect(names(view)).toEqual(['alpha', 'beta']);
+        expect(sliders(view)[0].max).toBe('2');
         // Nothing is on screen until something is selected, so nothing is read.
         expect(view.loads).toEqual([]);
 
@@ -184,75 +332,70 @@ describe('App', () => {
 
     test('groups tensors by the session they were pushed under', async () => {
         const view = await render();
-        await view.emit(
-            hello([]),
-            arrived(meta('first', 'first', 'run-a')),
-            arrived(meta('other', 'other', 'run-b'))
-        );
+        await view.emit(hello([]));
+        await view.emit(arrived(meta('first', 'first', 'run-a')));
+        await view.emit(arrived(meta('other', 'other', 'run-b')));
 
         const ids = [...view.container.querySelectorAll('.session-id')].map((n) => n.textContent);
         expect(ids.sort()).toEqual(['run-a', 'run-b']);
         // The newest session is listed first and its tensor is on screen.
         expect(ids[0]).toBe('run-a');
-        expect(view.container.querySelector('.ptv-root')?.textContent).toBe('other');
-
-        await view.unmount();
-    });
-
-    test('clicking an older tensor pins it, and later pushes leave it alone', async () => {
-        const view = await render();
-        await view.emit(hello([]), arrived(meta('first')), arrived(meta('second')));
-
-        // Newest first in the list, so the second entry is the older tensor.
-        const items = [...view.container.querySelectorAll('.tensor-item')];
-        await view.click(items[1]);
-        expect(view.container.querySelector('.ptv-root')?.textContent).toBe('first');
-
-        await view.click(view.container.querySelector('.follow input')!);
-        await view.emit(arrived(meta('third')));
-
-        expect(view.container.querySelector('.ptv-root')?.textContent).toBe('first');
+        expect(shownId(view)).toBe('other');
 
         await view.unmount();
     });
 
     test('reads a tensor once and then takes it from the cache', async () => {
         const view = await render({ cache: new TensorCache() });
-        // One at a time: batched into a single render, only the last one would
-        // ever be selected, so only it would be read.
         await view.emit(hello([]));
-        await view.emit(arrived(meta('first')));
-        await view.emit(arrived(meta('second')));
-        expect(view.loads).toEqual(['first', 'second']);
+        await view.emit(arrived(meta('frame', 'frame')));
+        await view.emit(arrived(meta('frame-2', 'frame')));
+        expect(view.loads).toEqual(['frame', 'frame-2']);
 
-        const items = [...view.container.querySelectorAll('.tensor-item')];
-        await view.click(items[1]);
-        await view.click(items[0]);
+        await view.scrub(sliders(view)[0], 0);
+        await view.scrub(sliders(view)[0], 1);
 
-        // Both were decoded already, so going back and forth reads nothing.
-        expect(view.loads).toEqual(['first', 'second']);
+        // Both were decoded already, so scrubbing over them reads nothing.
+        expect(view.loads).toEqual(['frame', 'frame-2']);
 
         await view.unmount();
     });
 
-    test('drops what the store evicted, so the list matches what is held', async () => {
+    test('drops what the store evicted, so the slider matches what is held', async () => {
         const view = await render();
-        await view.emit(hello([]), arrived(meta('first')), arrived(meta('second')));
+        await view.emit(hello([]));
+        for (const id of ['frame', 'frame-2', 'frame-3']) {
+            await view.emit(arrived(meta(id, 'frame')));
+        }
+        expect(sliders(view)[0].max).toBe('2');
 
-        await view.emit(arrived(meta('third'), ['first']));
+        await view.emit(arrived(meta('frame-4', 'frame'), ['frame']));
 
-        const names = [...view.container.querySelectorAll('.tensor-name')].map((n) => n.textContent);
-        expect(names).toEqual(['third', 'second']);
-        expect(view.container.textContent).toContain('2 held');
+        // Three arrivals left, so three slider stops.
+        expect(sliders(view)[0].max).toBe('2');
+        expect(view.container.textContent).toContain('3/3');
+        expect(view.container.textContent).toContain('3 held');
+
+        await view.unmount();
+    });
+
+    test('drops a name whose every arrival was evicted', async () => {
+        const view = await render();
+        await view.emit(hello([]));
+        await view.emit(arrived(meta('a1', 'alpha')));
+        await view.emit(arrived(meta('b1', 'beta'), ['a1']));
+
+        expect(names(view)).toEqual(['beta']);
 
         await view.unmount();
     });
 
     test('says so when a tensor cannot be read', async () => {
-        const view = await render({ failLoad: 'tensor first answered 404' });
-        await view.emit(hello([]), arrived(meta('first')));
+        const view = await render({ failLoad: 'the tensor request answered 404' });
+        await view.emit(hello([]));
+        await view.emit(arrived(meta('frame', 'frame')));
 
-        expect(view.container.textContent).toContain('tensor first answered 404');
+        expect(view.container.textContent).toContain('the tensor request answered 404');
         expect(view.container.querySelector('.ptv-root')).toBeNull();
 
         await view.unmount();
@@ -260,11 +403,9 @@ describe('App', () => {
 
     test('clears one session and then all of them', async () => {
         const view = await render();
-        await view.emit(
-            hello([]),
-            arrived(meta('first', 'first', 'run-a')),
-            arrived(meta('other', 'other', 'run-b'))
-        );
+        await view.emit(hello([]));
+        await view.emit(arrived(meta('first', 'first', 'run-a')));
+        await view.emit(arrived(meta('other', 'other', 'run-b')));
 
         const clearRunA = [...view.container.querySelectorAll('.session')]
             .find((node) => node.querySelector('.session-id')?.textContent === 'run-a')
@@ -286,3 +427,22 @@ describe('App', () => {
         await view.unmount();
     });
 });
+
+/** The names the sidebar lists, in order. */
+function names(view: { container: HTMLElement }): (string | null)[] {
+    return [...view.container.querySelectorAll('.tensor-name')].map((n) => n.textContent);
+}
+
+/** The time sliders, one per name that arrived more than once. */
+function sliders(view: { container: HTMLElement }): HTMLInputElement[] {
+    return [...view.container.querySelectorAll('.tensor-slider')] as HTMLInputElement[];
+}
+
+function followBox(view: { container: HTMLElement }): HTMLInputElement {
+    return view.container.querySelector('.follow input') as HTMLInputElement;
+}
+
+/** The id of the arrival the panel is showing. */
+function shownId(view: { container: HTMLElement }): string | null | undefined {
+    return view.container.querySelector('.shown-id')?.textContent;
+}

@@ -10,6 +10,7 @@ import type { TensorJson } from 'ptensor-ts';
 import { FeedServer } from '../../bun/feedServer';
 import type { FeedEvent } from '../../shared/feed';
 import { createFeedClient, readEndpoint } from '../feedClient';
+import { createInlineDecoder } from '../decoder';
 import { FEED_GLOBAL } from '../../shared/feed';
 
 const TOKEN = 'c'.repeat(64);
@@ -45,7 +46,12 @@ function start(store: TensorStore) {
     const server = new FeedServer({ store, token: TOKEN, feedInfo: () => INFO });
     running = server;
     const address = server.start();
-    return { server, client: createFeedClient({ origin: address.origin, token: TOKEN }) };
+    // Inline: there is no engine to run the decode worker in under `bun test`,
+    // and what is under test here is the client's wiring, not the worker's.
+    return {
+        server,
+        client: createFeedClient({ origin: address.origin, token: TOKEN }, createInlineDecoder()),
+    };
 }
 
 describe('readEndpoint', () => {

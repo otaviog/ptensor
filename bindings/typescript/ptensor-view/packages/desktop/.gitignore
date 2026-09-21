@@ -4,3 +4,6 @@ artifacts
 *.tsbuildinfo
 # Cut from docs/icon-light.png by scripts/makeIcons.ts.
 .icons
+
+# Bundled by scripts/buildDecodeWorker.ts from src/webview/decodeWorker.ts.
+src/webview/.generated/

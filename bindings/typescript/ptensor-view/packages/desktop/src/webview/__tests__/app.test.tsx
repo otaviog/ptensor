@@ -2,7 +2,6 @@ import { describe, expect, mock, test } from 'bun:test';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Tensor } from '@ptensor/tensor-view';
-import { tensorFromJson } from 'ptensor-ts';
 import type { FeedEvent, FeedInfo, TensorMeta } from '../../shared/feed';
 import type { FeedClient } from '../feedClient';
 
@@ -13,14 +12,12 @@ import type { FeedClient } from '../feedClient';
 // and what it does with the feed's events.
 //
 // `mock.module` replaces the module for the whole test process, so the stub has
-// to carry everything the other test files import from it. `tensorFromJson` is
-// ptensor-ts' own, which the view package only re-exports: the real decode,
-// with no React behind it.
+// to carry everything the other test files import from it at runtime. That is
+// only the panel: the decode path reaches ptensor-ts directly.
 mock.module('@ptensor/tensor-view', () => ({
     TensorViewer: ({ name }: { tensor: Tensor; name?: string }) => (
         <div className="ptv-root">{name}</div>
     ),
-    tensorFromJson,
 }));
 
 // Imported after the mock is installed, so App picks up the stub.

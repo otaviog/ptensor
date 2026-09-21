@@ -6,13 +6,14 @@
     "description": "Desktop app for displaying tensors streamed by p10::tlog module.",
     "scripts": {
         "icons": "bun scripts/makeIcons.ts",
-        "dev": "bun scripts/makeIcons.ts && electrobun dev",
-        "dev/ui": "bun scripts/devUi.ts",
+        "dev": "bun scripts/buildDecodeWorker.ts && bun scripts/makeIcons.ts && electrobun dev",
+        "dev/ui": "bun scripts/buildDecodeWorker.ts && bun scripts/devUi.ts",
         "start": "electrobun run",
-        "build": "bun scripts/makeIcons.ts && electrobun build",
-        "typecheck": "bun scripts/typecheck.ts",
-        "test": "bun test",
-        "test/send": "bun scripts/sendTensor.ts"
+        "build": "bun scripts/buildDecodeWorker.ts && bun scripts/makeIcons.ts && electrobun build",
+        "typecheck": "bun scripts/buildDecodeWorker.ts && bun scripts/typecheck.ts",
+        "test": "bun scripts/buildDecodeWorker.ts && bun test",
+        "test/send": "bun scripts/sendTensor.ts",
+        "worker": "bun scripts/buildDecodeWorker.ts"
     },
     "dependencies": {
         "@cliffy/command": "npm:@jsr/cliffy__command",

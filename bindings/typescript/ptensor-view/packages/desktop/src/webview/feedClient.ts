@@ -6,7 +6,7 @@
 // decode itself goes through ptensor-ts, which picks the engine's native base64
 // where there is one.
 
-import { tensorFromJson, type Tensor, type TensorJson } from '@ptensor/tensor-view';
+import type { Tensor } from 'ptensor-ts';
 import {
     FEED_GLOBAL,
     FEED_ROUTES,
@@ -14,6 +14,7 @@ import {
     type FeedEvent,
     type TensorMeta,
 } from '../shared/feed';
+import { createDecoder, type TensorDecoder } from './decoder';
 import { getAppLogger } from '../shared/logging';
 
 const log = getAppLogger('feed-client');
@@ -27,7 +28,7 @@ export interface FeedClient {
     subscribe(onEvent: (event: FeedEvent) => void): () => void;
     /** Every held tensor's metadata, newest first. */
     listTensors(): Promise<TensorMeta[]>;
-    /** Fetches one tensor and decodes it. */
+    /** Fetches one tensor and decodes it, off this thread where it can. */
     loadTensor(id: string): Promise<Tensor>;
     /** Drops one session's tensors, or all of them. */
     clear(sessionId?: string): Promise<void>;
@@ -62,7 +63,15 @@ function isEndpoint(value: unknown): value is FeedEndpoint {
     return typeof candidate.origin === 'string' && typeof candidate.token === 'string';
 }
 
-export function createFeedClient(endpoint: FeedEndpoint): FeedClient {
+/**
+ * `decoder` is injectable so a test can decode inline; left alone it is a
+ * worker, because a tensor decode is over a second of straight-line JS and the
+ * window has to stay responsive through it.
+ */
+export function createFeedClient(
+    endpoint: FeedEndpoint,
+    decoder: TensorDecoder = createDecoder()
+): FeedClient {
     const url = (path: string, params: Record<string, string> = {}): URL => {
         const target = new URL(path, endpoint.origin);
         target.searchParams.set('token', endpoint.token);
@@ -119,13 +128,12 @@ export function createFeedClient(endpoint: FeedEndpoint): FeedClient {
             return json<TensorMeta[]>(url(FEED_ROUTES.tensors));
         },
 
-        async loadTensor(id) {
-            const target = url(`${FEED_ROUTES.tensor}/${encodeURIComponent(id)}`);
-            const response = await fetch(target);
-            if (!response.ok) {
-                throw new Error(`tensor ${id} answered ${response.status}`);
-            }
-            return tensorFromJson((await response.json()) as TensorJson);
+        loadTensor(id) {
+            // The worker does the fetch too, so the tensor's base64 -- 262 MiB
+            // for a batched float32 image -- never enters this heap.
+            return decoder.decode(
+                url(`${FEED_ROUTES.tensor}/${encodeURIComponent(id)}`).toString()
+            );
         },
 
         async clear(sessionId) {

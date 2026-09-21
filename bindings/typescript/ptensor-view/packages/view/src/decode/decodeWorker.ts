@@ -3,7 +3,7 @@
 // `new Worker(new URL(...))` alone and emits no worker chunk.
 //
 // It does the fetch itself, not just the decode. That keeps the tensor's base64
-// -- 262 MiB for a batched float32 image -- out of the window's heap entirely:
+// -- 262 MiB for a batched float32 image -- out of the caller's heap entirely:
 // it is read, decoded and dropped here, and only the decoded buffer crosses,
 // transferred rather than copied.
 

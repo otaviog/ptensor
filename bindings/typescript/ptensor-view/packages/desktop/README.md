@@ -231,26 +231,14 @@ The window decodes only the tensor it is showing and keeps the decoded ones in
 a 1 GiB LRU, so clicking back and forth through a session costs nothing and
 cannot grow without bound.
 
-### The decode worker
+### Decoding
 
-base64 plus zstd on a batched float32 image is about 1.3 s of straight-line JS,
-which on the window's thread is 1.3 s of frozen panel per tensor. So it runs in
-a worker (`src/webview/decoder.ts`), which does the *fetch* as well as the
-decode -- the tensor's 262 MiB of base64 never enters the window's heap -- and
-transfers the decoded buffer back rather than copying it.
-
-The worker cannot be a second bundler entrypoint: `Bun.build` leaves
-`new Worker(new URL('./x.ts', import.meta.url))` exactly as written and emits no
-chunk for it. So `scripts/buildDecodeWorker.ts` bundles it into a module that
-exports its source as a string (9.6 kB), and the window starts it from a blob
-URL. A source string also avoids the import attribute that electrobun's
-`Bun.build` and Vite spell differently. The generated file is git-ignored; the
-`dev`, `dev/ui`, `build`, `typecheck` and `test` scripts all rebuild it first.
-
-If the worker cannot start, decoding falls back to the window's thread --
-slower, but working. `TensorDecoder.usesWorker` says which is in use, and the
-decoder tests assert it, because otherwise the fallback passes every test and
-the only sign is a line in the log.
+Decoding is `@ptensor/tensor-view/decode`'s job, not this package's. It runs in
+a worker that does the fetch as well as the decode, so the tensor's 262 MiB of
+base64 never enters the window's heap and the decoded buffer is transferred
+rather than copied; the window supplies the URL and a logger and nothing else.
+See that package's README for the worker's build step, and for why decoding
+sometimes lands back on the window's thread.
 
 ## Checks
 
@@ -259,12 +247,15 @@ bun run typecheck   # tsc over the app sources
 bun test            # feed server, feed client, App behaviour, tensor cache
 ```
 
-The feed server and client tests talk to a real socket, which took two things
-to make work in the same process as the panel tests: the DOM preload puts back
-the real `fetch` and `WebSocket` after happy-dom installs its emulations, and
-the panel's `mock.module` of `@ptensor/tensor-view` -- process-wide, like every
-`mock.module` -- carries the real `tensorFromJson` so the client test decodes a
-real blob.
+The feed server and client tests talk to a real socket, which the DOM preload
+has to allow for: happy-dom installs emulated `fetch` and `WebSocket` that
+cannot, so `src/webview/__tests__/happydom.ts` puts the real ones back after
+registering.
+
+`mock.module` is process-wide, which is why the decoder is imported from
+`@ptensor/tensor-view/decode` rather than the package root: the panel tests
+stub the root, and a root import would hand the client test a stub with no
+decoder on it.
 
 ## Note on React
 

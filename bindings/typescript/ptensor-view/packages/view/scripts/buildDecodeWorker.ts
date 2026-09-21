@@ -1,20 +1,21 @@
 // Bundles the decode worker into a module that exports its source as a string.
 //
-// The worker cannot be a second entrypoint: `Bun.build` leaves
+// The worker cannot be a bundler entrypoint: `Bun.build` leaves
 // `new Worker(new URL('./x.ts', import.meta.url))` exactly as written and emits
-// no chunk for it, so at runtime the window would ask for a .ts file. A source
-// string works in both bundlers the window is built with -- electrobun's
-// Bun.build and Vite -- and needs no import attributes, which the two spell
-// differently.
+// no chunk for it, so at runtime the host would ask for a .ts file. A source
+// string works in every bundler a host builds with -- Vite here, electrobun's
+// Bun.build in the desktop app -- and needs no import attributes, which they
+// spell differently.
 //
-// Run by `dev`, `dev/ui`, `build`, `typecheck` and `test`; the output is
-// git-ignored.
+// Run by this package's `build`, `typecheck` and `test`; the output is
+// git-ignored. Consumers get the string through the built bundle, so neither
+// app needs a build step of its own.
 
 import { dirname, join } from 'node:path';
 
 const packageRoot = join(dirname(import.meta.path), '..');
-const entrypoint = join(packageRoot, 'src/webview/decodeWorker.ts');
-const output = join(packageRoot, 'src/webview/.generated/decodeWorkerSource.ts');
+const entrypoint = join(packageRoot, 'src/decode/decodeWorker.ts');
+const output = join(packageRoot, 'src/decode/.generated/decodeWorkerSource.ts');
 
 const built = await Bun.build({
     entrypoints: [entrypoint],

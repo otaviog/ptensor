@@ -10,7 +10,7 @@ import type { TensorJson } from 'ptensor-ts';
 import { FeedServer } from '../../bun/feedServer';
 import type { FeedEvent } from '../../shared/feed';
 import { createFeedClient, readEndpoint } from '../feedClient';
-import { createInlineDecoder } from '../decoder';
+import { createInlineDecoder } from '@ptensor/tensor-view/decode';
 import { FEED_GLOBAL } from '../../shared/feed';
 
 const TOKEN = 'c'.repeat(64);

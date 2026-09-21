@@ -1,13 +1,14 @@
-// Decoding, off the window's thread.
+// Decoding, off the calling thread.
 //
 // base64 plus zstd on a batched float32 image is about 1.3 s of straight-line
-// JS. On the window's thread that is 1.3 s of frozen panel per tensor the user
-// clicks, so it runs in a worker and the decoded buffer is transferred back.
+// JS. On a UI thread that is 1.3 s of frozen panel per tensor the user clicks,
+// so it runs in a worker and the decoded buffer is transferred back.
 //
 // The worker is started from a blob URL built over a source string the build
 // step generated (./.generated/decodeWorkerSource). If it cannot start -- no
 // `Worker`, blob URLs refused, a bundle the engine will not parse -- decoding
-// falls back to this thread, which is slow but correct, rather than failing.
+// falls back to the calling thread, which is slow but correct, rather than
+// failing.
 
 import type { Tensor } from 'ptensor-ts';
 import { DECODE_WORKER_SOURCE } from './.generated/decodeWorkerSource';
@@ -18,9 +19,14 @@ import {
     type DecodeRequest,
     type DecodeResponse,
 } from './decodeTransfer';
-import { getAppLogger } from '../shared/logging';
-
-const log = getAppLogger('decoder');
+/**
+ * Where the decoder says what happened. The host owns logging, so this is the
+ * whole of it -- a `console` satisfies it, and so does a real logger.
+ */
+export interface DecoderLogger {
+    debug?(message: string): void;
+    warn?(message: string): void;
+}
 
 export interface TensorDecoder {
     /** Fetches and decodes the tensor at `url`. */
@@ -54,7 +60,7 @@ export function createInlineDecoder(): TensorDecoder {
     return { decode: decodeHere, usesWorker: false, dispose: () => {} };
 }
 
-export function createDecoder(): TensorDecoder {
+export function createDecoder(log: DecoderLogger = {}): TensorDecoder {
     const waiting = new Map<number, Waiting>();
     let worker: Worker | null = null;
     let broken = false;
@@ -70,7 +76,7 @@ export function createDecoder(): TensorDecoder {
     const giveUpOnWorker = (why: string): void => {
         if (!broken) {
             broken = true;
-            log.warn('Decoding on the window thread: {why}.', { why });
+            log.warn?.(`Decoding on the calling thread: ${why}.`);
         }
         stopWorker();
         for (const [id, pending] of waiting) {
@@ -120,7 +126,7 @@ export function createDecoder(): TensorDecoder {
                 giveUpOnWorker(event.message || 'the decode worker failed to start');
             });
             worker = started;
-            log.debug('Decode worker started.');
+            log.debug?.('Decode worker started.');
         } catch (error: unknown) {
             giveUpOnWorker(error instanceof Error ? error.message : String(error));
         }

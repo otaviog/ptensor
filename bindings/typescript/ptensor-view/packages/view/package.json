@@ -12,6 +12,10 @@
             "types": "./dist/index.d.ts",
             "import": "./dist/tensor-view.js"
         },
+        "./decode": {
+            "types": "./dist/decode.d.ts",
+            "import": "./dist/decode.js"
+        },
         "./styles.css": "./src/styles.css"
     },
     "files": [
@@ -20,13 +24,14 @@
     ],
     "scripts": {
         "dev": "vite",
-        "build": "vite build && vite build --config vite.lib.config.ts",
+        "build": "bun scripts/buildDecodeWorker.ts && vite build && vite build --config vite.lib.config.ts",
         "build:webview": "vite build",
-        "build:lib": "vite build --config vite.lib.config.ts",
-        "typecheck": "tsc --noEmit",
-        "test": "bun test",
+        "build:lib": "bun scripts/buildDecodeWorker.ts && vite build --config vite.lib.config.ts",
+        "typecheck": "bun scripts/buildDecodeWorker.ts && tsc --noEmit",
+        "test": "bun scripts/buildDecodeWorker.ts && bun test",
         "smoke": "node scripts/smoke-webview.mjs",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "worker": "bun scripts/buildDecodeWorker.ts"
     },
     "dependencies": {
         "ptensor-ts": "file:../../../ptensor-ts",

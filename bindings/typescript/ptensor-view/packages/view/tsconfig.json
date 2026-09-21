@@ -19,5 +19,5 @@
         "noEmit": true,
         "types": ["vite/client", "bun"]
     },
-    "include": ["src", "dev", "vite.config.ts", "vite.lib.config.ts"]
+    "include": ["src", "dev", "scripts/buildDecodeWorker.ts", "vite.config.ts", "vite.lib.config.ts"]
 }

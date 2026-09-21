@@ -1,3 +1,6 @@
 node_modules
 dist
 *.tsbuildinfo
+
+# Bundled by scripts/buildDecodeWorker.ts from src/decode/decodeWorker.ts.
+src/decode/.generated/

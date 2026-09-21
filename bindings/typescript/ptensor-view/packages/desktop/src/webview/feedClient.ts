@@ -14,7 +14,7 @@ import {
     type FeedEvent,
     type TensorMeta,
 } from '../shared/feed';
-import { createDecoder, type TensorDecoder } from './decoder';
+import { createDecoder, type TensorDecoder } from '@ptensor/tensor-view/decode';
 import { getAppLogger } from '../shared/logging';
 
 const log = getAppLogger('feed-client');
@@ -70,7 +70,10 @@ function isEndpoint(value: unknown): value is FeedEndpoint {
  */
 export function createFeedClient(
     endpoint: FeedEndpoint,
-    decoder: TensorDecoder = createDecoder()
+    decoder: TensorDecoder = createDecoder({
+        debug: (message) => log.debug(message),
+        warn: (message) => log.warn(message),
+    })
 ): FeedClient {
     const url = (path: string, params: Record<string, string> = {}): URL => {
         const target = new URL(path, endpoint.origin);

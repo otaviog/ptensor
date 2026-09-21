@@ -20,7 +20,11 @@ export default defineConfig({
             // The published entry points at ptensor-view's build output, which
             // would freeze the viewer at whatever was last built. Its sources
             // hot-reload like the app's own.
+            // Most specific first: a string alias is a prefix replacement, so
+            // a bare '@ptensor/tensor-view' entry would rewrite the subpaths
+            // into '.../src/index.ts/decode'.
             '@ptensor/tensor-view/styles.css': `${packageRoot}../view/src/styles.css`,
+            '@ptensor/tensor-view/decode': `${packageRoot}../view/src/decode/index.ts`,
             '@ptensor/tensor-view': `${packageRoot}../view/src/index.ts`,
         },
     },
